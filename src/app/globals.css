@@ -12,11 +12,37 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+.scroller {
+  width: 100%;
+  overflow: hidden;
+}
+
+
+.scroller_inner {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: max-content;
+  animation: scroll 20s linear infinite;
+}
+
+@keyframes scroll {
+  to {
+    transform: translateX(calc(-50% - 0.5rem));
   }
+}
+
+.logoWrap {
+  margin: -10px;
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.logoImg {
+  max-height: 100%;
+  max-width: 100%;
+  object-fit: contain;
 }
 
 body {
