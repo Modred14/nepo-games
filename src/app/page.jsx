@@ -87,7 +87,7 @@ export default function Home() {
               <button className="py-2 px-3 rounded-md border mr-4 hover:bg-gray-200 duration-500 transition-all">
                 Log In
               </button>
-              <button className="py-2 px-3 rounded-md  hover:bg-blue-800 border border-blue-600/90 duration-500 transition-all bg-blue-700 text-white font-bold">
+              <button className="py-2 px-3 rounded-md  hover:bg-blue-800 border border-blue-600/90 duration-500 transition-all bg-[#0000FF] text-white font-bold">
                 Get Started
               </button>
             </div>
@@ -96,44 +96,42 @@ export default function Home() {
       </Reveal>
       <main>
         <Reveal>
-          <div className="grid grid-cols-1 lg:grid-cols-2">
-            <div className="font-bold pl-10 pt-10">
-              <div className="w-full px-10  bg-blue-100/70 border rounded-2xl border-blue-800">
-                <p className="text-blue-700 uppercase text-md ">
-                  Trusted by over 500K+ gamers worldwide
-                </p>
-              </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 pb-10">
+            <div className="font-bold pl-10 ">
               <div className="text-8xl pt-10">
                 The Premium{" "}
-                <span className="text-blue-700">Gaming Account</span>{" "}
+                <span className="text-[#0000FF]">Gaming Account</span>{" "}
                 Marketplace
               </div>
-              <p className="text-gray-500 font-medium text-lg pt-7 max-w-120">
+              <p className="text-gray-500 font-medium text-3xl pt-7 text-center">
                 Redefining how premium gaming accounts are traded — securely and
-                transparently. Skip the grind. Trade with confidence.
+                transparently. Skip the grind.{" "}
+                <span className="font-bold text-[#0000FF]">
+                  Trade with confidence.
+                </span>
               </p>
               <div className="pt-10 grid grid-cols-2  max-w-120">
                 <div className="flex justify-center">
-                  <button className=" rounded-md py-4 px-5 hover:bg-blue-800 border border-blue-600/90 duration-500 transition-all text-lg bg-blue-700 text-white font-semibold">
+                  <button className=" rounded-2xl py-5 px-8 hover:bg-blue-800 border border-blue-600/90 duration-500 transition-all text-lg bg-[#0000FF] text-white font-semibold">
                     Buy Account
                   </button>
                 </div>
                 <div className="flex justify-center">
                   {" "}
-                  <button className=" py-4 px-5 rounded-md border mr-2 hover:bg-gray-200 duration-500 transition-all text-lg">
+                  <button className=" py-5 px-5 rounded-2xl border mr-2 hover:bg-blue-100/70 duration-500 transition-all text-lg">
                     Sell your account
                   </button>
                 </div>
               </div>
             </div>
-            <div className="p-10">
+            <div className="p-10 py-0">
               <img src="/nepo-market.png" alt="" />
             </div>
           </div>
         </Reveal>
         <Reveal>
           <div className="flex justify-center">
-            <div ref={scrollerRef} className="scroller bg-blue-700">
+            <div ref={scrollerRef} className="scroller bg-[#0000FF]">
               <div className="scroller_inner tag-list">
                 {games.map((game) => (
                   <div key={game.name} className="logoWrap">
@@ -147,25 +145,25 @@ export default function Home() {
         <Reveal>
           <div>
             <div className="grid w-full justify-center items-center">
-              <p className=" bg-blue-700 from-blue-700 to-blue-900 shadow-md border border-blue-100/80 shadow-blue-400 mt-10 text-gray-50 justify-center items-center flex gap-3 px-7 text-4xl  rounded-3xl py-3">
-                <Star className="fill-white"></Star>
+              <p className=" bg-linear-to-r gap-6 from-[#0000FF] to-[#1E3A8A] shadow-md border border-blue-100 shadow-blue-400 mt-10 text-[#FFFFFF] justify-center items-center flex text-4xl  rounded-full py-5 px-10">
+                <Star className="fill-white" size={40}></Star>
                 <span className="font-bold">Features</span>
               </p>
             </div>
-            <p className="text-blue-700 font-bold text-5xl pt-5 flex w-full justify-center">
+            <p className="text-[#0000FF] font-bold text-5xl pt-5 flex w-full justify-center">
               All Your Games. One Secure Marketplace
             </p>
             <div className="w-full flex pt-4 items-center justify-center">
-              <p className="text-2xl text-center max-w-300 px-3">
+              <p className="text-2xl text-center text-gray-900- max-w-300 px-3 pb-4">
                 Built for serious gamers, Nepo Games provides escrow protection,
                 verified sellers, and seamless transfers — so every trade is
                 smooth, safe, and guaranteed.
               </p>
             </div>
-            <div className="grid grid-cols-3 gap-2">
-              <div className="rounded-sm bg-gray-100">
+            <div className="grid grid-cols-3 text-2xl text-center gap-3 px-2">
+              <div className="rounded-2xl bg-[#FBF6F6] px-2">
                 <img src="" alt="" />
-                <p>Escrow-Protected Payments</p>
+                <p className="font-bold">Escrow-Protected Payments</p>
                 <p>
                   Every transaction on our platform is secured with escrow
                   protection. The buyer’s funds are safely held until the
@@ -175,9 +173,9 @@ export default function Home() {
                   is always safe.
                 </p>
               </div>
-              <div className="rounded-sm bg-gray-100">
+              <div className="rounded-2xl bg-[#FBF6F6]  px-2">
                 <img src="" alt="" />
-                <p>Advanced Search & Smart Filters</p>
+                <p className="font-bold">Advanced Search & Smart Filters</p>
                 <p>
                   Find exactly what you’re looking for in seconds. Filter
                   accounts by game title, rank, skins, price range, platform,
@@ -185,9 +183,9 @@ export default function Home() {
                   listings and discover the best deals without wasting time.
                 </p>
               </div>
-              <div className="rounded-sm bg-gray-100">
+              <div className="rounded-2xl bg-[#FBF6F6]  px-2">
                 <img src="" alt="" />
-                <p>Secure In-Platform Messaging</p>
+                <p className="font-bold">Secure In-Platform Messaging</p>
                 <p>
                   Communicate directly with sellers through our secure in-app
                   messaging system. Share details, confirm requirements, and
