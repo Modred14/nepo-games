@@ -130,14 +130,16 @@ export default function Home() {
       </div>
       <main>
         <Reveal>
-          <div className="grid grid-cols-1 pt-20 lg:grid-cols-2 pb-10">
+          <div className="grid grid-cols-1 pt-20 lg:grid-cols-2 pb-10 gap-3">
             <div className="font-bold pl-10 ">
-              <div className="text-8xl pt-10">
+              <div className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-[85px] pt-15">
                 The Premium{" "}
                 <span className="text-[#0000FF]">Gaming Account</span>{" "}
                 Marketplace
               </div>
-              <p className="text-gray-500 font-medium text-3xl pt-7 text-center">
+              <p
+                className="text-gray-500 font-medium text-lg sm:text-xl md:text-2xl lg:text-3xl pt-7 text-center"
+              >
                 Redefining how premium gaming accounts are traded — securely and
                 transparently. Skip the grind.{" "}
                 <span className="font-bold text-[#0000FF] italic">
@@ -158,8 +160,8 @@ export default function Home() {
                 </div>
               </div>
             </div>
-            <div className="p-20 ">
-              <img src="/nepo-market.png" alt="" />
+            <div className=" sm:px-20  p-10">
+              <img src="/nepo-market.png" className="" alt="" />
             </div>
           </div>
         </Reveal>
@@ -315,7 +317,7 @@ export default function Home() {
                     "shadow-blue-400",
                   ].join(" ")}
                 >
-                  <span className=" ">★</span>
+                  <span>★</span>
                   Stats
                 </button>
               </div>{" "}
