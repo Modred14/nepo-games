@@ -328,19 +328,19 @@ function StatCard({ iconSrc, value, label, className = "" }) {
             </div>
           </div>
         </Reveal>
-        <Reveal>
-          <div className="flex justify-center">
-            <div ref={scrollerRef} className="scroller bg-[#0000FF]">
-              <div className="scroller_inner tag-list">
-                {games.map((game) => (
-                  <div key={game.name} className="logoWrap">
-                    <img src={game.logo} alt={game.name} className="logoImg" />
-                  </div>
-                ))}
-              </div>
-            </div>
+<Reveal>
+  <div className="flex justify-center">
+    <div ref={scrollerRef} className="scroller bg-[#0000FF]">
+      <div className="scroller_inner tag-list">
+        {[...games, ...games].map((game, i) => (
+          <div key={`${game.name}-${i}`} className="logoWrap">
+            <img src={game.logo} alt={game.name} className="logoImg" />
           </div>
-        </Reveal>
+        ))}
+      </div>
+    </div>
+  </div>
+</Reveal>
         <Reveal>
           <div>
             <div className="grid w-full justify-center items-center ">
