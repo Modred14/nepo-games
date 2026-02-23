@@ -92,12 +92,16 @@ export default function Home() {
     },
     {
       name: "Gameloft",
-      logo: "./gameloft_512.png",
+      logo: "/gameloft_512.png",
     },
-    // {
-    //   name : "",
-    //   logo: "",
-    // },
+    {
+      name : "Free Fire",
+      logo: "/freefire.png",
+    },
+     {
+      name : "Blood Strike",
+      logo: "/bloodstrike.png",
+    },
   ];
   const scrollerRef = useRef(null);
 
@@ -159,49 +163,46 @@ export default function Home() {
             </div>
 
             {/* MOBILE SIDEBAR */}
-           
           </header>
         </Reveal>
       </div>
-       <div
-              className={`fixed top-0 right-0 h-full w-64 bg-white shadow-lg z-1050 transform transition-transform duration-300
+      <div
+        className={`fixed top-0 right-0 h-full w-64 bg-white shadow-lg z-1050 transform transition-transform duration-300
 
         ${open ? "translate-x-0" : "translate-x-full"}
         
         `}
-            >
-              <div className="p-6">
-                <button onClick={() => setOpen(false)} className="mb-8">
-                  <X size={30} />
-                </button>
+      >
+        <div className="p-6">
+          <button onClick={() => setOpen(false)} className="mb-8">
+            <X size={30} />
+          </button>
 
-                <div className="flex flex-col gap-6 text-lg font-semibold">
-                  <a href="">Marketplace</a>
+          <div className="flex flex-col gap-6 text-lg font-semibold">
+            <a href="">Marketplace</a>
 
-                  <a href="">Pricing</a>
+            <a href="">Pricing</a>
 
-                  <a href="">About Us</a>
+            <a href="">About Us</a>
 
-                  <a href="">Support</a>
+            <a href="">Support</a>
 
-                  <button className="mt-4 py-2 border rounded-md">
-                    Log In
-                  </button>
+            <button className="mt-4 py-2 border rounded-md">Log In</button>
 
-                  <button className="py-2 bg-blue-600 text-white rounded-md">
-                    Get Started
-                  </button>
-                </div>
-              </div>
-            </div>
+            <button className="py-2 bg-blue-600 text-white rounded-md">
+              Get Started
+            </button>
+          </div>
+        </div>
+      </div>
 
-            {/* BACKDROP */}
-            {open && (
-              <div
-                onClick={() => setOpen(false)}
-                className="fixed inset-0 bg-black/30 z-40"
-              />
-            )}
+      {/* BACKDROP */}
+      {open && (
+        <div
+          onClick={() => setOpen(false)}
+          className="fixed inset-0 bg-black/30 z-40"
+        />
+      )}
       <main>
         <Reveal>
           <div className="grid grid-cols-1 pt-20 lg:grid-cols-2 pb-10 gap-3">
@@ -226,13 +227,13 @@ export default function Home() {
               <div className="w-full grid lg:justify-start justify-center">
                 <div className="pt-10 grid grid-cols-2 gap-2   max-w-120">
                   <div className="flex justify-center">
-                    <button className=" rounded-2xl py-3 px-6 sm:py-5 sm:px-8 hover:bg-blue-800 border border-blue-600/90 duration-500 transition-all text-lg bg-[#0000FF] text-white font-semibold">
+                    <button className=" rounded-2xl py-3 px-6 sm:py-5 sm:px-8 hover:bg-blue-800 border border-blue-600/90 duration-500 transition-all sm:text-lg text-sm bg-[#0000FF] text-white font-semibold">
                       Buy Account
                     </button>
                   </div>
                   <div className="flex justify-center">
                     {" "}
-                    <button className="py-3 px-3 sm:py-5 sm:px-5 rounded-2xl border mr-2 hover:bg-gray-200/50 bg-white  duration-500 transition-all text-lg">
+                    <button className="py-3 px-3 sm:py-5 sm:px-5 rounded-2xl border mr-2 hover:bg-gray-200/50 bg-white  duration-500 transition-all  sm:text-lg text-sm">
                       Sell your account
                     </button>
                   </div>
@@ -260,7 +261,7 @@ export default function Home() {
         <Reveal>
           <div>
             <div className="grid w-full justify-center items-center ">
-              <p className=" bg-linear-to-r gap-4 from-[#0000FF] to-[#1E3A8A] shadow-md border border-blue-100 shadow-blue-400 mt-10 text-[#FFFFFF] justify-center items-center flex text-3xl lg:text-4xl  rounded-full py-5 px-10">
+              <p className=" bg-linear-to-r gap-4 hover:scale-[1.03] active:scale-[0.98] transition-transform from-[#3B82F6] to-[#1E3A8A] shadow-md border border-blue-100 shadow-blue-400 mt-10 text-[#FFFFFF] justify-center items-center flex text-3xl  rounded-full py-5 px-10">
                 <Star className="fill-white" size={30}></Star>
                 <span className="font-bold">Features</span>
               </p>
@@ -354,7 +355,7 @@ export default function Home() {
                 {/* Stats first */}
                 <button
                   className={[
-                    "flex items-center gap-3 rounded-full px-6 py-3 text-3xl lg:text-4xl",
+                    "flex items-center gap-3 rounded-full px-6 py-3 text-3xl ",
                     "bg-linear-to-r from-[#3B82F6] to-[#1E3A8A] text-white font-bold",
                     "shadow-md backdrop-blur-md border border-blue-100 shadow-blue-400",
                     "hover:scale-[1.03] active:scale-[0.98] transition-transform",
@@ -434,7 +435,7 @@ export default function Home() {
                 <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
                   <button
                     className={[
-                      "flex items-center gap-3 rounded-full px-6 py-3  text-3xl lg:text-4xl",
+                      "flex items-center gap-3 rounded-full px-6 py-3  text-3xl ",
                       "bg-linear-to-r from-[#3B82F6] to-[#1E3A8A] text-white font-bold",
                       "shadow-md backdrop-blur-md border border-blue-100 shadow-blue-400",
                       "hover:scale-[1.03] active:scale-[0.98] transition-transform",
@@ -450,48 +451,47 @@ export default function Home() {
         </Reveal>
         <Reveal>
           <div className="pt-30 pb-20 flex justify-center">
-            {/* layout width wrapper */}
             <div className="w-full max-w-5xl px-4 sm:px-8">
-              {/* timeline container */}
-              <div className="relative flex justify-center">
-                {/* vertical line (single, continuous) */}
-                <div className="absolute left-[52px] top-0 h-full w-[2px] bg-[#8A38F5]" />
+              {/* wrapper */}
+              <div className="relative flex flex-col items-center">
+                {/* CENTER LINE */}
+                <div className="absolute left-1/2 -translate-x-1/2 top-0 h-full w-[2px] bg-[#8A38F5]" />
 
-                <div className="flex flex-col gap-14 w-full">
-                  {steps.map((s, idx) => {
-                    const isLast = idx === steps.length - 1;
-
-                    return (
-                      <div
-                        key={s.title}
-                        className="relative flex gap-10 items-start"
-                      >
-                        {/* icon + cut line after last item */}
-                        <div className="relative w-[104px] flex justify-center">
-                          {/* cover the line after the last icon so it "stops" */}
-                          {isLast && (
-                            <div className="absolute left-[52px] top-[92px] h-[999px] w-[10px] -translate-x-1/2 bg-transparent" />
-                          )}
-
-                          <div className="relative z-10 bg-gradient-to-b from-[#4B6BC6] to-[#2626A6] w-25 h-25 md:w-30 md:h-30 p-6 rounded-full flex items-center justify-center shadow-[0_10px_30px_rgba(0,0,0,0.15)]">
-                            <img
-                              src={s.icon}
-                              alt={s.title}
-                              className="invert w-full h-full object-contain"
-                            />
-                          </div>
-                        </div>
-
-                        {/* card */}
-                        <div className="max-w-[520px] text-base sm:text-lg md:text-xl text-[#0000FF] border border-[#8A38F5] rounded-2xl md:py-6 md:px-6 py-5 px-4 bg-[#C1C8F5] shadow-[0_12px_40px_rgba(138,56,245,0.12)]">
-                          <p className="font-bold tracking-wide">{s.title}</p>
-                          <p className="mt-2 text-[#0000FF]/90">{s.text}</p>
-                        </div>
+                {/* STEPS */}
+                <div className="flex flex-col gap-14 w-full items-center">
+                  {steps.map((s, idx) => (
+                    <div
+                      key={s.title}
+                      className="relative flex flex-col items-center text-center"
+                    >
+                      {/* ICON */}
+                      <div className="relative z-10 bg-gradient-to-b from-[#4B6BC6] to-[#2626A6] w-25 h-25 md:w-30 md:h-30 p-6 rounded-full flex items-center justify-center shadow-[0_10px_30px_rgba(0,0,0,0.15)]">
+                        <img
+                          src={s.icon}
+                          alt={s.title}
+                          className="invert w-full h-full object-contain"
+                        />
                       </div>
-                    );
-                  })}
+
+                      {/* CARD */}
+                      <div className="mt-6 max-w-[520px] text-base sm:text-lg md:text-xl text-[#0000FF] border border-[#8A38F5] rounded-2xl md:py-6 md:px-6 py-5 px-4 bg-[#C1C8F5] shadow-[0_12px_40px_rgba(138,56,245,0.12)]">
+                        <p className="font-bold tracking-wide">{s.title}</p>
+                        <p className="mt-2 text-[#0000FF]/90">{s.text}</p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
+            </div>
+          </div>
+        </Reveal>
+        <Reveal>
+          <div className="bg-white">
+            <div className="grid pt-6 w-full justify-center items-center ">
+              <p className=" bg-linear-to-r gap-4 hover:scale-[1.03] active:scale-[0.98] transition-transform from-[#3B82F6] to-[#1E3A8A] shadow-md border border-blue-100 shadow-blue-400 mt-10 text-[#FFFFFF] justify-center items-center flex text-3xl  rounded-full py-5 px-10">
+                <Star className="fill-white" size={30}></Star>
+                <span className="font-bold">Reviews</span>
+              </p>
             </div>
           </div>
         </Reveal>
