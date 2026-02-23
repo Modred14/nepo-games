@@ -5,6 +5,88 @@ import { useEffect, useRef, useState, useMemo } from "react";
 
 export default function Home() {
   const [open, setOpen] = useState(false);
+  const [ready, setReady] = useState(false);
+  const innerRef = useRef(null);
+ const games = [
+    {
+      name: "Delta Force",
+      logo: "/deltaforce_512.png",
+    },
+    {
+      name: "Efootball",
+      logo: "/efootball_512.png",
+    },
+    {
+      name: "Mobile Legends",
+      logo: "/mobile_legends_512.png",
+    },
+    {
+      name: "Call Of Duty Mobile",
+      logo: "/call_of_duty_512.png",
+    },
+    {
+      name: "Fortnite",
+      logo: "/fortnite_512.png",
+    },
+    {
+      name: "Minecraft",
+      logo: "/minecraft_512.png",
+    },
+    {
+      name: "Pubg Mobile",
+      logo: "/pubg_512.png",
+    },
+    {
+      name: "Gameloft",
+      logo: "/gameloft_512.png",
+    },
+    {
+      name: "Free Fire",
+      logo: "/freefire.png",
+    },
+    {
+      name: "Blood Strike",
+      logo: "/bloodstrike.png",
+    },
+  ];
+  // Duplicate for seamless loop
+  const items = useMemo(() => [...games, ...games], [games]);
+
+  useEffect(() => {
+    const el = innerRef.current;
+    if (!el) return;
+
+    const imgs = Array.from(el.querySelectorAll("img"));
+    let cancelled = false;
+
+    const waitForImages = async () => {
+      await Promise.all(
+        imgs.map((img) => {
+          if (img.complete) return Promise.resolve();
+          return new Promise((res) => {
+            img.addEventListener("load", res, { once: true });
+            img.addEventListener("error", res, { once: true });
+          });
+        }),
+      );
+
+      if (cancelled) return;
+
+      // Force one repaint for iOS
+      el.style.transform = "translate3d(0,0,0)";
+      // eslint-disable-next-line no-unused-expressions
+      el.offsetHeight; // trigger reflow
+      el.style.transform = "";
+
+      setReady(true);
+    };
+
+    waitForImages();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [items]);
 
   function parsePrettyNumber(input) {
     const raw = String(input).trim();
@@ -153,48 +235,7 @@ export default function Home() {
     },
   ];
 
-  const games = [
-    {
-      name: "Delta Force",
-      logo: "/deltaforce_512.png",
-    },
-    {
-      name: "Efootball",
-      logo: "/efootball_512.png",
-    },
-    {
-      name: "Mobile Legends",
-      logo: "/mobile_legends_512.png",
-    },
-    {
-      name: "Call Of Duty Mobile",
-      logo: "/call_of_duty_512.png",
-    },
-    {
-      name: "Fortnite",
-      logo: "/fortnite_512.png",
-    },
-    {
-      name: "Minecraft",
-      logo: "/minecraft_512.png",
-    },
-    {
-      name: "Pubg Mobile",
-      logo: "/pubg_512.png",
-    },
-    {
-      name: "Gameloft",
-      logo: "/gameloft_512.png",
-    },
-    {
-      name: "Free Fire",
-      logo: "/freefire.png",
-    },
-    {
-      name: "Blood Strike",
-      logo: "/bloodstrike.png",
-    },
-  ];
+ 
   const scrollerRef = useRef(null);
 
   useEffect(() => {
@@ -338,15 +379,21 @@ export default function Home() {
           </div>
         </Reveal>
         <Reveal>
-          <div className="flex justify-center">
-            <div ref={scrollerRef} className="scroller bg-[#0000FF]">
-              <div className="scroller_inner tag-list">
-                {[...games, ...games].map((game, i) => (
-                  <div key={`${game.name}-${i}`} className="logoWrap">
-                    <img src={game.logo} alt={game.name} className="logoImg" />
-                  </div>
-                ))}
-              </div>
+          <div className="scroller bg-[#0000FF]">
+            <div
+              ref={innerRef}
+              className={`scroller_inner ${ready ? "is-ready" : ""}`}
+            >
+              {items.map((game, i) => (
+                <div key={`${game.name}-${i}`} className="logoWrap">
+                  <img
+                    src={game.logo}
+                    alt={game.name}
+                    className="logoImg"
+                    draggable="false"
+                  />
+                </div>
+              ))}
             </div>
           </div>
         </Reveal>

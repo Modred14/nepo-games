@@ -23,9 +23,20 @@
   align-items: center;
   gap: 12px;
   width: max-content;
-  animation: scroll 18s linear infinite;
   will-change: transform;
+  transform: translate3d(0,0,0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+
+  /* IMPORTANT: paused by default */
+  animation: scroll 18s linear infinite;
+  animation-play-state: paused;
 }
+
+.scroller_inner.is-ready {
+  animation-play-state: running;
+}
+
 
 @keyframes scroll {
   to {
