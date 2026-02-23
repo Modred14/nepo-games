@@ -6,128 +6,124 @@ import { useEffect, useRef, useState, useMemo } from "react";
 export default function Home() {
   const [open, setOpen] = useState(false);
 
-  const scrollerRef = useRef(null);
-  const [ready, setReady] = useState(false);
-
-  useEffect(() => {
-    // Wait for layout + first paint, then start animation
-    const t1 = requestAnimationFrame(() => {
-      const t2 = requestAnimationFrame(() => setReady(true));
-      return () => cancelAnimationFrame(t2);
-    });
-    return () => cancelAnimationFrame(t1);
-  }, []);
-
-
   function parsePrettyNumber(input) {
-  const raw = String(input).trim();
+    const raw = String(input).trim();
 
-  const hasPlus = raw.endsWith("+");
-  const noPlus = hasPlus ? raw.slice(0, -1) : raw;
+    const hasPlus = raw.endsWith("+");
+    const noPlus = hasPlus ? raw.slice(0, -1) : raw;
 
-  // Match: number + optional suffix (k/m/b) e.g. 100k, 1M, 2K
-  const match = noPlus.match(/^(\d+(\.\d+)?)([kKmMbB])?$/);
+    // Match: number + optional suffix (k/m/b) e.g. 100k, 1M, 2K
+    const match = noPlus.match(/^(\d+(\.\d+)?)([kKmMbB])?$/);
 
-  // Fallback: if it doesn't match, just treat as 0 and keep original string
-  if (!match) {
-    return { target: 0, suffix: "", plus: hasPlus, raw };
+    // Fallback: if it doesn't match, just treat as 0 and keep original string
+    if (!match) {
+      return { target: 0, suffix: "", plus: hasPlus, raw };
+    }
+
+    const num = Number(match[1]);
+    const suffix = (match[3] || "").toUpperCase();
+
+    const mult =
+      suffix === "K"
+        ? 1_000
+        : suffix === "M"
+          ? 1_000_000
+          : suffix === "B"
+            ? 1_000_000_000
+            : 1;
+
+    return { target: Math.round(num * mult), suffix, plus: hasPlus, raw };
   }
 
-  const num = Number(match[1]);
-  const suffix = (match[3] || "").toUpperCase();
+  function formatPrettyNumber(n, suffix, plus) {
+    let display = "";
 
-  const mult =
-    suffix === "K" ? 1_000 : suffix === "M" ? 1_000_000 : suffix === "B" ? 1_000_000_000 : 1;
+    if (suffix === "K") display = `${Math.round(n / 1_000)}K`;
+    else if (suffix === "M") display = `${Math.round(n / 1_000_000)}M`;
+    else if (suffix === "B") display = `${Math.round(n / 1_000_000_000)}B`;
+    else display = `${Math.round(n)}`;
 
-  return { target: Math.round(num * mult), suffix, plus: hasPlus, raw };
-}
+    return plus ? `${display}+` : display;
+  }
 
-function formatPrettyNumber(n, suffix, plus) {
-  let display = "";
+  function StatCard({ iconSrc, value, label, className = "" }) {
+    const cardRef = useRef(null);
+    const startedRef = useRef(false);
 
-  if (suffix === "K") display = `${Math.round(n / 1_000)}K`;
-  else if (suffix === "M") display = `${Math.round(n / 1_000_000)}M`;
-  else if (suffix === "B") display = `${Math.round(n / 1_000_000_000)}B`;
-  else display = `${Math.round(n)}`;
-
-  return plus ? `${display}+` : display;
-}
-
-function StatCard({ iconSrc, value, label, className = "" }) {
-  const cardRef = useRef(null);
-  const startedRef = useRef(false);
-
-  const { target, suffix, plus } = useMemo(() => parsePrettyNumber(value), [value]);
-
-  const [displayValue, setDisplayValue] = useState(() =>
-    // start from 0 but keep formatting style
-    formatPrettyNumber(0, suffix, plus)
-  );
-
-  useEffect(() => {
-    const el = cardRef.current;
-    if (!el) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        // Start ONLY when visible, and only once.
-        if (!entry.isIntersecting || startedRef.current) return;
-        startedRef.current = true;
-
-        const duration = 2000; // ms
-        const start = performance.now();
-
-        const tick = (now) => {
-          const t = Math.min(1, (now - start) / duration);
-          // Smooth-ish easing
-          const eased = 1 - Math.pow(1 - t, 3);
-
-          const current = Math.round(eased * target);
-          setDisplayValue(formatPrettyNumber(current, suffix, plus));
-
-          if (t < 1) requestAnimationFrame(tick);
-          else setDisplayValue(formatPrettyNumber(target, suffix, plus));
-        };
-
-        requestAnimationFrame(tick);
-      },
-      {
-        threshold: 0.35, // triggers when ~35% of card is visible
-      }
+    const { target, suffix, plus } = useMemo(
+      () => parsePrettyNumber(value),
+      [value],
     );
 
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [target, suffix, plus]);
+    const [displayValue, setDisplayValue] = useState(() =>
+      // start from 0 but keep formatting style
+      formatPrettyNumber(0, suffix, plus),
+    );
 
-  return (
-    <div
-      ref={cardRef}
-      className={[
-        "w-[220px] h-[220px] rounded-2xl",
-        "bg-gradient-to-b from-[#4F8CFF] to-[#2A2AB8]",
-        "shadow-[0_18px_40px_rgba(0,60,255,0.35)]",
-        "flex flex-col items-center justify-center text-white",
-        "relative overflow-hidden",
-        className,
-      ].join(" ")}
-    >
-      {/* subtle top glow */}
-      <div className="pointer-events-none absolute -top-12 left-1/2 h-40 w-40 -translate-x-1/2 rounded-full bg-white/15 blur-2xl" />
+    useEffect(() => {
+      const el = cardRef.current;
+      if (!el) return;
 
-      <img
-        src={iconSrc}
-        alt=""
-        className="h-20 w-20 object-contain mb-4 drop-shadow-[0_10px_20px_rgba(0,0,0,0.25)]"
-      />
+      const observer = new IntersectionObserver(
+        ([entry]) => {
+          // Start ONLY when visible, and only once.
+          if (!entry.isIntersecting || startedRef.current) return;
+          startedRef.current = true;
 
-      <div className="text-4xl font-extrabold leading-none tabular-nums">
-        {displayValue}
+          const duration = 2000; // ms
+          const start = performance.now();
+
+          const tick = (now) => {
+            const t = Math.min(1, (now - start) / duration);
+            // Smooth-ish easing
+            const eased = 1 - Math.pow(1 - t, 3);
+
+            const current = Math.round(eased * target);
+            setDisplayValue(formatPrettyNumber(current, suffix, plus));
+
+            if (t < 1) requestAnimationFrame(tick);
+            else setDisplayValue(formatPrettyNumber(target, suffix, plus));
+          };
+
+          requestAnimationFrame(tick);
+        },
+        {
+          threshold: 0.35, // triggers when ~35% of card is visible
+        },
+      );
+
+      observer.observe(el);
+      return () => observer.disconnect();
+    }, [target, suffix, plus]);
+
+    return (
+      <div
+        ref={cardRef}
+        className={[
+          "w-[220px] h-[220px] rounded-2xl",
+          "bg-gradient-to-b from-[#4F8CFF] to-[#2A2AB8]",
+          "shadow-[0_18px_40px_rgba(0,60,255,0.35)]",
+          "flex flex-col items-center justify-center text-white",
+          "relative overflow-hidden",
+          className,
+        ].join(" ")}
+      >
+        {/* subtle top glow */}
+        <div className="pointer-events-none absolute -top-12 left-1/2 h-40 w-40 -translate-x-1/2 rounded-full bg-white/15 blur-2xl" />
+
+        <img
+          src={iconSrc}
+          alt=""
+          className="h-20 w-20 object-contain mb-4 drop-shadow-[0_10px_20px_rgba(0,0,0,0.25)]"
+        />
+
+        <div className="text-4xl font-extrabold leading-none tabular-nums">
+          {displayValue}
+        </div>
+        <div className="text-sm font-semibold opacity-95">{label}</div>
       </div>
-      <div className="text-sm font-semibold opacity-95">{label}</div>
-    </div>
-  );
-}
+    );
+  }
 
   const steps = [
     {
@@ -199,7 +195,7 @@ function StatCard({ iconSrc, value, label, className = "" }) {
       logo: "/bloodstrike.png",
     },
   ];
-
+  const scrollerRef = useRef(null);
 
   useEffect(() => {
     const scroller = scrollerRef.current;
@@ -341,19 +337,19 @@ function StatCard({ iconSrc, value, label, className = "" }) {
             </div>
           </div>
         </Reveal>
-    <Reveal>
-      <div className="w-full">
-        <div ref={scrollerRef} className="scroller bg-[#0000FF]">
-          <div className={`scroller_inner ${ready ? "is-animating" : ""}`}>
-            {[...games, ...games].map((game, i) => (
-              <div key={`${game.name}-${i}`} className="logoWrap">
-                <img src={game.logo} alt={game.name} className="logoImg" />
-              </div>
-            ))}
+
+        <div className="flex justify-center">
+          <div ref={scrollerRef} className="scroller bg-[#0000FF]">
+            <div className="scroller_inner tag-list">
+              {[...games, ...games].map((game, i) => (
+                <div key={`${game.name}-${i}`} className="logoWrap">
+                  <img src={game.logo} alt={game.name} className="logoImg" />
+                </div>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
-    </Reveal>
+
         <Reveal>
           <div>
             <div className="grid w-full justify-center items-center ">
@@ -494,8 +490,7 @@ function StatCard({ iconSrc, value, label, className = "" }) {
                 {/* TOP */}
                 <div className="absolute left-1/2 top-10 -translate-x-1/2">
                   <StatCard
-                   iconSrc="link.png"
-                 
+                    iconSrc="link.png"
                     value="987+"
                     label="Account Sold"
                   />
@@ -522,7 +517,7 @@ function StatCard({ iconSrc, value, label, className = "" }) {
                 {/* BOTTOM */}
                 <div className="absolute left-1/2 bottom-10 -translate-x-1/2">
                   <StatCard
-                       iconSrc="book.png"
+                    iconSrc="book.png"
                     value="20K+"
                     label="Account Listed"
                   />
