@@ -6,6 +6,19 @@ import { useEffect, useRef, useState, useMemo } from "react";
 export default function Home() {
   const [open, setOpen] = useState(false);
 
+  const scrollerRef = useRef(null);
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    // Wait for layout + first paint, then start animation
+    const t1 = requestAnimationFrame(() => {
+      const t2 = requestAnimationFrame(() => setReady(true));
+      return () => cancelAnimationFrame(t2);
+    });
+    return () => cancelAnimationFrame(t1);
+  }, []);
+
+
   function parsePrettyNumber(input) {
   const raw = String(input).trim();
 
@@ -186,7 +199,7 @@ function StatCard({ iconSrc, value, label, className = "" }) {
       logo: "/bloodstrike.png",
     },
   ];
-  const scrollerRef = useRef(null);
+
 
   useEffect(() => {
     const scroller = scrollerRef.current;
