@@ -16,6 +16,8 @@
 .scroller {
   width: 100%;
   overflow: hidden;
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
 }
 
 .scroller_inner {
@@ -23,30 +25,35 @@
   align-items: center;
   gap: 12px;
   width: max-content;
-  animation: scroll 18s linear infinite;
   will-change: transform;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  transform: translate3d(0, 0, 0);
+  animation: scroll 18s linear infinite;
 }
 
+/* IMPORTANT: use 3d transform in keyframes for Safari */
 @keyframes scroll {
   to {
-    transform: translateX(-50%);
+    transform: translate3d(-50%, 0, 0);
   }
 }
 
 .logoWrap {
   flex: 0 0 auto;
-  height: 150px;     /* mobile-friendly */
-  width: 150px;      /* FORCE a box so it can't collapse */
+  height: 150px;
+  width: 150px;
   display: grid;
   place-items: center;
   padding: 6px;
 }
 
 .logoImg {
-  display: block;   /* IMPORTANT: removes inline img whitespace quirks */
+  display: block;
   height: 100%;
   width: 100%;
   object-fit: contain;
+  -webkit-user-drag: none;
 }
 
 body {
