@@ -24,7 +24,7 @@
   gap: 12px;
   width: max-content;
   will-change: transform;
-  transform: translate3d(0,0,0);
+  transform: translate3d(0, 0, 0);
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
 
@@ -33,10 +33,73 @@
   animation-play-state: paused;
 }
 
+@keyframes scrollUp {
+  from {
+    transform: translateY(0);
+  }
+
+  to {
+   transform: translateY(calc(-50% - 12px));
+  }
+}
+.reviewGrid {
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0px,
+    black 40px,
+    black calc(100% - 40px),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0px,
+    black 40px,
+    black calc(100% - 40px),
+    transparent 100%
+  );
+
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+}
+
+@keyframes scrollDown {
+  from {
+   transform: translateY(calc(-50% - 12px));
+  }
+
+  to {
+    transform: translateY(0);
+  }
+}
+
+.animate-scrollUp {
+  animation: scrollUp 30s linear infinite;
+}
+
+.animate-scrollDown {
+  animation: scrollDown 30s linear infinite;
+}
+.marquee {
+  will-change: transform;
+}
+
+.marquee {
+  animation-duration: 30s;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+/* THIS is the key fix */
+.group:hover .marquee {
+  animation-play-state: paused;
+}
+
 .scroller_inner.is-ready {
   animation-play-state: running;
 }
-
 
 @keyframes scroll {
   to {
@@ -46,15 +109,15 @@
 
 .logoWrap {
   flex: 0 0 auto;
-  height: 150px;     /* mobile-friendly */
-  width: 150px;      /* FORCE a box so it can't collapse */
+  height: 150px; /* mobile-friendly */
+  width: 150px; /* FORCE a box so it can't collapse */
   display: grid;
   place-items: center;
   padding: 6px;
 }
 
 .logoImg {
-  display: block;   /* IMPORTANT: removes inline img whitespace quirks */
+  display: block; /* IMPORTANT: removes inline img whitespace quirks */
   height: 100%;
   width: 100%;
   object-fit: contain;

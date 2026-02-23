@@ -2,12 +2,13 @@
 import { Menu, X, Star } from "lucide-react";
 import Reveal from "./reveal";
 import { useEffect, useRef, useState, useMemo } from "react";
+import Reviews from "./review"
 
 export default function Home() {
   const [open, setOpen] = useState(false);
   const [ready, setReady] = useState(false);
   const innerRef = useRef(null);
- const games = [
+  const games = [
     {
       name: "Delta Force",
       logo: "/deltaforce_512.png",
@@ -235,7 +236,6 @@ export default function Home() {
     },
   ];
 
- 
   const scrollerRef = useRef(null);
 
   useEffect(() => {
@@ -633,6 +633,8 @@ export default function Home() {
                 <span className="font-bold">Reviews</span>
               </p>
             </div>
+            <div className="pb-30 p-10 pr-8">
+            <Reviews/></div>
           </Reveal>{" "}
         </div>
       </main>
