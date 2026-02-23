@@ -234,11 +234,11 @@ export default function Home() {
                 </div>
 
                 <div>
-                  <button className="py-2 px-3 rounded-md border mr-4 hover:bg-gray-200/20">
+                  <button className="py-2 px-3 rounded-xl border mr-4 transition-all duration-500 hover:bg-gray-200/80">
                     Log In
                   </button>
 
-                  <button className="py-2 px-3 rounded-md hover:bg-blue-800 border border-blue-600 bg-[#0000FF] text-white font-bold">
+                  <button className="py-2 px-3 rounded-xl transition-all  duration-500 hover:bg-blue-800 border border-blue-600 bg-[#0000FF] text-white font-bold">
                     Get Started
                   </button>
                 </div>
@@ -337,19 +337,19 @@ export default function Home() {
             </div>
           </div>
         </Reveal>
-
-        <div className="flex justify-center">
-          <div ref={scrollerRef} className="scroller bg-[#0000FF]">
-            <div className="scroller_inner tag-list">
-              {[...games, ...games].map((game, i) => (
-                <div key={`${game.name}-${i}`} className="logoWrap">
-                  <img src={game.logo} alt={game.name} className="logoImg" />
-                </div>
-              ))}
+        <Reveal>
+          <div className="flex justify-center">
+            <div ref={scrollerRef} className="scroller bg-[#0000FF]">
+              <div className="scroller_inner tag-list">
+                {[...games, ...games].map((game, i) => (
+                  <div key={`${game.name}-${i}`} className="logoWrap">
+                    <img src={game.logo} alt={game.name} className="logoImg" />
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
-
+        </Reveal>
         <Reveal>
           <div>
             <div className="grid w-full justify-center items-center ">
