@@ -261,8 +261,8 @@ export default function Home() {
         <Reveal>
           <div>
             <div className="grid w-full justify-center items-center ">
-              <p className=" bg-linear-to-r gap-4 hover:scale-[1.03] active:scale-[0.98] transition-transform from-[#3B82F6] to-[#1E3A8A] shadow-md border border-blue-100 shadow-blue-400 mt-10 text-[#FFFFFF] justify-center items-center flex text-3xl  rounded-full py-5 px-10">
-                <Star className="fill-white" size={30}></Star>
+              <p className=" bg-linear-to-r gap-4 hover:scale-[1.03] active:scale-[0.98] transition-transform from-[#3B82F6] to-[#1E3A8A] shadow-md border border-blue-100 shadow-blue-400 mt-10 text-[#FFFFFF] justify-center items-center flex  text-xl sm:text-3xl  rounded-full py-5 px-10">
+                <Star className="fill-white " ></Star>
                 <span className="font-bold">Features</span>
               </p>
             </div>
@@ -270,17 +270,17 @@ export default function Home() {
               All Your Games. One Secure Marketplace
             </p>
             <div className="w-full flex pt-4 items-center justify-center">
-              <p className="text-xl lg:text-2xl text-center text-gray-900 max-w-300 px-3 pb-7">
+              <p className="text-base sm:text-xl lg:text-2xl text-center text-gray-900 max-w-300 px-3 pb-7">
                 Built for serious gamers, Nepo Games provides escrow protection,
                 verified sellers, and seamless transfers — so every trade is
                 smooth, safe, and guaranteed.
               </p>
             </div>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 text-xl lg:text-2xl text-center gap-3 px-2 ">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 text-base sm:text-xl lg:text-2xl text-center gap-3 px-2 ">
               <div className="group rounded-2xl pb-10 bg-[#FBF6F6] px-2 border shadow-blue-900 shadow-sm border-blue-100 hover:border-blue-700 transition-all duration-700">
                 <div className="p-15 pb-5">
                   {" "}
-                  <div className="w-full  h-100 overflow-hidden rounded-3xl">
+                  <div className="w-full h-50 sm:h-70 lg:h-100 overflow-hidden rounded-3xl">
                     <img
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-115"
                       src="/transact.jpg"
@@ -303,7 +303,7 @@ export default function Home() {
               <div className="group rounded-2xl pb-10 bg-[#FBF6F6] px-2 border shadow-blue-900 shadow-sm border-blue-100 hover:border-blue-700 transition-all duration-700">
                 <div className="p-15 pb-5">
                   {" "}
-                  <div className="w-full  h-100 overflow-hidden rounded-3xl">
+                  <div className="w-full  h-50 sm:h-70 lg:h-100 overflow-hidden rounded-3xl">
                     <img
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-115"
                       src="/google.jpg"
@@ -325,7 +325,7 @@ export default function Home() {
               <div className="group rounded-2xl pb-10 bg-[#FBF6F6] shadow-blue-900 shadow-sm px-2 border border-blue-100 hover:border-blue-700 transition-all duration-700">
                 <div className="p-15 pb-5">
                   {" "}
-                  <div className="w-full  h-100 overflow-hidden rounded-3xl">
+                  <div className="w-full  h-50 sm:h-70 lg:h-100 overflow-hidden rounded-3xl">
                     <img
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-115"
                       src="message.jpg"
@@ -355,13 +355,13 @@ export default function Home() {
                 {/* Stats first */}
                 <button
                   className={[
-                    "flex items-center gap-3 rounded-full px-6 py-3 text-3xl ",
+                    "flex items-center gap-3 rounded-full px-6 py-3 text-xl sm:text-3xl",
                     "bg-linear-to-r from-[#3B82F6] to-[#1E3A8A] text-white font-bold",
                     "shadow-md backdrop-blur-md border border-blue-100 shadow-blue-400",
                     "hover:scale-[1.03] active:scale-[0.98] transition-transform",
                   ].join(" ")}
                 >
-                  <Star className="fill-white" size={30}></Star>
+                  <Star className="fill-white"  ></Star>
                   Stats
                 </button>
 
@@ -435,13 +435,13 @@ export default function Home() {
                 <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
                   <button
                     className={[
-                      "flex items-center gap-3 rounded-full px-6 py-3  text-3xl ",
+                      "flex items-center gap-3 rounded-full px-6 py-3  text-xl sm:text-3xl ",
                       "bg-linear-to-r from-[#3B82F6] to-[#1E3A8A] text-white font-bold",
                       "shadow-md backdrop-blur-md border border-blue-100 shadow-blue-400",
                       "hover:scale-[1.03] active:scale-[0.98] transition-transform",
                     ].join(" ")}
                   >
-                    <Star className="fill-white" size={30}></Star>
+                    <Star className="fill-white"  ></Star>
                     Stats
                   </button>
                 </div>
@@ -488,8 +488,8 @@ export default function Home() {
         <Reveal>
           <div className="bg-white">
             <div className="grid pt-6 w-full justify-center items-center ">
-              <p className=" bg-linear-to-r gap-4 hover:scale-[1.03] active:scale-[0.98] transition-transform from-[#3B82F6] to-[#1E3A8A] shadow-md border border-blue-100 shadow-blue-400 mt-10 text-[#FFFFFF] justify-center items-center flex text-3xl  rounded-full py-5 px-10">
-                <Star className="fill-white" size={30}></Star>
+              <p className=" bg-linear-to-r gap-4 hover:scale-[1.03] active:scale-[0.98] transition-transform from-[#3B82F6] to-[#1E3A8A] shadow-md border border-blue-100 shadow-blue-400 mt-10 text-[#FFFFFF] justify-center items-center flex text-xl sm:text-3xl  rounded-full py-5 px-10">
+                <Star className="fill-white"  ></Star>
                 <span className="font-bold">Reviews</span>
               </p>
             </div>
