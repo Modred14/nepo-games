@@ -1,37 +1,120 @@
 "use client";
 import { Menu, X, Star } from "lucide-react";
 import Reveal from "./reveal";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 
 export default function Home() {
   const [open, setOpen] = useState(false);
 
-  function StatCard({ iconSrc, value, label, className = "" }) {
-    return (
-      <div
-        className={[
-          "w-[220px] h-[220px] rounded-2xl",
-          "bg-gradient-to-b from-[#4F8CFF] to-[#2A2AB8]",
-          "shadow-[0_18px_40px_rgba(0,60,255,0.35)]",
-          "flex flex-col items-center justify-center text-white",
-          "relative overflow-hidden",
-          className,
-        ].join(" ")}
-      >
-        {/* subtle top glow */}
-        <div className="pointer-events-none absolute -top-12 left-1/2 h-40 w-40 -translate-x-1/2 rounded-full bg-white/15 blur-2xl" />
+  function parsePrettyNumber(input) {
+  const raw = String(input).trim();
 
-        <img
-          src={iconSrc}
-          alt=""
-          className="h-20 w-20 object-contain mb-4 drop-shadow-[0_10px_20px_rgba(0,0,0,0.25)]"
-        />
+  const hasPlus = raw.endsWith("+");
+  const noPlus = hasPlus ? raw.slice(0, -1) : raw;
 
-        <div className="text-4xl font-extrabold leading-none">{value}</div>
-        <div className="text-sm font-semibold opacity-95">{label}</div>
-      </div>
-    );
+  // Match: number + optional suffix (k/m/b) e.g. 100k, 1M, 2K
+  const match = noPlus.match(/^(\d+(\.\d+)?)([kKmMbB])?$/);
+
+  // Fallback: if it doesn't match, just treat as 0 and keep original string
+  if (!match) {
+    return { target: 0, suffix: "", plus: hasPlus, raw };
   }
+
+  const num = Number(match[1]);
+  const suffix = (match[3] || "").toUpperCase();
+
+  const mult =
+    suffix === "K" ? 1_000 : suffix === "M" ? 1_000_000 : suffix === "B" ? 1_000_000_000 : 1;
+
+  return { target: Math.round(num * mult), suffix, plus: hasPlus, raw };
+}
+
+function formatPrettyNumber(n, suffix, plus) {
+  let display = "";
+
+  if (suffix === "K") display = `${Math.round(n / 1_000)}K`;
+  else if (suffix === "M") display = `${Math.round(n / 1_000_000)}M`;
+  else if (suffix === "B") display = `${Math.round(n / 1_000_000_000)}B`;
+  else display = `${Math.round(n)}`;
+
+  return plus ? `${display}+` : display;
+}
+
+function StatCard({ iconSrc, value, label, className = "" }) {
+  const cardRef = useRef(null);
+  const startedRef = useRef(false);
+
+  const { target, suffix, plus } = useMemo(() => parsePrettyNumber(value), [value]);
+
+  const [displayValue, setDisplayValue] = useState(() =>
+    // start from 0 but keep formatting style
+    formatPrettyNumber(0, suffix, plus)
+  );
+
+  useEffect(() => {
+    const el = cardRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        // Start ONLY when visible, and only once.
+        if (!entry.isIntersecting || startedRef.current) return;
+        startedRef.current = true;
+
+        const duration = 2000; // ms
+        const start = performance.now();
+
+        const tick = (now) => {
+          const t = Math.min(1, (now - start) / duration);
+          // Smooth-ish easing
+          const eased = 1 - Math.pow(1 - t, 3);
+
+          const current = Math.round(eased * target);
+          setDisplayValue(formatPrettyNumber(current, suffix, plus));
+
+          if (t < 1) requestAnimationFrame(tick);
+          else setDisplayValue(formatPrettyNumber(target, suffix, plus));
+        };
+
+        requestAnimationFrame(tick);
+      },
+      {
+        threshold: 0.35, // triggers when ~35% of card is visible
+      }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [target, suffix, plus]);
+
+  return (
+    <div
+      ref={cardRef}
+      className={[
+        "w-[220px] h-[220px] rounded-2xl",
+        "bg-gradient-to-b from-[#4F8CFF] to-[#2A2AB8]",
+        "shadow-[0_18px_40px_rgba(0,60,255,0.35)]",
+        "flex flex-col items-center justify-center text-white",
+        "relative overflow-hidden",
+        className,
+      ].join(" ")}
+    >
+      {/* subtle top glow */}
+      <div className="pointer-events-none absolute -top-12 left-1/2 h-40 w-40 -translate-x-1/2 rounded-full bg-white/15 blur-2xl" />
+
+      <img
+        src={iconSrc}
+        alt=""
+        className="h-20 w-20 object-contain mb-4 drop-shadow-[0_10px_20px_rgba(0,0,0,0.25)]"
+      />
+
+      <div className="text-4xl font-extrabold leading-none tabular-nums">
+        {displayValue}
+      </div>
+      <div className="text-sm font-semibold opacity-95">{label}</div>
+    </div>
+  );
+}
 
   const steps = [
     {
@@ -95,11 +178,11 @@ export default function Home() {
       logo: "/gameloft_512.png",
     },
     {
-      name : "Free Fire",
+      name: "Free Fire",
       logo: "/freefire.png",
     },
-     {
-      name : "Blood Strike",
+    {
+      name: "Blood Strike",
       logo: "/bloodstrike.png",
     },
   ];
@@ -262,7 +345,7 @@ export default function Home() {
           <div>
             <div className="grid w-full justify-center items-center ">
               <p className=" bg-linear-to-r gap-4 hover:scale-[1.03] active:scale-[0.98] transition-transform from-[#3B82F6] to-[#1E3A8A] shadow-md border border-blue-100 shadow-blue-400 mt-10 text-[#FFFFFF] justify-center items-center flex  text-xl sm:text-3xl  rounded-full py-5 px-10">
-                <Star className="fill-white " ></Star>
+                <Star className="fill-white "></Star>
                 <span className="font-bold">Features</span>
               </p>
             </div>
@@ -276,7 +359,7 @@ export default function Home() {
                 smooth, safe, and guaranteed.
               </p>
             </div>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 text-base sm:text-xl lg:text-2xl text-center gap-3 px-2 ">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 text-base sm:text-xl lg:text-2xl text-center gap-4 px-5 lg:px-10 ">
               <div className="group rounded-2xl pb-10 bg-[#FBF6F6] px-2 border shadow-blue-900 shadow-sm border-blue-100 hover:border-blue-700 transition-all duration-700">
                 <div className="p-15 pb-5">
                   {" "}
@@ -361,7 +444,7 @@ export default function Home() {
                     "hover:scale-[1.03] active:scale-[0.98] transition-transform",
                   ].join(" ")}
                 >
-                  <Star className="fill-white"  ></Star>
+                  <Star className="fill-white"></Star>
                   Stats
                 </button>
 
@@ -370,7 +453,7 @@ export default function Home() {
                 <div className="w-full flex justify-center">
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 place-items-center w-full">
                     <StatCard
-                      iconSrc="book.png"
+                      iconSrc="link.png"
                       value="987+"
                       label="Account Sold"
                     />
@@ -381,12 +464,12 @@ export default function Home() {
                     />
                     <StatCard
                       iconSrc="money.png"
-                      value="1M+"
+                      value="10M+"
                       label="Money Traded"
                     />
                     <StatCard
-                      iconSrc="link.png"
-                      value="2K+"
+                      iconSrc="book.png"
+                      value="20K+"
                       label="Account Listed"
                     />
                   </div>
@@ -398,7 +481,8 @@ export default function Home() {
                 {/* TOP */}
                 <div className="absolute left-1/2 top-10 -translate-x-1/2">
                   <StatCard
-                    iconSrc="book.png"
+                   iconSrc="link.png"
+                 
                     value="987+"
                     label="Account Sold"
                   />
@@ -417,7 +501,7 @@ export default function Home() {
                 <div className="absolute right-10 top-1/2 -translate-y-1/2">
                   <StatCard
                     iconSrc="money.png"
-                    value="1M+"
+                    value="10M+"
                     label="Money Traded"
                   />
                 </div>
@@ -425,8 +509,8 @@ export default function Home() {
                 {/* BOTTOM */}
                 <div className="absolute left-1/2 bottom-10 -translate-x-1/2">
                   <StatCard
-                    iconSrc="link.png"
-                    value="2K+"
+                       iconSrc="book.png"
+                    value="20K+"
                     label="Account Listed"
                   />
                 </div>
@@ -441,7 +525,7 @@ export default function Home() {
                       "hover:scale-[1.03] active:scale-[0.98] transition-transform",
                     ].join(" ")}
                   >
-                    <Star className="fill-white"  ></Star>
+                    <Star className="fill-white"></Star>
                     Stats
                   </button>
                 </div>
@@ -485,16 +569,17 @@ export default function Home() {
             </div>
           </div>
         </Reveal>
-        <Reveal>
-          <div className="bg-white">
+        <div className="bg-white">
+          {" "}
+          <Reveal>
             <div className="grid pt-6 w-full justify-center items-center ">
               <p className=" bg-linear-to-r gap-4 hover:scale-[1.03] active:scale-[0.98] transition-transform from-[#3B82F6] to-[#1E3A8A] shadow-md border border-blue-100 shadow-blue-400 mt-10 text-[#FFFFFF] justify-center items-center flex text-xl sm:text-3xl  rounded-full py-5 px-10">
-                <Star className="fill-white"  ></Star>
+                <Star className="fill-white"></Star>
                 <span className="font-bold">Reviews</span>
               </p>
             </div>
-          </div>
-        </Reveal>
+          </Reveal>{" "}
+        </div>
       </main>
     </div>
   );
