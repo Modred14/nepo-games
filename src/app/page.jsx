@@ -329,12 +329,22 @@ function StatCard({ iconSrc, value, label, className = "" }) {
           </div>
         </Reveal>
 <Reveal>
-  <div className="flex justify-center">
+  <div className="w-full">
     <div ref={scrollerRef} className="scroller bg-[#0000FF]">
-      <div className="scroller_inner tag-list">
+      <div className="scroller_inner">
         {[...games, ...games].map((game, i) => (
           <div key={`${game.name}-${i}`} className="logoWrap">
-            <img src={game.logo} alt={game.name} className="logoImg" />
+            <img
+              src={game.logo}
+              alt={game.name}
+              className="logoImg"
+              loading="lazy"
+              draggable="false"
+              onError={(e) => {
+                e.currentTarget.style.display = "none";
+                console.log("Failed image:", game.logo);
+              }}
+            />
           </div>
         ))}
       </div>
