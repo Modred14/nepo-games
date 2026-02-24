@@ -1,5 +1,13 @@
 "use client";
-import { Menu, X, Star } from "lucide-react";
+import {
+  Menu,
+  X,
+  Star,
+  Store,
+  BadgeDollarSign,
+  Info,
+  Headphones,
+} from "lucide-react";
 import Reveal from "./reveal";
 import { useEffect, useRef, useState, useMemo } from "react";
 import Reviews from "./review";
@@ -9,12 +17,14 @@ export default function Home() {
   const [open, setOpen] = useState(false);
   const [ready, setReady] = useState(false);
   const innerRef = useRef(null);
-  const linkClass =
-    "relative inline-block text-[#808080] transition-colors duration-500 " +
-    "after:content-[''] after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:w-full after:bg-current " +
-    "after:origin-left after:scale-x-0 after:transition-transform after:duration-500 after:ease-in-out " +
-    "hover:text-[#0000FF] hover:after:scale-x-100 " +
-    "active:text-[#0000FF] active:after:scale-x-100";
+  const [active, setActive] = useState("");
+const linkClass = (name) =>
+  `flex items-center gap-3 px-4 py-3 w-full border-b transition-colors duration-200
+   ${
+     active === name
+       ? "bg-blue-50 text-blue-700 border-blue-100 border-l-4 border-l-blue-600 font-semibold"
+       : "bg-white text-gray-800 border-gray-100 hover:bg-gray-100"
+   }`;
   const games = [
     {
       name: "Delta Force",
@@ -59,6 +69,25 @@ export default function Home() {
   ];
   // Duplicate for seamless loop
   const items = useMemo(() => [...games, ...games], [games]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    // lock background scroll
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    // allow ESC to close
+    const onKeyDown = (e) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      document.body.style.overflow = prev;
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [open, setOpen]);
 
   useEffect(() => {
     const el = innerRef.current;
@@ -429,36 +458,63 @@ hover:text-[#0000FF]
       <div
         className={`fixed top-0 right-0 h-full w-64 bg-white shadow-lg z-1050 transform transition-transform duration-300
 
-        ${open ? "translate-x-0" : "translate-x-full"}
+       
+         ${open ? "translate-x-0" : "translate-x-full"}
         
         `}
       >
         <div className="p-6 h-full flex flex-col justify-between">
-          <button onClick={() => setOpen(false)} className="mb-2.5">
+          <div className="flex justify-between">
+            <p className="font-bold">Nepo</p>
+<button onClick={() => setOpen(false)} className="mb-2.5 -mt-1">
             <X size={30} className="text-[#0000FF] font-bold" />
           </button>
-          <div className="bg-[#0000FF]/50 h-[0.5] -mx-4 mb-6"></div>
+          </div>
+          
+          <div className="bg-[#0000FF]/50 h-[0.5] -mx-6"></div>
 
-          <div className="flex  text-[#808080]  flex-col gap-6 h-full text-lg font-semibold">
-            <a href="#" className={linkClass}>
-              Marketplace
-            </a>
-            <a href="#" className={linkClass}>
-              Pricing
-            </a>
-            <a href="#" className={linkClass}>
-              About Us
-            </a>
-            <a href="#" className={linkClass}>
-              Support
-            </a>
+          <div className="flex  text-[#262626]  flex-col gap-6 h-full text-lg font-semibold">
+            <div className="flex flex-col -mx-6">
+              <button
+                onClick={() => setActive("Marketplace")}
+                className={linkClass("Marketplace")}
+              >
+                <Store size={20} />
+                Marketplace
+              </button>
+
+              <button
+                onClick={() => setActive("Pricing")}
+                className={linkClass("Pricing")}
+              >
+                <BadgeDollarSign size={20} />
+                Pricing
+              </button>
+
+              <button
+                onClick={() => setActive("About Us")}
+                className={linkClass("About Us")}
+              >
+                <Info size={20} />
+                About Us
+              </button>
+
+              <button
+                onClick={() => setActive("Support")}
+                className={linkClass("Support")}
+              >
+                <Headphones size={20} />
+                Support
+              </button>
+            </div>
             <div className="flex flex-col gap-6 mt-auto">
               <button
                 className="
       py-2 px-3 rounded-xl border
       transition-colors duration-300
-      hover:bg-gray-200/80
-      active:bg-gray-200/80
+      bg-gray-100
+      hover:bg-gray-300/90
+      active:bg-gray-300/90
       focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500
     "
               >
@@ -833,6 +889,8 @@ hover:text-[#0000FF]
               -translate-y-1/2
               px-5
               py-3
+              text-sm
+              sm:text-base
               rounded-full
               bg-gradient-to-r
               from-[#3B82F6]
