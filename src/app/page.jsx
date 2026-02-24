@@ -2,7 +2,8 @@
 import { Menu, X, Star } from "lucide-react";
 import Reveal from "./reveal";
 import { useEffect, useRef, useState, useMemo } from "react";
-import Reviews from "./review"
+import Reviews from "./review";
+import Footer from "./footer";
 
 export default function Home() {
   const [open, setOpen] = useState(false);
@@ -268,10 +269,102 @@ export default function Home() {
                 <div className="text-black font-bold">Nepo Games</div>
 
                 <div className="flex gap-9">
-                  <a href="">Marketplace</a>
-                  <a href="">Pricing</a>
-                  <a href="">About Us</a>
-                  <a href="">Support</a>
+                  <a
+                    href=""
+                    className="    relative inline-block
+
+    after:content-['']
+    after:absolute
+    after:left-0
+    after:bottom-0
+    after:h-[2px]
+    after:w-full
+    after:bg-current
+
+    after:origin-right
+    after:scale-x-0
+    
+    after:transition-transform
+    after:duration-500
+    after:ease-in-out
+
+    hover:after:origin-left
+    hover:after:scale-x-100"
+                  >
+                    Marketplace
+                  </a>
+                  <a
+                    href=""
+                    className="    relative inline-block
+
+    after:content-['']
+    after:absolute
+    after:left-0
+    after:bottom-0
+    after:h-[2px]
+    after:w-full
+    after:bg-current
+
+    after:origin-right
+    after:scale-x-0
+    
+    after:transition-transform
+    after:duration-500
+    after:ease-in-out
+
+    hover:after:origin-left
+    hover:after:scale-x-100"
+                  >
+                    Pricing
+                  </a>
+                  <a
+                    href=""
+                    className="    relative inline-block
+
+    after:content-['']
+    after:absolute
+    after:left-0
+    after:bottom-0
+    after:h-[2px]
+    after:w-full
+    after:bg-current
+
+    after:origin-right
+    after:scale-x-0
+    
+    after:transition-transform
+    after:duration-500
+    after:ease-in-out
+
+    hover:after:origin-left
+    hover:after:scale-x-100"
+                  >
+                    About Us
+                  </a>
+                  <a
+                    href=""
+                    className="    relative inline-block
+
+    after:content-['']
+    after:absolute
+    after:left-0
+    after:bottom-0
+    after:h-[2px]
+    after:w-full
+    after:bg-current
+
+    after:origin-right
+    after:scale-x-0
+    
+    after:transition-transform
+    after:duration-500
+    after:ease-in-out
+
+    hover:after:origin-left
+    hover:after:scale-x-100"
+                  >
+                    Support
+                  </a>
                 </div>
 
                 <div>
@@ -290,7 +383,11 @@ export default function Home() {
                 <div className="text-black font-bold">Nepo Games</div>
 
                 <button onClick={() => setOpen(!open)}>
-                  {open ? <X size={30} /> : <Menu size={30} />}
+                  {open ? (
+                    <X size={30} className="text-[#0000FF] font-bold" />
+                  ) : (
+                    <Menu size={30} className="font-bold text-[#0000FF]" />
+                  )}
                 </button>
               </div>
             </div>
@@ -306,25 +403,50 @@ export default function Home() {
         
         `}
       >
-        <div className="p-6">
-          <button onClick={() => setOpen(false)} className="mb-8">
-            <X size={30} />
+        <div className="p-6 h-full flex flex-col justify-between">
+          <button onClick={() => setOpen(false)} className="mb-2.5">
+            <X size={30} className="text-[#0000FF] font-bold" />
           </button>
+          <div className="bg-[#0000FF]/50 h-[0.5] -mx-4 mb-6"></div>
 
-          <div className="flex flex-col gap-6 text-lg font-semibold">
-            <a href="">Marketplace</a>
+          <div className="flex  text-[#808080]  flex-col gap-6 h-full text-lg font-semibold">
+            <a
+              href=""
+              className="hover:text-[#0000FF] transition-all duration-500"
+            >
+              Marketplace
+            </a>
 
-            <a href="">Pricing</a>
+            <a
+              href=""
+              className="hover:text-[#0000FF] transition-all duration-500"
+            >
+              Pricing
+            </a>
 
-            <a href="">About Us</a>
+            <a
+              href=""
+              className="hover:text-[#0000FF] transition-all duration-500"
+            >
+              About Us
+            </a>
 
-            <a href="">Support</a>
+            <a
+              href=""
+              className="hover:text-[#0000FF] transition-all duration-500"
+            >
+              Support
+            </a>
 
-            <button className="mt-4 py-2 border rounded-md">Log In</button>
+            <div className="flex flex-col gap-6 h-full justify-end">
+              <button className="py-2 px-3 rounded-xl border transition-all duration-500 hover:bg-gray-200/80">
+                Log In
+              </button>
 
-            <button className="py-2 bg-blue-600 text-white rounded-md">
-              Get Started
-            </button>
+              <button className="py-2 px-3 rounded-xl transition-all  duration-500 hover:bg-blue-800 border border-blue-600 bg-[#0000FF] text-white font-bold">
+                Get Started
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -633,10 +755,146 @@ export default function Home() {
                 <span className="font-bold">Reviews</span>
               </p>
             </div>
-            <div className="pb-30 p-10 pr-8">
-            <Reviews/></div>
+            <div className="pb-20 p-10 pr-8">
+              <Reviews />
+            </div>
           </Reveal>{" "}
         </div>
+        <Reveal>
+          <section className="w-full bg-[url('/footer.png')] bg-cover bg-center bg-no-repeat">
+            <div className="max-w-7xl mx-auto px-5 text-white text-center">
+              <div className="py-24 flex flex-col items-center">
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold">
+                  Get the{" "}
+                  <span className="font-serif italic font-normal">Latest</span>{" "}
+                  Updates
+                </h2>
+
+                <p className="mt-4 max-w-xl text-white/90 text-lg">
+                  Receive the latest news, insights and exclusive content
+                  directly in your inbox.
+                </p>
+
+                <div className="mt-10 w-full max-w-2xl relative">
+                  <input
+                    type="email"
+                    placeholder="Enter your email"
+                    className="
+              w-full
+              rounded-full
+              bg-transparent
+              border
+              border-white/50
+              py-5
+              pl-6
+              pr-40
+              outline-none
+              text-white
+              placeholder-white/60
+            "
+                  />
+
+                  <button
+                    className="
+              absolute
+              right-2
+              top-1/2
+              -translate-y-1/2
+              px-5
+              py-3
+              rounded-full
+              bg-gradient-to-r
+              from-[#3B82F6]
+              to-[#000099]
+              border
+              border-white/60
+              font-semibold
+              hover:scale-105
+              transition
+            "
+                  >
+                    Subscribe
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="w-full h-px bg-gradient-to-r from-transparent via-blue-500/60 to-transparent"></div>
+
+            <Footer />
+            <div className="w-full h-px bg-gradient-to-r from-transparent via-blue-500/60 to-transparent"></div>
+            <div className="max-w-7xl mx-auto px-5 pt-12 pb-6 text-white/70 text-sm text-center">
+              © {new Date().getFullYear()} Nepo Games. All rights reserved.
+            </div>
+            <div className="grid grid-cols-2 pb-5">
+              <div className="max-w-7xl mx-auto pb-3 px-5 text-white/40 text-sm text-center">
+                Designed by{" "}
+                <a
+                  href=""
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="
+    relative inline-block
+
+    after:content-['']
+    after:absolute
+    after:left-0
+    after:bottom-0
+    after:h-[2px]
+    after:w-full
+    after:bg-current
+
+    after:origin-right
+    after:scale-x-0
+    
+    after:transition-transform
+    after:duration-500
+    after:ease-in-out
+
+    hover:after:origin-left
+    hover:after:scale-x-100
+
+    font-bold
+  "
+                >
+                  Faiq
+                </a>
+              </div>
+              <div className="max-w-7xl mx-auto pb-3 px-5 text-white/40 text-sm text-center">
+                Developed by{" "}
+                <a
+                  href="http://modred.dev"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="
+    relative inline-block
+
+    after:content-['']
+    after:absolute
+    after:left-0
+    after:bottom-0
+    after:h-[2px]
+    after:w-full
+    after:bg-current
+
+    after:origin-right
+    after:scale-x-0
+
+    after:transition-transform
+    after:duration-500
+    after:ease-in-out
+    font-bold
+
+    hover:after:origin-left
+    hover:after:scale-x-100
+  "
+                >
+                  Modred
+                </a>
+              </div>
+            </div>
+          </section>
+        </Reveal>
       </main>
     </div>
   );

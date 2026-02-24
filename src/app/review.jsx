@@ -94,7 +94,7 @@ function Column({ reviews, direction }) {
 
 function Card({ review }) {
   return (
-    <div className="border rounded-2xl border-[#0000FF] mr-2 bg-white">
+    <div className="border backdrop-blur-xl shadow-sm bg-gray-50/50 rounded-2xl  border-[#0000FF]/50 mr-2">
       <div className="flex items-center gap-2 px-4 pt-2 text-[#0000FF]">
         <img src={review.img} className="h-15 w-15 rounded-full" />
 
