@@ -442,11 +442,9 @@ hover:text-[#0000FF]
                 <div className="text-black font-bold">Nepo Games</div>
 
                 <button onClick={() => setOpen(!open)}>
-                  {open ? (
-                    <X size={30} className="text-[#0000FF] font-bold" />
-                  ) : (
+                  
                     <Menu size={30} className="font-bold text-[#0000FF]" />
-                  )}
+                 
                 </button>
               </div>
             </div>
