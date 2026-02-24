@@ -9,6 +9,12 @@ export default function Home() {
   const [open, setOpen] = useState(false);
   const [ready, setReady] = useState(false);
   const innerRef = useRef(null);
+  const linkClass =
+    "relative inline-block text-[#808080] transition-colors duration-500 " +
+    "after:content-[''] after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:w-full after:bg-current " +
+    "after:origin-left after:scale-x-0 after:transition-transform after:duration-500 after:ease-in-out " +
+    "hover:text-[#0000FF] hover:after:scale-x-100 " +
+    "active:text-[#0000FF] active:after:scale-x-100";
   const games = [
     {
       name: "Delta Force",
@@ -271,25 +277,32 @@ export default function Home() {
                 <div className="flex gap-9">
                   <a
                     href=""
-                    className="    relative inline-block
+                    className="
+relative inline-block
 
-    after:content-['']
-    after:absolute
-    after:left-0
-    after:bottom-0
-    after:h-[2px]
-    after:w-full
-    after:bg-current
+after:content-['']
+after:absolute
+after:left-0
+after:bottom-0
+after:h-[2px]
+after:w-full
+after:bg-current
 
-    after:origin-right
-    after:scale-x-0
-    
-    after:transition-transform
-    after:duration-500
-    after:ease-in-out
+after:origin-right
+after:scale-x-0
 
-    hover:after:origin-left
-    hover:after:scale-x-100"
+after:transition-transform
+after:duration-500
+after:ease-in-out
+
+hover:after:origin-left
+hover:after:scale-x-100
+
+transition-colors
+duration-500
+
+hover:text-[#0000FF]
+"
                   >
                     Marketplace
                   </a>
@@ -308,6 +321,9 @@ export default function Home() {
     after:origin-right
     after:scale-x-0
     
+        hover:text-[#0000FF] 
+
+
     after:transition-transform
     after:duration-500
     after:ease-in-out
@@ -319,49 +335,63 @@ export default function Home() {
                   </a>
                   <a
                     href=""
-                    className="    relative inline-block
+                    className="
+relative inline-block
 
-    after:content-['']
-    after:absolute
-    after:left-0
-    after:bottom-0
-    after:h-[2px]
-    after:w-full
-    after:bg-current
+after:content-['']
+after:absolute
+after:left-0
+after:bottom-0
+after:h-[2px]
+after:w-full
+after:bg-current
 
-    after:origin-right
-    after:scale-x-0
-    
-    after:transition-transform
-    after:duration-500
-    after:ease-in-out
+after:origin-right
+after:scale-x-0
 
-    hover:after:origin-left
-    hover:after:scale-x-100"
+after:transition-transform
+after:duration-500
+after:ease-in-out
+
+hover:after:origin-left
+hover:after:scale-x-100
+
+transition-colors
+duration-500
+
+hover:text-[#0000FF]
+"
                   >
                     About Us
                   </a>
                   <a
                     href=""
-                    className="    relative inline-block
+                    className="
+relative inline-block
 
-    after:content-['']
-    after:absolute
-    after:left-0
-    after:bottom-0
-    after:h-[2px]
-    after:w-full
-    after:bg-current
+after:content-['']
+after:absolute
+after:left-0
+after:bottom-0
+after:h-[2px]
+after:w-full
+after:bg-current
 
-    after:origin-right
-    after:scale-x-0
-    
-    after:transition-transform
-    after:duration-500
-    after:ease-in-out
+after:origin-right
+after:scale-x-0
 
-    hover:after:origin-left
-    hover:after:scale-x-100"
+after:transition-transform
+after:duration-500
+after:ease-in-out
+
+hover:after:origin-left
+hover:after:scale-x-100
+
+transition-colors
+duration-500
+
+hover:text-[#0000FF]
+"
                   >
                     Support
                   </a>
@@ -410,40 +440,41 @@ export default function Home() {
           <div className="bg-[#0000FF]/50 h-[0.5] -mx-4 mb-6"></div>
 
           <div className="flex  text-[#808080]  flex-col gap-6 h-full text-lg font-semibold">
-            <a
-              href=""
-              className="hover:text-[#0000FF] transition-all duration-500"
-            >
+            <a href="#" className={linkClass}>
               Marketplace
             </a>
-
-            <a
-              href=""
-              className="hover:text-[#0000FF] transition-all duration-500"
-            >
+            <a href="#" className={linkClass}>
               Pricing
             </a>
-
-            <a
-              href=""
-              className="hover:text-[#0000FF] transition-all duration-500"
-            >
+            <a href="#" className={linkClass}>
               About Us
             </a>
-
-            <a
-              href=""
-              className="hover:text-[#0000FF] transition-all duration-500"
-            >
+            <a href="#" className={linkClass}>
               Support
             </a>
-
-            <div className="flex flex-col gap-6 h-full justify-end">
-              <button className="py-2 px-3 rounded-xl border transition-all duration-500 hover:bg-gray-200/80">
+            <div className="flex flex-col gap-6 mt-auto">
+              <button
+                className="
+      py-2 px-3 rounded-xl border
+      transition-colors duration-300
+      hover:bg-gray-200/80
+      active:bg-gray-200/80
+      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500
+    "
+              >
                 Log In
               </button>
 
-              <button className="py-2 px-3 rounded-xl transition-all  duration-500 hover:bg-blue-800 border border-blue-600 bg-[#0000FF] text-white font-bold">
+              <button
+                className="
+      py-2 px-3 rounded-xl border border-blue-600
+      bg-[#0000FF] text-white font-bold
+      transition-colors duration-300
+      hover:bg-blue-800
+      active:bg-blue-800
+      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500
+    "
+              >
                 Get Started
               </button>
             </div>
