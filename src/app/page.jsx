@@ -1,6 +1,5 @@
 "use client";
 import {
-  Menu,
   X,
   Star,
   Store,
@@ -12,14 +11,16 @@ import Reveal from "./reveal";
 import { useEffect, useRef, useState, useMemo } from "react";
 import Reviews from "./review";
 import Footer from "./footer";
+import RevealRight from "./revealfright";
+import RevealLeft from "./revealfrleft";
 
 export default function Home() {
   const [open, setOpen] = useState(false);
   const [ready, setReady] = useState(false);
   const innerRef = useRef(null);
   const [active, setActive] = useState("");
-const linkClass = (name) =>
-  `flex items-center gap-3 px-4 py-3 w-full border-b transition-colors duration-200
+  const linkClass = (name) =>
+    `flex items-center gap-3 px-4 py-3 w-full border-b transition-colors duration-200
    ${
      active === name
        ? "bg-blue-50 text-blue-700 border-blue-100 border-l-4 border-l-blue-600 font-semibold"
@@ -442,9 +443,11 @@ hover:text-[#0000FF]
                 <div className="text-black font-bold">Nepo Games</div>
 
                 <button onClick={() => setOpen(!open)}>
-                  
-                    <Menu size={30} className="font-bold text-[#0000FF]" />
-                 
+                  <div className="group items-center flex flex-col gap-1 cursor-pointer">
+                    <span className="w-6 h-0.75 bg-[#0000FF] rounded transition-all group-hover:w-6"></span>
+                    <span className="w-4  h-0.75 bg-[#0000FF] rounded transition-all group-hover:w-8"></span>
+                    <span className="w-6  h-0.75 bg-[#0000FF] rounded transition-all group-hover:w-6"></span>
+                  </div>{" "}
                 </button>
               </div>
             </div>
@@ -461,14 +464,14 @@ hover:text-[#0000FF]
         
         `}
       >
-        <div className="p-6 h-full flex flex-col justify-between">
+        <div className="p-6 pt-5.25 h-full flex flex-col justify-between">
           <div className="flex justify-between">
             <p className="font-bold">Nepo</p>
-<button onClick={() => setOpen(false)} className="mb-2.5 -mt-1">
-            <X size={30} className="text-[#0000FF] font-bold" />
-          </button>
+            <button onClick={() => setOpen(false)} className="mb-2.5 -mt-1">
+              <X size={30} className="text-[#0000FF] font-bold" />
+            </button>
           </div>
-          
+
           <div className="bg-[#0000FF]/50 h-[0.5] -mx-6"></div>
 
           <div className="flex  text-[#262626]  flex-col gap-6 h-full text-lg font-semibold">
@@ -810,20 +813,23 @@ hover:text-[#0000FF]
                       key={s.title}
                       className="relative flex flex-col items-center text-center"
                     >
-                      {/* ICON */}
-                      <div className="relative z-10 bg-gradient-to-b from-[#4B6BC6] to-[#2626A6] w-25 h-25 md:w-30 md:h-30 p-6 rounded-full flex items-center justify-center shadow-[0_10px_30px_rgba(0,0,0,0.15)]">
-                        <img
-                          src={s.icon}
-                          alt={s.title}
-                          className="invert w-full h-full object-contain"
-                        />
-                      </div>
-
+                      <RevealRight>
+                        {/* ICON */}
+                        <div className="relative z-10 bg-gradient-to-b from-[#4B6BC6] to-[#2626A6] w-25 h-25 md:w-30 md:h-30 p-6 rounded-full flex items-center justify-center shadow-[0_10px_30px_rgba(0,0,0,0.15)]">
+                          <img
+                            src={s.icon}
+                            alt={s.title}
+                            className="invert w-full h-full object-contain"
+                          />
+                        </div>
+                      </RevealRight>
                       {/* CARD */}
-                      <div className="mt-6 max-w-[520px] text-base sm:text-lg md:text-xl text-[#0000FF] border border-[#8A38F5] rounded-2xl md:py-6 md:px-6 py-5 px-4 bg-[#C1C8F5] shadow-[0_12px_40px_rgba(138,56,245,0.12)]">
-                        <p className="font-bold tracking-wide">{s.title}</p>
-                        <p className="mt-2 text-[#0000FF]/90">{s.text}</p>
-                      </div>
+                      <RevealLeft>
+                        <div className="mt-6 max-w-[520px] text-base sm:text-lg md:text-xl text-[#0000FF] border border-[#8A38F5] rounded-2xl md:py-6 md:px-6 py-5 px-4 bg-[#C1C8F5] shadow-[0_12px_40px_rgba(138,56,245,0.12)]">
+                          <p className="font-bold tracking-wide">{s.title}</p>
+                          <p className="mt-2 text-[#0000FF]/90">{s.text}</p>
+                        </div>
+                      </RevealLeft>
                     </div>
                   ))}
                 </div>
