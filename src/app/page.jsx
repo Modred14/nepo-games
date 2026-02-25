@@ -627,7 +627,7 @@ hover:text-[#0000FF]
             </div>
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 text-sm sm:text-base lg:text-xl text-center gap-4 px-5 lg:px-10 ">
               <div className="group rounded-2xl pb-10 bg-[#FBF6F6] px-2 border shadow-blue-900 shadow-sm border-blue-100 hover:border-blue-700 transition-all duration-700">
-                <div className="sm:p-7 pb-5">
+                <div className="sm:p-15 p-7 pb-5">
                   {" "}
                   <div className="w-full h-50 sm:h-70 overflow-hidden rounded-3xl">
                     <img
@@ -650,7 +650,7 @@ hover:text-[#0000FF]
                 </p>
               </div>
               <div className="group rounded-2xl pb-10 bg-[#FBF6F6] px-2 border shadow-blue-900 shadow-sm border-blue-100 hover:border-blue-700 transition-all duration-700">
-                <div className="sm:p-7 pb-5">
+                <div className="sm:p-15 p-7 pb-5">
                   {" "}
                   <div className="w-full  h-50 sm:h-70 overflow-hidden rounded-3xl">
                     <img
@@ -672,7 +672,7 @@ hover:text-[#0000FF]
                 </p>
               </div>
               <div className="group rounded-2xl pb-10 bg-[#FBF6F6] shadow-blue-900 shadow-sm px-2 border border-blue-100 hover:border-blue-700 transition-all duration-700">
-                <div className="sm:p-7 pb-5">
+                <div className="sm:p-15 p-7 pb-5">
                   {" "}
                   <div className="w-full  h-50 sm:h-70 overflow-hidden rounded-3xl">
                     <img
