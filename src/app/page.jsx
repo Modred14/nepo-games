@@ -508,7 +508,7 @@ hover:text-[#0000FF]
                 Support
               </button>
             </div>
-            <div className="flex flex-col gap-6 mt-auto">
+            <div className="flex flex-col gap-6 mb-2.5 mt-auto">
               <button
                 className="
       py-2 px-3 rounded-xl border
@@ -625,11 +625,11 @@ hover:text-[#0000FF]
                 smooth, safe, and guaranteed.
               </p>
             </div>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 text-base sm:text-xl lg:text-2xl text-center gap-4 px-5 lg:px-10 ">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 text-sm sm:text-base lg:text-xl text-center gap-4 px-5 lg:px-10 ">
               <div className="group rounded-2xl pb-10 bg-[#FBF6F6] px-2 border shadow-blue-900 shadow-sm border-blue-100 hover:border-blue-700 transition-all duration-700">
                 <div className="p-15 pb-5">
                   {" "}
-                  <div className="w-full h-50 sm:h-70 lg:h-100 overflow-hidden rounded-3xl">
+                  <div className="w-full h-50 sm:h-70 overflow-hidden rounded-3xl">
                     <img
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-115"
                       src="/transact.jpg"
@@ -652,7 +652,7 @@ hover:text-[#0000FF]
               <div className="group rounded-2xl pb-10 bg-[#FBF6F6] px-2 border shadow-blue-900 shadow-sm border-blue-100 hover:border-blue-700 transition-all duration-700">
                 <div className="p-15 pb-5">
                   {" "}
-                  <div className="w-full  h-50 sm:h-70 lg:h-100 overflow-hidden rounded-3xl">
+                  <div className="w-full  h-50 sm:h-70 overflow-hidden rounded-3xl">
                     <img
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-115"
                       src="/google.jpg"
@@ -674,7 +674,7 @@ hover:text-[#0000FF]
               <div className="group rounded-2xl pb-10 bg-[#FBF6F6] shadow-blue-900 shadow-sm px-2 border border-blue-100 hover:border-blue-700 transition-all duration-700">
                 <div className="p-15 pb-5">
                   {" "}
-                  <div className="w-full  h-50 sm:h-70 lg:h-100 overflow-hidden rounded-3xl">
+                  <div className="w-full  h-50 sm:h-70 overflow-hidden rounded-3xl">
                     <img
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-115"
                       src="message.jpg"
@@ -851,8 +851,10 @@ hover:text-[#0000FF]
             </div>
           </Reveal>{" "}
         </div>
-        <Reveal>
-          <section className="w-full bg-[url('/footer.png')] bg-cover bg-center bg-no-repeat">
+
+        <section className="w-full bg-[url('/footer.png')] bg-cover bg-center bg-no-repeat">
+          <Reveal>
+            {" "}
             <div className="max-w-7xl mx-auto px-5 text-white text-center">
               <div className="py-24 flex flex-col items-center">
                 <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold">
@@ -911,9 +913,7 @@ hover:text-[#0000FF]
                 </div>
               </div>
             </div>
-
             <div className="w-full h-px bg-gradient-to-r from-transparent via-blue-500/60 to-transparent"></div>
-
             <Footer />
             <div className="w-full h-px bg-gradient-to-r from-transparent via-blue-500/60 to-transparent"></div>
             <div className="max-w-7xl mx-auto px-5 pt-12 pb-6 text-white/70 text-sm text-center">
@@ -986,8 +986,8 @@ hover:text-[#0000FF]
                 </a>
               </div>
             </div>
-          </section>
-        </Reveal>
+          </Reveal>{" "}
+        </section>
       </main>
     </div>
   );
