@@ -625,7 +625,7 @@ hover:text-[#0000FF]
                 smooth, safe, and guaranteed.
               </p>
             </div>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 text-sm sm:text-base lg:text-xl text-center gap-4 px-5 lg:px-10 ">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 text-base lg:text-xl text-center gap-4 px-5 lg:px-10 ">
               <div className="group rounded-2xl pb-10 bg-[#FBF6F6] px-2 border shadow-blue-900 shadow-sm border-blue-100 hover:border-blue-700 transition-all duration-700">
                 <div className="sm:p-12 p-7 sm:pb-5 pb-5">
                   {" "}
