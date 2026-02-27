@@ -105,7 +105,7 @@ export default function Login() {
       peer-not-placeholder-shown:-top-2.5 peer-not-placeholder-shown:translate-y-0 peer-not-placeholder-shown:text-sm
     "
               >
-                Full Name
+                Full Name (Surname first)
               </label>
             </div>
             <div className="relative mb-6">
@@ -246,7 +246,7 @@ export default function Login() {
 
             {/* FORGOT PASSWORD */}
             <div className="text-sm text-center mb-7 pt-3">
-              <div className="flex gap-3">
+              <div className="flex items-start gap-3">
                 <input
                   type="checkbox"
                   name="checkbox"
