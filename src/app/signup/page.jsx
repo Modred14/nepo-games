@@ -245,8 +245,8 @@ export default function Login() {
             </div>
 
             {/* FORGOT PASSWORD */}
-            <div className="text-sm text-center mb-7 pt-3">
-              <div className="flex items-start gap-3">
+            <div className="text-sm  items-center text-center mb-7 pt-3">
+              <div className="flex items-center gap-3">
                 <input
                   type="checkbox"
                   name="checkbox"
