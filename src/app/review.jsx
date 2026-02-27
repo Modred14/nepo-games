@@ -119,7 +119,9 @@ function Card({ review }) {
         </svg>
       </div>
 
-      <div className="font-bold p-3 text-sm">{review.message}</div>
+      <div className="font-bold p-3 text-sm text-gray-700">
+        {review.message}
+      </div>
     </div>
   );
 }

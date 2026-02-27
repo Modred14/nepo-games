@@ -1,10 +1,7 @@
 @import "tailwindcss";
 
 :root {
-  background-image: url("/background.png");
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
+  background-color: white;
 }
 
 @theme inline {
@@ -31,6 +28,27 @@
   /* IMPORTANT: paused by default */
   animation: scroll 18s linear infinite;
   animation-play-state: paused;
+}
+.form-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.form-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.form-scroll::-webkit-scrollbar-thumb {
+  background: #2563eb;
+  border-radius: 9999px;
+}
+
+.form-scroll::-webkit-scrollbar-thumb:hover {
+  background: #1d4ed8;
+}
+
+.form-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #2563eb transparent;
 }
 
 @keyframes scrollUp {
