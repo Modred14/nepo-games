@@ -151,7 +151,7 @@ export default function Login() {
                 Can't remember your password?{" "}
               </span>
               <a
-                href="#"
+                href="/resetpassword"
                 className=" relative inline-block
 
     after:content-['']

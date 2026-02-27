@@ -11,6 +11,7 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [checked, setChecked] = useState(false);
+  const [confirmPassword, setConfirmPassword] = useState("");
 
   const user = {
     name: fullName,
@@ -216,6 +217,8 @@ export default function Login() {
               <input
                 type={showPassword ? "text" : "password"}
                 id="confirmpassword"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder=" "
                 className="peer w-full border border-gray-300 rounded-md
                pl-12 pr-12 py-4
