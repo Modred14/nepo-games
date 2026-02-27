@@ -89,7 +89,7 @@ export default function Login() {
             {/* SIGN IN BUTTON */}
             <button
               onClick={handleReset}
-              className="w-full mt-5 shadow-md hover:bg-blue-700 border border-blue-600 bg-[#0000FF]  text-white font-semibold py-3 rounded-xl transition-all duration-700 mb-6"
+              className="w-full mt-5  mb-30 lg:mb-0 shadow-md hover:bg-blue-700 border border-blue-600 bg-[#0000FF]  text-white font-semibold py-3 rounded-xl transition-all duration-700"
             >
               Send Email
             </button>

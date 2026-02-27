@@ -8,7 +8,7 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [step, setStep] = useState(2);
+  const [step, setStep] = useState(1);
 
   const handleReset = (e) => {
     e.preventDefault();
@@ -138,7 +138,7 @@ export default function Login() {
                 {/* SIGN IN BUTTON */}
                 <button
                   onClick={handleReset}
-                  className="w-full shadow-md mt-10 hover:bg-blue-700 border border-blue-600 bg-[#0000FF]  text-white font-semibold py-3 rounded-xl transition-all duration-700 mb-6"
+                  className="w-full shadow-md mt-10 hover:bg-blue-700 border border-blue-600 bg-[#0000FF]  text-white font-semibold py-3 rounded-xl transition-all duration-700  mb-30 lg:mb-0"
                 >
                   Reset Password
                 </button>
@@ -189,7 +189,7 @@ export default function Login() {
     {/* VERIFICATION ICON */}
     <div className="flex w-full mb-10 items-center justify-center">
       <img 
-        className="h-32 w-32 object-contain" 
+        className="h-30 w-30 object-contain" 
         src="/verification.png" 
         alt="Success Verification" 
       />
@@ -204,7 +204,7 @@ export default function Login() {
     <a href="/marketsplace" className="w-full">
       <button
         type="button"
-        className="w-full shadow-lg hover:bg-blue-700 bg-[#0000FF] text-white text-lg font-semibold py-4 rounded-xl transition-all duration-300"
+        className="w-full shadow-lg mb-30 lg:mb-0 hover:bg-blue-700 bg-[#0000FF] text-white text-lg font-semibold py-4 rounded-xl transition-all duration-300"
       >
         Continue to Marketplace
       </button>
