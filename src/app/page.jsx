@@ -303,11 +303,11 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-linear-to-b">
       <div>
-        <div className="w-full px-[5%] mt-10 bg-transparent fixed z-100">
+        <div className="w-full px-[5%] mt-5 bg-transparent fixed z-100">
           <Reveal>
             <header className="relative">
               <div className="px-[2%]  backdrop-blur-2xl border-[#7A7AFE] bg-white/80 rounded-4xl border">
-                <div className="flex py-3 font-semibold items-center text-[#808080] justify-between w-full">
+                <div className="flex md:py-3 py-2 font-semibold items-center text-[#808080] justify-between w-full">
                   <img
                     src="/logo.png"
                     alt="Nepo Games"
@@ -418,7 +418,7 @@ hover:text-[#0000FF]
                         <img
                           src="/menu-open.png"
                           alt="Nepo Games"
-                          className="w-6 object-cover"
+                          className="w-4 object-cover"
                         />
                       </button>
                     </div>
