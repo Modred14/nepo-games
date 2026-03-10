@@ -10,6 +10,7 @@ import {
   Plus,
   SlidersHorizontal,
   Tag,
+  Menu,
 } from "lucide-react";
 import Reveal from "./reveal";
 import nepoModal from "./components/nepoModal";
@@ -404,7 +405,7 @@ hover:text-[#0000FF]
                       Contact
                     </a>
                   </div>
-                  <div className="flex gap-4 h-10">
+                  <div>
                     <div className="hidden md:flex">
                       <img
                         src="/profile.png"
@@ -412,13 +413,13 @@ hover:text-[#0000FF]
                         className="w-10.25 h-10.25 rounded-[50%] object-cover"
                       />
                     </div>
-                    <div className="md:hidden  -mt-1 pr-3 md:pr-0">
+                    <div className="md:hidden pr-3 flex justify-center md:pr-0">
                       <button onClick={() => setOpen(!open)}>
-                        <div className="group items-center flex flex-col gap-1 cursor-pointer">
-                          <span className="w-6 h-0.75 bg-[#0000FF] rounded transition-all group-hover:w-6"></span>
-                          <span className="w-4  h-0.75 bg-[#0000FF] rounded transition-all group-hover:w-8"></span>
-                          <span className="w-6  h-0.75 bg-[#0000FF] rounded transition-all group-hover:w-6"></span>
-                        </div>{" "}
+                        <img
+                          src="/menu-open.png"
+                          alt="Nepo Games"
+                          className="w-6 object-cover"
+                        />
                       </button>
                     </div>
                   </div>
@@ -541,7 +542,7 @@ hover:text-[#0000FF]
                 </div>
                 <div className="text-center pt-5 text-5xl">
                   <p>Trade your Gaming Accounts with</p>
-                  <p className="text-white pt-3">Nepogames</p>
+                  <p className="text-white sm:pt-3">Nepogames</p>
                 </div>
                 <div>
                   <nepoModal />
@@ -659,7 +660,7 @@ hover:text-[#0000FF]
                   </p>
                 </div>
               </div> */}
-            <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-10 px-[5%]  items-stretch">
+            <div className="grid overflow-x-hidden sm:grid-cols-2 xl:grid-cols-4 gap-10 px-[5%]  items-stretch">
               <RevealLeft>
                 <div className="bg-linear-to-b h-full from-[#4F8CFF]/50 rounded-xl pb-0 p-7 shadow-md to-[#8A38F5]/50 hover:scale-102 transition-all duration-500">
                   <div className="flex gap-3 items-center">
