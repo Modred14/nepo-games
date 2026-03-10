@@ -586,80 +586,10 @@ hover:text-[#0000FF]
           <div>
             {" "}
             <Reveal>
-              <p className="text-[#0000FF] px-3 font-bold text-3xl mt-5 mb-7 text-center lg:text-5xl pt-5 flex w-full justify-center">
+              <p className="text-[#0000FF] px-3 text-3xl mt-5 mb-7 text-center lg:text-5xl pt-5 flex w-full justify-center">
                 How our Marketplace Works
               </p>
             </Reveal>
-            {/* <div className="grid sm:grid-cols-2 lg:grid-cols-3 text-base lg:text-xl text-center gap-4 px-5 lg:px-10 ">
-                <div className="group rounded-2xl pb-10 bg-[#FBF6F6] px-2 border shadow-blue-900 shadow-sm border-blue-100 hover:border-blue-700 transition-all duration-700">
-                  <div className="sm:p-12 p-7 sm:pb-5 pb-5">
-                    {" "}
-                    <div className="w-full h-50 sm:h-70 overflow-hidden rounded-3xl">
-                      <img
-                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-115"
-                        src="/transact.jpg"
-                        alt=""
-                      />
-                    </div>
-                  </div>
-                  <p className="font-bold transition-all duration-500 group-hover:text-blue-700">
-                    Escrow-Protected Payments
-                  </p>
-                  <p>
-                    Every transaction on our platform is secured with escrow
-                    protection. The buyer’s funds are safely held until the
-                    account transfer is fully completed and verified. This
-                    ensures both parties are protected and eliminates the risk
-                    of scams or chargebacks. Trade with complete confidence
-                    knowing your money is always safe.
-                  </p>
-                </div>
-                <div className="group rounded-2xl pb-10 bg-[#FBF6F6] px-2 border shadow-blue-900 shadow-sm border-blue-100 hover:border-blue-700 transition-all duration-700">
-                  <div className="sm:p-12 p-7 sm:pb-5 pb-5">
-                    {" "}
-                    <div className="w-full  h-50 sm:h-70 overflow-hidden rounded-3xl">
-                      <img
-                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-115"
-                        src="/google.jpg"
-                        alt=""
-                      />
-                    </div>
-                  </div>
-
-                  <p className="font-bold transition-all duration-500 group-hover:text-blue-700">
-                    Advanced Search & Smart Filters
-                  </p>
-                  <p>
-                    Find exactly what you’re looking for in seconds. Filter
-                    accounts by game title, rank, skins, price range, platform,
-                    and more. Our smart filtering system makes it easy to
-                    compare listings and discover the best deals without wasting
-                    time.
-                  </p>
-                </div>
-                <div className="group rounded-2xl pb-10 bg-[#FBF6F6] shadow-blue-900 shadow-sm px-2 border border-blue-100 hover:border-blue-700 transition-all duration-700">
-                  <div className="sm:p-12 p-7 sm:pb-5 pb-5">
-                    {" "}
-                    <div className="w-full  h-50 sm:h-70 overflow-hidden rounded-3xl">
-                      <img
-                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-115"
-                        src="message.jpg"
-                        alt=""
-                      />
-                    </div>
-                  </div>
-
-                  <p className="font-bold transition-all duration-500 group-hover:text-blue-700">
-                    Secure In-Platform Messaging
-                  </p>
-                  <p>
-                    Communicate directly with sellers through our secure in-app
-                    messaging system. Share details, confirm requirements, and
-                    track conversations safely within the platform. This keeps
-                    all transactions organized and transparent.
-                  </p>
-                </div>
-              </div> */}
             <div className="grid overflow-hidden sm:grid-cols-2 xl:grid-cols-4 gap-10 px-[5%]  items-stretch">
               <RevealLeft>
                 <div className="bg-linear-to-b h-full from-[#4F8CFF]/50 rounded-xl pb-0 p-7 shadow-md to-[#8A38F5]/50  transition-all duration-500">
@@ -794,147 +724,33 @@ hover:text-[#0000FF]
               </RevealRight>
             </div>
           </div>
-          <Reveal>
-            <div className="pt-10">
-              <div className="relative mx-auto w-full max-w-250 overflow-hidden rounded-3xl">
-                {/* MOBILE LAYOUT */}
-                <div className="flex flex-col items-center gap-6 p-6 md:hidden">
-                  {/* Stats first */}
-                  <button
-                    className={[
-                      "flex items-center gap-3 rounded-full px-6 py-3 text-xl sm:text-3xl",
-                      "bg-linear-to-r from-[#3B82F6] to-[#1E3A8A] text-white font-bold",
-                      "shadow-md backdrop-blur-md border border-blue-100 shadow-blue-400",
-                      "hover:scale-[1.03] active:scale-[0.98] transition-transform",
-                    ].join(" ")}
-                  >
-                    <Star className="fill-white"></Star>
-                    Stats
-                  </button>
-
-                  {/* Stat cards after */}
-
-                  <div className="w-full flex justify-center">
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 place-items-center w-full">
-                      <StatCard
-                        iconSrc="link.png"
-                        value="987+"
-                        label="Account Sold"
-                      />
-                      <StatCard
-                        iconSrc="person.png"
-                        value="100k+"
-                        label="Active Users"
-                      />
-                      <StatCard
-                        iconSrc="money.png"
-                        value="10M+"
-                        label="Money Traded"
-                      />
-                      <StatCard
-                        iconSrc="book.png"
-                        value="20K+"
-                        label="Account Listed"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* DESKTOP/TABLET LAYOUT */}
-                <div className="hidden min-h-162.5 md:block">
-                  {/* TOP */}
-                  <div className="absolute left-1/2 top-10 -translate-x-1/2">
-                    <StatCard
-                      iconSrc="link.png"
-                      value="987+"
-                      label="Account Sold"
-                    />
-                  </div>
-
-                  {/* LEFT */}
-                  <div className="absolute left-10 top-1/2 -translate-y-1/2">
-                    <StatCard
-                      iconSrc="person.png"
-                      value="100k+"
-                      label="Active Users"
-                    />
-                  </div>
-
-                  {/* RIGHT */}
-                  <div className="absolute right-10 top-1/2 -translate-y-1/2">
-                    <StatCard
-                      iconSrc="money.png"
-                      value="10M+"
-                      label="Money Traded"
-                    />
-                  </div>
-
-                  {/* BOTTOM */}
-                  <div className="absolute left-1/2 bottom-10 -translate-x-1/2">
-                    <StatCard
-                      iconSrc="book.png"
-                      value="20K+"
-                      label="Account Listed"
-                    />
-                  </div>
-
-                  {/* CENTER PILL */}
-                  <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-                    <button
-                      className={[
-                        "flex items-center gap-3 rounded-full px-6 py-3  text-xl sm:text-3xl ",
-                        "bg-linear-to-r from-[#3B82F6] to-[#1E3A8A] text-white font-bold",
-                        "shadow-md backdrop-blur-md border border-blue-100 shadow-blue-400",
-                        "hover:scale-[1.03] active:scale-[0.98] transition-transform",
-                      ].join(" ")}
-                    >
-                      <Star className="fill-white"></Star>
-                      Stats
-                    </button>
-                  </div>
-                </div>
+          <div className="from-[#8A38F5]/50 to-[#4F8CFF]/50 bg-linear-to-b w-full mt-15 flex justify-center">
+          <div className="grid md:grid-cols-2 items-center max-w-6xl pb-10 px-[5%]  ">
+            <Reveal>
+              <div className="w-full flex justify-center">
+                <img src="/phone.png" alt="" />
               </div>
-            </div>
-          </Reveal>
-          <Reveal>
-            <div className="pt-30 pb-20 flex justify-center">
-              <div className="w-full max-w-5xl px-4 sm:px-8">
-                {/* wrapper */}
-                <div className="relative flex flex-col items-center">
-                  {/* CENTER LINE */}
-                  <div className="absolute left-1/2 -translate-x-1/2 top-0 h-full w-[2px] bg-[#8A38F5]" />
-
-                  {/* STEPS */}
-                  <div className="flex flex-col gap-14 w-full items-center">
-                    {steps.map((s, idx) => (
-                      <div
-                        key={s.title}
-                        className="relative flex flex-col items-center text-center"
-                      >
-                        <RevealRight>
-                          {/* ICON */}
-                          <div className="relative z-10 bg-gradient-to-b from-[#4B6BC6] to-[#2626A6] w-25 h-25 md:w-30 md:h-30 p-6 rounded-full flex items-center justify-center shadow-[0_10px_30px_rgba(0,0,0,0.15)]">
-                            <img
-                              src={s.icon}
-                              alt={s.title}
-                              className="invert w-full h-full object-contain"
-                            />
-                          </div>
-                        </RevealRight>
-                        {/* CARD */}
-                        <RevealLeft>
-                          <div className="mt-6 max-w-[520px] text-base sm:text-lg md:text-xl text-[#0000FF] border border-[#8A38F5] rounded-2xl md:py-6 md:px-6 py-5 px-4 bg-[#C1C8F5] shadow-[0_12px_40px_rgba(138,56,245,0.12)]">
-                            <p className="font-bold tracking-wide">{s.title}</p>
-                            <p className="mt-2 text-[#0000FF]/90">{s.text}</p>
-                          </div>
-                        </RevealLeft>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+            </Reveal>
+            <Reveal>
+              <div>
+                <p className="text-4xl">
+                  Trade Securely with
+                  <span className="text-white"> Nepogames</span>
+                </p>
+                <p className="pt-5 md:pt-10">
+                  Buy and sell gaming accounts with complete confidence on
+                  NepoGames. Every transaction is protected by our secure escrow
+                  system, which safely holds the buyer’s funds until the account
+                  transfer is fully completed and verified. This ensures that
+                  both buyers and sellers are protected from scams, fraud, or
+                  chargebacks. Whether you’re looking to sell your account
+                  quickly or find rare accounts to buy, NepoGames makes trading
+                  safe, simple, and reliable, giving you peace of mind every
+                  step of the way.
+                </p>
               </div>
-            </div>
-          </Reveal>
+            </Reveal>
+          </div></div>
           <div className="bg-white">
             {" "}
             <Reveal>
