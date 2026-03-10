@@ -137,17 +137,18 @@
 
 @keyframes scroll {
   to {
-    transform: translateX(-50%);
+    transform: translateX(calc(-50% - 7px));
   }
 }
 
 .logoWrap {
   flex: 0 0 auto;
-  height: 150px; /* mobile-friendly */
+  height: 130px; /* mobile-friendly */
   width: 150px; /* FORCE a box so it can't collapse */
   display: grid;
   place-items: center;
   padding: 6px;
+  margin-top: -25px;
 }
 
 .logoImg {

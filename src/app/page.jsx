@@ -6,8 +6,15 @@ import {
   BadgeDollarSign,
   Info,
   Headphones,
+  User2Icon,
+  Plus,
+  BugPlayIcon,
+  TowerControl,
+  SlidersHorizontal,
+  Tag,
 } from "lucide-react";
 import Reveal from "./reveal";
+import nepoModal from "./components/nepoModal";
 import { useEffect, useRef, useState, useMemo } from "react";
 import Reviews from "./review";
 import Footer from "./footer";
@@ -295,17 +302,19 @@ export default function Home() {
     });
   }, []);
   return (
-    <div className="min-h-screen bg-[url('/background.png')] bg-cover bg-center bg-no-repeat">
+    <div className="min-h-screen bg-linear-to-b">
       <div>
-        <div className="w-full bg-white/80 backdrop-blur-2xl fixed z-100">
+        <div className="w-full px-[5%] mt-10 bg-transparent fixed z-100">
           <Reveal>
             <header className="relative">
-              <div className="px-6 lg:px-15 border-b border-gray-300">
-                {/* DESKTOP NAV */}
-                <div className="hidden lg:flex py-4 font-semibold items-center text-[#808080] justify-between w-full">
-                  <div className="text-black font-bold">Nepo Games</div>
-
-                  <div className="flex gap-9">
+              <div className="px-[2%]  backdrop-blur-2xl border-[#7A7AFE] bg-white/80 rounded-4xl border">
+                <div className="flex py-3 font-semibold items-center text-[#808080] justify-between w-full">
+                  <img
+                    src="/logo.png"
+                    alt="Nepo Games"
+                    className="w-9 h-9 p-2 rounded-[50%] bg-blue-700 object-cover"
+                  />
+                  <div className="hidden md:flex font-medium gap-9">
                     <a
                       href=""
                       className="
@@ -364,6 +373,7 @@ hover:text-[#0000FF]
                     >
                       Pricing
                     </a>
+
                     <a
                       href=""
                       className="
@@ -393,70 +403,29 @@ duration-500
 hover:text-[#0000FF]
 "
                     >
-                      About Us
-                    </a>
-                    <a
-                      href=""
-                      className="
-relative inline-block
-
-after:content-['']
-after:absolute
-after:left-0
-after:bottom-0
-after:h-[2px]
-after:w-full
-after:bg-current
-
-after:origin-right
-after:scale-x-0
-
-after:transition-transform
-after:duration-500
-after:ease-in-out
-
-hover:after:origin-left
-hover:after:scale-x-100
-
-transition-colors
-duration-500
-
-hover:text-[#0000FF]
-"
-                    >
-                      Support
+                      Contact
                     </a>
                   </div>
-
-                  <div>
-                    <a href="/login">
-                      <button className="py-2 px-3 rounded-xl border mr-4 transition-all duration-500 hover:bg-gray-200/80">
-                        Log In
+                  <div className="flex gap-4 h-10">
+                    <div className="hidden md:flex">
+                      <img
+                        src="/profile.png"
+                        alt="Nepo Games"
+                        className="w-10.25 h-10.25 rounded-[50%] object-cover"
+                      />
+                    </div>
+                    <div className="md:hidden  -mt-1 pr-3 md:pr-0">
+                      <button onClick={() => setOpen(!open)}>
+                        <div className="group items-center flex flex-col gap-1 cursor-pointer">
+                          <span className="w-6 h-0.75 bg-[#0000FF] rounded transition-all group-hover:w-6"></span>
+                          <span className="w-4  h-0.75 bg-[#0000FF] rounded transition-all group-hover:w-8"></span>
+                          <span className="w-6  h-0.75 bg-[#0000FF] rounded transition-all group-hover:w-6"></span>
+                        </div>{" "}
                       </button>
-                    </a>
-                    <a href="/signup">
-                      <button className="py-2 px-3 rounded-xl transition-all  duration-500 hover:bg-blue-800 border border-blue-600 bg-[#0000FF] text-white font-bold">
-                        Get Started
-                      </button>
-                    </a>
+                    </div>
                   </div>
-                </div>
-
-                {/* MOBILE NAV */}
-                <div className="flex py-4 font-semibold lg:hidden items-center justify-between">
-                  <div className="text-black font-bold">Nepo Games</div>
-
-                  <button onClick={() => setOpen(!open)}>
-                    <div className="group items-center flex flex-col gap-1 cursor-pointer">
-                      <span className="w-6 h-0.75 bg-[#0000FF] rounded transition-all group-hover:w-6"></span>
-                      <span className="w-4  h-0.75 bg-[#0000FF] rounded transition-all group-hover:w-8"></span>
-                      <span className="w-6  h-0.75 bg-[#0000FF] rounded transition-all group-hover:w-6"></span>
-                    </div>{" "}
-                  </button>
                 </div>
               </div>
-
-              {/* MOBILE SIDEBAR */}
             </header>
           </Reveal>
         </div>
@@ -558,49 +527,46 @@ hover:text-[#0000FF]
           />
         )}
         <main>
-          <Reveal>
-            <div className="grid grid-cols-1 pt-20 lg:grid-cols-2 pb-10 gap-3">
-              <div className="font-bold px-10 ">
-                <h1 className="pt-15 text-center lg:text-start font-bold leading-[1.05] hidden sm:block text-[clamp(4rem,5.4vw,5.6rem)]">
-                  The Premium{" "}
-                  <span className="text-[#0000FF]">Gaming Account</span>{" "}
-                  Marketplace
-                </h1>
-                <h1 className="pt-15 text-center lg:text-start font-bold leading-[1.05] sm:hidden block text-[clamp(2rem,5.4vw,5.6rem)]">
-                  The Premium{" "}
-                  <span className="text-[#0000FF]">Gaming Account</span>{" "}
-                  Marketplace
-                </h1>
-                <p className="pt-7 text-center font-medium text-gray-500 text-[clamp(1.3rem,1.9vw,1.6rem)]">
-                  Redefining how premium gaming accounts are traded — securely
-                  and transparently. Skip the grind.{" "}
-                  <span className="font-bold text-[#0000FF] italic">
-                    Trade with confidence.
-                  </span>
-                </p>
-                <div className="w-full grid lg:justify-start justify-center">
-                  <div className="pt-10 grid grid-cols-2 gap-2   max-w-120">
-                    <div className="flex justify-center">
-                      <button className=" rounded-2xl py-3 px-6 sm:py-5 sm:px-8 hover:bg-blue-800 border border-blue-600/90 duration-500 transition-all sm:text-lg text-sm bg-[#0000FF] text-white font-semibold">
-                        Buy Account
-                      </button>
-                    </div>
-                    <div className="flex justify-center">
-                      {" "}
-                      <button className="py-3 px-3 sm:py-5 sm:px-5 rounded-2xl border mr-2 hover:bg-gray-200/50 bg-white  duration-500 transition-all  sm:text-lg text-sm">
-                        Sell your account
-                      </button>
-                    </div>
+          {" "}
+          <div className="bg-linear-to-b h-full mb-10 rounded-b-4xl from-[#FFFFFF] to-[#8080FF]">
+            <Reveal>
+              <div className="pt-45 px-[2%]">
+                <div className="justify-center flex">
+                  <div className="bg-white flex justify-center items-center gap-2 p-1 px-3 rounded-2xl">
+                    <img
+                      src="/logo.png"
+                      alt="Nepo Games"
+                      className="w-5 h-5 p-1 rounded-[50%] bg-blue-700 object-cover"
+                    />
+                    <p className="text-[#0000FF]">Best Gaming Marketplace</p>
+                  </div>{" "}
+                </div>
+                <div className="text-center pt-5 text-5xl">
+                  <p>Trade your Gaming Accounts with</p>
+                  <p className="text-white pt-3">Nepogames</p>
+                </div>
+                <div>
+                  <nepoModal />
+                </div>
+                <div className="text-center mt-4 text-lg flex w-full justify-center">
+                  <div className=" max-w-120">
+                    <p className="text-[#808080]">
+                      Redefining how premium gaming accounts are traded —
+                      securely and transparently .Skip the grind.{" "}
+                    </p>
+                    <p className="font-bold italic text-[#0000FF]">
+                      Trade with confidence.
+                    </p>
                   </div>
                 </div>
+                <div className="justify-center flex">
+                  <img src="/nepo-mark.png" alt="" />
+                </div>
               </div>
-              <div className=" sm:px-20  p-10">
-                <img src="/nepo-market.png" className="" alt="" />
-              </div>
-            </div>
-          </Reveal>
+            </Reveal>{" "}
+          </div>
           <Reveal>
-            <div className="scroller bg-[#0000FF]">
+            <div className="scroller bg-linear-to-r from-[#5DACEC] to-[#9750F6]">
               <div
                 ref={innerRef}
                 className={`scroller_inner ${ready ? "is-ready" : ""}`}
@@ -618,25 +584,14 @@ hover:text-[#0000FF]
               </div>
             </div>
           </Reveal>
-          <Reveal>
-            <div>
-              <div className="grid w-full justify-center items-center ">
-                <p className=" bg-linear-to-r gap-4 hover:scale-[1.03] active:scale-[0.98] transition-transform from-[#3B82F6] to-[#1E3A8A] shadow-md border border-blue-100 shadow-blue-400 mt-10 text-[#FFFFFF] justify-center items-center flex  text-xl sm:text-3xl  rounded-full py-5 px-10">
-                  <Star className="fill-white "></Star>
-                  <span className="font-bold">Features</span>
-                </p>
-              </div>
-              <p className="text-[#0000FF] px-3 font-bold text-3xl text-center lg:text-5xl pt-5 flex w-full justify-center">
-                All Your Games. One Secure Marketplace
+          <div>
+            {" "}
+            <Reveal>
+              <p className="text-[#0000FF] px-3 font-bold text-3xl mt-5 mb-7 text-center lg:text-5xl pt-5 flex w-full justify-center">
+                How our Marketplace Works
               </p>
-              <div className="w-full flex pt-4 items-center justify-center">
-                <p className="text-base sm:text-xl lg:text-2xl text-center text-gray-900 max-w-300 px-3 pb-7">
-                  Built for serious gamers, Nepo Games provides escrow
-                  protection, verified sellers, and seamless transfers — so
-                  every trade is smooth, safe, and guaranteed.
-                </p>
-              </div>
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 text-base lg:text-xl text-center gap-4 px-5 lg:px-10 ">
+            </Reveal>
+            {/* <div className="grid sm:grid-cols-2 lg:grid-cols-3 text-base lg:text-xl text-center gap-4 px-5 lg:px-10 ">
                 <div className="group rounded-2xl pb-10 bg-[#FBF6F6] px-2 border shadow-blue-900 shadow-sm border-blue-100 hover:border-blue-700 transition-all duration-700">
                   <div className="sm:p-12 p-7 sm:pb-5 pb-5">
                     {" "}
@@ -705,9 +660,141 @@ hover:text-[#0000FF]
                     all transactions organized and transparent.
                   </p>
                 </div>
-              </div>
+              </div> */}
+            <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-10 px-[5%]  items-stretch">
+              <RevealLeft>
+                <div className="bg-linear-to-b h-full from-[#4F8CFF]/50 rounded-xl pb-0 p-7 shadow-md to-[#8A38F5]/50 hover:scale-102 transition-all duration-500">
+                  <div className="flex gap-3 items-center">
+                    <div className=" bg-white rounded-[50%] p-3">
+                      <div className="border-[#6D62FA] rounded-[50%] border-3">
+                        <User2Icon
+                          size={25}
+                          style={{ stroke: "url(#grad1)" }}
+                        />
+                        <svg width="0" height="0">
+                          <defs>
+                            <linearGradient
+                              id="grad1"
+                              x1="0%"
+                              y1="0%"
+                              x2="0%"
+                              y2="100%"
+                            >
+                              <stop offset="0%" stopColor="#4F8CFF" />
+                              <stop offset="100%" stopColor="#8A38F5" />
+                            </linearGradient>
+                          </defs>
+                        </svg>{" "}
+                      </div>
+                    </div>
+                    <p className=" text-[22px] bg-linear-to-r to-[#0000FF] from-[#800080E0] bg-clip-text text-transparent">
+                      Sign Up
+                    </p>
+                  </div>
+                  <p className="text-[13px] p-2 pb-5 sm:h-22">
+                    Register to access a protected marketplace built for secure,
+                    transparent gaming account trading.
+                  </p>
+                  <div className="mt-auto px-5">
+                    <img src="/ex-sign.png" className="rounded-t-2xl " alt="" />
+                  </div>
+                </div>
+              </RevealLeft>
+              <RevealRight>
+                <div className="bg-linear-to-b h-full from-[#4F8CFF]/50 rounded-xl pb-0 p-7 shadow-md to-[#8A38F5]/50 hover:scale-102 transition-all duration-500">
+                  <div className="flex gap-3 items-center">
+                    <div className=" bg-white rounded-[50%] p-3">
+                      <div className="">
+                        <Plus size={25} className="text-[#6D62FA] " />{" "}
+                      </div>
+                    </div>
+                    <p className=" text-[22px] bg-linear-to-r to-[#0000FF] from-[#800080E0] bg-clip-text text-transparent">
+                      Add Account
+                    </p>
+                  </div>
+                  <p className="text-[13px] p-2 pb-5 sm:h-23.25 xl:h-[92.5px]">
+                    Add games to sell and see potential buyers. Safe Fast and
+                    Secure.
+                  </p>
+                  <div className="mt-auto px-5">
+                    <img
+                      src="/game-sign.png"
+                      className="rounded-t-2xl "
+                      alt=""
+                    />
+                  </div>
+                </div>
+              </RevealRight>
+              <RevealLeft>
+                {" "}
+                <div className="bg-linear-to-b h-full from-[#4F8CFF]/50 rounded-xl pb-0 p-7 shadow-md to-[#8A38F5]/50 hover:scale-102 transition-all duration-500">
+                  <div className="flex gap-3 items-center">
+                    <div className=" bg-white rounded-[50%] p-3">
+                      <div>
+                        <Tag size={25} style={{ stroke: "url(#grad1)" }} />
+                        <svg width="0" height="0">
+                          <defs>
+                            <linearGradient
+                              id="grad1"
+                              x1="0%"
+                              y1="0%"
+                              x2="0%"
+                              y2="100%"
+                            >
+                              <stop offset="0%" stopColor="#4F8CFF" />
+                              <stop offset="100%" stopColor="#8A38F5" />
+                            </linearGradient>
+                          </defs>
+                        </svg>{" "}
+                      </div>
+                    </div>
+                    <p className=" text-[22px] bg-linear-to-r to-[#0000FF] from-[#800080E0] bg-clip-text text-transparent">
+                      Buy or Sell
+                    </p>
+                  </div>
+                  <p className="text-[13px] p-2 pb-5 sm:h-23.25 xl:h-[92.5px]">
+                    List your gaming account in minutes, connect with serious
+                    buyers, and receive secure payouts with zero hassle.
+                  </p>
+                  <div className="mt-auto px-5">
+                    <img
+                      src="/buy-sign.png"
+                      className="rounded-t-2xl "
+                      alt=""
+                    />
+                  </div>
+                </div>
+              </RevealLeft>{" "}
+              <RevealRight>
+                <div className="bg-linear-to-b h-full from-[#4F8CFF]/50 rounded-xl pb-0 p-7 shadow-md to-[#8A38F5]/50 hover:scale-102 transition-all duration-500">
+                  <div className="flex gap-3 items-center">
+                    <div className=" bg-white rounded-[50%] p-3">
+                      <div>
+                        <SlidersHorizontal
+                          size={25}
+                          className="text-[#6D62FA] "
+                        />
+                      </div>
+                    </div>
+                    <p className=" text-[22px] bg-linear-to-r to-[#0000FF] from-[#800080E0] bg-clip-text text-transparent">
+                      Control Trade
+                    </p>
+                  </div>
+                  <p className="text-[13px] p-2 pb-5 sm:h-23.25 xl:h-[92.5px]">
+                    Track, manage, and monitor every transaction in real time
+                    with complete transparency and security..
+                  </p>
+                  <div className="mt-auto px-5">
+                    <img
+                      src="/page-sign.png"
+                      className="rounded-t-2xl "
+                      alt=""
+                    />
+                  </div>
+                </div>
+              </RevealRight>
             </div>
-          </Reveal>
+          </div>
           <Reveal>
             <div className="pt-10">
               <div className="relative mx-auto w-full max-w-250 overflow-hidden rounded-3xl">
@@ -863,7 +950,6 @@ hover:text-[#0000FF]
               </div>
             </Reveal>{" "}
           </div>
-
           <section className="w-full bg-[url('/footer.png')] bg-cover bg-center bg-no-repeat">
             <Reveal>
               {" "}
