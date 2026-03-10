@@ -549,7 +549,7 @@ hover:text-[#0000FF]
                 </div>
                 <div className="text-center mt-4 text-lg flex w-full justify-center">
                   <div className=" max-w-120">
-                    <p className="text-[#808080]">
+                    <p className="text-[#1b1a1a]">
                       Redefining how premium gaming accounts are traded —
                       securely and transparently .Skip the grind.{" "}
                     </p>
@@ -660,9 +660,9 @@ hover:text-[#0000FF]
                   </p>
                 </div>
               </div> */}
-            <div className="grid overflow-x-hidden sm:grid-cols-2 xl:grid-cols-4 gap-10 px-[5%]  items-stretch">
+            <div className="grid overflow-hidden sm:grid-cols-2 xl:grid-cols-4 gap-10 px-[5%]  items-stretch">
               <RevealLeft>
-                <div className="bg-linear-to-b h-full from-[#4F8CFF]/50 rounded-xl pb-0 p-7 shadow-md to-[#8A38F5]/50 hover:scale-102 transition-all duration-500">
+                <div className="bg-linear-to-b h-full from-[#4F8CFF]/50 rounded-xl pb-0 p-7 shadow-md to-[#8A38F5]/50  transition-all duration-500">
                   <div className="flex gap-3 items-center">
                     <div className=" bg-white rounded-[50%] p-3">
                       <div className="border-[#6D62FA] rounded-[50%] border-3">
@@ -700,7 +700,7 @@ hover:text-[#0000FF]
                 </div>
               </RevealLeft>
               <RevealRight>
-                <div className="bg-linear-to-b h-full from-[#4F8CFF]/50 rounded-xl pb-0 p-7 shadow-md to-[#8A38F5]/50 hover:scale-102 transition-all duration-500">
+                <div className="bg-linear-to-b h-full from-[#4F8CFF]/50 rounded-xl pb-0 p-7 shadow-md to-[#8A38F5]/50  transition-all duration-500">
                   <div className="flex gap-3 items-center">
                     <div className=" bg-white rounded-[50%] p-3">
                       <div className="">
@@ -726,7 +726,7 @@ hover:text-[#0000FF]
               </RevealRight>
               <RevealLeft>
                 {" "}
-                <div className="bg-linear-to-b h-full from-[#4F8CFF]/50 rounded-xl pb-0 p-7 shadow-md to-[#8A38F5]/50 hover:scale-102 transition-all duration-500">
+                <div className="bg-linear-to-b h-full from-[#4F8CFF]/50 rounded-xl pb-0 p-7 shadow-md to-[#8A38F5]/50  transition-all duration-500">
                   <div className="flex gap-3 items-center">
                     <div className=" bg-white rounded-[50%] p-3">
                       <div>
@@ -765,7 +765,7 @@ hover:text-[#0000FF]
                 </div>
               </RevealLeft>{" "}
               <RevealRight>
-                <div className="bg-linear-to-b h-full from-[#4F8CFF]/50 rounded-xl pb-0 p-7 shadow-md to-[#8A38F5]/50 hover:scale-102 transition-all duration-500">
+                <div className="bg-linear-to-b h-full from-[#4F8CFF]/50 rounded-xl pb-0 p-7 shadow-md to-[#8A38F5]/50  transition-all duration-500">
                   <div className="flex gap-3 items-center">
                     <div className=" bg-white rounded-[50%] p-3">
                       <div>
