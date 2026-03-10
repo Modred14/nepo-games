@@ -8,8 +8,6 @@ import {
   Headphones,
   User2Icon,
   Plus,
-  BugPlayIcon,
-  TowerControl,
   SlidersHorizontal,
   Tag,
 } from "lucide-react";
