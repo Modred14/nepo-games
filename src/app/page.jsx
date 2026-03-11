@@ -172,19 +172,20 @@ export default function Home() {
     return plus ? `${display}+` : display;
   }
 
-  function StatCard({ iconSrc, value, label, className = "" }) {
+  function StatCard({ value }) {
     const cardRef = useRef(null);
     const startedRef = useRef(false);
 
-    const { target, suffix, plus } = useMemo(
-      () => parsePrettyNumber(value),
-      [value],
-    );
+    const [displayValue, setDisplayValue] = useState(0);
 
-    const [displayValue, setDisplayValue] = useState(() =>
-      // start from 0 but keep formatting style
-      formatPrettyNumber(0, suffix, plus),
-    );
+    // parse "100k+" -> { number:100, suffix:"k", plus:"+" }
+    const parsed = useMemo(() => {
+      const num = parseInt(value);
+      const suffix = value.toLowerCase().includes("k") ? "k" : "";
+      const plus = value.includes("+") ? "+" : "";
+
+      return { number: num, suffix, plus };
+    }, [value]);
 
     useEffect(() => {
       const el = cardRef.current;
@@ -192,92 +193,41 @@ export default function Home() {
 
       const observer = new IntersectionObserver(
         ([entry]) => {
-          // Start ONLY when visible, and only once.
           if (!entry.isIntersecting || startedRef.current) return;
+
           startedRef.current = true;
 
-          const duration = 2000; // ms
+          const duration = 2000;
           const start = performance.now();
 
           const tick = (now) => {
             const t = Math.min(1, (now - start) / duration);
-            // Smooth-ish easing
             const eased = 1 - Math.pow(1 - t, 3);
 
-            const current = Math.round(eased * target);
-            setDisplayValue(formatPrettyNumber(current, suffix, plus));
+            const current = Math.round(eased * parsed.number);
+            setDisplayValue(current);
 
             if (t < 1) requestAnimationFrame(tick);
-            else setDisplayValue(formatPrettyNumber(target, suffix, plus));
+            else setDisplayValue(parsed.number);
           };
 
           requestAnimationFrame(tick);
         },
-        {
-          threshold: 0.35, // triggers when ~35% of card is visible
-        },
+        { threshold: 0.35 },
       );
 
       observer.observe(el);
       return () => observer.disconnect();
-    }, [target, suffix, plus]);
+    }, [parsed.number]);
 
     return (
-      <div
-        ref={cardRef}
-        className={[
-          "w-[220px] h-[220px] rounded-2xl",
-          "bg-gradient-to-b from-[#4F8CFF] to-[#2A2AB8]",
-          "shadow-[0_18px_40px_rgba(0,60,255,0.35)]",
-          "flex flex-col items-center justify-center text-white",
-          "relative overflow-hidden",
-          className,
-        ].join(" ")}
-      >
-        {/* subtle top glow */}
-        <div className="pointer-events-none absolute -top-12 left-1/2 h-40 w-40 -translate-x-1/2 rounded-full bg-white/15 blur-2xl" />
-
-        <img
-          src={iconSrc}
-          alt=""
-          className="h-20 w-20 object-contain mb-4 drop-shadow-[0_10px_20px_rgba(0,0,0,0.25)]"
-        />
-
-        <div className="text-4xl font-extrabold leading-none tabular-nums">
-          {displayValue}
-        </div>
-        <div className="text-sm font-semibold opacity-95">{label}</div>
+      <div ref={cardRef}>
+        {displayValue}
+        {parsed.suffix}
+        {parsed.plus}
       </div>
     );
   }
-
-  const steps = [
-    {
-      title: "EXPLORE",
-      text: "Browse thousands of handpicked accounts. Filter by rare skins, peak rank or specific legacy items across your favorite titles.",
-      icon: "/analyze.png",
-    },
-    {
-      title: "VERIFY",
-      text: "Check detailed sellers ratings and accounts screenshots. Our system pulls live data to ensure the rank and inventory match the listing.",
-      icon: "/verify.png",
-    },
-    {
-      title: "SECURE",
-      text: "Pay with confidence. Your funds are held in Escrow; the seller doesn’t get a dime until you have the login.",
-      icon: "/lock.png",
-    },
-    {
-      title: "UNLOCK",
-      text: "Once payment is confirmed, the account credentials (email and password) are automatically released to your dashboard.",
-      icon: "/unlock.png",
-    },
-    {
-      title: "PLAY",
-      text: "Safe. Secure. Fast",
-      icon: "/game.png",
-    },
-  ];
 
   const scrollerRef = useRef(null);
 
@@ -768,13 +718,14 @@ hover:text-[#0000FF]
                   </p>
                   <div className="md:flex hidden px-[10%]">
                     <div className="p-3 rounded-2xl pb-0 bg-linear-to-b from-[#4F8CFF] to-[#8A38F5]">
-                      <p className="flex justify-center text-white text-xl pb-2">
-                        <p>
+                      <div className="flex gap-1.5 justify-center text-white text-xl pb-2">
+                        <span>
                           {" "}
-                          <span>100k+ </span>
-                          Active Users
-                        </p>
-                      </p>
+                          <StatCard value={"100k+"} />{" "}
+                        </span>
+                        Active Users{" "}
+                      </div>
+
                       <div className="px-6 ">
                         <img
                           src="/user-list.png"
@@ -790,13 +741,13 @@ hover:text-[#0000FF]
                 </div>
                 <div className="md:hidden px-[10%] pb-10">
                   <div className="p-3 rounded-2xl pb-0 bg-linear-to-b from-[#4F8CFF] to-[#8A38F5]">
-                    <p className="flex justify-center text-white text-xl pb-2">
-                      <p>
+                    <div className="flex gap-1.5 justify-center text-white text-xl pb-2">
+                      <span>
                         {" "}
-                        <span>100k+ </span>
-                        Active Users
-                      </p>
-                    </p>
+                        <StatCard value={"100k+"} />{" "}
+                      </span>
+                      Active Users{" "}
+                    </div>
                     <div className="px-6 ">
                       <img
                         src="/user-list.png"
