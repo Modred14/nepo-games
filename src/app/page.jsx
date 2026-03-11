@@ -13,7 +13,7 @@ import {
   Menu,
 } from "lucide-react";
 import Reveal from "./reveal";
-import nepoModal from "./components/nepoModal";
+// import nepoModal from "./components/nepoModal";
 import { useEffect, useRef, useState, useMemo } from "react";
 import Reviews from "./review";
 import Footer from "./footer";
@@ -306,7 +306,7 @@ export default function Home() {
         <div className="w-full px-[5%] mt-5 bg-transparent fixed z-100">
           <Reveal>
             <header className="relative">
-              <div className="px-[2%]  backdrop-blur-2xl border-[#7A7AFE] bg-white/80 rounded-4xl border">
+              <div className="px-[2%]  backdrop-blur-2xl border-[#7A7AFE]/50 shadow-xs bg-white/80 rounded-4xl border">
                 <div className="flex md:py-3 py-2 font-semibold items-center text-[#808080] justify-between w-full">
                   <img
                     src="/logo.png"
@@ -544,9 +544,7 @@ hover:text-[#0000FF]
                   <p>Trade your Gaming Accounts with</p>
                   <p className="text-white sm:pt-3">Nepogames</p>
                 </div>
-                <div>
-                  <nepoModal />
-                </div>
+                <div>{/* <nepoModal /> */}</div>
                 <div className="text-center mt-4 text-lg flex w-full justify-center">
                   <div className=" max-w-120">
                     <p className="text-[#1b1a1a]">
@@ -624,7 +622,7 @@ hover:text-[#0000FF]
                     Register to access a protected marketplace built for secure,
                     transparent gaming account trading.
                   </p>
-                  <div className="mt-auto px-5">
+                  <div className="mt-auto xl:pt-4 px-5">
                     <img src="/ex-sign.png" className="rounded-t-2xl " alt="" />
                   </div>
                 </div>
@@ -645,7 +643,7 @@ hover:text-[#0000FF]
                     Add games to sell and see potential buyers. Safe Fast and
                     Secure.
                   </p>
-                  <div className="mt-auto px-5">
+                  <div className="mt-auto xl:pt-4 px-5">
                     <img
                       src="/game-sign.png"
                       className="rounded-t-2xl "
@@ -685,7 +683,7 @@ hover:text-[#0000FF]
                     List your gaming account in minutes, connect with serious
                     buyers, and receive secure payouts with zero hassle.
                   </p>
-                  <div className="mt-auto px-5">
+                  <div className="mt-auto xl:pt-4 px-5">
                     <img
                       src="/buy-sign.png"
                       className="rounded-t-2xl "
@@ -713,7 +711,7 @@ hover:text-[#0000FF]
                     Track, manage, and monitor every transaction in real time
                     with complete transparency and security..
                   </p>
-                  <div className="mt-auto px-5">
+                  <div className="mt-auto xl:pt-4 px-5">
                     <img
                       src="/page-sign.png"
                       className="rounded-t-2xl "
@@ -725,47 +723,93 @@ hover:text-[#0000FF]
             </div>
           </div>
           <div className="from-[#8A38F5]/50 to-[#4F8CFF]/50 bg-linear-to-b w-full mt-15 flex justify-center">
-          <div className="grid md:grid-cols-2 items-center max-w-6xl pb-10 px-[5%]  ">
-            <Reveal>
-              <div className="w-full flex justify-center">
-                <img src="/phone.png" alt="" />
-              </div>
-            </Reveal>
-            <Reveal>
-              <div>
-                <p className="text-4xl">
-                  Trade Securely with
-                  <span className="text-white"> Nepogames</span>
-                </p>
-                <p className="pt-5 md:pt-10">
-                  Buy and sell gaming accounts with complete confidence on
-                  NepoGames. Every transaction is protected by our secure escrow
-                  system, which safely holds the buyer’s funds until the account
-                  transfer is fully completed and verified. This ensures that
-                  both buyers and sellers are protected from scams, fraud, or
-                  chargebacks. Whether you’re looking to sell your account
-                  quickly or find rare accounts to buy, NepoGames makes trading
-                  safe, simple, and reliable, giving you peace of mind every
-                  step of the way.
-                </p>
-              </div>
-            </Reveal>
-          </div></div>
+            <div className="grid md:grid-cols-2 items-center max-w-6xl pb-10 px-[5%]  ">
+              <Reveal>
+                <div className="w-full flex justify-center">
+                  <img src="/phone.png" alt="" />
+                </div>
+              </Reveal>
+              <Reveal>
+                <div>
+                  <p className="text-4xl">
+                    Trade Securely with
+                    <span className="text-white"> Nepogames</span>
+                  </p>
+                  <p className="pt-5 md:pt-10">
+                    Buy and sell gaming accounts with complete confidence on
+                    NepoGames. Every transaction is protected by our secure
+                    escrow system, which safely holds the buyer’s funds until
+                    the account transfer is fully completed and verified. This
+                    ensures that both buyers and sellers are protected from
+                    scams, fraud, or chargebacks. Whether you’re looking to sell
+                    your account quickly or find rare accounts to buy, NepoGames
+                    makes trading safe, simple, and reliable, giving you peace
+                    of mind every step of the way.
+                  </p>
+                </div>
+              </Reveal>
+            </div>
+          </div>
           <div className="bg-white">
             {" "}
             <Reveal>
-              <div className="grid pt-6 w-full justify-center items-center ">
-                <p className=" bg-linear-to-r gap-4 hover:scale-[1.03] active:scale-[0.98] transition-transform from-[#3B82F6] to-[#1E3A8A] shadow-md border border-blue-100 shadow-blue-400 mt-10 text-[#FFFFFF] justify-center items-center flex text-xl sm:text-3xl  rounded-full py-5 px-10">
-                  <Star className="fill-white"></Star>
-                  <span className="font-bold">Reviews</span>
-                </p>
-              </div>
-              <div className="pb-20 p-10 pr-8">
-                <Reviews />
+              <div className="from-[#8A38F5]/50 px-[5%] to-[#4F8CFF]/50 bg-linear-to-b w-full mt-15 grid md:grid-cols-2">
+                <div className="py-15 h-full gap-6 flex flex-col justify-between ">
+                  <p className="text-white font-bold text-3xl">
+                    What Our Users Are Saying About{" "}
+                    <span className="text-[#402BBA]"> Nepo Games</span>
+                  </p>
+                  <p className="text-white md:mb-0 -mb-15">
+                    At Nepo Games, player satisfaction is our top priority.
+                    Here’s what real users have to say about their buying and
+                    selling experience on our platform. From secure transactions
+                    to fast delivery, their feedback reflects the trust and
+                    reliability we strive to maintain.
+                  </p>
+                  <div className="md:flex hidden px-[10%]">
+                    <div className="p-3 rounded-2xl pb-0 bg-linear-to-b from-[#4F8CFF] to-[#8A38F5]">
+                      <p className="flex justify-center text-white text-xl pb-2">
+                        <p>
+                          {" "}
+                          <span>100k+ </span>
+                          Active Users
+                        </p>
+                      </p>
+                      <div className="px-6 ">
+                        <img
+                          src="/user-list.png"
+                          className="rounded-t-2xl"
+                          alt=""
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>{" "}
+                <div className=" sm:px-10 md:px-0 lg:px-10 py-10 ">
+                  <Reviews />
+                </div>
+                <div className="md:hidden px-[10%] pb-10">
+                  <div className="p-3 rounded-2xl pb-0 bg-linear-to-b from-[#4F8CFF] to-[#8A38F5]">
+                    <p className="flex justify-center text-white text-xl pb-2">
+                      <p>
+                        {" "}
+                        <span>100k+ </span>
+                        Active Users
+                      </p>
+                    </p>
+                    <div className="px-6 ">
+                      <img
+                        src="/user-list.png"
+                        className="rounded-t-2xl"
+                        alt=""
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
             </Reveal>{" "}
           </div>
-          <section className="w-full bg-[url('/footer.png')] bg-cover bg-center bg-no-repeat">
+          <section className="w-full bg-linear-to-b from-[#4F8CFF] to-[#8A38F5]">
             <Reveal>
               {" "}
               <div className="max-w-7xl mx-auto px-5 text-white text-center">
@@ -828,9 +872,9 @@ hover:text-[#0000FF]
                   </div>
                 </div>
               </div>
-              <div className="w-full h-px bg-gradient-to-r from-transparent via-blue-500/60 to-transparent"></div>
+              <div className="w-full h-px bg-linear-to-r from-transparent via-gray-100/20 to-transparent"></div>
               <Footer />
-              <div className="w-full h-px bg-gradient-to-r from-transparent via-blue-500/60 to-transparent"></div>
+              <div className="w-full h-[0.5px] bg-linear-to-r from-transparent via-gray-100/20 to-transparent"></div>
               <div className="max-w-7xl mx-auto px-5 pt-12 pb-6 text-white/70 text-sm text-center">
                 © {new Date().getFullYear()} Nepo Games. All rights reserved.
               </div>

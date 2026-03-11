@@ -9,7 +9,12 @@ export default function Footer() {
         <div className="grid grid-cols-1 gap-10 md:grid-cols-2">
           {/* Left brand block */}
           <div className="space-y-4">
-            <h3 className="text-xl font-bold tracking-wide">NEPO GAMES</h3>
+            <h3 className="text-xl flex itemd-center font-bold tracking-wide">
+              <span>
+                <img src="/logo2.png" className="w-4 mt-1.5 mr-0.5" alt="" />
+              </span>
+              EPO GAMES
+            </h3>
 
             <p className="max-w-sm text-sm leading-6 text-white/85">
               Your Trusted Gaming Account Marketplace. Buy, sell, and trade
