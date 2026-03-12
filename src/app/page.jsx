@@ -1,7 +1,7 @@
 "use client";
 import {
   X,
-  Star,
+  ChevronDown,
   Store,
   BadgeDollarSign,
   Info,
@@ -25,6 +25,7 @@ export default function Home() {
   const [ready, setReady] = useState(false);
   const innerRef = useRef(null);
   const [active, setActive] = useState("");
+   const [activeIndex, setActiveIndex] = useState(null);
   const linkClass = (name) =>
     `flex items-center gap-3 px-4 py-3 w-full border-b transition-colors duration-200
    ${
@@ -75,6 +76,25 @@ export default function Home() {
     },
   ];
   // Duplicate for seamless loop
+
+  const faqs = [
+    {
+      question: "Why choose Nepogames?",
+      reply:
+        "Nepogames is a trusted platform where gamers can easily buy and sell games. We focus on fair pricing, fast transactions, and a smooth experience so players can get the games they want without hassle.",
+    },
+    {
+      question: "How does Nepogames work?",
+      reply:
+        "Nepogames connects buyers and sellers of games on one platform. Sellers list their games, buyers browse and purchase them, and the platform handles the transaction securely.",
+    },
+    {
+      question: "Is Nepogames secure?",
+      reply:
+        "Yes. Nepogames is designed with security in mind to protect both buyers and sellers. Transactions are handled safely and user information is protected to ensure a reliable marketplace.",
+    },
+  ];
+
   const items = useMemo(() => [...games, ...games], [games]);
 
   useEffect(() => {
@@ -228,6 +248,10 @@ export default function Home() {
       </div>
     );
   }
+
+  const toggleFAQ = (index) => {
+    setActiveIndex(activeIndex === index ? null : index);
+  };
 
   const scrollerRef = useRef(null);
 
@@ -700,6 +724,20 @@ hover:text-[#0000FF]
               </Reveal>
             </div>
           </div>
+          <Reveal>
+            <p className="bg-linear-to-b from-[#4F8CFF] to-[#8A38F5] bg-clip-text text-transparent px-3 text-3xl mt-5 mb-7 text-center lg:text-5xl pt-5 flex w-full justify-center">
+              The Data Driving Our Gaming Economy
+            </p>
+          </Reveal>
+          <Reveal>
+            <div>
+              <img
+                src="/group.png"
+                className="px-[10%] sm:px-[15%] lg:px-[20%]"
+                alt=""
+              />
+            </div>
+          </Reveal>
           <div className="bg-white">
             {" "}
             <Reveal>
@@ -759,6 +797,49 @@ hover:text-[#0000FF]
                 </div>
               </div>
             </Reveal>{" "}
+          </div>
+          <div className="px-[5%]">
+            <div className=" flex text-center justify-center pt-13">
+              <p className="font-bold sm:text-4xl text-3xl">
+                Frequently Asked
+                <span className="text-[#402BBA]"> Questions</span>
+              </p>
+            </div>
+            <div className="flex pt-3 justify-center text-center">
+              {" "}
+              <p>
+                Everything you need to know about Nepo Games and our products
+              </p>
+            </div>
+            <div className="pt-10 pb-15">
+              <div className="space-y-4 max-w-xl mx-auto">
+      {faqs.map((faq, index) => (
+        <div
+          key={index}
+          className="rounded-xl bg-linear-to-r from-[#8A38F5] to-[#4F8CFF] p-[2px]"
+        >
+          <div className="bg-white rounded-xl">
+            <button
+              onClick={() => toggleFAQ(index)}
+              className="w-full flex justify-between items-center p-5 text-left"
+            >
+              <span className="font-medium text-lg">{faq.question}</span>
+
+              <ChevronDown
+                className={`transition-transform duration-300 ${
+                  activeIndex === index ? "rotate-180" : ""
+                }`}
+              />
+            </button>
+
+            {activeIndex === index && (
+              <div className="px-5 pb-5 text-gray-600">{faq.reply}</div>
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+            </div>
           </div>
           <section className="w-full bg-linear-to-b from-[#4F8CFF] to-[#8A38F5]">
             <Reveal>
