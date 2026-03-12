@@ -25,7 +25,7 @@ export default function Home() {
   const [ready, setReady] = useState(false);
   const innerRef = useRef(null);
   const [active, setActive] = useState("");
-   const [activeIndex, setActiveIndex] = useState(null);
+  const [activeIndex, setActiveIndex] = useState(null);
   const linkClass = (name) =>
     `flex items-center gap-3 px-4 py-3 w-full border-b transition-colors duration-200
    ${
@@ -518,7 +518,36 @@ hover:text-[#0000FF]
                   <p>Trade your Gaming Accounts with</p>
                   <p className="text-white sm:pt-3">Nepogames</p>
                 </div>
-                <div>{/* <nepoModal /> */}</div>
+                <div className="hidden md:flex relative">
+                  {/* floating tags */}
+                  <div className="absolute left-0 right-0 -top-5 flex justify-center pointer-events-none">
+                    <div className="flex justify-between max-w-3xl w-full px-[1%]">
+                      <div className="w-fit">
+                        <div className="relative">
+                          <div className="absolute -top-4.5 left-22 w-3 h-3 border-l-4 border-t-4 border-blue-700 rotate-90"></div>
+
+                          <div className="rotate-[45deg] bg-linear-to-r from-purple-600 to-blue-500 px-3 py-2 rounded-xl border-2 border-blue-800 shadow-lg">
+                            <p className="text-white text-sm font-semibold tracking-wide">
+                              Nepogames
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="w-fit">
+                        <div className="relative">
+                          <div className="absolute -top-4.5 left-6 w-3 h-3 border-l-4 border-t-4 border-blue-700"></div>
+
+                          <div className="rotate-[-45deg] bg-linear-to-r from-purple-600 to-blue-500 px-3 py-2 rounded-xl border-2 border-blue-800 shadow-lg">
+                            <p className="text-white text-sm font-semibold tracking-wide">
+                              Nepogames
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
                 <div className="text-center mt-4 text-lg flex w-full justify-center">
                   <div className=" max-w-120">
                     <p className="text-[#1b1a1a]">
@@ -813,32 +842,36 @@ hover:text-[#0000FF]
             </div>
             <div className="pt-10 pb-15">
               <div className="space-y-4 max-w-xl mx-auto">
-      {faqs.map((faq, index) => (
-        <div
-          key={index}
-          className="rounded-xl bg-linear-to-r from-[#8A38F5] to-[#4F8CFF] p-[2px]"
-        >
-          <div className="bg-white rounded-xl">
-            <button
-              onClick={() => toggleFAQ(index)}
-              className="w-full flex justify-between items-center p-5 text-left"
-            >
-              <span className="font-medium text-lg">{faq.question}</span>
+                {faqs.map((faq, index) => (
+                  <div
+                    key={index}
+                    className="rounded-xl bg-linear-to-r from-[#8A38F5] to-[#4F8CFF] p-[2px]"
+                  >
+                    <div className="bg-white rounded-xl">
+                      <button
+                        onClick={() => toggleFAQ(index)}
+                        className="w-full flex justify-between items-center p-5 text-left"
+                      >
+                        <span className="font-medium text-lg">
+                          {faq.question}
+                        </span>
 
-              <ChevronDown
-                className={`transition-transform duration-300 ${
-                  activeIndex === index ? "rotate-180" : ""
-                }`}
-              />
-            </button>
+                        <ChevronDown
+                          className={`transition-transform duration-300 ${
+                            activeIndex === index ? "rotate-180" : ""
+                          }`}
+                        />
+                      </button>
 
-            {activeIndex === index && (
-              <div className="px-5 pb-5 text-gray-600">{faq.reply}</div>
-            )}
-          </div>
-        </div>
-      ))}
-    </div>
+                      {activeIndex === index && (
+                        <div className="px-5 pb-5 text-gray-600">
+                          {faq.reply}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
           <section className="w-full bg-linear-to-b from-[#4F8CFF] to-[#8A38F5]">
