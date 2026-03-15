@@ -95,7 +95,7 @@ export default function LoginClient() {
   };
 
   return (
-    <Reveal>
+   
       <div className="lg:h-screen flex  flex-col lg:flex-row  bg-white">
         <div className="w-full lg:hidden lg:w-1/2 flex justify-center items-center bg-white">
           <img
@@ -342,6 +342,6 @@ export default function LoginClient() {
           />
         </div>
       </div>
-    </Reveal>
+   
   );
 }
