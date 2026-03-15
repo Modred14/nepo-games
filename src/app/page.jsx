@@ -13,12 +13,12 @@ import {
   Menu,
 } from "lucide-react";
 import Reveal from "./reveal";
-// import nepoModal from "./components/nepoModal";
 import { useEffect, useRef, useState, useMemo } from "react";
 import Reviews from "./review";
 import Footer from "./footer";
 import RevealRight from "./revealfright";
 import RevealLeft from "./revealfrleft";
+import Loading from "./loading";
 
 export default function Home() {
   const [open, setOpen] = useState(false);
@@ -26,6 +26,23 @@ export default function Home() {
   const innerRef = useRef(null);
   const [active, setActive] = useState("");
   const [activeIndex, setActiveIndex] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+
+  useEffect(() => {
+  const handleLoad = () => {
+    setLoading(false);
+  };
+
+  if (document.readyState === "complete") {
+    handleLoad();
+  } else {
+    window.addEventListener("load", handleLoad);
+  }
+
+  return () => window.removeEventListener("load", handleLoad);
+}, []);
+
   const linkClass = (name) =>
     `flex items-center gap-3 px-4 py-3 w-full border-b transition-colors duration-200
    ${
@@ -75,7 +92,6 @@ export default function Home() {
       logo: "/bloodstrike.png",
     },
   ];
-  // Duplicate for seamless loop
 
   const faqs = [
     {
@@ -93,8 +109,33 @@ export default function Home() {
       reply:
         "Yes. Nepogames is designed with security in mind to protect both buyers and sellers. Transactions are handled safely and user information is protected to ensure a reliable marketplace.",
     },
-  ];
+    {
+      question: "How do I buy a game on Nepogames?",
+      reply:
+        "Simply browse the available games, select the one you want, and complete the checkout process. Once payment is confirmed, the game or activation details will be delivered to you quickly.",
+    },
+    {
+      question: "How do I sell my games on Nepogames?",
+      reply:
+        "Create a seller account, list your game with the necessary details, and set your price. Once a buyer purchases your game, the platform helps complete the transaction securely.",
+    },
+    {
+      question: "How long does it take to receive my game?",
+      reply:
+        "Most purchases are processed quickly after payment confirmation. In many cases, buyers receive their game details almost instantly.",
+    },
+    {
+      question: "Can I get a refund?",
+      reply:
+        "Refunds may be available depending on the situation and platform policy. If you experience any issue with your purchase, you can contact support for assistance.",
+    },
 
+    {
+      question: "How can I contact support?",
+      reply:
+        "If you need help, you can reach out to the Nepogames support team through the contact section on the website. Our team will assist you as quickly as possible.",
+    },
+  ];
   const items = useMemo(() => [...games, ...games], [games]);
 
   useEffect(() => {
@@ -274,6 +315,9 @@ export default function Home() {
       scrollerInner.appendChild(clone);
     });
   }, []);
+  if (loading) {
+    return <Loading />;
+  }
   return (
     <div className="min-h-screen bg-linear-to-b">
       <div>
@@ -944,7 +988,7 @@ hover:text-[#0000FF]
                 © {new Date().getFullYear()} Nepo Games. All rights reserved.
               </div>
               <div className="grid grid-cols-2 pb-5">
-                <div className="max-w-7xl mx-auto pb-3 px-5 text-white/40 text-sm text-center">
+                <div className="max-w-7xl mx-auto pb-3 px-5 text-white/40 text-xs text-center">
                   Designed by{" "}
                   <a
                     href=""
@@ -977,7 +1021,7 @@ hover:text-[#0000FF]
                     Faiq
                   </a>
                 </div>
-                <div className="max-w-7xl mx-auto pb-3 px-5 text-white/40 text-sm text-center">
+                <div className="max-w-7xl mx-auto pb-3 px-5 text-white/40 text-xs text-center">
                   Developed by{" "}
                   <a
                     href="http://modred.dev"

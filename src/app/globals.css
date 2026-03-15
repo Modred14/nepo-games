@@ -14,6 +14,14 @@ body {
   /* --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono); */
 }
+@keyframes loading {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
+}
+
+.animate-loading {
+  animation: loading 1.2s linear infinite;
+}
 
 .scroller {
   width: 100%;
