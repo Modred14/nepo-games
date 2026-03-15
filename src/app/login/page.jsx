@@ -1,10 +1,10 @@
-import PageLoader from "@/components/PageLoader";
+import { Suspense } from "react";
 import LoginClient from "./LoginClient";
 
 export default function LoginPage() {
   return (
-    <PageLoader>
+    <Suspense fallback={<p>Loading...</p>}>
       <LoginClient />
-    </PageLoader>
+    </Suspense>
   );
 }
