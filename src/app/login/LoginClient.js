@@ -5,8 +5,8 @@ import React from "react";
 import { useState, useEffect } from "react";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 import Reveal from "../reveal";
-import ErrorModal from "../components/ErrorModal";
-import SuccessModal from "../components/SuccessModal";
+import ErrorModal from "../../components/ErrorModal";
+import SuccessModal from "../../components/SuccessModal";
 import { useRouter } from "next/navigation";
 
 export default function LoginClient() {
