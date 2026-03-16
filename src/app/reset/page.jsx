@@ -214,7 +214,7 @@ export default function Login() {
                     </p>
 
                     {/* CONTINUE BUTTON */}
-                    <a href="/marketsplace" className="w-full">
+                    <a href="/marketplace" className="w-full">
                       <button
                         type="button"
                         className="w-full shadow-lg mb-30 lg:mb-0 hover:bg-blue-700 bg-[#0000FF] text-white text-lg font-semibold py-4 rounded-xl transition-all duration-300"

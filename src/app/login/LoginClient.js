@@ -78,13 +78,12 @@ export default function LoginClient() {
       console.log(data);
       if (data.user) {
         localStorage.setItem("nepo-user", JSON.stringify(data.user));
-        if (data.token) localStorage.setItem("nepo-token", data.token);
-      }
+     }
       setErrorOpen(false);
       setMessage("Login successful!");
       setSuccessOpen(true);
       setTimeout(() => {
-        router.push("/marketsplace");
+        router.push("/marketplace");
       }, 3000);
     } catch (err) {
       setLoading(false);

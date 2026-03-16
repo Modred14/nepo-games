@@ -15,9 +15,23 @@ export async function POST(req) {
     }
 
     const result = await pool.query(
-      `SELECT id, email, password_hash, email_verified
-       FROM users
-       WHERE email = $1`,
+      `SELECT 
+     account_status,
+     created_at,
+     email,
+     email_verified,
+     first_name,
+     id,
+     identity_verified,
+     is_verified,
+     profile_image,
+     role,
+     surname,
+     updated_at,
+     username,
+     password_hash  
+   FROM users
+   WHERE email = $1`,
       [email],
     );
 
@@ -54,21 +68,21 @@ export async function POST(req) {
 
       const verifyLink = `${process.env.NEXT_PUBLIC_BASE_URL}/verify?token=${token}`;
 
-       await resend.emails.send({
-      from: "Nepo Games <nepo-games@resend.dev>",
-      to: email,
-      subject: "Verify your email",
-      html: `
+      await resend.emails.send({
+        from: "Nepo Games <nepo-games@resend.dev>",
+        to: email,
+        subject: "Verify your email",
+        html: `
         <h2>Welcome to Nepo Games!</h2>
         <p>Click the button below to verify your email. This link expires in 1 hour.</p>
         <a href="${verifyLink}" style="display:inline-block;padding:10px 20px;background:#0070f3;color:white;text-decoration:none;border-radius:5px;">Verify Email</a>
         <p>If the button doesn't work, copy and paste this link in your browser:</p>
         <p>${verifyLink}</p>
       `,
-      text: `Welcome to Nepo Games!
+        text: `Welcome to Nepo Games!
 Verify your email by clicking the link below (expires in 1 hour):
 ${verifyLink}`,
-    });
+      });
 
       return Response.json(
         {
@@ -78,13 +92,17 @@ ${verifyLink}`,
       );
     }
 
+    const {
+      password_hash,
+      verification_token,
+      verification_expires,
+      ...safeUser
+    } = user;
+
     return Response.json(
       {
         message: "Login successful",
-        user: {
-          id: user.id,
-          email: user.email,
-        },
+        user: safeUser,
       },
       { status: 200 },
     );

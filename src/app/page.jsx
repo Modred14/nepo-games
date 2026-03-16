@@ -316,7 +316,7 @@ export default function Home() {
                     />
                     <div className="hidden md:flex font-medium gap-9">
                       <a
-                        href=""
+                        href="/marketplace"
                         className="
 relative inline-block
 
