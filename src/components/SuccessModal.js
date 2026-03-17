@@ -67,7 +67,7 @@ export default function SuccessModal({
           {/* Message */}
           <p
             id="success-message"
-            className="text-green-600 text-base leading-relaxed pb-4"
+            className="text-center text-green-600 text-base leading-relaxed pb-4"
           >
             {message}
           </p>

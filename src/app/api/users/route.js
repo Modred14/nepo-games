@@ -6,7 +6,8 @@ import { resend } from "../../../../lib/resend";
 export async function POST(req) {
   try {
     const token = crypto.randomBytes(32).toString("hex");
-
+    const defaultAvatar =
+      "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
     const expires = new Date(Date.now() + 1000 * 60 * 60);
     const { first_name, surname, username, email, password } = await req.json();
     const existingUsers = await pool.query(
@@ -41,10 +42,19 @@ export async function POST(req) {
 
     const result = await pool.query(
       `INSERT INTO users
-  (first_name, surname, username, email, password_hash, verification_token, verification_expires)
-  VALUES ($1,$2,$3,$4,$5,$6,$7)
-  RETURNING id, first_name, surname, username, email`,
-      [first_name, surname, username, email, hashedPassword, token, expires],
+  (first_name, surname, username, email, password_hash, profile_image, verification_token, verification_expires)
+  VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+  RETURNING id, first_name, surname, username, email, profile_image`,
+      [
+        first_name,
+        surname,
+        username,
+        email,
+        hashedPassword,
+        defaultAvatar,
+        token,
+        expires,
+      ],
     );
     const verifyLink = `${process.env.NEXT_PUBLIC_BASE_URL}/verify?token=${token}`;
 

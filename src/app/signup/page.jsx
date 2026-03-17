@@ -468,7 +468,7 @@ export default function Login() {
                 >
                   {loading ? (
                     <div className="flex w-full text-center justify-center gap-3">
-                      <span className="inline-block w-5 h-5 border-4 border-white border-t-transparent rounded-full animate-spin"></span>{" "}
+                      <span className="inline-block w-6 h-6 border-4 border-white border-t-transparent rounded-full animate-spin"></span>{" "}
                     </div>
                   ) : (
                     "Create Account"
