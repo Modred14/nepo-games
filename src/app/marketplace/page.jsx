@@ -163,7 +163,7 @@ export default function Marketplace() {
                 type="search"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="bg-gray-200 w-full p-2 pl-9 sm:pl-10 text-sm rounded-2xl border border-blue-600/40"
+                className="bg-gray-200 w-full p-2 pl-9 sm:pl-10 text-base rounded-2xl border border-blue-600/40"
                 placeholder="Search for gaming accounts"
               />
             </div>
