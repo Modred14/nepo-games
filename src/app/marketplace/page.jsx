@@ -163,7 +163,7 @@ export default function Marketplace() {
                 type="search"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="bg-gray-200 w-full p-2 pl-9 sm:pl-10 text-xs sm:text-sm rounded-2xl border border-blue-600/40"
+                className="bg-gray-200 w-full p-2 pl-9 sm:pl-10 text-base rounded-2xl border border-blue-600/40"
                 placeholder="Search for gaming accounts"
               />
             </div>
@@ -182,9 +182,9 @@ export default function Marketplace() {
         </div>
         <div className="px-[2%]   w-full py-[5%] sm:py-[2%]">
           {filteredGames.length === 0 ? (
-            <div>
-              <NoGame />
-            </div>
+           <div className="h-[65vh]">
+  <NoGame />
+</div>
           ) : (
             <div className="grid grid-cols-1 justify-center xs:grid-cols-2 sm:flex gap-2 sm:gap-5 flex-wrap">
               {filteredGames.map((game, index) => {
