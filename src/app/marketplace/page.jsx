@@ -14,6 +14,19 @@ export default function Marketplace() {
   const [search, setSearch] = useState("");
   const [games, setGames] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [platform, setPlatform] = useState("");
+  const [type, setType] = useState("");
+  const [minPrice, setMinPrice] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
+  const [verifiedOnly, setVerifiedOnly] = useState(false);
+  const [priceRange, setPriceRange] = useState([0, 50000000]);
+
+  const getAmount = (price) => {
+    if (!price) return 0;
+    const parts = price.split(" ");
+    const amount = parts[1] || "0";
+    return Number(amount.replace(/[^\d]/g, ""));
+  };
 
   const router = useRouter();
   useEffect(() => {
@@ -55,32 +68,58 @@ export default function Marketplace() {
     }
   };
   if (loading) {
-  return <Loader />;
-}
-const formatGamePrice = (price) => {
-  if (!price) return "";
-
-  const parts = price.split(" ");
-
-  if (parts.length !== 2) return price;
-
-  let [currency, amount] = parts;
-
-  const num = Number(amount.replace(/[^\d]/g, ""));
-  if (isNaN(num)) return price;
-
-  const formatted = num.toLocaleString();
-
-  if (currency === "NGN") {
-    return `₦ ${formatted}`;
+    return <Loader />;
   }
+  const formatGamePrice = (price) => {
+    if (!price) return "";
 
-  return `${currency} ${formatted}`;
-};
+    const parts = price.split(" ");
+
+    if (parts.length !== 2) return price;
+
+    let [currency, amount] = parts;
+
+    const num = Number(amount.replace(/[^\d]/g, ""));
+    if (isNaN(num)) return price;
+
+    const formatted = num.toLocaleString();
+
+    if (currency === "NGN") {
+      return `₦ ${formatted}`;
+    }
+
+    return `${currency} ${formatted}`;
+  };
 
   const filteredGames = games
-    .filter((game) => game.title.toLowerCase().includes(search.toLowerCase()))
+    .filter((game) => {
+      const matchesSearch = game.title
+        .toLowerCase()
+        .includes(search.toLowerCase());
+
+      const matchesPlatform = !platform || game.platform === platform;
+
+      // IMPORTANT FIX: using title instead of game.type
+      const matchesGame = !type || game.title === type;
+
+      const matchesVerified = !verifiedOnly || game.verified === true;
+
+      const amount = getAmount(game.price);
+
+      const matchesMin = amount >= priceRange[0];
+      const matchesMax = amount <= priceRange[1];
+
+      return (
+        matchesSearch &&
+        matchesPlatform &&
+        matchesGame &&
+        matchesVerified &&
+        matchesMin &&
+        matchesMax
+      );
+    })
     .sort((a, b) => b.verified - a.verified);
+
   return (
     <PageLoader>
       <div className="pb-20">
@@ -117,13 +156,117 @@ const formatGamePrice = (price) => {
             </button>
           </div>
         </div>
-        <div className="px-[2%]   w-full py-[5%] sm:py-[2%]">
+        <div className="px-[2%] w-full ">
+          <div className="w-full mt-3 px-2 sm:px-4 ">
+            <div className="flex flex-wrap items-center gap-3 sm:gap-4 bg-white border border-blue-600/20 rounded-xl p-3 shadow-sm">
+              {/* Platform */}
+              <div className="flex flex-col">
+                <label className="text-xs text-gray-500">Platform</label>
+                <select
+                  value={platform}
+                  onChange={(e) => setPlatform(e.target.value)}
+                  className="p-2 text-sm rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-400 outline-none"
+                >
+                  <option value="">All</option>
+                  <option value="mobile">Mobile</option>
+                  <option value="pc">PC</option>
+                  <option value="xbox">Xbox</option>
+                  <option value="playstation">PlayStation</option>
+                </select>
+              </div>
+
+              {/* Game */}
+              <div className="flex flex-col">
+                <label className="text-xs text-gray-500">Game</label>
+                <select
+                  value={type}
+                  onChange={(e) => setType(e.target.value)}
+                  className="p-2 text-sm rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-400 outline-none"
+                >
+                  <option value="">All Games</option>
+                  <option value="Efootball">Efootball</option>
+                  <option value="Call of Duty">Call of Duty</option>
+                  <option value="Free Fire">Free Fire</option>
+                  <option value="PubG">PubG</option>
+                  <option value="Blood Strike">Blood Strike</option>
+                  <option value="EA Sports (FIFA)">EA Sports (FIFA)</option>
+                  <option value="Delta Force">Delta Force</option>
+                  <option value="Dream League Soccer">
+                    Dream League Soccer
+                  </option>
+                </select>
+              </div>
+
+              {/* Price (compact but powerful) */}
+              <div className="flex flex-col flex-1 min-w-45">
+                <div className="flex gap-2 justify-between text-xs text-gray-500">
+                  <span>Price</span>
+                  <div className="gap-2 flex">
+                
+                    <span className="text-gray-700 flex items-center font-medium">
+                      ₦
+                      <input
+                        type="number"
+                        min="0"
+                        value={priceRange[1]}
+                        onChange={(e) => {
+                          let value = Number(e.target.value);
+
+                          if (value > 50000000) value = 50000000;
+                          if (value < 0) value = 0;
+
+                          setPriceRange([priceRange[0], value]);
+                        }}
+                        className="w-19 focus:outline-none focus:border focus:ml-1 border-blue-600/50 rounded-sm px-1 cursor-pointer"
+                      />
+                    </span>
+                  </div>
+                </div>
+
+                <input
+                  type="range"
+                  min="0"
+                  max="50000000"
+                  value={priceRange[1]}
+                  onChange={(e) =>
+                    setPriceRange([priceRange[0], Number(e.target.value)])
+                  }
+                  className="w-full accent-blue-600 cursor-pointer"
+                />
+              </div>
+
+              {/* Verified */}
+              <label className="flex items-center gap-2 text-sm ">
+                <input
+                  type="checkbox"
+                  checked={verifiedOnly}
+                  onChange={(e) => setVerifiedOnly(e.target.checked)}
+                  className="accent-green-600"
+                />
+                <span className="text-green-600 text-xs font-bold">Verified Sellers</span>
+              </label>
+
+              {/* Reset */}
+              <button
+                onClick={() => {
+                  setPlatform("");
+                  setType("");
+                  setVerifiedOnly(false);
+                  setSearch("");
+                  setPriceRange([0, 50000000]);
+                }}
+                className="ml-auto  px-2 py-1 border border-blue-600/30 text-[13px] rounded-lg bg-blue-100 hover:bg-blue-200 transition"
+              >
+                Reset
+              </button>
+            </div>
+          </div>
           {filteredGames.length === 0 ? (
-            <div className="h-[65vh]">
+            <div className="h-[60vh]">
               <NoGame />
             </div>
           ) : (
-            <div className="grid grid-cols-1 justify-center xs:grid-cols-2 sm:flex gap-2 sm:gap-5 flex-wrap">
+            <div className="grid py-[5%] sm:py-[2%] grid-cols-1 justify-center xs:grid-cols-2 sm:flex gap-2 sm:gap-5 flex-wrap">
               {filteredGames.map((game, index) => {
                 return (
                   <div key={index}>
