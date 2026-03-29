@@ -6,11 +6,15 @@ import PageLoader from "@/components/PageLoader";
 import { useRouter } from "next/navigation";
 import { Search, ShoppingCart, Verified } from "lucide-react";
 import NoGame from "@/components/NoGame";
+import Loader from "@/components/Loader";
 
 export default function Marketplace() {
   useAuthGuard();
   const [user, setUser] = useState(null);
   const [search, setSearch] = useState("");
+  const [games, setGames] = useState([]);
+  const [loading, setLoading] = useState(true);
+
   const router = useRouter();
   useEffect(() => {
     const storedUser = localStorage.getItem("nepo-user");
@@ -21,6 +25,26 @@ export default function Marketplace() {
       console.log(parsedUser);
     }
   }, []);
+
+  useEffect(() => {
+    const fetchGames = async () => {
+      try {
+        const res = await fetch("/api/market");
+
+        if (!res.ok) throw new Error("Failed to fetch listings");
+
+        const data = await res.json();
+
+        setGames(data.games);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchGames();
+  }, []);
   const handleLogout = () => {
     const storedUser = localStorage.getItem("nepo-user");
 
@@ -30,123 +54,36 @@ export default function Marketplace() {
       router.push("/login");
     }
   };
-  const games = [
-    {
-      id: "1",
-      user_id: "2",
-      title: "Call of Duty",
-      slug: "/1",
-      description: "This is an efootball account",
-      views_count: "1003",
-      price: "N 1,000",
-      currency: "NGN",
-      proof_image_url: "",
-      cover_image: "/call-of-duty.png",
-      platform: "Mobile",
-      status: "Active",
-      created_at: "10pm",
-      updated_at: "",
-      deleted_at: "",
-      verified: true,
-    },
-    {
-      id: "1",
-      user_id: "2",
-      title: "Efootball",
-      slug: "/1",
-      description: "This is an efootball account",
-      views_count: "1003",
-      price: "N 1,000",
-      currency: "NGN",
-      proof_image_url: "",
-      cover_image: "/call-of-duty.png",
-      platform: "Mobile",
-      status: "Active",
-      created_at: "10pm",
-      updated_at: "",
-      deleted_at: "",
-      verified: true,
-    },
-    {
-      id: "1",
-      user_id: "2",
-      title: "Free Fire",
-      slug: "/1",
-      description: "This is an efootball account",
-      views_count: "1003",
-      price: "N 1,000",
-      currency: "NGN",
-      proof_image_url: "",
-      cover_image: "/call-of-duty.png",
-      platform: "Mobile",
-      status: "Active",
-      created_at: "10pm",
-      updated_at: "",
-      deleted_at: "",
-      verified: false,
-    },
-    {
-      id: "1",
-      user_id: "2",
-      title: "Efootball",
-      slug: "/1",
-      description: "This is an efootball account",
-      views_count: "1003",
-      price: "N 1,000",
-      currency: "NGN",
-      proof_image_url: "",
-      cover_image: "/call-of-duty.png",
-      platform: "Mobile",
-      status: "Active",
-      created_at: "10pm",
-      updated_at: "",
-      deleted_at: "",
-      verified: true,
-    },
-    {
-      id: "1",
-      user_id: "2",
-      title: "Efootball",
-      slug: "/1",
-      description: "This is an efootball account",
-      views_count: "1003",
-      price: "N 1,000",
-      currency: "NGN",
-      proof_image_url: "",
-      cover_image: "/call-of-duty.png",
-      platform: "Mobile",
-      status: "Active",
-      created_at: "10pm",
-      updated_at: "",
-      deleted_at: "",
-      verified: true,
-    },
-    {
-      id: "1",
-      user_id: "2",
-      title: "Efootball",
-      slug: "/1",
-      description: "This is an efootball account",
-      views_count: "1003",
-      price: "N 1,000",
-      currency: "NGN",
-      proof_image_url: "",
-      cover_image: "/call-of-duty.png",
-      platform: "Mobile",
-      status: "Active",
-      created_at: "10pm",
-      updated_at: "",
-      deleted_at: "",
-      verified: true,
-    },
-  ];
+  if (loading) {
+  return <Loader />;
+}
+const formatGamePrice = (price) => {
+  if (!price) return "";
+
+  const parts = price.split(" ");
+
+  if (parts.length !== 2) return price;
+
+  let [currency, amount] = parts;
+
+  const num = Number(amount.replace(/[^\d]/g, ""));
+  if (isNaN(num)) return price;
+
+  const formatted = num.toLocaleString();
+
+  if (currency === "NGN") {
+    return `₦ ${formatted}`;
+  }
+
+  return `${currency} ${formatted}`;
+};
 
   const filteredGames = games
     .filter((game) => game.title.toLowerCase().includes(search.toLowerCase()))
     .sort((a, b) => b.verified - a.verified);
   return (
     <PageLoader>
-      <div>
+      <div className="pb-20">
         <div className="flex border-b border-[#0000FF]/40 justify-between py-4 px-7 items-center">
           <p className="text-lg sm:text-xl font-bold">
             Hello, {user?.username}
@@ -218,7 +155,7 @@ export default function Marketplace() {
                           <div className="text-[#0000FF] font-bold ">
                             {game.title}
                           </div>
-                          <div>{game.price}</div>
+                          <div>{formatGamePrice(game.price)}</div>
                         </div>
                         <a>
                           <button className="flex  text-white p-1.5 rounded-lg border border-[#0038C9] bg-linear-to-b from-[#4F8CFF] to-[#8A38F5] b items-center gap-1 sm:text-sm text-xs">
