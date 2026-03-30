@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { Search, ShoppingCart, Verified } from "lucide-react";
 import NoGame from "@/components/NoGame";
 import Loader from "@/components/Loader";
+import ReactSlider from "react-slider";
 
 export default function Marketplace() {
   useAuthGuard();
@@ -16,10 +17,8 @@ export default function Marketplace() {
   const [loading, setLoading] = useState(true);
   const [platform, setPlatform] = useState("");
   const [type, setType] = useState("");
-  const [minPrice, setMinPrice] = useState("");
-  const [maxPrice, setMaxPrice] = useState("");
   const [verifiedOnly, setVerifiedOnly] = useState(false);
-  const [priceRange, setPriceRange] = useState([0, 50000000]);
+  const [priceRange, setPriceRange] = useState([0, 20000000]);
 
   const getAmount = (price) => {
     if (!price) return 0;
@@ -96,19 +95,12 @@ export default function Marketplace() {
       const matchesSearch = game.title
         .toLowerCase()
         .includes(search.toLowerCase());
-
       const matchesPlatform = !platform || game.platform === platform;
-
-      // IMPORTANT FIX: using title instead of game.type
       const matchesGame = !type || game.title === type;
-
       const matchesVerified = !verifiedOnly || game.verified === true;
-
       const amount = getAmount(game.price);
-
       const matchesMin = amount >= priceRange[0];
       const matchesMax = amount <= priceRange[1];
-
       return (
         matchesSearch &&
         matchesPlatform &&
@@ -139,7 +131,7 @@ export default function Marketplace() {
                 type="search"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="bg-gray-200 w-full p-2 pl-9 sm:pl-10 text-base rounded-2xl border border-blue-600/40"
+                className="bg-gray-200 w-full p-2 pl-9 text-xs sm:text-sm  rounded-2xl border border-blue-600/40"
                 placeholder="Search gaming accounts"
               />
             </div>
@@ -156,32 +148,18 @@ export default function Marketplace() {
             </button>
           </div>
         </div>
-        <div className="px-[2%] w-full ">
-          <div className="w-full mt-3 px-2 sm:px-4 ">
+        <div className="px-[3%] w-full ">
+          <div className="w-full mt-3">
             <div className="flex flex-wrap items-center gap-3 sm:gap-4 bg-white border border-blue-600/20 rounded-xl p-3 shadow-sm">
               {/* Platform */}
-              <div className="flex flex-col">
-                <label className="text-xs text-gray-500">Platform</label>
-                <select
-                  value={platform}
-                  onChange={(e) => setPlatform(e.target.value)}
-                  className="p-2 text-sm rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-400 outline-none"
-                >
-                  <option value="">All</option>
-                  <option value="mobile">Mobile</option>
-                  <option value="pc">PC</option>
-                  <option value="xbox">Xbox</option>
-                  <option value="playstation">PlayStation</option>
-                </select>
-              </div>
 
               {/* Game */}
-              <div className="flex flex-col">
+              <div className="flex flex-col flex-1 min-w-40">
                 <label className="text-xs text-gray-500">Game</label>
                 <select
                   value={type}
                   onChange={(e) => setType(e.target.value)}
-                  className="p-2 text-sm rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-400 outline-none"
+                  className="w-full p-2 text-sm rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-400 outline-none"
                 >
                   <option value="">All Games</option>
                   <option value="Efootball">Efootball</option>
@@ -196,15 +174,56 @@ export default function Marketplace() {
                   </option>
                 </select>
               </div>
-
+              <div className="flex flex-col flex-1 min-w-40">
+                <label className="text-xs text-gray-500">Platform</label>
+                <select
+                  value={platform}
+                  onChange={(e) => setPlatform(e.target.value)}
+                  className="p-2 text-sm rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-400 outline-none"
+                >
+                  <option value="">All Platforms</option>
+                  <option value="mobile">Mobile</option>
+                  <option value="pc">PC</option>
+                  <option value="xbox">Xbox</option>
+                  <option value="playstation">PlayStation</option>
+                </select>
+              </div>
               {/* Price (compact but powerful) */}
               <div className="flex flex-col flex-1 min-w-45">
-                <div className="flex gap-2 justify-between text-xs text-gray-500">
-                  <span>Price</span>
-                  <div className="gap-2 flex">
-                
-                    <span className="text-gray-700 flex items-center font-medium">
-                      ₦
+                <div className="flex flex-col lg:flex-row justify-between lg:items-center text-xs ">
+                  <span className="text-xs lg:text-sm text-gray-500 ">
+                    Price
+                  </span>{" "}
+                  <div className="flex gap-2 ">
+                    {/* MIN */}
+                    <div className="relative w-24 ">
+                      <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-700">
+                        ₦
+                      </span>
+
+                      <input
+                        type="number"
+                        min="0"
+                        value={priceRange[0]}
+                        onChange={(e) => {
+                          let value = Number(e.target.value);
+
+                          if (value < 0) value = 0;
+                          if (value > priceRange[1]) value = priceRange[1]; // prevent crossing
+
+                          setPriceRange([value, priceRange[1]]);
+                        }}
+                        placeholder="Min"
+                        className="w-full pl-6 pr-2 py-1 border border-blue-600/50 rounded-sm focus:outline-none text-black"
+                      />
+                    </div>
+
+                    {/* MAX */}
+                    <div className="relative w-24">
+                      <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-700">
+                        ₦
+                      </span>
+
                       <input
                         type="number"
                         min="0"
@@ -212,26 +231,37 @@ export default function Marketplace() {
                         onChange={(e) => {
                           let value = Number(e.target.value);
 
-                          if (value > 50000000) value = 50000000;
-                          if (value < 0) value = 0;
+                          if (value > 20000000) value = 20000000;
+                          if (value < priceRange[0]) value = priceRange[0]; // prevent crossing
 
                           setPriceRange([priceRange[0], value]);
                         }}
-                        className="w-19 focus:outline-none focus:border focus:ml-1 border-blue-600/50 rounded-sm px-1 cursor-pointer"
+                        placeholder="Max"
+                        className="w-full pl-6 pr-2 py-1 border border-blue-600/50 rounded-sm focus:outline-none text-black"
                       />
-                    </span>
+                    </div>
                   </div>
                 </div>
-
-                <input
-                  type="range"
-                  min="0"
-                  max="50000000"
-                  value={priceRange[1]}
-                  onChange={(e) =>
-                    setPriceRange([priceRange[0], Number(e.target.value)])
-                  }
-                  className="w-full accent-blue-600 cursor-pointer"
+                <ReactSlider
+                  className="w-full flex items-center mt-2"
+                  thumbClassName="w-2 h-2 bg-blue-600 rounded-full cursor-grab focus:outline-none"
+                  trackClassName="h-1 bg-gray-300 rounded-full"
+                  min={0}
+                  max={20000000}
+                  value={priceRange}
+                  onChange={(val) => setPriceRange(val)}
+                  pearling
+                  minDistance={0}
+                  renderTrack={(props, state) => {
+                    return (
+                      <div
+                        {...props}
+                        className={`h-1 rounded-full ${
+                          state.index === 1 ? "bg-blue-600" : "bg-gray-300"
+                        }`}
+                      />
+                    );
+                  }}
                 />
               </div>
 
@@ -243,7 +273,9 @@ export default function Marketplace() {
                   onChange={(e) => setVerifiedOnly(e.target.checked)}
                   className="accent-green-600"
                 />
-                <span className="text-green-600 text-xs font-bold">Verified Sellers</span>
+                <span className="text-green-600 text-xs font-bold">
+                  Verified Sellers
+                </span>
               </label>
 
               {/* Reset */}
@@ -253,7 +285,7 @@ export default function Marketplace() {
                   setType("");
                   setVerifiedOnly(false);
                   setSearch("");
-                  setPriceRange([0, 50000000]);
+                  setPriceRange([0, 20000000]);
                 }}
                 className="ml-auto  px-2 py-1 border border-blue-600/30 text-[13px] rounded-lg bg-blue-100 hover:bg-blue-200 transition"
               >
@@ -266,11 +298,11 @@ export default function Marketplace() {
               <NoGame />
             </div>
           ) : (
-            <div className="grid py-[5%] sm:py-[2%] grid-cols-1 justify-center xs:grid-cols-2 sm:flex gap-2 sm:gap-5 flex-wrap">
+            <div className="grid py-3 sm:py-10 grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 3xl:flex gap-2 sm:gap-5 flex-wrap">
               {filteredGames.map((game, index) => {
                 return (
                   <div key={index}>
-                    <div className="border-2 rounded-md border-[#4F8CFF] sm:w-70">
+                    <div className="border-2 rounded-md border-[#4F8CFF]">
                       {game.verified && (
                         <div className="w-full flex justify-end pr-2">
                           {" "}
@@ -288,7 +320,7 @@ export default function Marketplace() {
                       <div className="w-full  ">
                         <img
                           src={game.cover_image}
-                          className="w-fit h-50 object-cover rounded-t-[4.5px] "
+                          className="w-full h-50 object-cover rounded-t-[4.5px] "
                           alt=""
                         />
                       </div>{" "}
