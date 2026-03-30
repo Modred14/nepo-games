@@ -19,6 +19,7 @@ export default function Marketplace() {
   const [type, setType] = useState("");
   const [verifiedOnly, setVerifiedOnly] = useState(false);
   const [priceRange, setPriceRange] = useState([0, 20000000]);
+  const [imagesLoaded, setImagesLoaded] = useState(0);
 
   const getAmount = (price) => {
     if (!price) return 0;
@@ -57,18 +58,17 @@ export default function Marketplace() {
 
     fetchGames();
   }, []);
-  const handleLogout = () => {
-    const storedUser = localStorage.getItem("nepo-user");
 
-    if (storedUser) {
-      localStorage.removeItem("nepo-user");
-      if (storedUser.token) localStorage.removeItem("nepo-token");
-      router.push("/login");
-    }
-  };
-  if (loading) {
-    return <Loader />;
-  }
+  // const handleLogout = () => {
+  //   const storedUser = localStorage.getItem("nepo-user");
+
+  //   if (storedUser) {
+  //     localStorage.removeItem("nepo-user");
+  //     if (storedUser.token) localStorage.removeItem("nepo-token");
+  //     router.push("/login");
+  //   }
+  // };
+
   const formatGamePrice = (price) => {
     if (!price) return "";
 
@@ -112,6 +112,29 @@ export default function Marketplace() {
     })
     .sort((a, b) => b.verified - a.verified);
 
+  const isImagesReady =
+    filteredGames.length === 0 || imagesLoaded >= filteredGames.length;
+  useEffect(() => {
+    let count = 0;
+
+    if (filteredGames.length === 0) return;
+
+    filteredGames.forEach((game) => {
+      const img = new Image();
+      img.src = game.cover_image;
+
+      img.onload = img.onerror = () => {
+        count++;
+        if (count === filteredGames.length) {
+          setImagesLoaded(filteredGames.length);
+        }
+      };
+    });
+  }, [filteredGames]);
+  if (loading || !isImagesReady) {
+    return <Loader />;
+  }
+
   return (
     <PageLoader>
       <div className="pb-20">
@@ -140,10 +163,7 @@ export default function Marketplace() {
                 Become a seller
               </p>
             </div>
-            <button
-              className="border w-9 border-blue-600/40 rounded-3xl"
-              onClick={handleLogout}
-            >
+            <button className="border w-9 border-blue-600/40 rounded-3xl">
               <img src={user?.profile_image} alt="" />
             </button>
           </div>
@@ -151,9 +171,6 @@ export default function Marketplace() {
         <div className="px-[3%] w-full ">
           <div className="w-full mt-3">
             <div className="flex flex-wrap items-center gap-3 sm:gap-4 bg-white border border-blue-600/20 rounded-xl p-3 shadow-sm">
-              {/* Platform */}
-
-              {/* Game */}
               <div className="flex flex-col flex-1 min-w-40">
                 <label className="text-xs text-gray-500">Game</label>
                 <select
