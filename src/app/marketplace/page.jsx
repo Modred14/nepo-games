@@ -204,12 +204,18 @@ export default function Marketplace() {
                       <input
                         type="number"
                         min="0"
-                        value={priceRange[0]}
+                        value={priceRange[0] ?? ""}
                         onChange={(e) => {
-                          let value = Number(e.target.value);
+                          const val = e.target.value;
+                          if (val === "") {
+                            setPriceRange(["", priceRange[1]]);
+                            return;
+                          }
+
+                          let value = Number(val);
 
                           if (value < 0) value = 0;
-                          if (value > priceRange[1]) value = priceRange[1]; // prevent crossing
+                          if (value > priceRange[1]) value = priceRange[1];
 
                           setPriceRange([value, priceRange[1]]);
                         }}
@@ -227,12 +233,21 @@ export default function Marketplace() {
                       <input
                         type="number"
                         min="0"
-                        value={priceRange[1]}
+                        value={priceRange[1] ?? ""}
                         onChange={(e) => {
-                          let value = Number(e.target.value);
+                          const val = e.target.value;
+
+                          if (val === "") {
+                            setPriceRange([priceRange[0], ""]);
+                            return;
+                          }
+                          let value = Number(val);
 
                           if (value > 20000000) value = 20000000;
-                          if (value < priceRange[0]) value = priceRange[0]; // prevent crossing
+                          if (value < priceRange[0]) value = priceRange[0];
+                          if (priceRange[0] !== "" && value < priceRange[0]) {
+                            value = priceRange[0];
+                          }
 
                           setPriceRange([priceRange[0], value]);
                         }}
