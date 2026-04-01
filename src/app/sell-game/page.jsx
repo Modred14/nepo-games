@@ -11,7 +11,7 @@ const gameData = {
   "Blood Strike": "bloodstrike-ac.png",
   "EA Sports (FIFA)": "fifa.png",
   "  Delta Force": "delta.png",
-  " Dream League Soccer": "dls.png",
+  " DLS": "dls.png",
 };
 
 export default function SellGame() {
