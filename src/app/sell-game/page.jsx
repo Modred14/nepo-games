@@ -9,9 +9,9 @@ const gameData = {
   "Free Fire": "freefire-ac.png",
   PubG: "pubg.png",
   "Blood Strike": "bloodstrike-ac.png",
-  "EA Sports (FIFA)": "fifa.png",
-  "  Delta Force": "delta.png",
-  " DLS": "dls.png",
+  "EA Sports": "fifa.png",
+  "Delta Force": "delta.png",
+  "DLS": "dls.png",
 };
 
 export default function SellGame() {
