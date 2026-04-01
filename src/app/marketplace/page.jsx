@@ -319,8 +319,8 @@ const getAmount = (price) => {
             <div className="grid py-3 sm:py-10 grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 3xl:flex gap-2 sm:gap-5 flex-wrap">
               {filteredGames.map((game, index) => {
                 return (
-                  <div key={index}>
-                    <div className="border-2 rounded-md border-[#4F8CFF]">
+                  <div key={index} >
+                    <div className="border-2 rounded-md h-full border-[#4F8CFF]">
                       {game.verified && (
                         <div className="w-full flex justify-end pr-2">
                           {" "}
@@ -345,7 +345,7 @@ const getAmount = (price) => {
                       <div className="px-2 flex items-center py-3  justify-between">
                         {" "}
                         <div>
-                          <div className="text-[#0000FF] text-sm sm:text-base font-bold ">
+                          <div className="text-[#0000FF] font-bold ">
                             {game.title}
                           </div>
                           <div>{formatGamePrice(game.price)}</div>
