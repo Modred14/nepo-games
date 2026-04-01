@@ -345,7 +345,7 @@ const getAmount = (price) => {
                       <div className="px-2 flex items-center py-3  justify-between">
                         {" "}
                         <div>
-                          <div className="text-[#0000FF] font-bold ">
+                          <div className="text-[#0000FF] text-sm sm:text-base font-bold ">
                             {game.title}
                           </div>
                           <div>{formatGamePrice(game.price)}</div>
