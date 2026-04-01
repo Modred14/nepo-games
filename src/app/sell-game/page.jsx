@@ -4,14 +4,14 @@ import { useState, useEffect } from "react";
 import useAuthGuard from "../hooks/useAuthGuard";
 
 const gameData = {
-  Efootball: "efootball.png",
+  "Blood Strike": "bloodstrike-ac.png",
   "Call of Duty": "call-of-duty.png",
+  "Delta Force": "delta.png",
+  DLS: "dls.png",
+  "EA Sports": "fifa.png",
+  Efootball: "efootball.png",
   "Free Fire": "freefire-ac.png",
   PubG: "pubg.png",
-  "Blood Strike": "bloodstrike-ac.png",
-  "EA Sports": "fifa.png",
-  "Delta Force": "delta.png",
-  "DLS": "dls.png",
 };
 
 export default function SellGame() {
