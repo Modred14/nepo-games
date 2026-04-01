@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Mail, Lock, Eye, EyeOff, User } from "lucide-react";
 import Reveal from "../reveal";
 import ErrorModal from "../../components/ErrorModal";
@@ -24,6 +24,14 @@ export default function Login() {
   const [successOpen, setSuccessOpen] = useState(false);
 
   const router = useRouter();
+
+  useEffect(() => {
+    const user = JSON.parse(localStorage.getItem("nepo-user"));
+
+    if (user) {
+      router.push("/marketplace");
+    }
+  }, [router]);
 
   function parseFullName(fullName) {
     const trimmed = fullName.trim();

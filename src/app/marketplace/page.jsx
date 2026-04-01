@@ -18,15 +18,13 @@ export default function Marketplace() {
   const [platform, setPlatform] = useState("");
   const [type, setType] = useState("");
   const [verifiedOnly, setVerifiedOnly] = useState(false);
-  const [priceRange, setPriceRange] = useState([0, 20000000]);
+  const [priceRange, setPriceRange] = useState([0,5000000]);
   const [imagesLoaded, setImagesLoaded] = useState(0);
 
-  const getAmount = (price) => {
-    if (!price) return 0;
-    const parts = price.split(" ");
-    const amount = parts[1] || "0";
-    return Number(amount.replace(/[^\d]/g, ""));
-  };
+const getAmount = (price) => {
+  const numericPrice = parseFloat(price.replace(/[^0-9.]/g, ""));
+  return numericPrice;
+};
 
   const router = useRouter();
   useEffect(() => {
@@ -69,26 +67,12 @@ export default function Marketplace() {
   //   }
   // };
 
-  const formatGamePrice = (price) => {
-    if (!price) return "";
 
-    const parts = price.split(" ");
+ function formatGamePrice(price) {
+  const numericPrice = parseFloat(price.replace(/[^0-9.]/g, ""));
+  return `₦ ${numericPrice.toLocaleString()}`;
+}
 
-    if (parts.length !== 2) return price;
-
-    let [currency, amount] = parts;
-
-    const num = Number(amount.replace(/[^\d]/g, ""));
-    if (isNaN(num)) return price;
-
-    const formatted = num.toLocaleString();
-
-    if (currency === "NGN") {
-      return `₦ ${formatted}`;
-    }
-
-    return `${currency} ${formatted}`;
-  };
 
   const filteredGames = games
     .filter((game) => {
@@ -99,6 +83,7 @@ export default function Marketplace() {
       const matchesGame = !type || game.title === type;
       const matchesVerified = !verifiedOnly || game.verified === true;
       const amount = getAmount(game.price);
+      
       const matchesMin = amount >= priceRange[0];
       const matchesMax = amount <= priceRange[1];
       return (
@@ -163,9 +148,10 @@ export default function Marketplace() {
                 Become a seller
               </p>
             </div>
+            <a href="/profile">
             <button className="border w-9 border-blue-600/40 rounded-3xl">
               <img src={user?.profile_image} alt="" />
-            </button>
+            </button></a>
           </div>
         </div>
         <div className="px-[3%] w-full ">
@@ -260,7 +246,7 @@ export default function Marketplace() {
                           }
                           let value = Number(val);
 
-                          if (value > 20000000) value = 20000000;
+                          if (value >5000000) value =5000000;
                           if (value < priceRange[0]) value = priceRange[0];
                           if (priceRange[0] !== "" && value < priceRange[0]) {
                             value = priceRange[0];
@@ -279,7 +265,7 @@ export default function Marketplace() {
                   thumbClassName="w-2 h-2 bg-blue-600 rounded-full cursor-grab focus:outline-none"
                   trackClassName="h-1 bg-gray-300 rounded-full"
                   min={0}
-                  max={20000000}
+                  max={5000000}
                   value={priceRange}
                   onChange={(val) => setPriceRange(val)}
                   pearling
@@ -317,7 +303,7 @@ export default function Marketplace() {
                   setType("");
                   setVerifiedOnly(false);
                   setSearch("");
-                  setPriceRange([0, 20000000]);
+                  setPriceRange([0,5000000]);
                 }}
                 className="ml-auto  px-2 py-1 border border-blue-600/30 text-[13px] rounded-lg bg-blue-100 hover:bg-blue-200 transition"
               >
@@ -364,7 +350,7 @@ export default function Marketplace() {
                           </div>
                           <div>{formatGamePrice(game.price)}</div>
                         </div>
-                        <a>
+                        <a href={`/game${game.slug}`}>
                           <button className="flex  text-white p-1.5 rounded-lg border border-[#0038C9] bg-linear-to-b from-[#4F8CFF] to-[#8A38F5] b items-center gap-1 sm:text-sm text-xs">
                             Buy{" "}
                             <ShoppingCart

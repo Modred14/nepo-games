@@ -44,7 +44,7 @@ export default function SuccessModal({
       role="dialog"
       aria-modal="true"
       aria-describedby="success-message"
-      className="z-50 mb-3 flex items-center justify-center backdrop-blur-sm"
+      className="z-50 mb-3 flex items-center justify-center "
     >
       <div className="relative mb-4 w-full max-w-md bg-white/10 backdrop-blur-xl border border-green-400/40 rounded-xl px-3 pt-6 animate-fadeIn">
         

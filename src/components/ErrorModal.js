@@ -45,7 +45,7 @@ export default function ErrorModal({
       aria-modal="true"
       aria-labelledby="error-title"
       aria-describedby="error-message"
-      className=" z-50 flex items-center justify-center backdrop-blur-sm"
+      className=" z-50 flex items-center justify-center "
     >
       <div className="relative mb-4 w-full max-w-md bg-white/10 backdrop-blur-xl border border-red-400/40 rounded-xl px-3 pt-6 animate-fadeIn">
         {/* Close Button */}

@@ -407,12 +407,13 @@ hover:text-[#0000FF]
                       </a>
                     </div>
                     <div>
+                    
                       <div className="hidden md:flex">
-                        <img
+                      <a href="/login">  <img
                           src="/profile.png"
                           alt="Nepo Games"
                           className="w-10.25 h-10.25 rounded-[50%] object-cover"
-                        />
+                        />  </a>
                       </div>
                       <div className="md:hidden pr-3 flex justify-center md:pr-0">
                         <button onClick={() => setOpen(!open)}>
