@@ -8,15 +8,22 @@ export default function PageLoader({ children }) {
   useEffect(() => {
     const handleLoad = () => {
       setLoaded(true);
+      document.documentElement.style.overflow = "";
+      document.body.style.overflow = "";
     };
-
+    document.documentElement.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
     if (document.readyState === "complete") {
       handleLoad();
     } else {
       window.addEventListener("load", handleLoad);
     }
 
-    return () => window.removeEventListener("load", handleLoad);
+    return () => {
+      window.removeEventListener("load", handleLoad);
+      document.documentElement.style.overflow = "";
+      document.body.style.overflow = "";
+    };
   }, []);
 
   return (
