@@ -14,7 +14,7 @@ export default function Loader() {
             />
           </div>
 
-          <p className="text-blue-700 font-semibold">Loading Nepogames...</p>
+          <p className="text-blue-700 font-semibold">Loading Nepogames<span className="loading-dots"></span></p>
 
           <div className="w-40 h-1 bg-gray-200 rounded overflow-hidden">
             <div className="h-full bg-blue-600 animate-loading w-1/2"></div>
