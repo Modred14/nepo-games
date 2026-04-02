@@ -27,10 +27,12 @@ export default function Home() {
   const [active, setActive] = useState("");
   const [activeIndex, setActiveIndex] = useState(null);
 
-  const [user, setUser] = useState(() => {
-    const stored = localStorage.getItem("nepo-user");
-    return stored ? JSON.parse(stored) : null;
-  });
+ useEffect(() => {
+  const stored = localStorage.getItem("nepo-user");
+  if (stored) {
+    setUser(JSON.parse(stored));
+  }
+}, []);
   const handleLogout = () => {
     localStorage.removeItem("nepo-user");
     window.location.reload();
