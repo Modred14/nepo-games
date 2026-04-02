@@ -16,7 +16,7 @@ import Loader from "@/components/Loader";
 export default function AccountSettingsPage() {
   const [activeTab, setActiveTab] = useState("profile");
   const [loading, setLoading] = useState(false);
-
+ const [user, setUser] =useState("")
  useEffect(() => {
   const stored = localStorage.getItem("nepo-user");
   if (stored) {
@@ -125,7 +125,7 @@ function TabButton({ icon, label, active, onClick }) {
 function ProfileTab() {
   const [list, setList] = useState([]);
   const [error, setError] = useState("");
-  const [correct, setCorrect] = useState("");
+  const [correct, setCorrect] = useState(""); const [user, setUser] =useState("")
  useEffect(() => {
   const stored = localStorage.getItem("nepo-user");
   if (stored) {
@@ -294,6 +294,7 @@ function PasswordTab() {
     newPass: false,
     confirm: false,
   });
+   const [user, setUser] =useState("")
   const [loading, setLoading] = useState(false);
  useEffect(() => {
   const stored = localStorage.getItem("nepo-user");

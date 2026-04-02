@@ -24,15 +24,16 @@ export default function Home() {
   const [open, setOpen] = useState(false);
   const [ready, setReady] = useState(false);
   const innerRef = useRef(null);
+  const [user, setUser] = useState("");
   const [active, setActive] = useState("");
   const [activeIndex, setActiveIndex] = useState(null);
 
- useEffect(() => {
-  const stored = localStorage.getItem("nepo-user");
-  if (stored) {
-    setUser(JSON.parse(stored));
-  }
-}, []);
+  useEffect(() => {
+    const stored = localStorage.getItem("nepo-user");
+    if (stored) {
+      setUser(JSON.parse(stored));
+    }
+  }, []);
   const handleLogout = () => {
     localStorage.removeItem("nepo-user");
     window.location.reload();
