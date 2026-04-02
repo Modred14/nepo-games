@@ -260,7 +260,7 @@ export default function Marketplace() {
                   </div>
                 </div>
                 <ReactSlider
-                  className="w-full flex items-center mt-2"
+                  className="w-full pt-1 flex items-center mt-2"
                   thumbClassName="w-2 h-2 bg-blue-600 rounded-full cursor-grab focus:outline-none"
                   trackClassName="h-1 bg-gray-300 rounded-full"
                   min={0}
