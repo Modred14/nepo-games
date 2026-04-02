@@ -27,12 +27,20 @@ export default function Home() {
   const [active, setActive] = useState("");
   const [activeIndex, setActiveIndex] = useState(null);
 
+  const [user, setUser] = useState(() => {
+    const stored = localStorage.getItem("nepo-user");
+    return stored ? JSON.parse(stored) : null;
+  });
+  const handleLogout = () => {
+    localStorage.removeItem("nepo-user");
+    window.location.reload();
+  };
   const linkClass = (name) =>
     `flex items-center gap-3 px-4 py-3 w-full border-b transition-colors duration-200
    ${
      active === name
        ? "bg-blue-50 text-blue-700 border-blue-100 border-l-4 border-l-blue-600 font-semibold"
-       : "bg-white text-gray-800 border-gray-100 hover:bg-gray-100"
+       : "bg-white text-gray-800 border-gray-400/20 hover:bg-gray-100"
    }`;
   const games = [
     {
@@ -206,17 +214,6 @@ export default function Home() {
     return { target: Math.round(num * mult), suffix, plus: hasPlus, raw };
   }
 
-  function formatPrettyNumber(n, suffix, plus) {
-    let display = "";
-
-    if (suffix === "K") display = `${Math.round(n / 1_000)}K`;
-    else if (suffix === "M") display = `${Math.round(n / 1_000_000)}M`;
-    else if (suffix === "B") display = `${Math.round(n / 1_000_000_000)}B`;
-    else display = `${Math.round(n)}`;
-
-    return plus ? `${display}+` : display;
-  }
-
   function StatCard({ value }) {
     const cardRef = useRef(null);
     const startedRef = useRef(false);
@@ -307,7 +304,10 @@ export default function Home() {
           <div className="w-full px-[5%] mt-5 bg-transparent fixed z-100">
             <Reveal>
               <header className="relative">
-                <div className="px-[2%]  backdrop-blur-2xl border-[#7A7AFE]/50 shadow-xs bg-white/80 rounded-4xl border">
+                <div
+                  className={`px-[2%]  backdrop-blur-2xl transition-all duration-300 border-[#7A7AFE]/50 shadow-xs bg-white/95   ${open ? "rounded-t-4xl" : "rounded-4xl"}
+         border`}
+                >
                   <div className="flex md:py-3 py-2 font-semibold items-center text-[#808080] justify-between w-full">
                     <img
                       src="/logo.png"
@@ -407,117 +407,196 @@ hover:text-[#0000FF]
                       </a>
                     </div>
                     <div>
-                    
                       <div className="hidden md:flex">
-                      <a href="/login">  <img
-                          src="/profile.png"
-                          alt="Nepo Games"
-                          className="w-10.25 h-10.25 rounded-[50%] object-cover"
-                        />  </a>
-                      </div>
-                      <div className="md:hidden pr-3 flex justify-center md:pr-0">
-                        <button onClick={() => setOpen(!open)}>
+                        <a href="/login">
+                          {" "}
                           <img
-                            src="/menu-open.png"
+                            src="/profile.png"
                             alt="Nepo Games"
-                            className="w-4 object-cover"
-                          />
+                            className="w-10.25 h-10.25 rounded-[50%] object-cover"
+                          />{" "}
+                        </a>
+                      </div>
+                      <div className="md:hidden pr-3 flex transition-all duration-300 justify-center md:pr-0">
+                        <button onClick={() => setOpen(!open)}>
+                          {open ? (
+                            <div className="-mr-1">
+                              <X size={23} className=" text-blue-700" />
+                            </div>
+                          ) : (
+                            <img
+                              src="/menu-open.png"
+                              alt="Open menu"
+                              className="w-4 object-cover"
+                            />
+                          )}
                         </button>
                       </div>
                     </div>
                   </div>
                 </div>
-              </header>
-            </Reveal>
-          </div>
-          <div
-            className={`fixed top-0 right-0 h-full w-64 bg-white shadow-lg z-1050 transform transition-transform duration-300
+                <div
+                  className={`fixed top-13 rounded-b-4xl transition-all duration-300 right-0 w-full border-[#7A7AFE]/50 border border-t-0 z-1050 transform        
+ ease-out
+  ${open ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4 pointer-events-none"}`}
+                >
+                  <div className="p-6 pt-0  backdrop-blur-2xl border-[#7A7AFE]/50 shadow-xs rounded-b-4xl bg-white/95  h-full flex flex-col justify-between">
+                    <div className="bg-[#7A7AFE]/50 h-[0.5] -mx-6"></div>
+                    {user?.username ? (
+                      <div>
+                        <div className="flex items-center gap-3 pt-3">
+                          <div className="w-12 h-12 rounded-full bg-blue-200 border border-blue-600 overflow-hidden">
+                            <img
+                              src={user?.profile_image}
+                              alt="Profile"
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <p>
+                            Welcome back,{" "}
+                            <span className="font-semibold">
+                              {user?.username}
+                            </span>
+                          </p>
+                        </div>
+                        <p className="pb-3 pt-1 text-xs">
+                          Not you?{" "}
+                          <button
+                            onClick={handleLogout}
+                            className="text-red-600"
+                          >
+                            Log out
+                          </button>
+                        </p>
+                        <div className="bg-[#7A7AFE]/50 h-[1] -mx-6"></div>
+                      </div>
+                    ) : (
+                      <>
+                        <div>
+                          <div className="flex items-center gap-3 py-3">
+                            <div className="w-12 h-12 rounded-full bg-blue-200 border border-blue-600 overflow-hidden">
+                              <img
+                                src="/profile.png"
+                                alt="Profile"
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                            <p>
+                              <a
+                                href="/login"
+                                className="font-semibold text-blue-600"
+                              >
+                                Sign In
+                              </a>{" "}
+                              to your account
+                            </p>
+                          </div>
+                          <div className="bg-[#7A7AFE]/50 h-[1] -mx-6"></div>
+                        </div>
+                      </>
+                    )}
+                    <div className="flex text-base text-[#262626]  flex-col gap-6 h-full font-semibold -mb-2.5">
+                      <div className="flex flex-col -mb-6 -mx-6">
+                        <a href="/marketplace">
+                          <button
+                            onClick={() => setActive("Marketplace")}
+                            className={`${linkClass("Marketplace")} group`}
+                          >
+                            <Store
+                              size={20}
+                              className="text-black group-hover:text-blue-600 transition-colors duration-200"
+                            />
+                            Marketplace
+                          </button>
+                        </a>
 
-       
-         ${open ? "translate-x-0" : "translate-x-full"}
-        
-        `}
-          >
-            <div className="p-6 pt-5.25 border-l-2 border-blue-800 h-full flex flex-col justify-between">
-              <div className="flex justify-between">
-                <p className="font-bold">Nepo</p>
-                <button onClick={() => setOpen(false)} className="mb-2.5 -mt-1">
-                  <X size={30} className="text-[#0000FF] font-bold" />
-                </button>
-              </div>
+                        <a href="">
+                          <button
+                            onClick={() => setActive("Pricing")}
+                            className={`${linkClass("Pricing")} group`}
+                          >
+                            <BadgeDollarSign
+                              size={20}
+                              className="text-black group-hover:text-blue-600 transition-colors duration-200"
+                            />
+                            Pricing
+                          </button>
+                        </a>
 
-              <div className="bg-[#0000FF]/50 h-[0.5] -mx-6"></div>
-
-              <div className="flex text-base  text-[#262626]  flex-col gap-6 h-full font-semibold">
-                <div className="flex flex-col -mx-6">
-                  <button
-                    onClick={() => setActive("Marketplace")}
-                    className={linkClass("Marketplace")}
-                  >
-                    <Store size={20} />
-                    Marketplace
-                  </button>
-
-                  <button
-                    onClick={() => setActive("Pricing")}
-                    className={linkClass("Pricing")}
-                  >
-                    <BadgeDollarSign size={20} />
-                    Pricing
-                  </button>
-
-                  <button
-                    onClick={() => setActive("About Us")}
-                    className={linkClass("About Us")}
-                  >
-                    <Info size={20} />
-                    About Us
-                  </button>
-
-                  <button
-                    onClick={() => setActive("Support")}
-                    className={linkClass("Support")}
-                  >
-                    <Headphones size={20} />
-                    Support
-                  </button>
-                </div>
-                <div className="flex flex-col text-base gap-5 mb-2.5 mt-auto">
-                  <a
-                    href="/login"
-                    className="
-      py-2 px-3 rounded-xl border
-      transition-colors duration-300
-      border-gray-400/50
-      bg-gray-100
-         flex items-center justify-center
-      hover:bg-gray-300/90
-      text-black/60
-      active:bg-gray-300/90
-      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500
-    "
-                  >
-                    {" "}
-                    Log In
-                  </a>
-                  <a
-                    href="/signup"
-                    className="
-                     flex items-center justify-center
+                        <a href="">
+                          <button
+                            onClick={() => setActive("Support")}
+                            className={`${linkClass("Support")} group`}
+                          >
+                            <Headphones
+                              size={20}
+                              className="text-black group-hover:text-blue-600 transition-colors duration-200"
+                            />
+                            Contact
+                          </button>
+                        </a>
+                      </div>
+                      {user?.username ? (
+                        <>
+                          <div className="flex items-center pt-3 border-t border-[#7A7AFE]/50 -mx-6 justify-between text-sm">
+                            <div className="w-10 h-10 ml-6 rounded-full bg-blue-200 border border-blue-600 overflow-hidden">
+                              <img
+                                src={user?.profile_image}
+                                alt="Profile"
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                            <a
+                              href="/profile"
+                              className="mr-6
+                 flex items-center justify-center
       py-2 px-3 rounded-xl border 
       bg-[#0000FF] text-white font-bold
             border-gray-400/50
-      transition-colors duration-300
-      hover:bg-blue-800
-      active:bg-blue-800
+      transition-all duration-300
+      hover:bg-blue-700
+      active:bg-blue-700
       focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500
     "
-                  >
-                    Get Started
-                  </a>
+                            >
+                              Go to Profile
+                            </a>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          {" "}
+                          <div className="flex items-center pt-3 border-t border-[#7A7AFE]/50 -mx-6 justify-between text-sm">
+                            <div className="w-10 h-10 ml-6 rounded-full bg-blue-200 border border-blue-600 overflow-hidden">
+                              <img
+                                src="/profile.png"
+                                alt="Profile"
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                            <a
+                              href="/signup"
+                              className="mr-6
+                 flex items-center justify-center
+      py-2 px-3 rounded-xl border 
+      bg-[#0000FF] text-white font-bold
+            border-gray-400/50
+      transition-all duration-300
+      hover:bg-blue-700
+      active:bg-blue-700
+      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500
+    "
+                            >
+                              Sign Up
+                            </a>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
+              </header>
+            </Reveal>
           </div>
 
           {/* BACKDROP */}

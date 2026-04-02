@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import useAuthGuard from "../hooks/useAuthGuard";
 
 const gameData = {
@@ -161,7 +161,7 @@ export default function SellGame() {
               {images.length !== 5 && (
                 <p className="text-red-500 text-center pb-3 text-sm">
                   Upload exactly <span className="font-bold">5 images</span>{" "}
-                  showing all details of the game account before proceeding.
+                  showing all details of the gaming account before proceeding.
                   These images will be visible to buyers,{" "}
                   <span className="font-bold">
                     do not include any sensitive information.
@@ -357,8 +357,8 @@ export default function SellGame() {
             </h2>
 
             <p className="text-gray-500 text-sm max-w-sm">
-              Your game account has been successfully listed. You can view it or
-              list another one.
+              Your gaming account has been listed successfully. You can view it
+              or list another one.
             </p>
 
             {/* Buttons */}

@@ -338,7 +338,7 @@ const getAmount = (price) => {
                       <div className="w-full  ">
                         <img
                           src={game.cover_image}
-                          className="w-full h-50 object-cover rounded-t-[4.5px] "
+                          className="w-full h-50 object-cover border-b-2 border-[#4F8CFF] rounded-t-[4.5px] "
                           alt=""
                         />
                       </div>{" "}
