@@ -2,12 +2,12 @@
 
 import { useEffect, useState } from "react";
 import useAuthGuard from "../hooks/useAuthGuard";
-import PageLoader from "@/components/PageLoader";
+import Reveal from "../reveal";
 import { useRouter } from "next/navigation";
 import { Search, ShoppingCart, Verified } from "lucide-react";
 import NoGame from "@/components/NoGame";
-import Loader from "@/components/Loader";
 import ReactSlider from "react-slider";
+import SmallLoader from "@/components/smallLoader";
 
 export default function Marketplace() {
   useAuthGuard();
@@ -114,12 +114,9 @@ export default function Marketplace() {
       };
     });
   }, [filteredGames]);
-  if (loading || !isImagesReady) {
-    return <Loader />;
-  }
 
   return (
-    <PageLoader>
+    <Reveal className="overflow-auto">
       <div className="pb-20">
         <div className="flex border-b border-[#0000FF]/40 justify-between py-4 px-7 items-center">
           <p className="text-lg sm:text-xl font-bold">
@@ -310,63 +307,71 @@ export default function Marketplace() {
               </button>
             </div>
           </div>
-          {filteredGames.length === 0 ? (
-            <div className="h-[60vh]">
-              <NoGame />
+          {loading || !isImagesReady ? (
+            <div className="h-[65vh] flex items-center justify-center">
+              <SmallLoader />
             </div>
           ) : (
-            <div className="grid py-3 sm:py-10 grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 3xl:flex gap-2 sm:gap-5 flex-wrap">
-              {filteredGames.map((game, index) => {
-                return (
-                  <div key={index}>
-                    <div className="border group rounded-md h-full overflow-hidden border-[#4F8CFF] hover:border-[#0051e8] shadow-xs transition-all duration-300 hover:shadow-sm">
-                      {game.verified && (
-                        <div className="w-full flex justify-end pr-2">
-                          {" "}
-                          <div className="-mb-93">
-                            <div className="flex  relative mt-2 py-0.5 w-fit rounded-2xl border px-2 gap-1 bg-green-100 text-xs text-green-800 items-center">
-                              Verified Trader{" "}
-                              <Verified
-                                className="fill-green-600 text-green-100"
-                                size={16}
-                              />
+            <div>
+              {filteredGames.length === 0 ? (
+                <div className="h-[60vh]">
+                  <NoGame />
+                </div>
+              ) : (
+                <div className="grid py-3 sm:py-10 grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 3xl:flex gap-2 sm:gap-5 flex-wrap">
+                  {filteredGames.map((game, index) => {
+                    return (
+                      <div key={index}>
+                        <div className="border group rounded-md h-full overflow-hidden border-[#4F8CFF] hover:border-[#0051e8] shadow-xs transition-all duration-300 hover:shadow-sm">
+                          {game.verified && (
+                            <div className="w-full flex justify-end pr-2">
+                              {" "}
+                              <div className="-mb-93">
+                                <div className="flex  relative mt-2 py-0.5 w-fit rounded-2xl border px-2 gap-1 bg-green-100 text-xs text-green-800 items-center">
+                                  Verified Trader{" "}
+                                  <Verified
+                                    className="fill-green-600 text-green-100"
+                                    size={16}
+                                  />
+                                </div>
+                              </div>{" "}
                             </div>
-                          </div>{" "}
-                        </div>
-                      )}{" "}
-                      <div className="w-full hover:border-[#0051e8] border-b border-[#4F8CFF]  transition-all duration-300">
-                        <img
-                          src={game.cover_image}
-                          className="w-full h-50 object-cover  "
-                          alt=""
-                        />
-                      </div>{" "}
-                      <div className="px-2 flex items-center py-3  justify-between">
-                        {" "}
-                        <div>
-                          <div className="text-[#0000FF] font-bold ">
-                            {game.title}
-                          </div>
-                          <div>{formatGamePrice(game.price)}</div>
-                        </div>
-                        <a href={`/game${game.slug}`}>
-                          <button className="flex  text-white p-1.5 rounded-lg border border-[#0038C9] bg-linear-to-b from-[#4F8CFF] to-[#8A38F5] b items-center gap-1 sm:text-sm text-xs">
-                            Buy{" "}
-                            <ShoppingCart
-                              size={14}
-                              className="text-white fill-white"
+                          )}{" "}
+                          <div className="w-full hover:border-[#0051e8] border-b border-[#4F8CFF]  transition-all duration-300">
+                            <img
+                              src={game.cover_image}
+                              className="w-full h-50 object-cover  "
+                              alt=""
                             />
-                          </button>
-                        </a>
+                          </div>{" "}
+                          <div className="px-2 flex items-center py-3  justify-between">
+                            {" "}
+                            <div>
+                              <div className="text-[#0000FF] font-bold ">
+                                {game.title}
+                              </div>
+                              <div>{formatGamePrice(game.price)}</div>
+                            </div>
+                            <a href={`/game${game.slug}`}>
+                              <button className="flex  text-white p-1.5 rounded-lg border border-[#0038C9] bg-linear-to-b from-[#4F8CFF] to-[#8A38F5] b items-center gap-1 sm:text-sm text-xs">
+                                Buy{" "}
+                                <ShoppingCart
+                                  size={14}
+                                  className="text-white fill-white"
+                                />
+                              </button>
+                            </a>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                );
-              })}
+                    );
+                  })}
+                </div>
+              )}
             </div>
           )}
         </div>{" "}
       </div>
-    </PageLoader>
+    </Reveal>
   );
 }
