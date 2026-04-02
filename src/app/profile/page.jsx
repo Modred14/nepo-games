@@ -16,13 +16,13 @@ import Loader from "@/components/Loader";
 export default function AccountSettingsPage() {
   const [activeTab, setActiveTab] = useState("profile");
   const [loading, setLoading] = useState(false);
- const [user, setUser] =useState("")
- useEffect(() => {
-  const stored = localStorage.getItem("nepo-user");
-  if (stored) {
-    setUser(JSON.parse(stored));
-  }
-}, []);
+  const [user, setUser] = useState("");
+  useEffect(() => {
+    const stored = localStorage.getItem("nepo-user");
+    if (stored) {
+      setUser(JSON.parse(stored));
+    }
+  }, []);
 
   if (loading) {
     return <Loader />;
@@ -35,7 +35,7 @@ export default function AccountSettingsPage() {
       </h1>
 
       {/* Mobile Tabs */}
-      <div className="flex md:hidden rounded-sm overflow-x-auto gap-2 mb-4 ">
+      <div className="flex md:hidden overflow-x-auto gap-2 mb-4 ">
         <MobileTab
           label="Profile"
           active={activeTab === "profile"}
@@ -103,7 +103,7 @@ function MobileTab({ label, active, onClick }) {
   return (
     <button
       onClick={onClick}
-      className={`px-2 py-1  text-xs whitespace-nowrap ${active ? "bg-blue-600 text-white" : "bg-white border"}`}
+      className={`px-2 py-1 rounded-sm text-xs whitespace-nowrap ${active ? "bg-blue-600 text-white" : "bg-white border"}`}
     >
       {label}
     </button>
@@ -125,14 +125,21 @@ function TabButton({ icon, label, active, onClick }) {
 function ProfileTab() {
   const [list, setList] = useState([]);
   const [error, setError] = useState("");
-  const [correct, setCorrect] = useState(""); const [user, setUser] =useState("")
- useEffect(() => {
-  const stored = localStorage.getItem("nepo-user");
-  if (stored) {
-    setUser(JSON.parse(stored));
-  }
-}, []);
+  const [correct, setCorrect] = useState("");
+  const [user, setUser] = useState("");
   const [loading, setLoading] = useState(false);
+  const [imgLoading, setImgLoading] = useState(true);
+
+  if (loading) {
+    return <Loader />;
+  }
+
+  useEffect(() => {
+    const stored = localStorage.getItem("nepo-user");
+    if (stored) {
+      setUser(JSON.parse(stored));
+    }
+  }, []);
   const [selectedFile, setSelectedFile] = useState(null);
   const handleUpload = async (e) => {
     setError("");
@@ -211,10 +218,19 @@ function ProfileTab() {
             className="cursor-pointer block w-full h-full"
           >
             <div className="w-full h-full rounded-full bg-blue-200 border border-blue-600 overflow-hidden">
+              {imgLoading && (
+                <div className="absolute inset-0  rounded-full flex items-center justify-center bg-gray-100">
+                  <div className="w-6 h-6 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
+                </div>
+              )}
               <img
-                src={user?.profile_image}
+                src={user?.profile_image || "/placeholder.png"}
                 alt="Profile"
-                className="w-full h-full object-cover"
+                className={`w-full h-full object-cover transition-opacity duration-300 ${
+                  imgLoading ? "opacity-0" : "opacity-100"
+                }`}
+                onLoad={() => setImgLoading(false)}
+                onError={() => setImgLoading(false)}
               />
             </div>
 
@@ -259,10 +275,14 @@ function ProfileTab() {
       <div className="sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 flex flex-wrap">
         <Info
           label="Full Name"
-          value={`${user?.first_name} ${user?.surname}` || "No name"}
+          value={
+            user?.first_name && user?.surname
+              ? `${user.first_name} ${user.surname}`
+              : "Loading..."
+          }
         />
-        <Info label="User Name" value={user?.username || "@username"} />
-        <Info label="E-Mail" value={user?.email || "email@example.com"} />
+        <Info label="User Name" value={user?.username || "Loading..."} />
+        <Info label="E-Mail" value={user?.email || "Loading..."} />
       </div>
       {list.length > 0 && (
         <div>
@@ -294,14 +314,14 @@ function PasswordTab() {
     newPass: false,
     confirm: false,
   });
-   const [user, setUser] =useState("")
+  const [user, setUser] = useState("");
   const [loading, setLoading] = useState(false);
- useEffect(() => {
-  const stored = localStorage.getItem("nepo-user");
-  if (stored) {
-    setUser(JSON.parse(stored));
-  }
-}, []);
+  useEffect(() => {
+    const stored = localStorage.getItem("nepo-user");
+    if (stored) {
+      setUser(JSON.parse(stored));
+    }
+  }, []);
 
   const [error, setError] = useState("");
   const checks = {
