@@ -18,13 +18,13 @@ export default function Marketplace() {
   const [platform, setPlatform] = useState("");
   const [type, setType] = useState("");
   const [verifiedOnly, setVerifiedOnly] = useState(false);
-  const [priceRange, setPriceRange] = useState([0,5000000]);
+  const [priceRange, setPriceRange] = useState([0, 5000000]);
   const [imagesLoaded, setImagesLoaded] = useState(0);
 
-const getAmount = (price) => {
-  const numericPrice = parseFloat(price.replace(/[^0-9.]/g, ""));
-  return numericPrice;
-};
+  const getAmount = (price) => {
+    const numericPrice = parseFloat(price.replace(/[^0-9.]/g, ""));
+    return numericPrice;
+  };
 
   const router = useRouter();
   useEffect(() => {
@@ -67,12 +67,10 @@ const getAmount = (price) => {
   //   }
   // };
 
-
- function formatGamePrice(price) {
-  const numericPrice = parseFloat(price.replace(/[^0-9.]/g, ""));
-  return `₦ ${numericPrice.toLocaleString()}`;
-}
-
+  function formatGamePrice(price) {
+    const numericPrice = parseFloat(price.replace(/[^0-9.]/g, ""));
+    return `₦ ${numericPrice.toLocaleString()}`;
+  }
 
   const filteredGames = games
     .filter((game) => {
@@ -83,7 +81,7 @@ const getAmount = (price) => {
       const matchesGame = !type || game.title === type;
       const matchesVerified = !verifiedOnly || game.verified === true;
       const amount = getAmount(game.price);
-      
+
       const matchesMin = amount >= priceRange[0];
       const matchesMax = amount <= priceRange[1];
       return (
@@ -149,9 +147,10 @@ const getAmount = (price) => {
               </p>
             </div>
             <a href="/profile">
-            <button className="border w-9 border-blue-600/40 rounded-3xl">
-              <img src={user?.profile_image} alt="" />
-            </button></a>
+              <button className="border w-9 border-blue-600/40 rounded-3xl">
+                <img src={user?.profile_image} alt="" />
+              </button>
+            </a>
           </div>
         </div>
         <div className="px-[3%] w-full ">
@@ -246,7 +245,7 @@ const getAmount = (price) => {
                           }
                           let value = Number(val);
 
-                          if (value >5000000) value =5000000;
+                          if (value > 5000000) value = 5000000;
                           if (value < priceRange[0]) value = priceRange[0];
                           if (priceRange[0] !== "" && value < priceRange[0]) {
                             value = priceRange[0];
@@ -303,7 +302,7 @@ const getAmount = (price) => {
                   setType("");
                   setVerifiedOnly(false);
                   setSearch("");
-                  setPriceRange([0,5000000]);
+                  setPriceRange([0, 5000000]);
                 }}
                 className="ml-auto  px-2 py-1 border border-blue-600/30 text-[13px] rounded-lg bg-blue-100 hover:bg-blue-200 transition"
               >
@@ -319,8 +318,8 @@ const getAmount = (price) => {
             <div className="grid py-3 sm:py-10 grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 3xl:flex gap-2 sm:gap-5 flex-wrap">
               {filteredGames.map((game, index) => {
                 return (
-                  <div key={index} >
-                    <div className="border-2 rounded-md h-full border-[#4F8CFF]">
+                  <div key={index}>
+                    <div className="border group rounded-md h-full overflow-hidden border-[#4F8CFF] hover:border-[#0051e8] shadow-xs transition-all duration-300 hover:shadow-sm">
                       {game.verified && (
                         <div className="w-full flex justify-end pr-2">
                           {" "}
@@ -335,10 +334,10 @@ const getAmount = (price) => {
                           </div>{" "}
                         </div>
                       )}{" "}
-                      <div className="w-full  ">
+                      <div className="w-full hover:border-[#0051e8] border-b border-[#4F8CFF]  transition-all duration-300">
                         <img
                           src={game.cover_image}
-                          className="w-full h-50 object-cover border-b-2 border-[#4F8CFF] rounded-t-[4.5px] "
+                          className="w-full h-50 object-cover  "
                           alt=""
                         />
                       </div>{" "}

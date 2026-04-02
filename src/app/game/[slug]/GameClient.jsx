@@ -308,7 +308,7 @@ export default function GameClient({ game, images, similarGames }) {
                         {/* Image */}
                         <img
                           src={`/${game.cover_image}`}
-                          className="w-full h-50 object-cover rounded-t-[4.5px] "
+                          className="w-full h-50 object-cover border-[#4F8CFF] border-b rounded-t-[4.5px] "
                           alt=""
                         />
 
