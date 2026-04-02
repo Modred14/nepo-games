@@ -17,10 +17,12 @@ export default function AccountSettingsPage() {
   const [activeTab, setActiveTab] = useState("profile");
   const [loading, setLoading] = useState(false);
 
-  const [user, setUser] = useState(() => {
-    const stored = localStorage.getItem("nepo-user");
-    return stored ? JSON.parse(stored) : null;
-  });
+ useEffect(() => {
+  const stored = localStorage.getItem("nepo-user");
+  if (stored) {
+    setUser(JSON.parse(stored));
+  }
+}, []);
 
   if (loading) {
     return <Loader />;
@@ -124,10 +126,12 @@ function ProfileTab() {
   const [list, setList] = useState([]);
   const [error, setError] = useState("");
   const [correct, setCorrect] = useState("");
-  const [user, setUser] = useState(() => {
-    const stored = localStorage.getItem("nepo-user");
-    return stored ? JSON.parse(stored) : null;
-  });
+ useEffect(() => {
+  const stored = localStorage.getItem("nepo-user");
+  if (stored) {
+    setUser(JSON.parse(stored));
+  }
+}, []);
   const [loading, setLoading] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const handleUpload = async (e) => {
@@ -291,10 +295,12 @@ function PasswordTab() {
     confirm: false,
   });
   const [loading, setLoading] = useState(false);
-  const [user, setUser] = useState(() => {
-    const stored = localStorage.getItem("nepo-user");
-    return stored ? JSON.parse(stored) : null;
-  });
+ useEffect(() => {
+  const stored = localStorage.getItem("nepo-user");
+  if (stored) {
+    setUser(JSON.parse(stored));
+  }
+}, []);
 
   const [error, setError] = useState("");
   const checks = {
