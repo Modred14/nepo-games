@@ -129,10 +129,7 @@ function ProfileTab() {
   const [user, setUser] = useState("");
   const [loading, setLoading] = useState(false);
   const [imgLoading, setImgLoading] = useState(true);
-
-  if (loading) {
-    return <Loader />;
-  }
+  const [selectedFile, setSelectedFile] = useState(null);
 
   useEffect(() => {
     const stored = localStorage.getItem("nepo-user");
@@ -140,7 +137,9 @@ function ProfileTab() {
       setUser(JSON.parse(stored));
     }
   }, []);
-  const [selectedFile, setSelectedFile] = useState(null);
+  if (loading) {
+    return <Loader />;
+  }
   const handleUpload = async (e) => {
     setError("");
     setCorrect("");
@@ -173,7 +172,53 @@ function ProfileTab() {
       }
 
       // update UI instantly
-      setUser((prev) => ({ ...prev, profile_image: data.imageUrl }));
+      const updatedUser = {
+        ...user,
+        profile_image: data.imageUrl,
+      };
+
+      setUser(updatedUser);
+      localStorage.setItem("nepo-user", JSON.stringify(updatedUser));
+      setCorrect("Profile picture updated successfully.");
+      setError("");
+    } catch (err) {
+      console.error(err);
+      setCorrect("");
+      setError("Upload failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+  const handleRemove = async (e) => {
+    setError("");
+    setCorrect("");
+
+    const formData = new FormData();
+    formData.append("userId", user.id);
+
+    try {
+      setLoading(true);
+      const res = await fetch("/api/user/default", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setCorrect("");
+        setError(data.error);
+        return;
+      }
+
+      // update UI instantly
+      const updatedUser = {
+        ...user,
+        profile_image: data.imageUrl,
+      };
+
+      setUser(updatedUser);
+      localStorage.setItem("nepo-user", JSON.stringify(updatedUser));
       setCorrect("Profile picture updated successfully.");
       setError("");
     } catch (err) {
@@ -187,8 +232,11 @@ function ProfileTab() {
   return (
     <div className="bg-white rounded-2xl shadow p-4 sm:p-6 border border-blue-400">
       <div className="pb-1 sm:pb-0 sm:text-start sm:pl-36 text-center w-full">
-        {error && <p className="text-red-500 text-sm mb-1">{error}</p>}
-        {correct && <p className="text-green-500 text-sm mb-1">{correct}</p>}
+        {error ? (
+          <p className="text-red-500 text-sm mb-1">{error}</p>
+        ) : (
+          correct && <p className="text-green-500 text-sm mb-1">{correct}</p>
+        )}{" "}
       </div>{" "}
       <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
         <div className="relative mx-auto sm:mx-0 w-25 h-25 sm:w-30 sm:h-30">
@@ -199,6 +247,7 @@ function ProfileTab() {
             className="hidden"
             disabled={loading}
             onChange={(e) => {
+              setCorrect("");
               const file = e.target.files[0];
               if (!file) return;
 
@@ -210,6 +259,10 @@ function ProfileTab() {
                 ...(prev || {}),
                 profile_image: imageUrl,
               }));
+
+              setError(
+                "Click the upload button to update your profile picture",
+              );
             }}
           />
 
@@ -261,6 +314,7 @@ function ProfileTab() {
             </button>
             <button
               disabled={loading}
+              onClick={handleRemove}
               className={`border border-blue-400/70 bg-gray-100 hover:bg-gray-200 transition-all duration-300 px-4 py-2 rounded-md text-xs sm:text-sm   ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
             >
               Remove
@@ -313,7 +367,14 @@ function PasswordTab() {
     current: false,
     newPass: false,
     confirm: false,
-  });
+  });  const [error, setError] = useState("");
+  const checks = {
+    length: form.newPass.length >= 6,
+    number: /\d/.test(form.newPass),
+    special: /[^A-Za-z0-9]/.test(form.newPass),
+    uppercase: /[A-Z]/.test(form.newPass),
+  };
+  const [correct, setCorrect] = useState("");
   const [user, setUser] = useState("");
   const [loading, setLoading] = useState(false);
   useEffect(() => {
@@ -323,14 +384,7 @@ function PasswordTab() {
     }
   }, []);
 
-  const [error, setError] = useState("");
-  const checks = {
-    length: form.newPass.length >= 6,
-    number: /\d/.test(form.newPass),
-    special: /[^A-Za-z0-9]/.test(form.newPass),
-    uppercase: /[A-Z]/.test(form.newPass),
-  };
-  const [correct, setCorrect] = useState("");
+
   const handleChangePassword = async () => {
     if (loading) return; // prevent spam clicks
 
@@ -426,9 +480,11 @@ function PasswordTab() {
             disabled={loading}
           />
         </div>
-        {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
-        {correct && <p className="text-green-500 text-sm mt-2">{correct}</p>}
-
+        {error ? (
+          <p className="text-red-500 text-sm mt-2">{error}</p>
+        ) : (
+          correct && <p className="text-green-500 text-sm mt-2">{correct}</p>
+        )}
         <div className="text-xs sm:text-sm mt-2 space-y-1">
           <CheckItem valid={checks.length} text="At least 6 characters" />
           <CheckItem valid={checks.number} text="Contains a number" />

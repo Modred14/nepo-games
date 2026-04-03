@@ -106,6 +106,17 @@ export default function GameClient({ game, images, similarGames }) {
                   </p>
                 </div>
               </div>
+              <div className="bg-[#E6E6FF]  rounded-md overflow-hidden mt-3 py-3 px-3">
+                <p className="text-sm">
+                  <span className="font-bold text-[#0000FF]">
+                    Payment Protection
+                  </span>
+                </p>
+
+                <p className="text-sm text-gray-800 mt-1 leading-relaxed">
+                  Your payment is held until account delivered to the buyer.
+                </p>
+              </div>
             </div>
           </div>{" "}
           {/* SELLER */}
@@ -122,7 +133,9 @@ export default function GameClient({ game, images, similarGames }) {
               <div className="flex px-4 py-4 items-center justify-between">
                 <div>
                   <p className="text-xs text-gray-500">Username</p>
-                  <p className="font-semibold text-[#0000FF]">{game.username}</p>
+                  <p className="font-semibold text-[#0000FF]">
+                    {game.username}
+                  </p>
                 </div>
 
                 <img

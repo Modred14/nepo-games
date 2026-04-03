@@ -38,13 +38,10 @@ export default function Home() {
     localStorage.removeItem("nepo-user");
     window.location.reload();
   };
-  const linkClass = (name) =>
+  const linkClass = () =>
     `flex items-center gap-3 px-4 py-3 w-full border-b transition-colors duration-200
-   ${
-     active === name
-       ? "bg-blue-50 text-blue-700 border-blue-100 border-l-4 border-l-blue-600 font-semibold"
-       : "bg-white text-gray-800 border-gray-400/20 hover:bg-gray-100"
-   }`;
+    "bg-white text-gray-800 border-gray-400/20 hover:bg-gray-100"
+   `;
   const games = [
     {
       name: "Delta Force",
@@ -439,11 +436,11 @@ hover:text-[#0000FF]
                   </div>
                 </div>
                 <div
-                  className={`fixed top-13 rounded-b-4xl transition-all duration-300 right-0 w-full border-[#7A7AFE]/50 border border-t-0 z-1050 transform        
+                  className={`fixed top-13 rounded-b-4xl transition-all duration-300 right-0 w-full border-[#bbbbf6] border border-t-0 z-1050 transform        
  ease-out
   ${open ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4 pointer-events-none"}`}
                 >
-                  <div className="p-6 pt-0  backdrop-blur-2xl border-[#7A7AFE]/50 shadow-xs rounded-b-4xl bg-white/95  h-full flex flex-col justify-between">
+                  <div className="p-6 pt-0  backdrop-blur-2xl  shadow-xs rounded-b-4xl bg-white/95  h-full flex flex-col justify-between">
                     <div className="bg-[#7A7AFE]/50 h-[0.5] -mx-6"></div>
                     {user?.username ? (
                       <div>
@@ -503,13 +500,15 @@ hover:text-[#0000FF]
                         <a href="/marketplace">
                           <button
                             onClick={() => setActive("Marketplace")}
-                            className={`${linkClass("Marketplace")} group`}
+                            className={`${linkClass("Marketplace")}   group`}
                           >
                             <Store
                               size={20}
                               className="text-black group-hover:text-blue-600 transition-colors duration-200"
                             />
-                            Marketplace
+                            <span className=" group-hover:text-blue-600 ">
+                              Marketplace
+                            </span>
                           </button>
                         </a>
 
@@ -522,20 +521,24 @@ hover:text-[#0000FF]
                               size={20}
                               className="text-black group-hover:text-blue-600 transition-colors duration-200"
                             />
-                            Pricing
+                            <span className=" group-hover:text-blue-600 ">
+                              Pricing
+                            </span>
                           </button>
                         </a>
 
                         <a href="">
                           <button
                             onClick={() => setActive("Support")}
-                            className={`${linkClass("Support")} group`}
+                            className={`${linkClass("Support")} border-b-0 group`}
                           >
                             <Headphones
                               size={20}
                               className="text-black group-hover:text-blue-600 transition-colors duration-200"
                             />
-                            Contact
+                            <span className=" group-hover:text-blue-600 ">
+                              Contact
+                            </span>
                           </button>
                         </a>
                       </div>

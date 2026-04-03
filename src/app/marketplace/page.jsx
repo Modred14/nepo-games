@@ -143,8 +143,8 @@ export default function Marketplace() {
                 Become a seller
               </p>
             </div>
-            <a href="/profile">
-              <button className="border w-9 border-blue-600/40 rounded-3xl">
+            <a href="/profile" className="flex items-center">
+              <button className="border overflow-hidden w-9 border-blue-600/40 rounded-3xl">
                 <img src={user?.profile_image} alt="" />
               </button>
             </a>

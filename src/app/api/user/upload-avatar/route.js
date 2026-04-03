@@ -25,10 +25,10 @@ export async function POST(req) {
     const imageUrl = await uploadImage(buffer);
 
     // Save to DB
-    await pool.query(
-      "UPDATE users SET profile_image = ? WHERE id = ?",
-      [imageUrl, userId]
-    );
+  await pool.query(
+  "UPDATE users SET profile_image = $1 WHERE id = $2",
+  [imageUrl, userId]
+);
 
     return NextResponse.json({ imageUrl });
   } catch (err) {
