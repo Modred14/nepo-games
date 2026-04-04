@@ -28,7 +28,7 @@ export default function EmailAnimation() {
           rotate: step === 1 ? 20 : step === 2 ? -10 : 0,
         }}
       >
-        <Icon size={70} />
+        <Icon size={60} />
       </motion.div>
     </div>
   );
