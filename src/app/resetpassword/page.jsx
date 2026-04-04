@@ -2,9 +2,10 @@
 
 import React from "react";
 import { useState } from "react";
-import { Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, NotepadText, Send } from "lucide-react";
 import Reveal from "../reveal";
 import PageLoader from "@/components/PageLoader";
+import EmailAnimation from "@/components/Email";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -146,12 +147,14 @@ export default function Login() {
                     Check your Email
                   </h1>
 
-                  <p className="text-center text-blue-600 mb-8">
+                  <p className="text-center text-blue-600 mb-4">
                     We have sent a password reset link to your Email address:
                     <span className="text-black font-bold"> {email}</span>.
                     Please check your inbox and follow the instruction to reset
                     your password
                   </p>
+                  <EmailAnimation />
+
                   <a
                     href="mailto:someone@example.com"
                     className="block w-full mt-5 mb-30 lg:mb-0 shadow-md hover:bg-blue-700 border border-blue-600 bg-[#0000FF] text-white font-semibold py-3 rounded-xl transition-all duration-700 text-center"
