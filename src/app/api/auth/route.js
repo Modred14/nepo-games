@@ -29,7 +29,11 @@ export async function POST(req) {
      surname,
      updated_at,
      username,
-     password_hash  
+     password_hash,
+     phone_number,
+     phone_verified,
+     verification_token,
+     verification_expires    
    FROM users
    WHERE email = $1`,
       [email],
@@ -55,17 +59,24 @@ export async function POST(req) {
 
     // EMAIL NOT VERIFIED
     if (!user.email_verified) {
-      const token = crypto.randomBytes(32).toString("hex");
-      const expires = new Date(Date.now() + 1000 * 60 * 60);
+      let token = user.verification_token;
+      let expires = user.verification_expires;
 
-      await pool.query(
-        `UPDATE users
+      const now = new Date();
+
+      // If no token OR expired → generate new one
+      if (!token || !expires || new Date(expires) < now) {
+        token = crypto.randomBytes(32).toString("hex");
+        expires = new Date(Date.now() + 1000 * 60 * 60);
+
+        await pool.query(
+          `UPDATE users
          SET verification_token = $1,
              verification_expires = $2
          WHERE email = $3`,
-        [token, expires, email],
-      );
-
+          [token, expires, email],
+        );
+      }
       const verifyLink = `${process.env.NEXT_PUBLIC_BASE_URL}/verify?token=${token}`;
 
       await resend.emails.send({

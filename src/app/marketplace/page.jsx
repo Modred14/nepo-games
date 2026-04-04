@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import useAuthGuard from "../hooks/useAuthGuard";
 import Reveal from "../reveal";
-import { useRouter } from "next/navigation";
 import { Search, ShoppingCart, Verified } from "lucide-react";
 import NoGame from "@/components/NoGame";
 import ReactSlider from "react-slider";
@@ -26,7 +25,6 @@ export default function Marketplace() {
     return numericPrice;
   };
 
-  const router = useRouter();
   useEffect(() => {
     const storedUser = localStorage.getItem("nepo-user");
 
@@ -138,11 +136,15 @@ export default function Marketplace() {
                 placeholder="Search gaming accounts"
               />
             </div>
-            <div className="sm:block hidden">
-              <p className="text-sm bg-blue-500 text-gray-50 rounded-lg p-2 px-3">
-                Become a seller
-              </p>
-            </div>
+            {!user?.phone_verified && (
+              <a href="/seller">
+                <div className="sm:block hidden">
+                  <p className="text-sm bg-blue-500 text-gray-50 rounded-lg p-2 px-3">
+                    Become a seller
+                  </p>
+                </div>
+              </a>
+            )}
             <a href="/profile" className="flex items-center">
               <button className="border overflow-hidden w-9 border-blue-600/40 rounded-3xl">
                 <img src={user?.profile_image} alt="" />

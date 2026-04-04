@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import useAuthGuard from "../hooks/useAuthGuard";
 
 const gameData = {
@@ -16,6 +17,20 @@ const gameData = {
 
 export default function SellGame() {
   useAuthGuard();
+
+  const router = useRouter();
+
+useEffect(() => {
+  const storedUser = localStorage.getItem("nepo-user");
+
+  if (!storedUser) return;
+
+  const user = JSON.parse(storedUser);
+
+  if (user.phone_verified === false) {
+    router.replace("/seller");
+  }
+}, [router]);
 
   const [selectedGame, setSelectedGame] = useState("");
   const [platform, setPlatform] = useState("");

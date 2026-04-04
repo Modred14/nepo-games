@@ -14,6 +14,7 @@ export async function POST(req) {
       "SELECT email, username FROM users WHERE email = $1 OR username = $2",
       [email, username],
     );
+    const phone_number = null;
 
     if (existingUsers.rows.length > 0) {
       const emailTaken = existingUsers.rows.some((u) => u.email === email);
@@ -42,9 +43,9 @@ export async function POST(req) {
 
     const result = await pool.query(
       `INSERT INTO users
-  (first_name, surname, username, email, password_hash, profile_image, verification_token, verification_expires)
+  (first_name, surname, username, email, password_hash, profile_image, verification_token, verification_expires, phone_number, phone_verified, phone_verification_code)
   VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
-  RETURNING id, first_name, surname, username, email, profile_image`,
+  RETURNING id, first_name, surname, username, email, profile_image,  phone_number, phone_verified`,
       [
         first_name,
         surname,

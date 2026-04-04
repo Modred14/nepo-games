@@ -1,12 +1,79 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Reveal from "../reveal";
 import { Check, Plus, DollarSign, User2, ArrowRight } from "lucide-react";
+import PhoneInput from "react-phone-input-2";
+import "react-phone-input-2/lib/style.css";
+import PageLoader from "@/components/PageLoader";
+import { useRouter } from "next/navigation";
+import useAuthGuard from "../hooks/useAuthGuard";
 
 export default function Seller() {
+  useAuthGuard();
+
+  const router = useRouter();
+
+useEffect(() => {
+  const storedUser = localStorage.getItem("nepo-user");
+
+  if (!storedUser) return;
+
+  const user = JSON.parse(storedUser);
+
+  if (user.phone_verified === true) {
+    router.replace("/sell-game");
+  }
+}, [router]);
+
   const [step, setStep] = useState(1);
-  const [userNumber, SetUserNumber] = useState("")
+  const [phone, setPhone] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
+  const inputs = useRef([]);
+
+  const handleChange = (value, index) => {
+    if (!/^[0-9]?$/.test(value)) return;
+    const newOtp = [...otp];
+    newOtp[index] = value;
+    setOtp(newOtp);
+    if (value && index < 5) {
+      inputs.current[index + 1].focus();
+    }
+  };
+  const distort = (phone) => {
+    const slit = phone.split("");
+    const first = [];
+    for (let i = 0; i < 4; i++) {
+      first.push(slit[i]);
+    }
+    first.push(" ");
+    for (let i = 4; i < 6; i++) {
+      first.push(slit[i]);
+    }
+    first.push(" ");
+    first.push("*****");
+
+    first.push(" ");
+    for (let i = 10; i < 14; i++) {
+      first.push(slit[i]);
+    }
+    first.toString();
+    return first;
+  };
+
+  const handleKeyDown = (e, index) => {
+    if (e.key === "Backspace" && !otp[index] && index > 0) {
+      inputs.current[index - 1].focus();
+    }
+  };
+
+  const handleVerify = () => {
+    const code = otp.join("");
+    console.log(code);
+    setPhone("");
+    setStep(4);
+  };
 
   const steps = [
     {
@@ -30,72 +97,271 @@ export default function Seller() {
       sub: "Sell your account securely and earn easily.",
     },
   ];
+
   const handleJoin = () => {
     setStep(2);
   };
+  const handleSave = () => {
+    setStep(3);
+  };
 
   return (
-    <Reveal>
-      <div>
-        {step === 1 && (
-          <div className="py-7 sm:px-10 px-5 min-w-full">
-            <p className="text-[#0000FF] text-3xl">Become a Seller</p>
-            <p className="py-2">Start selling your games on our marketplace</p>
-            <div className="bg-[#DFE1FF] rounded-xl grid md:grid-cols-[1.5fr_1fr] min-w-full gap-4 border border-[#8789FE] py-10 px-5">
-              <div className="border flex flex-col items-center justify-center rounded-xl bg-white border-[#8789FE] p-4">
-                <div className="relative">
-                  {steps.map((step, index) => {
-                    const Icon = step.icon;
-                    const isLast = index === steps.length - 1;
+    <PageLoader>
+      <Reveal>
+        <div className="min-h-screen">
+          {step === 1 && (
+            <div className="py-7 sm:px-10 px-5 min-w-full">
+              <p className="text-[#0000FF] text-3xl">Become a Seller</p>
+              <p className="py-2">
+                Start selling your games on our marketplace
+              </p>
+              <div className="bg-[#DFE1FF] rounded-xl grid md:grid-cols-[1.5fr_1fr] min-w-full gap-4 border border-[#8789FE] py-10 px-5">
+                <div className="border py-10 flex flex-col items-center justify-center rounded-xl bg-white border-[#8789FE] p-4">
+                  <div className="relative">
+                    {steps.map((step, index) => {
+                      const Icon = step.icon;
+                      const isLast = index === steps.length - 1;
 
-                    return (
-                      <div key={index} className="flex gap-3 relative">
-                        {/* LEFT SIDE: ICON + LINE */}
-                        <div className="flex flex-col items-center relative">
-                          <div className="bg-[#0000FF] rounded-full p-1 z-10">
-                            <Icon size={22} className="text-white" />
+                      return (
+                        <div key={index} className="flex gap-3 relative">
+                          {/* LEFT SIDE: ICON + LINE */}
+                          <div className="flex flex-col items-center relative">
+                            <div className="bg-[#0000FF] rounded-full p-1 z-10">
+                              <Icon size={22} className="text-white" />
+                            </div>
+
+                            {/* connector line */}
+                            {!isLast && (
+                              <div className="w-0.5 bg-[#8789FE] flex-1 mt-1" />
+                            )}
                           </div>
 
-                          {/* connector line */}
-                          {!isLast && (
-                            <div className="w-0.5 bg-[#8789FE] flex-1 mt-1" />
-                          )}
+                          {/* RIGHT SIDE: CONTENT */}
+                          <div className="pb-6">
+                            <p className="text-[#0000FF] font-semibold">
+                              {step.header}
+                            </p>
+                            <p className="text-sm text-gray-600">{step.sub}</p>
+                          </div>
                         </div>
+                      );
+                    })}
+                  </div>
 
-                        {/* RIGHT SIDE: CONTENT */}
-                        <div className="pb-6">
-                          <p className="text-[#0000FF] font-semibold">
-                            {step.header}
-                          </p>
-                          <p className="text-sm text-gray-600">{step.sub}</p>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+                  {/* FOOTER */}
+                  <div className="flex flex-wrap items-center justify-center gap-2 ">
+                    <button
+                      onClick={handleJoin}
+                      className="flex text-white items-center text-sm sm:text-base bg-[#0000FF] px-4 py-3 rounded-xl gap-3"
+                    >
+                      Apply as a seller <ArrowRight size={20} />
+                    </button>
 
-                {/* FOOTER */}
-                <div className="flex flex-wrap items-center justify-center gap-2 ">
-                  <button
-                    onClick={handleJoin}
-                    className="flex text-white items-center text-sm sm:text-base bg-[#0000FF] px-4 py-3 rounded-xl gap-3"
-                  >
-                    Apply as a seller <ArrowRight size={20} />
-                  </button>
-
-                  <div className="text-sm">
-                    <p>Any question?</p>
-                    <p className="text-[#0000ff]">Contact customer support</p>
+                    <div className="text-sm  items-center sm:items-start flex-col flex">
+                      <p>Any question?</p>
+                      <p className="text-[#0000ff]">Contact customer support</p>
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div className="border hidden md:flex items-center justify-center  rounded-xl border-[#8789FE]">
-                <img src="/sell.png"  className="w-6/10" alt="" />
+                <div className="border hidden md:flex items-center justify-center  rounded-xl border-[#8789FE]">
+                  <img src="/sell.png" className="w-6/10" alt="" />
+                </div>
               </div>
             </div>
-          </div>
-        )}
-      </div>
-    </Reveal>
+          )}
+          {step != 1 && step != 4 && (
+            <Reveal>
+              <div className="lg:max-h-screen flex overflow-hidden flex-col lg:flex-row bg-white">
+                {/* <div className="w-full lg:hidden lg:w-1/2 flex justify-center items-center bg-white">
+                  <img
+                    src="/phoneno.png"
+                    alt="Phone number Illustration"
+                    className="w-64 md:w-80 lg:max-w-2xl object-contain mt-10 lg:mt-0"
+                  />
+                </div>
+
+                <div className="w-full lg:hidden ">
+                  <svg
+                    viewBox="0 0 1440 120"
+                    className="w-full h-12"
+                    preserveAspectRatio="none"
+                  >
+                    <path
+                      d="M0,60 C300,120 600,0 900,60 C1200,120 1440,40 1440,40"
+                      stroke="#1D4ED8"
+                      strokeWidth="3"
+                      fill="transparent"
+                    />
+                  </svg>
+                </div> */}
+                <div className="w-full min-h-screen bg-blue-50/20 lg:w-1/2 form-scroll lg:overflow-y-auto flex justify-center px-6 py-30 lg:py-25">
+                  {step === 2 && (
+                    <div className=" flex items-center justify-center px-4">
+                      <div className="w-full max-w-md border border-blue-600/20 bg-white rounded-2xl shadow-lg p-6 sm:p-8">
+                        <h1 className="text-2xl sm:text-3xl font-semibold text-center">
+                          <span className="text-blue-600">Verification</span>{" "}
+                          <span className="text-black">of Identity</span>
+                        </h1>
+
+                        <p className="text-gray-500 text-center text-sm mt-3">
+                          Enter your phone number to receive a verification code
+                        </p>
+
+                        {/* INPUT */}
+                        <div className="mt-6">
+                          <PhoneInput
+                            country={"ng"}
+                            disabled={loading}
+                            value={phone}
+                            onChange={(value) => setPhone("+" + value)}
+                            containerClass="!w-full"
+                            inputClass="!w-full !h-[50px] !pl-[60px] !text-sm !rounded-r-md !border !overflow-hidden !border-blue-400 focus:!border-blue-600 focus:!shadow-none"
+                            buttonClass="!border-blue-400 hover:!border-r !rounded-l-sm hover:rounded-none focus:!border-blue-600  !bg-transparent "
+                            dropdownClass="!rounded-xl !border-blue-400/50 !border !shadow-md"
+                          />
+                        </div>
+
+                        {/* BUTTON */}
+                        <button
+                          onClick={handleSave}
+                          disabled={loading}
+                          className="w-full mt-6 h-12.5 rounded-xl bg-[#0000FF] text-white font-medium text-sm hover:bg-[#0000f8] duration-300 transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                        >
+                          {loading ? (
+                            <>
+                              <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                              Processing...
+                            </>
+                          ) : (
+                            "Continue"
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  )}{" "}
+                  {step === 3 && (
+                    <div className=" flex items-center justify-center px-4">
+                      <div className="w-full max-w-md border border-blue-600/20 bg-white rounded-2xl shadow-lg p-6 sm:p-8 text-center">
+                        <h1 className="text-2xl sm:text-3xl font-semibold">
+                          <span className="text-blue-600">Verification</span>{" "}
+                          <span>of Identity</span>
+                        </h1>
+
+                        <p className="text-gray-500 text-sm mt-3">
+                          Verify your identity by confirming the code sent to
+                          your phone number
+                        </p>
+
+                        <p className="mt-4 text-sm">
+                          Enter the{" "}
+                          <span className="text-blue-600 font-medium">
+                            6 - Digit code
+                          </span>{" "}
+                          sent to your phone number
+                        </p>
+
+                        <p className="mt-2 font-semibold text-lg">
+                          {distort(phone)}
+                        </p>
+
+                        <div className="flex justify-between mt-6 gap-3">
+                          {otp.map((digit, index) => (
+                            <input
+                              key={index}
+                              ref={(el) => (inputs.current[index] = el)}
+                              type="text"
+                              maxLength="1"
+                              value={digit}
+                              onChange={(e) =>
+                                handleChange(e.target.value, index)
+                              }
+                              onKeyDown={(e) => handleKeyDown(e, index)}
+                              className="w-12 h-12 text-center border border-blue-500 rounded-md text-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                          ))}
+                        </div>
+
+                        <button
+                          onClick={handleVerify}
+                          disabled={loading}
+                          className="w-full mt-6 h-12.5 rounded-xl bg-[#0000FF] text-white font-medium text-sm hover:bg-[#0000f8] duration-300 transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                        >
+                          {loading ? (
+                            <>
+                              <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                              Verifying...
+                            </>
+                          ) : (
+                            "Verify"
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="hidden lg:flex  border-l-2 border-blue-600 lg:w-1/2 items-center justify-center bg-white">
+                  <img
+                    src="/phoneno.png"
+                    alt="Phone number Illustration"
+                    className="max-w-2xl w-full object-contain"
+                  />
+                </div>
+              </div>
+            </Reveal>
+          )}{" "}
+          {step === 4 && (
+            <div className="flex min-h-screen flex-col items-center justify-center text-center py-10 gap-4">
+              <Reveal>
+                <div className=" w-full flex gap-4 justify-center items-center flex-col max-w-md border border-blue-600/20 bg-white rounded-2xl shadow-lg p-6 sm:p-8">
+                  {/* Success Emoji */}
+                  <div className="text-6xl">🎉</div>
+                  {/* Message */}
+                  <h2 className="text-2xl font-bold text-green-600">
+                    Congratulations !
+                  </h2>
+                  <p className="text-gray-500 text-sm max-w-sm">
+                    You have successfully been verified and now a seller on{" "}
+                    <span className="text-blue-600 font-semibold">
+                      Nepogames{" "}
+                    </span>
+                    marketplace
+                  </p>
+                  {/* Buttons */}
+                  <div className="flex gap-3 mt-4">
+                    {/* VIEW DETAILS */}
+                    <a href="/marketplace">
+                      {" "}
+                      <button
+                        onClick={() => {
+                          // replace with actual slug logic
+                          window.location.href = `/game/${slug}`;
+                        }}
+                        className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition"
+                      >
+                        Marketplace
+                      </button>
+                    </a>
+
+                    {/* LIST ANOTHER */}
+                    <a href="/sell-game">
+                      <button
+                        onClick={() => {
+                          setSuccess(false);
+                          setSlug("");
+                        }}
+                        className="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-100 transition"
+                      >
+                        List your first game
+                      </button>
+                    </a>
+                  </div>
+                </div>
+              </Reveal>
+            </div>
+          )}
+        </div>
+      </Reveal>
+    </PageLoader>
   );
 }

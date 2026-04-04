@@ -665,7 +665,7 @@ hover:text-[#0000FF]
                     <div className=" max-w-120">
                       <p className="text-[#1b1a1a]">
                         Redefining how premium gaming accounts are traded —
-                        securely and transparently .Skip the grind.{" "}
+                        securely and transparently. Skip the grind.{" "}
                       </p>
                       <p className="font-bold italic text-[#0000FF]">
                         Trade with confidence.
