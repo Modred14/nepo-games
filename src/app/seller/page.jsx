@@ -8,6 +8,7 @@ import "react-phone-input-2/lib/style.css";
 import PageLoader from "@/components/PageLoader";
 import { useRouter } from "next/navigation";
 import useAuthGuard from "../hooks/useAuthGuard";
+import { parsePhoneNumberFromString } from "libphonenumber-js";
 
 export default function Seller() {
   useAuthGuard();
@@ -30,6 +31,8 @@ export default function Seller() {
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
+  const [error, setError] = useState("");
+  const [errorAdd, setErrorAdd] = useState("");
   const inputs = useRef([]);
 
   const handleChange = (value, index) => {
@@ -42,24 +45,32 @@ export default function Seller() {
     }
   };
   const distort = (phone) => {
-    const slit = phone.split("");
-    const first = [];
-    for (let i = 0; i < 4; i++) {
-      first.push(slit[i]);
+    if (!phone) {
+      setError("Phone number is required");
+      return "";
     }
-    first.push(" ");
-    for (let i = 4; i < 6; i++) {
-      first.push(slit[i]);
-    }
-    first.push(" ");
-    first.push("*****");
 
-    first.push(" ");
-    for (let i = 10; i < 14; i++) {
-      first.push(slit[i]);
+    const parsed = parsePhoneNumberFromString(phone);
+
+    if (!parsed || !parsed.isValid()) {
+      setError("Invalid phone number format");
+      return;
     }
-    first.toString();
-    return first;
+
+    setError(""); // clear previous errors
+
+    const countryCode = `+${parsed.countryCallingCode}`;
+    const digits = parsed.nationalNumber;
+
+    if (digits.length <= 4) {
+      return `${countryCode} ${digits}`;
+    }
+
+    const start = digits.slice(0, 3);
+    const end = digits.slice(-3);
+    const masked = "*".repeat(digits.length - 5);
+
+    return `${countryCode} ${start}${masked}${end}`;
   };
 
   const handleKeyDown = (e, index) => {
@@ -71,7 +82,18 @@ export default function Seller() {
   const handleVerify = () => {
     const code = otp.join("");
     console.log(code);
+    if (!code) {
+    setErrorAdd("OTP is required");
+    return;
+  }
+
+  if (code.length !== 6) {
+    setErrorAdd("OTP must be 6 digits");
+    return;
+  }
+
     setPhone("");
+
     setStep(4);
   };
 
@@ -102,6 +124,26 @@ export default function Seller() {
     setStep(2);
   };
   const handleSave = () => {
+    setError("");
+    if (phone == 0) {
+      setError("Phone number is required");
+      return;
+    }
+    const parsed = parsePhoneNumberFromString(phone);
+
+    if (!parsed || !parsed.isValid()) {
+      setError("Invalid phone number format");
+      return;
+    }
+
+    setError(""); // clear previous errors
+
+    const countryCode = `+${parsed.countryCallingCode}`;
+    const digits = parsed.nationalNumber;
+
+    if (digits.length <= 4) {
+      return `${countryCode} ${digits}`;
+    }
     setStep(3);
   };
 
@@ -203,12 +245,15 @@ export default function Seller() {
                           <span className="text-black">of Identity</span>
                         </h1>
 
-                        <p className="text-gray-500 text-center text-sm mt-3">
+                        <p className="text-gray-500 text-center text-sm mt-3 mb-5">
                           Enter your phone number to receive a verification code
+                        </p>
+                        <p className="text-red-500 -mt-2 font-semibold text-sm text-center">
+                          {error}
                         </p>
 
                         {/* INPUT */}
-                        <div className="mt-6">
+                        <div className="mt-2">
                           <PhoneInput
                             country={"ng"}
                             disabled={loading}
@@ -252,14 +297,22 @@ export default function Seller() {
                           your phone number
                         </p>
 
-                        <p className="mt-4 text-sm">
-                          Enter the{" "}
-                          <span className="text-blue-600 font-medium">
-                            6 - Digit code
-                          </span>{" "}
-                          sent to your phone number
-                        </p>
-
+                        {!errorAdd ? (
+                          <>
+                            {" "}
+                            <p className="mt-4 text-sm">
+                              Enter the{" "}
+                              <span className="text-blue-600 font-medium">
+                                6 - Digit code
+                              </span>{" "}
+                              sent to your phone number
+                            </p>
+                          </>
+                        ) : (
+                          <span className="text-red-500 mt-3 font-semibold text-sm text-center block">
+                            {errorAdd}
+                          </span>
+                        )}
                         <p className="mt-2 font-semibold text-lg">
                           {distort(phone)}
                         </p>
