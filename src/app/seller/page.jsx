@@ -248,9 +248,7 @@ export default function Seller() {
                         <p className="text-gray-500 text-center text-sm mt-3 mb-5">
                           Enter your phone number to receive a verification code
                         </p>
-                        <p className="text-red-500 -mt-2 font-semibold text-sm text-center">
-                          {error}
-                        </p>
+                       
 
                         {/* INPUT */}
                         <div className="mt-2">
@@ -265,7 +263,9 @@ export default function Seller() {
                             dropdownClass="!rounded-xl !border-blue-400/50 !border !shadow-md"
                           />
                         </div>
-
+ <p className="text-red-500 mt-2 font-semibold text-sm text-center">
+                          {error}
+                        </p>
                         {/* BUTTON */}
                         <button
                           onClick={handleSave}

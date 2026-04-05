@@ -10,10 +10,34 @@ import EmailAnimation from "@/components/Email";
 export default function Login() {
   const [email, setEmail] = useState("");
   const [step, setStep] = useState(1);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleReset = (e) => {
+  const handleReset = async (e) => {
     e.preventDefault();
-    setStep(2);
+    setError("");
+    setLoading(true);
+
+    try {
+      const res = await fetch("/api/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || "Something went wrong");
+        return;
+      }
+   
+      setStep(2);
+    } catch (err) {
+      setError("Network error. Try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -69,6 +93,7 @@ export default function Login() {
                       <input
                         type="email"
                         id="email"
+                        disabled={loading}
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         placeholder=" "
@@ -91,13 +116,18 @@ export default function Login() {
                       </label>
                     </div>
                     {/* PASSWORD */}
-
+                    {error && (
+                      <p className="text-red-500 text-sm mt-3 text-center">
+                        {error}
+                      </p>
+                    )}
                     {/* SIGN IN BUTTON */}
                     <button
                       onClick={handleReset}
-                      className="w-full mt-5  mb-30 lg:mb-0 shadow-md hover:bg-blue-700 border border-blue-600 bg-[#0000FF]  text-white font-semibold py-3 rounded-xl transition-all duration-700"
+                      disabled={loading}
+                      className="w-full mt-5 mb-30 lg:mb-0 shadow-md hover:bg-blue-700 border border-blue-600 bg-[#0000FF] text-white font-semibold py-3 rounded-xl transition-all duration-700 disabled:opacity-60"
                     >
-                      Send Email
+                      {loading ? "Sending..." : "Send Email"}
                     </button>
                   </form>
                   {/* GOOGLE */}

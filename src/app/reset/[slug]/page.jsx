@@ -3,20 +3,60 @@
 import React from "react";
 import { useState } from "react";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
-import Reveal from "../reveal";
+import Reveal from "../../reveal";
 import PageLoader from "@/components/PageLoader";
+import { useParams, useRouter } from "next/navigation";
 
 export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(1);
+  const params = useParams();
+  const token = params?.slug;
+  const router = useRouter();
 
-  const handleReset = (e) => {
+  const handleReset = async (e) => {
     e.preventDefault();
-    setStep(2);
-  };
+    setError("");
+    setLoading(true);
 
+    try {
+      if (!password || !confirmPassword) {
+        setError("All fields are required");
+        return;
+      }
+
+      if (password !== confirmPassword) {
+        setError("Passwords do not match");
+        return;
+      }
+
+      const res = await fetch("/api/reset-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          token,
+          newPassword: password,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || "Something went wrong");
+        return;
+      }
+
+      setStep(2); // success screen
+    } catch (err) {
+      setError("Network error. Try again");
+    } finally {
+      setLoading(false);
+    }
+  };
   return (
     <PageLoader>
       <div>
@@ -71,6 +111,7 @@ export default function Login() {
                         type={showPassword ? "text" : "password"}
                         id="password"
                         placeholder=" "
+                        disabled={loading}
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         className="peer w-full border border-gray-300 rounded-md
@@ -112,6 +153,7 @@ export default function Login() {
                       <input
                         type={showPassword ? "text" : "password"}
                         id="confirmpassword"
+                        disabled={loading}
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
                         placeholder=" "
@@ -146,13 +188,18 @@ export default function Login() {
                       </button>
                     </div>
                     {/* PASSWORD */}
-
+                    {error && (
+                      <p className="text-red-500 text-sm mt-3 text-center">
+                        {error}
+                      </p>
+                    )}
                     {/* SIGN IN BUTTON */}
                     <button
                       onClick={handleReset}
-                      className="w-full shadow-md mt-10 hover:bg-blue-700 border border-blue-600 bg-[#0000FF]  text-white font-semibold py-3 rounded-xl transition-all duration-700  mb-30 lg:mb-0"
+                      disabled={loading}
+                      className="w-full shadow-md mt-5 hover:bg-blue-700 border border-blue-600 bg-[#0000FF] text-white font-semibold py-3 rounded-xl transition-all duration-700 mb-30 lg:mb-0 disabled:opacity-60"
                     >
-                      Reset Password
+                      {loading ? "Resetting..." : "Reset Password"}
                     </button>
                   </form>
                   {/* GOOGLE */}
@@ -214,12 +261,12 @@ export default function Login() {
                     </p>
 
                     {/* CONTINUE BUTTON */}
-                    <a href="/marketplace" className="w-full">
+                    <a href="/login" className="w-full">
                       <button
                         type="button"
                         className="w-full shadow-lg mb-30 lg:mb-0 hover:bg-blue-700 bg-[#0000FF] text-white text-lg font-semibold py-4 rounded-xl transition-all duration-300"
                       >
-                        Continue to Marketplace
+                        Login
                       </button>
                     </a>
                   </div>
