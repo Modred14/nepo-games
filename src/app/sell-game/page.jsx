@@ -8,7 +8,7 @@ const gameData = {
   "Blood Strike": "bloodstrike-ac.png",
   "Call of Duty": "call-of-duty.png",
   "Delta Force": "delta.png",
-  DLS: "dls.png",
+  "DLS": "dls.png",
   "EA Sports": "fifa.png",
   Efootball: "efootball.png",
   "Free Fire": "freefire-ac.png",
@@ -377,7 +377,7 @@ useEffect(() => {
             </p>
 
             {/* Buttons */}
-            <div className="flex gap-3 mt-4">
+            <div className="flex text-sm sm:text-base gap-3 mt-4">
               {/* VIEW DETAILS */}
               <button
                 onClick={() => {

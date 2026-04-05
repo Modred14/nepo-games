@@ -14,17 +14,17 @@ export default function Seller() {
 
   const router = useRouter();
 
-useEffect(() => {
-  const storedUser = localStorage.getItem("nepo-user");
+  useEffect(() => {
+    const storedUser = localStorage.getItem("nepo-user");
 
-  if (!storedUser) return;
+    if (!storedUser) return;
 
-  const user = JSON.parse(storedUser);
+    const user = JSON.parse(storedUser);
 
-  if (user.phone_verified === true) {
-    router.replace("/sell-game");
-  }
-}, [router]);
+    if (user.phone_verified === true) {
+      router.replace("/sell-game");
+    }
+  }, [router]);
 
   const [step, setStep] = useState(1);
   const [phone, setPhone] = useState("");
@@ -313,11 +313,11 @@ useEffect(() => {
           {step === 4 && (
             <div className="flex min-h-screen flex-col items-center justify-center text-center py-10 gap-4">
               <Reveal>
-                <div className=" w-full flex gap-4 justify-center items-center flex-col max-w-md border border-blue-600/20 bg-white rounded-2xl shadow-lg p-6 sm:p-8">
+                <div className=" w-full flex gap-4 justify-center items-center flex-col max-w-md sm:border border-blue-600/20 bg-white rounded-2xl sm:shadow-lg p-6 sm:p-8">
                   {/* Success Emoji */}
                   <div className="text-6xl">🎉</div>
                   {/* Message */}
-                  <h2 className="text-2xl font-bold text-green-600">
+                  <h2 className="text-xl xs:text-2xl font-bold text-green-600">
                     Congratulations !
                   </h2>
                   <p className="text-gray-500 text-sm max-w-sm">
@@ -328,7 +328,7 @@ useEffect(() => {
                     marketplace
                   </p>
                   {/* Buttons */}
-                  <div className="flex gap-3 mt-4">
+                  <div className="items-center sm:text-sm flex text-xs gap-3 mt-4">
                     {/* VIEW DETAILS */}
                     <a href="/marketplace">
                       {" "}

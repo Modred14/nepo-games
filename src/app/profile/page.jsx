@@ -192,6 +192,7 @@ function ProfileTab() {
   const handleRemove = async (e) => {
     setError("");
     setCorrect("");
+    setSelectedFile("")
 
     const formData = new FormData();
     formData.append("userId", user.id);

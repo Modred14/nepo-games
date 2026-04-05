@@ -168,10 +168,10 @@ export default function Marketplace() {
                   <option value="Free Fire">Free Fire</option>
                   <option value="PubG">PubG</option>
                   <option value="Blood Strike">Blood Strike</option>
-                  <option value="EA Sports (FIFA)">EA Sports (FIFA)</option>
+                  <option value="EA Sports">EA Sports (FIFA)</option>
                   <option value="Delta Force">Delta Force</option>
-                  <option value="Dream League Soccer">
-                    Dream League Soccer
+                  <option value="DLS">
+                    Dream League Soccer (DLS)
                   </option>
                 </select>
               </div>
