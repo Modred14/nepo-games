@@ -9,10 +9,23 @@ import EmailAnimation from "@/components/Email";
 
 export default function Login() {
   const [email, setEmail] = useState("");
-  const [step, setStep] = useState();
+  const [step, setStep] = useState(1);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [cooldown, setCooldown] = useState(0);
+
+  const getEmailLink = (email) => {
+    if (email.includes("@gmail.com")) {
+      return "https://mail.google.com";
+    }
+    if (email.includes("@yahoo.com")) {
+      return "https://mail.yahoo.com";
+    }
+    if (email.includes("@outlook.com") || email.includes("@hotmail.com")) {
+      return "https://outlook.live.com/mail";
+    }
+    return "mailto:";
+  };
 
   const handleReset = async (e) => {
     e.preventDefault();
@@ -120,7 +133,7 @@ export default function Login() {
                   </h1>
 
                   <p className="text-sm text-blue-700 text-center mb-6">
-                    Enter your email to receive a reset link
+                    Enter your email to receive a password reset link
                   </p>
 
                   {/* EMAIL */}
@@ -180,8 +193,8 @@ export default function Login() {
 
               <div className="hidden border-l-2 border-[#6060FF] lg:flex lg:w-1/2 items-center justify-center bg-white">
                 <img
-                  src="forgot-1.jpg"
-                  alt="Login Illustration"
+                  src="/forgot-1.jpg"
+                  alt="forgot Illustration"
                   className="max-w-2xl w-full object-contain"
                 />
               </div>
@@ -216,10 +229,10 @@ export default function Login() {
               <div className="w-full lg:w-1/2 h-full form-scroll lg:overflow-y-auto flex items-center justify-center px-6 py-12 lg:py-24">
                 <div className="w-full max-w-md grid place-items-center h-fit mx-auto mb-30 lg:mb-0 bg-white border border-gray-200 shadow-lg rounded-2xl p-6 sm:p-8">
                   <h1 className="text-2xl font-bold mb-2">Check your Email</h1>
-                  <p className="text-blue-600 text-sm leading-relaxed mb-2">
+                  <p className="text-blue-600 text-sm leading-relaxed mb-1">
                     We’ve sent a password reset link to
                   </p>
-                  <p className="text-black font-semibold text-base break-all mb-4">
+                  <p className="text-black font-semibold text-base break-all mb-2">
                     {email}
                   </p>
                   <p className="text-gray-500 text-center text-sm leading-relaxed mb-6">
@@ -228,13 +241,13 @@ export default function Login() {
                   </p>
 
                   {/* ANIMATION */}
-                  <div className="mb-6">
+                  <div className="-mt-3 mb-3">
                     <EmailAnimation />
                   </div>
 
                   {/* CTA */}
                   <a
-                    href="mailto:"
+                    href={getEmailLink(email)}
                     className="block w-full shadow-md hover:bg-blue-700 border border-blue-600 bg-[#0000FF] text-white font-semibold py-3 rounded-xl transition-all duration-300 text-center"
                   >
                     Open your email app
@@ -259,8 +272,8 @@ export default function Login() {
 
               <div className="hidden border-l-2 border-[#6060FF] lg:flex lg:w-1/2 items-center justify-center bg-white">
                 <img
-                  src="forgot-1.jpg"
-                  alt="Login Illustration"
+                 src="/forgot-1.jpg"
+                  alt="forgot Illustration"
                   className="max-w-2xl w-full object-contain"
                 />
               </div>

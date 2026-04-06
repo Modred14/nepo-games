@@ -114,7 +114,7 @@ export default function GameClient({ game, images, similarGames }) {
                 </p>
 
                 <p className="text-sm text-gray-800 mt-1 leading-relaxed">
-                  Your payment is held until account delivered to the buyer.
+                  Payment is held until the account is delivered to the buyer.
                 </p>
               </div>
             </div>
