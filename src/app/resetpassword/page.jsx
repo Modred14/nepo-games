@@ -9,9 +9,10 @@ import EmailAnimation from "@/components/Email";
 
 export default function Login() {
   const [email, setEmail] = useState("");
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
 
   const handleReset = async (e) => {
     e.preventDefault();
@@ -31,8 +32,49 @@ export default function Login() {
         setError(data.error || "Something went wrong");
         return;
       }
-   
+
       setStep(2);
+    } catch (err) {
+      setError("Network error. Try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResend = async () => {
+    if (cooldown > 0) return;
+
+    setError("");
+    setMessage("");
+    setLoading(true);
+
+    try {
+      const res = await fetch("/api/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || "Failed to resend email");
+        return;
+      }
+
+      setMessage("Reset link sent again ✅");
+
+      // start cooldown (30s)
+      setCooldown(30);
+      const timer = setInterval(() => {
+        setCooldown((prev) => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
     } catch (err) {
       setError("Network error. Try again.");
     } finally {
@@ -71,20 +113,19 @@ export default function Login() {
               </div>
               <div className="w-full lg:w-1/2 items-center h-full form-scroll lg:overflow-y-auto flex justify-center px-6 py-12 lg:py-25">
                 {" "}
-                <div className="w-full max-w-md">
+                <div className="w-full max-w-md  h-fit mx-auto mb-30 lg:mb-0 bg-white border border-gray-200 shadow-lg rounded-2xl p-6 sm:p-8">
                   {/* HEADER */}
-                  <h1 className="text-3xl font-bold text-center mb-2">
+                  <h1 className="text-[26px] font-bold text-center mb-1">
                     Retrieve Password{" "}
                   </h1>
 
-                  <p className="text-center text-blue-600 mb-8">
-                    Enter the email associated with your account and we will
-                    send a password reset email.
+                  <p className="text-sm text-blue-700 text-center mb-6">
+                    Enter your email to receive a reset link
                   </p>
 
                   {/* EMAIL */}
                   <form action="">
-                    <div className="relative mb-6">
+                    <div className="relative mb-4">
                       <Mail
                         size={18}
                         className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
@@ -125,7 +166,10 @@ export default function Login() {
                     <button
                       onClick={handleReset}
                       disabled={loading}
-                      className="w-full mt-5 mb-30 lg:mb-0 shadow-md hover:bg-blue-700 border border-blue-600 bg-[#0000FF] text-white font-semibold py-3 rounded-xl transition-all duration-700 disabled:opacity-60"
+                      className="w-full py-3 mt-5 rounded-xl font-semibold text-white
+    bg-blue-600 hover:bg-blue-700 active:scale-[0.99]
+    transition-all duration-200 shadow-md
+    disabled:opacity-60 disabled:cursor-not-allowed"
                     >
                       {loading ? "Sending..." : "Send Email"}
                     </button>
@@ -169,28 +213,47 @@ export default function Login() {
                   />
                 </svg>
               </div>
-              <div className="w-full lg:w-1/2 items-center h-full form-scroll lg:overflow-y-auto flex justify-center px-6 py-12 lg:py-25">
-                {" "}
-                <div className="w-full max-w-md">
-                  {/* HEADER */}
-                  <h1 className="text-3xl font-bold text-center mb-2">
-                    Check your Email
-                  </h1>
-
-                  <p className="text-center text-blue-600 mb-4">
-                    We have sent a password reset link to your Email address:
-                    <span className="text-black font-bold"> {email}</span>.
-                    Please check your inbox and follow the instruction to reset
-                    your password
+              <div className="w-full lg:w-1/2 h-full form-scroll lg:overflow-y-auto flex items-center justify-center px-6 py-12 lg:py-24">
+                <div className="w-full max-w-md grid place-items-center h-fit mx-auto mb-30 lg:mb-0 bg-white border border-gray-200 shadow-lg rounded-2xl p-6 sm:p-8">
+                  <h1 className="text-2xl font-bold mb-2">Check your Email</h1>
+                  <p className="text-blue-600 text-sm leading-relaxed mb-2">
+                    We’ve sent a password reset link to
                   </p>
-                  <EmailAnimation />
+                  <p className="text-black font-semibold text-base break-all mb-4">
+                    {email}
+                  </p>
+                  <p className="text-gray-500 text-center text-sm leading-relaxed mb-6">
+                    Please check your inbox and follow the instructions to reset
+                    your password.
+                  </p>
 
+                  {/* ANIMATION */}
+                  <div className="mb-6">
+                    <EmailAnimation />
+                  </div>
+
+                  {/* CTA */}
                   <a
-                    href="mailto:someone@example.com"
-                    className="block w-full mt-5 mb-30 lg:mb-0 shadow-md hover:bg-blue-700 border border-blue-600 bg-[#0000FF] text-white font-semibold py-3 rounded-xl transition-all duration-700 text-center"
+                    href="mailto:"
+                    className="block w-full shadow-md hover:bg-blue-700 border border-blue-600 bg-[#0000FF] text-white font-semibold py-3 rounded-xl transition-all duration-300 text-center"
                   >
-                    Open Gmail app
+                    Open your email app
                   </a>
+                  <button
+                    onClick={handleResend}
+                    disabled={cooldown > 0 || loading}
+                    className="mt-4 text-sm font-medium text-blue-600 hover:underline disabled:opacity-50"
+                  >
+                    {loading
+                      ? "Resending..."
+                      : cooldown > 0
+                        ? `Resend email in ${cooldown}s`
+                        : "Resend email"}
+                  </button>
+                  {/* EXTRA HELP */}
+                  <p className="text-gray-400 text-xs mt-4">
+                    Didn’t receive the email? Check your spam folder.
+                  </p>
                 </div>
               </div>
 
