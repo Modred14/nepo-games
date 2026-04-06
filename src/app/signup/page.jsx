@@ -414,7 +414,7 @@ export default function Login() {
                     <div>
                       <span className="text-gray-600">I have to the </span>
                       <a
-                        href="#"
+                        href="/terms-of-service"
                         agreed
                         className=" relative inline-block
 
@@ -441,7 +441,7 @@ export default function Login() {
                       </a>
                       <span className="text-gray-600"> and </span>{" "}
                       <a
-                        href="#"
+                        href="/privacy-policy"
                         className=" relative inline-block
 
     after:content-['']
