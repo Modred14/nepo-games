@@ -147,7 +147,11 @@ export default function Marketplace() {
             )}
             <a href="/profile" className="flex items-center">
               <button className="border overflow-hidden w-9 h-9 border-blue-600/40 rounded-3xl">
-                <img src={user?.profile_image} alt="" />
+                <img
+                  src={user?.profile_image}
+                  alt="Profile Image"
+                  className="w-full h-full object-cover"
+                />
               </button>
             </a>
           </div>
@@ -170,9 +174,7 @@ export default function Marketplace() {
                   <option value="Blood Strike">Blood Strike</option>
                   <option value="EA Sports">EA Sports (FIFA)</option>
                   <option value="Delta Force">Delta Force</option>
-                  <option value="DLS">
-                    Dream League Soccer (DLS)
-                  </option>
+                  <option value="DLS">Dream League Soccer (DLS)</option>
                 </select>
               </div>
               <div className="flex flex-col flex-1 min-w-40">
