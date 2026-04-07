@@ -117,7 +117,7 @@ export default function Marketplace() {
     <Reveal className="overflow-auto">
       <div className="pb-20">
         <div className="flex border-b border-[#0000FF]/40 justify-between py-4 px-7 items-center">
-          <p className="text-lg sm:text-xl font-bold">
+          <p className="text-base sm:text-lg font-bold">
             Hello, {user?.username}
           </p>
           <div className="flex items-center gap-2 sm:gap-5">
@@ -139,7 +139,7 @@ export default function Marketplace() {
             {!user?.phone_verified && (
               <a href="/seller">
                 <div className="sm:block hidden">
-                  <p className="text-sm bg-blue-500 text-gray-50 rounded-lg p-2 px-3">
+                  <p className="text-xs md:text-sm bg-blue-500 text-gray-50 rounded-lg p-2 px-3">
                     Become a seller
                   </p>
                 </div>

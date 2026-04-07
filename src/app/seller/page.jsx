@@ -21,7 +21,7 @@ export default function Seller() {
     if (!storedUser) return;
 
     const user = JSON.parse(storedUser);
-
+console.log(user)
     if (user.phone_verified === true) {
       router.replace("/sell-game");
     }

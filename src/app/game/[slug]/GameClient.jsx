@@ -300,7 +300,7 @@ export default function GameClient({ game, images, similarGames }) {
                   </button>
                 </a>
               </div>
-              <div>
+              <div className="mb-10 md:mb-0">
                 <div className="grid grid-cols-2 md:grid-cols-1 xl:grid-cols-2 gap-3">
                   {similarGames.map((game, index) => (
                     <div key={index}>

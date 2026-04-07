@@ -8,6 +8,7 @@ import Reveal from "../reveal";
 import ErrorModal from "../../components/ErrorModal";
 import SuccessModal from "../../components/SuccessModal";
 import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 
 export default function LoginClient() {
   const [showPassword, setShowPassword] = useState(false);
@@ -18,12 +19,14 @@ export default function LoginClient() {
   const [errorTrigger, setErrorTrigger] = useState(0);
   const [loading, setLoading] = useState(false);
   const [successOpen, setSuccessOpen] = useState(false);
+  const [googleLoad, setGoogleLoad] = useState(false);
 
   const router = useRouter();
   const params = useSearchParams();
   const msg = params.get("msg");
   const verified = params.get("verified");
   const signupSuccess = params.get("signupSuccess");
+  const oauthError = params.get("oauthError");
 
   useEffect(() => {
     if ((verified || signupSuccess) && msg) {
@@ -31,6 +34,13 @@ export default function LoginClient() {
       setSuccessOpen(true);
     }
   }, [msg, verified, signupSuccess]);
+
+  useEffect(() => {
+    if (oauthError && msg) {
+      setMessage(msg);
+      setErrorOpen(true);
+    }
+  }, [oauthError]);
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem("nepo-user"));
 
@@ -38,6 +48,22 @@ export default function LoginClient() {
       router.push("/marketplace");
     }
   }, [router]);
+  const handleGoogleSignIn = async () => {
+    if (loading) return;
+
+    try {
+      setLoading(true);
+      setGoogleLoad(true);
+
+      await signIn("google", {
+        callbackUrl: "/marketplace",
+      });
+    } catch (err) {
+      console.error("Google login failed:", err);
+      setLoading(false);
+      setGoogleLoad(false);
+    }
+  };
   const handleLogin = async (e) => {
     e.preventDefault();
     if (!email?.trim()) {
@@ -278,7 +304,7 @@ export default function LoginClient() {
               disabled={loading}
               className="w-full shadow-md hover:bg-blue-700 border border-blue-600 bg-[#0000FF]  text-white font-semibold py-3 rounded-xl transition-all duration-700 mb-6"
             >
-              {loading ? (
+              {loading && !googleLoad ? (
                 <div className="flex w-full text-center justify-center gap-3">
                   <span className="inline-block w-6 h-6 border-4 border-white border-t-transparent rounded-full animate-spin"></span>{" "}
                 </div>
@@ -294,15 +320,24 @@ export default function LoginClient() {
 
           <div className="flex justify-center mb-6">
             <button
+              onClick={handleGoogleSignIn}
               disabled={loading}
               className="flex items-center gap-3 border px-6 py-2 rounded-xl shadow-sm hover:bg-gray-100 duration-700 transition"
             >
-              <img
-                src="https://www.svgrepo.com/show/475656/google-color.svg"
-                alt="Google"
-                className="w-5 h-5"
-              />
-              Google
+              {loading && googleLoad ? (
+                <div className="flex w-full text-center justify-center gap-3">
+                  <span className="inline-block w-6 h-6 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></span>{" "}
+                </div>
+              ) : (
+                <>
+                  <img
+                    src="https://www.svgrepo.com/show/475656/google-color.svg"
+                    alt="Google"
+                    className="w-5 h-5"
+                  />
+                  Google
+                </>
+              )}
             </button>
           </div>
 

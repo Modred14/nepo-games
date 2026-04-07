@@ -43,9 +43,9 @@ export async function POST(req) {
 
     const result = await pool.query(
       `INSERT INTO users
-  (first_name, surname, username, email, password_hash, profile_image, verification_token, verification_expires, phone_number, phone_verified, phone_verification_code, reset_token, reset_token_expiry) 
-  VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
-  RETURNING id, first_name, surname, username, email, profile_image`,
+  (first_name, surname, username, email, password_hash, profile_image, verification_token, verification_expires, phone_number, phone_verified, phone_verification_code, reset_token, reset_token_expiry, provider)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+  RETURNING id, first_name, surname, username, email, profile_image, phone_verified`,
       [
         first_name,
         surname,
@@ -60,6 +60,7 @@ export async function POST(req) {
         null,
         null,
         null,
+        "credentials",
       ],
     );
     const verifyLink = `${process.env.NEXT_PUBLIC_BASE_URL}/verify?token=${token}`;

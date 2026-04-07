@@ -19,6 +19,7 @@ import Footer from "./footer";
 import RevealRight from "./revealfright";
 import RevealLeft from "./revealfrleft";
 import PageLoader from "@/components/PageLoader";
+import { signOut } from "next-auth/react";
 
 export default function Home() {
   const [open, setOpen] = useState(false);
@@ -34,9 +35,12 @@ export default function Home() {
       setUser(JSON.parse(stored));
     }
   }, []);
-  const handleLogout = () => {
+  const handleLogout = async () => {
     localStorage.removeItem("nepo-user");
-    window.location.reload();
+
+    await signOut({
+      callbackUrl: "/login", // where to go after logout
+    });
   };
   const linkClass = () =>
     `flex items-center gap-3 px-4 py-3 w-full border-b transition-colors duration-200
@@ -408,14 +412,52 @@ hover:text-[#0000FF]
                     </div>
                     <div>
                       <div className="hidden md:flex">
-                        <a href="/login">
-                          {" "}
-                          <img
-                            src="/profile.png"
-                            alt="Nepo Games"
-                            className="w-10.25 h-10.25 rounded-[50%] object-cover"
-                          />{" "}
-                        </a>
+                        {!user?.profile_image ? (
+                          <a href="/login">
+                            {" "}
+                            <img
+                              src="/profile.png"
+                              alt="Nepo Games"
+                              className="w-10.25 h-10.25 rounded-[50%] object-cover"
+                            />
+                          </a>
+                        ) : (
+                          <>
+                            <div className="relative group w-fit">
+                              <a href="/profile">
+                                <img
+                                  src={user?.profile_image}
+                                  alt="Nepo Games"
+                                  className="border-blue-600/70 border w-10 h-10 rounded-full object-cover cursor-pointer"
+                                />
+                              </a>
+
+                              {/* Dropdown */}
+                              <div className="absolute right-0 mt-1 w-30 bg-white/95 backdrop-blur-md border  border-[#7A7AFE]/50 rounded-sm shadow-sm opacity-0 invisible translate-y-2 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 transition-all duration-200 z-50 overflow-hidden">
+                                {/* Profile */}
+                                <a
+                                  href="/profile"
+                                  className="flex items-center gap-3 px-4 py-3 text-xs text-gray-700 hover:bg-gray-100/80 transition"
+                                >
+                                  <span className="text-xs">👤</span>
+                                  Profile
+                                </a>
+
+                                {/* Divider */}
+                                <div className="h-px bg-gray-200 mx-2"></div>
+
+                                {/* Logout */}
+                                <button
+                                  onClick={handleLogout}
+                                  className="flex items-center gap-3 w-full px-4 py-3 text-xs text-red-500 hover:bg-red-50 transition"
+                                >
+                                  <span className="text-xs">🚪</span>
+                                  Logout
+                                </button>
+                              </div>
+                            </div>
+                          </>
+                        )}
                       </div>
                       <div className="md:hidden pr-3 flex transition-all duration-300 justify-center md:pr-0">
                         <button onClick={() => setOpen(!open)}>

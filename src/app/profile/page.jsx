@@ -331,7 +331,7 @@ function ProfileTab() {
         <Info
           label="Full Name"
           value={
-            user?.first_name && user?.surname
+            user?.first_name
               ? `${user.first_name} ${user.surname}`
               : "Loading..."
           }

@@ -16,26 +16,19 @@ export async function POST(req) {
 
     const result = await pool.query(
       `SELECT 
-     account_status,
-     created_at,
-     email,
-     email_verified,
-     first_name,
-     id,
-     identity_verified,
-     is_verified,
-     profile_image,
-     role,
-     surname,
-     updated_at,
-     username,
-     password_hash,
-     phone_number,
-     phone_verified,
-     verification_token,
-     verification_expires    
-   FROM users
-   WHERE email = $1`,
+  email,
+  first_name,
+  id,
+  profile_image,
+  surname,
+  username,
+  phone_verified,
+  password_hash,
+  email_verified,
+  verification_token,
+  verification_expires
+FROM users
+WHERE email = $1`,
       [email],
     );
 
