@@ -17,6 +17,7 @@ export default function AccountSettingsPage() {
   const [activeTab, setActiveTab] = useState("profile");
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState("");
+  const [globalLoading, setGlobalLoading] = useState(false);
   useEffect(() => {
     const stored = localStorage.getItem("nepo-user");
     if (stored) {
@@ -39,22 +40,22 @@ export default function AccountSettingsPage() {
         <MobileTab
           label="Profile"
           active={activeTab === "profile"}
-          onClick={() => setActiveTab("profile")}
+          onClick={() => !globalLoading && setActiveTab("profile")}
         />
         <MobileTab
           label="Password"
           active={activeTab === "password"}
-          onClick={() => setActiveTab("password")}
+          onClick={() =>  !globalLoading && setActiveTab("password")}
         />
         <MobileTab
           label="Security"
           active={activeTab === "security"}
-          onClick={() => setActiveTab("security")}
+          onClick={() => !globalLoading && setActiveTab("security")}
         />
         <MobileTab
           label="Notifications"
           active={activeTab === "notifications"}
-          onClick={() => setActiveTab("notifications")}
+          onClick={() => !globalLoading && setActiveTab("notifications")}
         />
       </div>
 
@@ -66,31 +67,41 @@ export default function AccountSettingsPage() {
             label="Profile Information"
             active={activeTab === "profile"}
             onClick={() => setActiveTab("profile")}
+            disabled={globalLoading}
           />
           <TabButton
             icon={<Lock size={16} />}
             label="Change Password"
             active={activeTab === "password"}
             onClick={() => setActiveTab("password")}
+            disabled={globalLoading}
           />
           <TabButton
             icon={<Shield size={16} />}
             label="Security"
             active={activeTab === "security"}
             onClick={() => setActiveTab("security")}
+            disabled={globalLoading}
           />
           <TabButton
             icon={<Bell size={16} />}
             label="Notifications"
             active={activeTab === "notifications"}
             onClick={() => setActiveTab("notifications")}
+            disabled={globalLoading}
           />
         </div>
 
         {/* Content */}
-        <div className="flex-1">
+        <div
+          className={`flex-1 ${
+            globalLoading ? "pointer-events-none opacity-80" : ""
+          }`}
+        >
           {activeTab === "profile" && <ProfileTab />}
-          {activeTab === "password" && <PasswordTab />}
+          {activeTab === "password" && (
+            <PasswordTab setGlobalLoading={setGlobalLoading} />
+          )}
           {activeTab === "security" && <SecurityTab />}
           {activeTab === "notifications" && <NotificationTab />}
         </div>
@@ -110,11 +121,14 @@ function MobileTab({ label, active, onClick }) {
   );
 }
 
-function TabButton({ icon, label, active, onClick }) {
+function TabButton({ icon, label, active, onClick, disabled }) {
   return (
     <button
       onClick={onClick}
-      className={`flex items-center gap-2 w-full px-3 py-2 rounded-md mb-2 text-sm font-medium transition ${active ? "bg-blue-600 text-white" : "text-gray-600 hover:bg-gray-100"}`}
+        disabled={disabled} 
+      className={`flex items-center gap-2 w-full px-3 py-2 rounded-md mb-2 text-sm font-medium transition ${
+        active ? "bg-blue-600 text-white" : "text-gray-600 hover:bg-gray-100"
+      } ${disabled ? "opacity-90 cursor-not-allowed" : ""}`} // ✅ ADDED
     >
       {icon}
       {label}
@@ -192,7 +206,7 @@ function ProfileTab() {
   const handleRemove = async (e) => {
     setError("");
     setCorrect("");
-    setSelectedFile("")
+    setSelectedFile("");
 
     const formData = new FormData();
     formData.append("userId", user.id);
@@ -335,6 +349,8 @@ function ProfileTab() {
               ? `${user.first_name} ${user.surname}`
               : "Loading..."
           }
+          user={user}
+          setUser={setUser}
         />
         <Info label="User Name" value={user?.username || "Loading..."} />
         <Info label="E-Mail" value={user?.email || "Loading..."} />
@@ -353,22 +369,117 @@ function ProfileTab() {
   );
 }
 
-function Info({ label, value }) {
+function Info({ label, value, user, setUser }) {
+  const [editing, setEditing] = useState(false);
+  const [input, setInput] = useState(value);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+
+  const handleSave = async () => {
+    if (!input.trim()) return;
+    setError("");
+    setSuccess("");
+
+    const parts = input.trim().split(" ");
+    const first_name = parts[0];
+    const surname = parts.slice(1).join(" ") || "";
+
+    try {
+      setLoading(true);
+
+      const res = await fetch("/api/user/change-name", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId: user.id,
+          first_name,
+          surname,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        console.error(data.error);
+        return;
+      }
+
+      const updatedUser = {
+        ...user,
+        first_name,
+        surname,
+      };
+
+      setUser(updatedUser);
+      localStorage.setItem("nepo-user", JSON.stringify(updatedUser));
+
+      setSuccess("Name updated successfully");
+      setError("");
+      setEditing(false);
+    } catch (err) {
+      console.error("Update failed:", err);
+      setError("Something went wrong. Try again.");
+      setSuccess("");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const isFullName = label === "Full Name";
+  if (loading) {
+    return <Loader />;
+  }
   return (
     <div>
+      {error ? (
+        <p className="text-red-500 text-sm mt-2 mb-2">{error}</p>
+      ) : (
+        success && <p className="text-green-500 mb-2 text-sm mt-2">{success}</p>
+      )}
       <p className="text-blue-600 font-semibold text-sm">{label}</p>
-      <p className="text-black text-sm sm:text-base">{value}</p>
+
+      {isFullName && editing ? (
+        <div className="flex gap-2 items-center">
+          <input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            className="border px-2 py-1 rounded text-sm w-fit"
+          />
+          <button onClick={handleSave} className="text-green-600 text-xs">
+            ✔ Save
+          </button>
+        </div>
+      ) : (
+        <div className="flex items-center gap-2">
+          <p className="text-black text-sm sm:text-base">{value}</p>
+
+          {isFullName && (
+            <button
+              onClick={() => {
+                setEditing(true);
+                setInput(value);
+              }}
+              className="text-blue-500 text-xs"
+            >
+              Edit
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }
-
-function PasswordTab() {
+function PasswordTab({ setGlobalLoading }) {
   const [form, setForm] = useState({ current: "", newPass: "", confirm: "" });
   const [show, setShow] = useState({
     current: false,
     newPass: false,
     confirm: false,
-  });  const [error, setError] = useState("");
+  });
+  const [error, setError] = useState("");
   const checks = {
     length: form.newPass.length >= 6,
     number: /\d/.test(form.newPass),
@@ -384,7 +495,6 @@ function PasswordTab() {
       setUser(JSON.parse(stored));
     }
   }, []);
-
 
   const handleChangePassword = async () => {
     if (loading) return; // prevent spam clicks
@@ -405,6 +515,7 @@ function PasswordTab() {
     setError("");
     setCorrect("");
     setLoading(true);
+    setGlobalLoading(true); // ✅ ADDED
 
     try {
       const res = await fetch("/api/user/change-password", {
@@ -438,6 +549,7 @@ function PasswordTab() {
       setCorrect("");
     } finally {
       setLoading(false);
+      setGlobalLoading(false); // ✅ ADDED
     }
   };
 
