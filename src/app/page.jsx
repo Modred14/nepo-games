@@ -312,13 +312,13 @@ export default function Home() {
                   className={`px-[2%]  backdrop-blur-2xl transition-all duration-300 border-[#7A7AFE]/50 shadow-xs bg-white/95   ${open ? "rounded-t-4xl" : "rounded-4xl"}
          border`}
                 >
-                  <div className="flex md:py-3 py-2 font-semibold items-center text-[#808080] justify-between w-full">
+                  <div className="flex md:grid grid-cols-3 justify-between md:py-3 py-2 font-semibold items-center text-[#808080]  w-full">
                     <img
                       src="/logo.png"
                       alt="Nepo Games"
                       className="w-9 h-9 p-2 rounded-[50%] bg-blue-700 object-cover"
                     />
-                    <div className="hidden md:flex font-medium gap-9">
+                    <div className="hidden md:flex font-medium justify-center gap-9">
                       <a
                         href="/marketplace"
                         className="
@@ -411,16 +411,25 @@ hover:text-[#0000FF]
                       </a>
                     </div>
                     <div>
-                      <div className="hidden md:flex">
+                      <div className="hidden md:flex justify-end">
                         {!user?.profile_image ? (
-                          <a href="/login">
-                            {" "}
-                            <img
-                              src="/profile.png"
-                              alt="Nepo Games"
-                              className="w-10.25 h-10.25 rounded-[50%] object-cover"
-                            />
-                          </a>
+                          <div className="flex border  text-blue-700 font-medium transition-all duration-200  hover:text-blue-800 border-blue-600/70 text-sm items-center rounded-2xl w-fit overflow-hidden">
+                            {/* Sign In */}
+                            <a
+                              href="/login"
+                              className="px-4 py-2 pr-5 hover:bg-blue-50 -mr-2"
+                            >
+                              Sign In
+                            </a>
+
+                            {/* Sign Up */}
+                            <a
+                              href="/signup"
+                              className="px-4 py-2 bg-blue-700 text-white rounded-l-2xl font-medium transition-all duration-200 hover:bg-blue-800 hover:scale-102 active:scale-95"
+                            >
+                              Sign Up
+                            </a>
+                          </div>
                         ) : (
                           <>
                             <div className="relative group w-fit">
