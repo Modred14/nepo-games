@@ -3,7 +3,10 @@ import GoogleProvider from "next-auth/providers/google";
 import pool from "../../../../../lib/db";
 
 const defaultAvatar = "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
-
+const normalizeImage = (img) => {
+  if (typeof img === "string" && img.trim() !== "") return img;
+  return defaultAvatar;
+};
 const handler = NextAuth({
   providers: [
     GoogleProvider({
@@ -78,7 +81,7 @@ const handler = NextAuth({
             email.split("@")[0], // simple username
             email,
             null, // no password for Google users
-            image || defaultAvatar,
+            normalizeImage(image),
             null,
             null,
             null,
@@ -109,7 +112,12 @@ const handler = NextAuth({
         );
 
         if (result.rows.length > 0) {
-          token.user = result.rows[0];
+          const dbUser = result.rows[0];
+
+          token.user = {
+            ...dbUser,
+            profile_image: normalizeImage(dbUser.profile_image),
+          };
         }
 
         return token;
@@ -123,7 +131,12 @@ const handler = NextAuth({
         );
 
         if (result.rows.length > 0) {
-          token.user = result.rows[0];
+          const dbUser = result.rows[0];
+
+          token.user = {
+            ...dbUser,
+            profile_image: normalizeImage(dbUser.profile_image),
+          };
         }
       }
 

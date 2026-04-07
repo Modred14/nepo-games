@@ -563,7 +563,7 @@ export default function Login() {
             </div>
           </div>
 
-          <div className="hidden lg:flex lg:w-1/2 items-center justify-center bg-white">
+          <div className="hidden lg:flex lg:w-1/2 h-screen items-center justify-center bg-white">
             <img
               src="/signup.jpg"
               alt="Sign Up Illustration"

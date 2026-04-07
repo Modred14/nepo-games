@@ -146,7 +146,7 @@ export default function Marketplace() {
               </a>
             )}
             <a href="/profile" className="flex items-center">
-              <button className="border overflow-hidden w-9 border-blue-600/40 rounded-3xl">
+              <button className="border overflow-hidden w-9 h-9 border-blue-600/40 rounded-3xl">
                 <img src={user?.profile_image} alt="" />
               </button>
             </a>

@@ -10,7 +10,14 @@ function PageContent() {
 
   useEffect(() => {
     if (status === "authenticated" && session?.user) {
-      localStorage.setItem("nepo-user", JSON.stringify(session.user));
+      const safeUser = {
+        ...session.user,
+        profile_image:
+          session.user.profile_image?.trim() ||
+          "https://cdn-icons-png.flaticon.com/512/3135/3135715.png",
+      };
+
+      localStorage.setItem("nepo-user", JSON.stringify(safeUser));
     }
 
     if (status === "unauthenticated") {
