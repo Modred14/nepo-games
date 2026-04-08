@@ -19,7 +19,7 @@ export default function Conversation({ buyerId, GameDetails }) {
   const inputRef = useRef(null);
 
   return (
-    <div className="max-h-screen w-full overflow-hidden flex bg-cover bg-center">
+    <div className="h-[100dvh] w-full overflow-hidden flex bg-cover bg-center">
       <div className="p-4 md:grid hidden">
         <div className="border border-blue-500/40 rounded-xl shadow-sm bg-white sm:min-w-60 lg:min-w-72 overflow-hidden">
           {/* Header */}
@@ -85,13 +85,6 @@ export default function Conversation({ buyerId, GameDetails }) {
         </div>
       </div>{" "}
       <div className="relative z-10 h-screen  overflow-hidden flex flex-col w-full">
-        <div
-          className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: "url('/conversation.png')" }}
-        />
-
-        <div className="absolute inset-0 bg-white/80" />
-
         <div className="relative z-10 h-screen flex flex-col w-full overflow-hidden">
           {/* background */}
           <div
