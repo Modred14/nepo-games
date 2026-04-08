@@ -127,7 +127,7 @@ export default function Conversation({ buyerId, GameDetails }) {
             </div>
 
             {/* INPUT (NO FIXED) */}
-            <div className="p-4 mb-7 shrink-0">
+            <div className="p-4 mb-8 shrink-0">
               <div
                 onClick={() => inputRef.current?.focus()}
                 className="flex items-center gap-3  min-w-0
