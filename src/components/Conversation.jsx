@@ -84,7 +84,7 @@ export default function Conversation({ buyerId, GameDetails }) {
           </div>
         </div>
       </div>{" "}
-      <div className="relative z-10 h-screen  flex flex-col w-full">
+      <div className="relative z-10 h-screen  overflow-hidden flex flex-col w-full">
         <div
           className="absolute inset-0 bg-cover bg-center"
           style={{ backgroundImage: "url('/conversation.png')" }}
@@ -265,7 +265,7 @@ export default function Conversation({ buyerId, GameDetails }) {
             </div>
 
             {/* INPUT (NO FIXED) */}
-            <div className="p-4 shrink-0">
+            <div className="p-4 mb-5 shrink-0">
               <div
                 onClick={() => inputRef.current?.focus()}
                 className="flex items-center gap-3  min-w-0
