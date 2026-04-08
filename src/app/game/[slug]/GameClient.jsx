@@ -48,7 +48,7 @@ export default function GameClient({ game, images, similarGames }) {
   return (
     <PageLoader>
       <div className="w-full flex px-2 justify-center"></div>{" "}
-      <div className="px-[3%] pt-3">
+      <div className="px-[3%] sm:pt-5 pt-3">
   <a
     href="/marketplace"
     className="text-xs text-gray-500 hover:text-[#0000FF] transition inline-flex items-center gap-1"
@@ -57,7 +57,7 @@ export default function GameClient({ game, images, similarGames }) {
   </a>
 </div>
 
-<div className="p-[3%] pt-5">
+<div className="p-[3%] sm:pt-5 pt-3">
         <div className="md:grid grid-cols-[2fr_1fr]  gap-7">
           <div className="grid h-fit gap-4">
             <ImageSlider images={images} index={index} setIndex={setIndex} />
