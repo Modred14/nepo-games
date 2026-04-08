@@ -13,7 +13,7 @@ export async function POST(req) {
     const user = result.rows;
     if (!user[0]?.password_hash) {
       return NextResponse.json(
-        { error: "User record is invalid" },
+        { error: "User record doesn't contain password" },
         { status: 404 },
       );
     }
