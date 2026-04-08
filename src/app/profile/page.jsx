@@ -9,6 +9,7 @@ import {
   User,
   Shield,
   Bell,
+  Link,
   Camera,
 } from "lucide-react";
 import Loader from "@/components/Loader";
@@ -45,12 +46,17 @@ export default function AccountSettingsPage() {
         <MobileTab
           label="Password"
           active={activeTab === "password"}
-          onClick={() =>  !globalLoading && setActiveTab("password")}
+          onClick={() => !globalLoading && setActiveTab("password")}
         />
         <MobileTab
-          label="Security"
-          active={activeTab === "security"}
-          onClick={() => !globalLoading && setActiveTab("security")}
+          label="Linked Account"
+          active={activeTab === "linked"}
+          onClick={() => !globalLoading && setActiveTab("linked")}
+        />
+        <MobileTab
+          label="Data & Privacy "
+          active={activeTab === "data"}
+          onClick={() => !globalLoading && setActiveTab("data")}
         />
         <MobileTab
           label="Notifications"
@@ -77,10 +83,17 @@ export default function AccountSettingsPage() {
             disabled={globalLoading}
           />
           <TabButton
+            icon={<Link size={16} />}
+            label="Linked Account"
+            active={activeTab === "linked"}
+            onClick={() => setActiveTab("linked")}
+            disabled={globalLoading}
+          />
+          <TabButton
             icon={<Shield size={16} />}
-            label="Security"
-            active={activeTab === "security"}
-            onClick={() => setActiveTab("security")}
+            label="Data & Privacy"
+            active={activeTab === "data"}
+            onClick={() => setActiveTab("data")}
             disabled={globalLoading}
           />
           <TabButton
@@ -102,7 +115,8 @@ export default function AccountSettingsPage() {
           {activeTab === "password" && (
             <PasswordTab setGlobalLoading={setGlobalLoading} />
           )}
-          {activeTab === "security" && <SecurityTab />}
+          {activeTab === "linked" && <LInkedTab />}
+          {activeTab === "data" && <DataTab />}
           {activeTab === "notifications" && <NotificationTab />}
         </div>
       </div>
@@ -125,7 +139,7 @@ function TabButton({ icon, label, active, onClick, disabled }) {
   return (
     <button
       onClick={onClick}
-        disabled={disabled} 
+      disabled={disabled}
       className={`flex items-center gap-2 w-full px-3 py-2 rounded-md mb-2 text-sm font-medium transition ${
         active ? "bg-blue-600 text-white" : "text-gray-600 hover:bg-gray-100"
       } ${disabled ? "opacity-90 cursor-not-allowed" : ""}`} // ✅ ADDED
@@ -683,13 +697,150 @@ function PasswordInput({ label, value, onChange, show, toggle }) {
   );
 }
 
-function SecurityTab() {
+function LInkedTab() {
   return (
-    <div className="bg-white rounded-2xl shadow p-4 sm:p-6 space-y-4">
-      <h2 className="text-base sm:text-lg font-semibold">Security Settings</h2>
-      <Toggle label="Two-Factor Authentication" storageKey="2fa" />
-      <Toggle label="Login Alerts" storageKey="alerts" />
-      <Toggle label="Remember Devices" storageKey="devices" />
+    <div className="bg-white rounded-2xl shadow p-4 sm:p-6 space-y-6">
+      {/* Header */}
+
+      {/* Linked Account Section */}
+      <div className="space-y-3">
+        <div>
+          <h2 className="text-base sm:text-lg font-semibold text-gray-800">
+            Linked Account
+          </h2>
+          <p className="text-xs text-gray-500">
+            Sign in to{" "}
+            <span className="text-blue-600 font-medium">Nepogames</span> using
+            this third party account
+          </p>
+        </div>
+
+        {/* Google Card */}
+        <div className="flex items-center my-7 justify-between border border-blue-200 rounded-xl p-4 hover:shadow-sm transition-all duration-200">
+          <div className="flex items-center gap-3">
+            {/* Google Icon */}
+            <div className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-50">
+              <img
+                src="https://www.svgrepo.com/show/475656/google-color.svg"
+                alt="Google"
+                className="w-6 h-6"
+              />
+            </div>
+
+            <div>
+              <p className="text-sm font-medium text-gray-800">
+                Google Account
+              </p>
+              <p className="text-xs text-gray-500">Signed in with Google</p>
+            </div>
+          </div>
+
+          {/* Connected Badge */}
+          <div className="flex items-center gap-2 bg-green-100 text-green-600 text-[10px] xs:text-xs font-medium px-3 py-1.5 rounded-lg">
+            <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+            Connected
+          </div>
+        </div>
+      </div>
+
+      {/* Security Section */}
+      <div className="flex items-center justify-between border-t pt-4">
+        <div className="flex items-center gap-1">
+          <p className="text-sm">
+            <span className="text-blue-600 font-medium">Security Status</span>
+            <span className="text-green-500"> : Strong</span>
+          </p>
+
+          <Lock size={15} className="text-green-500" />
+        </div>
+      </div>
+
+      {/* Security Illustration */}
+      <div className="flex justify-center">
+        <div className="relative">
+          <img
+            src="/security-shield.png"
+            alt="Security"
+            className=" opacity-95"
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DataTab() {
+  return (
+    <div className="bg-white rounded-2xl shadow p-4 sm:p-6 space-y-6">
+      {/* Header */}
+      <div>
+        <h2 className="text-base sm:text-lg font-semibold text-gray-900">
+          Data & Privacy
+        </h2>
+        <p className="text-xs text-gray-500">Last updated: April 2026</p>
+        <p className="text-xs pt-5 sm:text-sm text-gray-500">
+          By using{" "}
+          <span className="text-blue-600 font-semibold">Nepogames</span> you
+          agree to these terms and conditions. Please read our{" "}
+          <a href="/terms-of-service" className="text-blue-600 font-semibold">
+            Terms of Service
+          </a>{" "}
+          and{" "}
+          <a href="/privacy-policy" className="text-blue-600 font-semibold">
+            Privacy Policy
+          </a>{" "}
+          carefully before using our platform
+        </p>
+      </div>
+
+      {/* Divider line */}
+      <div className="h-px w-full bg-gray-100" />
+
+      {/* Content Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-10 relative">
+        {/* Vertical divider for desktop */}
+        <div className="hidden sm:block absolute left-1/2 top-0 bottom-0 w-px bg-gray-100" />
+
+        {/* Terms */}
+        <div className="space-y-4">
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900">
+              Terms of Service
+            </h3>
+            <p className="text-xs text-gray-500 mt-1">
+              Last updated: April 2026
+            </p>
+          </div>
+          <a href="/terms-of-service">
+            <button
+              className="w-full sm:w-auto px-5 py-2.5 rounded-lg bg-[#0000FF] text-white text-sm font-medium
+        hover:opacity-90 transition active:scale-[0.98]"
+            >
+              Terms of service
+            </button>
+          </a>
+        </div>
+
+        {/* Privacy */}
+        <div className="space-y-4">
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900">
+              Privacy Policy
+            </h3>
+            <p className="text-xs text-gray-500 mt-1">
+              Last updated: April 2026
+            </p>
+          </div>
+          <a href="/privacy-policy">
+            <button
+              className="w-full sm:w-auto px-5 py-2.5 rounded-lg bg-[#0000FF] text-white text-sm font-medium
+        hover:opacity-90 transition active:scale-[0.98]"
+            >
+              Privacy Policy
+            </button>
+          </a>
+        </div>
+      </div>
     </div>
   );
 }
