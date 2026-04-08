@@ -13,7 +13,7 @@ import {
   Menu,
 } from "lucide-react";
 import Reveal from "./reveal";
-import { useEffect, useRef, useState, useMemo } from "react";
+import { useEffect, useRef, useState, useMemo, use } from "react";
 import Reviews from "./review";
 import Footer from "./footer";
 import RevealRight from "./revealfright";
@@ -28,6 +28,7 @@ export default function Home() {
   const [user, setUser] = useState("");
   const [active, setActive] = useState("");
   const [activeIndex, setActiveIndex] = useState(null);
+  const [refOpen, setOpenRef] = useState(false);
 
   useEffect(() => {
     const stored = localStorage.getItem("nepo-user");
@@ -35,6 +36,19 @@ export default function Home() {
       setUser(JSON.parse(stored));
     }
   }, []);
+
+  const ref = useRef(null);
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) {
+        setOpenRef(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   const handleLogout = async () => {
     localStorage.removeItem("nepo-user");
 
@@ -432,44 +446,54 @@ hover:text-[#0000FF]
                           </div>
                         ) : (
                           <>
-                            <div className="relative group w-fit">
+                            <div
+                              ref={ref}
+                              onMouseEnter={() => setOpenRef(true)}
+                              className="relative  w-fit"
+                            >
                               <a>
                                 <img
                                   src={user?.profile_image}
+                                  onClick={() => setOpenRef((prev) => !prev)}
                                   alt="Nepo Games"
                                   className="border-blue-600/70 border w-10 h-10 rounded-full object-cover cursor-pointer"
                                 />
                               </a>
 
                               {/* Dropdown */}
-                              <div className="absolute right-0 mt-1 bg-white/95 backdrop-blur-md border  border-[#7A7AFE]/50 rounded-sm shadow-sm opacity-0 invisible translate-y-2 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 transition-all duration-200 z-50 overflow-hidden">
-                                {/* Profile */}
-                                <a
-                                  href="/profile"
-                                  className="flex items-center gap-3 px-4 py-3 text-xs text-gray-700 hover:bg-gray-100/80 transition"
-                                >
-                                  <span className="text-xs">👤</span>
-                                  Profile
-                                </a>{" "}
-                                <div className="h-px bg-gray-200 mx-2"></div>
-                                <a
-                                  href="/marketplace"
-                                  className="flex items-center gap-3 px-4 py-3 text-xs text-gray-700 hover:bg-gray-100/80 transition"
-                                >
-                                  <span className="text-xs">🛒</span>
-                                  Marketplace
-                                </a>
-                                {/* Divider */}
-                                <div className="h-px bg-gray-200 mx-2"></div>
-                                {/* Logout */}
-                                <button
-                                  onClick={handleLogout}
-                                  className="flex items-center gap-3 w-full px-4 py-3 text-xs text-red-500 hover:bg-red-50 transition"
-                                >
-                                  <span className="text-xs">🚪</span>
-                                  Logout
-                                </button>
-                              </div>
+                              {refOpen && (
+                                <>
+                                  {" "}
+                                  <div className="absolute right-0 mt-1 bg-white/95  backdrop-blur-md border  border-[#7A7AFE]/50 shadow-sm rounded-sm z-50 overflow-hidden transition-all duration-200">
+                                    {/* Profile */}
+                                    <a
+                                      href="/profile"
+                                      className="flex items-center gap-3 px-4 py-3 text-xs text-gray-700 hover:bg-gray-100/80 transition"
+                                    >
+                                      <span className="text-xs">👤</span>
+                                      Profile
+                                    </a>{" "}
+                                    <div className="h-px bg-gray-200 mx-2"></div>
+                                    <a
+                                      href="/marketplace"
+                                      className="flex items-center gap-3 px-4 py-3 text-xs text-gray-700 hover:bg-gray-100/80 transition"
+                                    >
+                                      <span className="text-xs">🛒</span>
+                                      Marketplace
+                                    </a>
+                                    {/* Divider */}
+                                    <div className="h-px bg-gray-200 mx-2"></div>
+                                    {/* Logout */}
+                                    <button
+                                      onClick={handleLogout}
+                                      className="flex items-center gap-3 w-full px-4 py-3 text-xs text-red-500 hover:bg-red-50 transition"
+                                    >
+                                      <span className="text-xs">🚪</span>
+                                      Logout
+                                    </button>
+                                  </div>{" "}
+                                </>
+                              )}
                             </div>
                           </>
                         )}

@@ -72,21 +72,19 @@ export default function ImageSlider({ images }) {
 
   return (
     <div className="w-full">
-      <div
-        onMouseEnter={() => setIsPaused(true)}
-        onMouseLeave={() => {
-          setIsPaused(false);
-          startTimeRef.current = Date.now() - (progress / 100) * DURATION;
-        }}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-        className="relative w-full xl:h-100 aspect-video border-2 flex justify-center items-center bg-gray-200 border-blue-600/60 rounded-md overflow-hidden"
-      >
+      <div className="relative w-full xl:h-100 aspect-video border-2 flex justify-center items-center bg-gray-200 border-blue-600/60 rounded-md overflow-hidden">
         {/* IMAGE */}
         <img
           key={index}
           src={images[index]}
+          onMouseEnter={() => setIsPaused(true)}
+          onMouseLeave={() => {
+            setIsPaused(false);
+            startTimeRef.current = Date.now() - (progress / 100) * DURATION;
+          }}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
           alt=""
           className="w-full h-full object-contain absolute inset-0 transition-opacity duration-700 ease-in-out"
         />

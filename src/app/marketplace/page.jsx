@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import useAuthGuard from "../hooks/useAuthGuard";
 import Reveal from "../reveal";
 import { Search, ShoppingCart, Verified } from "lucide-react";
@@ -20,6 +20,20 @@ export default function Marketplace() {
   const [verifiedOnly, setVerifiedOnly] = useState(false);
   const [priceRange, setPriceRange] = useState([0, 5000000]);
   const [imagesLoaded, setImagesLoaded] = useState(0);
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  // close on outside click
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) {
+        setOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const getAmount = (price) => {
     const numericPrice = parseFloat(price.replace(/[^0-9.]/g, ""));
@@ -144,49 +158,58 @@ export default function Marketplace() {
               </a>
             )}
             <div className="flex items-center">
-              <div className="relative group w-fit">
+              <div
+                ref={ref}
+                onMouseEnter={() => setOpen(true)}
+                className="relative w-fit"
+              >
                 <a>
                   <img
                     src={user?.profile_image}
+                    onClick={() => setOpen((prev) => !prev)}
                     alt="Nepo Games"
                     className="border-blue-600/70 border w-9 h-9 rounded-full object-cover cursor-pointer"
                   />
                 </a>
 
-                {/* Dropdown */}
-                <div className="absolute right-0 mt-1 bg-white/95 backdrop-blur-md border  border-[#7A7AFE]/50 rounded-sm shadow-sm opacity-0 invisible translate-y-2 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 transition-all duration-200 z-50 overflow-hidden">
-                  {/* Profile */}
-                  <a
-                    href="/profile"
-                    className="flex items-center gap-3 px-4 py-3 text-xs text-gray-700 hover:bg-gray-100/80 transition"
-                  >
-                    <span className="text-xs">👤</span>
-                    Profile
-                  </a>{" "}
-                  {!user?.phone_verified && (
-                    <div>
-                      {" "}
-                      <div className="h-px bg-gray-200 mx-2"></div>
+                {open && (
+                  <>
+                    {" "}
+                    <div className="absolute right-0 mt-1 bg-white/95 backdrop-blur-md border  border-[#7A7AFE]/50 shadow-sm rounded-sm z-50 overflow-hidden transition-all duration-200">
+                      {/* Profile */}
                       <a
-                        href="/seller"
+                        href="/profile"
                         className="flex items-center gap-3 px-4 py-3 text-xs text-gray-700 hover:bg-gray-100/80 transition"
                       >
-                        <span className="text-xs">📦</span>
-                        Become Seller{" "}
-                      </a>
-                    </div>
-                  )}
-                  {/* Divider */}
-                  <div className="h-px bg-gray-200 mx-2"></div>
-                  {/* Logout */}
-                  <button
-                    onClick={handleLogout}
-                    className="flex items-center gap-3 w-full px-4 py-3 text-xs text-red-500 hover:bg-red-50 transition"
-                  >
-                    <span className="text-xs">🚪</span>
-                    Logout
-                  </button>
-                </div>
+                        <span className="text-xs">👤</span>
+                        Profile
+                      </a>{" "}
+                      {!user?.phone_verified && (
+                        <div className="w-full">
+                          {" "}
+                          <div className="h-px bg-gray-200 mx-2"></div>
+                          <a
+                            href="/seller"
+                            className="flex items-center gap-3 px-4 py-3 text-xs text-gray-700 hover:bg-gray-100/80 transition  whitespace-nowrap"
+                          >
+                            <span className="text-xs">📦</span>
+                            Become Seller{" "}
+                          </a>
+                        </div>
+                      )}
+                      {/* Divider */}
+                      <div className="h-px bg-gray-200 mx-2"></div>
+                      {/* Logout */}
+                      <button
+                        onClick={handleLogout}
+                        className="flex items-center gap-3 w-full px-4 py-3 text-xs text-red-500 hover:bg-red-50 transition"
+                      >
+                        <span className="text-xs">🚪</span>
+                        Logout
+                      </button>
+                    </div>{" "}
+                  </>
+                )}
               </div>
             </div>
           </div>
