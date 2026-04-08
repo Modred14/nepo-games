@@ -7,6 +7,7 @@ import { Search, ShoppingCart, Verified } from "lucide-react";
 import NoGame from "@/components/NoGame";
 import ReactSlider from "react-slider";
 import SmallLoader from "@/components/smallLoader";
+import { signOut } from "next-auth/react";
 
 export default function Marketplace() {
   useAuthGuard();
@@ -55,16 +56,13 @@ export default function Marketplace() {
     fetchGames();
   }, []);
 
-  // const handleLogout = () => {
-  //   const storedUser = localStorage.getItem("nepo-user");
+  const handleLogout = async () => {
+    localStorage.removeItem("nepo-user");
 
-  //   if (storedUser) {
-  //     localStorage.removeItem("nepo-user");
-  //     if (storedUser.token) localStorage.removeItem("nepo-token");
-  //     router.push("/login");
-  //   }
-  // };
-
+    await signOut({
+      callbackUrl: "/login", // where to go after logout
+    });
+  };
   function formatGamePrice(price) {
     const numericPrice = parseFloat(price.replace(/[^0-9.]/g, ""));
     return `₦ ${numericPrice.toLocaleString()}`;
@@ -120,7 +118,7 @@ export default function Marketplace() {
           <p className="text-base sm:text-lg font-bold">
             Hello, {user?.username}
           </p>
-          <div className="flex items-center gap-2 sm:gap-5">
+          <div className="flex items-center gap-1 sm:gap-5">
             {" "}
             <div className="relative w-30 sm:w-70 ">
               <Search
@@ -145,15 +143,52 @@ export default function Marketplace() {
                 </div>
               </a>
             )}
-            <a href="/profile" className="flex items-center">
-              <button className="border overflow-hidden w-9 h-9 border-blue-600/40 rounded-3xl">
-                <img
-                  src={user?.profile_image}
-                  alt="Profile Image"
-                  className="w-full h-full object-cover"
-                />
-              </button>
-            </a>
+            <div className="flex items-center">
+              <div className="relative group w-fit">
+                <a>
+                  <img
+                    src={user?.profile_image}
+                    alt="Nepo Games"
+                    className="border-blue-600/70 border w-9 h-9 rounded-full object-cover cursor-pointer"
+                  />
+                </a>
+
+                {/* Dropdown */}
+                <div className="absolute right-0 mt-1 bg-white/95 backdrop-blur-md border  border-[#7A7AFE]/50 rounded-sm shadow-sm opacity-0 invisible translate-y-2 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 transition-all duration-200 z-50 overflow-hidden">
+                  {/* Profile */}
+                  <a
+                    href="/profile"
+                    className="flex items-center gap-3 px-4 py-3 text-xs text-gray-700 hover:bg-gray-100/80 transition"
+                  >
+                    <span className="text-xs">👤</span>
+                    Profile
+                  </a>{" "}
+                  {!user?.phone_verified && (
+                    <div>
+                      {" "}
+                      <div className="h-px bg-gray-200 mx-2"></div>
+                      <a
+                        href="/seller"
+                        className="flex items-center gap-3 px-4 py-3 text-xs text-gray-700 hover:bg-gray-100/80 transition"
+                      >
+                        <span className="text-xs">📦</span>
+                        Become Seller{" "}
+                      </a>
+                    </div>
+                  )}
+                  {/* Divider */}
+                  <div className="h-px bg-gray-200 mx-2"></div>
+                  {/* Logout */}
+                  <button
+                    onClick={handleLogout}
+                    className="flex items-center gap-3 w-full px-4 py-3 text-xs text-red-500 hover:bg-red-50 transition"
+                  >
+                    <span className="text-xs">🚪</span>
+                    Logout
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
         <div className="px-[3%] w-full ">
