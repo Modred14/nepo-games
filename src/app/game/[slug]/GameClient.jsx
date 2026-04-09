@@ -1,17 +1,25 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import ImageSlider from "@/components/ImageSlider";
 import { ShoppingCart, Star } from "lucide-react";
 import PageLoader from "@/components/PageLoader";
+import { useRouter } from "next/navigation";
 
 export default function GameClient({ game, images, similarGames }) {
   const [index, setIndex] = useState(0);
   const [message, setMessage] = useState("");
   const [report, setReport] = useState(false);
+  const [user, setUser] = useState([]);
   const [selectedReason, setSelectedReason] = useState(null);
   const [customReason, setCustomReason] = useState("");
 
+  useEffect(() => {
+    const storedUser = localStorage.getItem("nepo-user");
+    const user = storedUser ? JSON.parse(storedUser) : null;
+    setUser(user);
+  }, []);
+  const user_id = user?.id;
   function formatGamePrice(price) {
     return Number(price).toLocaleString();
   }
@@ -19,6 +27,11 @@ export default function GameClient({ game, images, similarGames }) {
     if (!text) return "";
     return text.charAt(0).toUpperCase() + text.slice(1);
   }
+  const router = useRouter();
+
+  const openChat = (listingId, receiverId) => {
+    router.push(`/c/${listingId}?user_id=${user_id}&receiver_id=${receiverId}`);
+  };
   const handleReport = (reason) => {
     if (reason === "Others") {
       setSelectedReason("Others");
@@ -49,21 +62,23 @@ export default function GameClient({ game, images, similarGames }) {
     <PageLoader>
       <div className="w-full flex px-2 justify-center"></div>{" "}
       <div className="px-[3%] sm:pt-5 pt-3">
-  <a
-    href="/marketplace"
-    className="text-xs text-gray-500 hover:text-[#0000FF] transition inline-flex items-center gap-1"
-  >
-    <span>←</span> Back to marketplace
-  </a>
-</div>
-
-<div className="p-[3%] sm:pt-5 pt-3">
+        <a
+          href="/marketplace"
+          className="text-xs text-gray-500 hover:text-[#0000FF] transition inline-flex items-center gap-1"
+        >
+          <span>←</span> Back to marketplace
+        </a>
+      </div>
+      <div className="p-[3%] sm:pt-5 pt-3">
         <div className="md:grid grid-cols-[2fr_1fr]  gap-7">
           <div className="grid h-fit gap-4">
             <ImageSlider images={images} index={index} setIndex={setIndex} />
             <div className="text-sm  sm:text-base px-[5%] xs:px-[10%] py-4">
               {" "}
-              <button className="w-full px-2 bg-[#4A4BFF] rounded-md gap-2 text-white py-2 flex justify-center items-center">
+              <button
+                onClick={() => openChat(game.id, game.user_id)}
+                className="w-full px-2 bg-[#4A4BFF] rounded-md gap-2 text-white py-2 flex justify-center items-center"
+              >
                 <ShoppingCart size={15} /> Buy account now (₦{" "}
                 {formatGamePrice(game.price)})
               </button>

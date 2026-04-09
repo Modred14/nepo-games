@@ -176,7 +176,7 @@ export default function Marketplace() {
                   <>
                     {" "}
                     <div className="absolute right-0 mt-1 bg-white/95 backdrop-blur-md border  border-[#7A7AFE]/50 shadow-sm rounded-sm z-50 overflow-hidden transition-all duration-200">
-                      {/* Profile */}
+
                       <a
                         href="/profile"
                         className="flex items-center gap-3 px-4 py-3 text-xs text-gray-700 hover:bg-gray-100/80 transition"
