@@ -273,7 +273,7 @@ export default function Conversation({ buyerId, GameDetails }) {
   };
   const lastIndex = messages.length - 1;
   return (
-    <div className="h-screen w-full overflow-hidden flex bg-cover bg-center">
+    <div className="h-dvh w-full overflow-hidden flex bg-cover bg-center">
       <div className="p-4 md:grid hidden">
         <div className="border border-blue-500/40 rounded-xl shadow-sm bg-white sm:min-w-60 lg:min-w-72 overflow-hidden">
           {/* Header */}
@@ -338,7 +338,7 @@ export default function Conversation({ buyerId, GameDetails }) {
           </div>
         </div>
       </div>{" "}
-      <div className="relative z-10 h-screen  overflow-hidden flex flex-col w-full">
+      <div className="relative z-10 overflow-hidden flex flex-col w-full">
         <div className="relative z-10 h-screen flex flex-col w-full overflow-hidden">
           {/* background */}
           <div
