@@ -12,7 +12,7 @@ export default function PrivacyPolicy() {
             <div className="bg-blue-700 p-5 rounded-2xl shadow-lg">
               <img
                 src="/logo.png"
-                alt="Nepo Games Logo"
+                alt="Nepogames Logo"
                 className="h-12 w-auto object-contain"
               />
             </div>
@@ -20,7 +20,7 @@ export default function PrivacyPolicy() {
 
           <h1 className="text-4xl font-bold mb-3">Privacy Policy</h1>
           <p className="text-gray-500 max-w-xl mx-auto">
-            How Nepo Games collects, uses, and protects your data.
+            How Nepogames collects, uses, and protects your data.
           </p>
 
           <p className="text-sm text-gray-400 mt-3">
@@ -54,7 +54,7 @@ const sections = [
     title: "1. Introduction",
     content: (
       <p>
-        <span className="font-semibold">Nepo Games</span> ("we", "our", "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, and safeguard your information when you use our platform.
+        <span className="font-semibold">Nepogames</span> ("we", "our", "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, and safeguard your information when you use our platform.
       </p>
     ),
   },
@@ -86,7 +86,7 @@ const sections = [
     title: "4. Payments and Transactions",
     content: (
       <p>
-        Nepo Games acts as an intermediary between users. Payments may be held temporarily until delivery is confirmed. We do not store full financial details; payments are processed by trusted third-party providers.
+        Nepogames acts as an intermediary between users. Payments may be held temporarily until delivery is confirmed. We do not store full financial details; payments are processed by trusted third-party providers.
       </p>
     ),
   },
@@ -128,7 +128,7 @@ const sections = [
     title: "9. Age Restriction",
     content: (
       <p>
-        Nepo Games is accessible to users aged 3 and above. Users under 13 must use the platform under parental supervision.
+        Nepogames is accessible to users aged 3 and above. Users under 13 must use the platform under parental supervision.
       </p>
     ),
   },

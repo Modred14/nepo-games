@@ -12,7 +12,7 @@ export default function TermsOfService() {
             <div className="bg-blue-700 p-5 rounded-2xl shadow-lg">
               <img
                 src="/logo.png"
-                alt="Nepo Games Logo"
+                alt="Nepogames Logo"
                 className="h-12 w-auto object-contain"
               />
             </div>
@@ -20,7 +20,7 @@ export default function TermsOfService() {
 
           <h1 className="text-4xl font-bold mb-3">Terms of Service</h1>
           <p className="text-gray-500 max-w-xl mx-auto">
-            These terms govern your use of Nepo Games. Use of the platform means
+            These terms govern your use of Nepogames. Use of the platform means
             you fully accept these terms.
           </p>
 
@@ -51,7 +51,7 @@ const sections = [
     title: "1. Acceptance of Terms",
     content: (
       <p>
-        By using Nepo Games, you agree to be legally bound by these Terms. If
+        By using Nepogames, you agree to be legally bound by these Terms. If
         you do not agree, you must not use the platform.
       </p>
     ),
@@ -61,7 +61,7 @@ const sections = [
     content: (
       <p>
         The platform is accessible to users aged 3+. Users under 13 must use the
-        platform under parental supervision. By using Nepo Games, you confirm
+        platform under parental supervision. By using Nepogames, you confirm
         you meet these requirements.
       </p>
     ),
@@ -82,7 +82,7 @@ const sections = [
     title: "4. Transactions & Escrow",
     content: (
       <p>
-        Nepo Games acts strictly as an intermediary. Payments may be held
+        Nepogames acts strictly as an intermediary. Payments may be held
         temporarily until delivery is confirmed. "Delivery" is defined as
         successful transfer of account access and control to the buyer,
         including valid login credentials.
@@ -94,7 +94,7 @@ const sections = [
     content: (
       <p>
         All transactions are generally final. However, refunds may be issued at
-        the sole discretion of Nepo Games in cases where the seller fails to
+        the sole discretion of Nepogames in cases where the seller fails to
         deliver valid login details or the account significantly differs from
         what was advertised. Evidence may be required before any decision is
         made.
@@ -106,7 +106,7 @@ const sections = [
     content: (
       <p>
         Users acknowledge that buying or selling accounts carries inherent
-        risks. Nepo Games does not guarantee account longevity, security, or
+        risks. Nepogames does not guarantee account longevity, security, or
         protection from recovery by original owners. All transactions are
         conducted at your own risk.
       </p>
@@ -126,8 +126,8 @@ const sections = [
     title: "8. Dispute Resolution",
     content: (
       <p>
-        Nepo Games may intervene in disputes at its discretion. All decisions
-        made by Nepo Games are final and binding. We are not obligated to
+        Nepogames may intervene in disputes at its discretion. All decisions
+        made by Nepogames are final and binding. We are not obligated to
         resolve disputes.
       </p>
     ),
@@ -145,7 +145,7 @@ const sections = [
     title: "10. Fees & Charges",
     content: (
       <p>
-        Nepo Games reserves the right to introduce fees, commissions, or service
+        Nepogames reserves the right to introduce fees, commissions, or service
         charges at any time. Continued use of the platform implies acceptance of
         such fees.
       </p>
@@ -155,7 +155,7 @@ const sections = [
     title: "11. Limitation of Liability",
     content: (
       <p>
-        Nepo Games shall not be liable for any losses, including financial loss,
+        Nepogames shall not be liable for any losses, including financial loss,
         data loss, or damages arising from use of the platform or transactions
         between users.
       </p>
