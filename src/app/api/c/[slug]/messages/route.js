@@ -20,12 +20,16 @@ export async function GET(req, context) {
     // 1. GET OR CREATE CONVERSATION
     // -----------------------------
     let convo = await pool.query(
-      `SELECT * FROM conversations
-       WHERE sender_id = $1
-       AND receiver_id = $2
-       AND listing_id = $3
-       LIMIT 1`,
-      [sender_id, receiver_id, listing_id]
+      ` SELECT * FROM conversations
+      WHERE listing_id = $1
+      AND (
+        (sender_id = $2 AND receiver_id = $3)
+        OR
+        (sender_id = $3 AND receiver_id = $2)
+      )
+      LIMIT 1
+      `,
+      [listing_id, sender_id, receiver_id]
     );
 
     // If not found, create it
@@ -41,11 +45,15 @@ export async function GET(req, context) {
         // race condition fallback
         convo = await pool.query(
           `SELECT * FROM conversations
-           WHERE sender_id = $1
-           AND receiver_id = $2
-           AND listing_id = $3
-           LIMIT 1`,
-          [sender_id, receiver_id, listing_id]
+          WHERE listing_id = $1
+          AND (
+            (sender_id = $2 AND receiver_id = $3)
+            OR
+            (sender_id = $3 AND receiver_id = $2)
+          )
+          LIMIT 1
+          `,
+          [listing_id, sender_id, receiver_id]
         );
       }
     }
@@ -78,7 +86,9 @@ export async function GET(req, context) {
       messages: messages.rows,
     });
   } catch (err) {
-    console.error("[CHAT API CRASH]", err);
+      console.error("🔥 FULL ERROR:", err);
+  console.error("🔥 MESSAGE:", err.message);
+  console.error("🔥 STACK:", err.stack);
 
     return Response.json(
       {

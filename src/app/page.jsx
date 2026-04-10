@@ -454,7 +454,7 @@ hover:text-[#0000FF]
                               <a>
                                 <img
                                   src={user?.profile_image}
-                                  onClick={() => setOpenRef((prev) => !prev)}
+                                  onClick={() => setOpenRef(true)}
                                   alt="Nepo Games"
                                   className="border-blue-600/70 border w-10 h-10 rounded-full object-cover cursor-pointer"
                                 />

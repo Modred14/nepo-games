@@ -2,8 +2,10 @@
 
 import { useEffect, useRef, useState, useMemo } from "react";
 import { Send, Star } from "lucide-react";
-import { div } from "framer-motion/m";
-import SmallLoader from "./smallLoader";
+import { useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
+import { useParams } from "next/navigation";
+import Loader from "./Loader";
 
 export default function Conversation({
   chatId,
@@ -15,9 +17,38 @@ export default function Conversation({
 }) {
   const [textMessage, setTextMessage] = useState("");
   const [messages, setMessages] = useState([]);
+  const [conversations, setConversations] = useState([]);
+  const [loadingChats, setLoadingChats] = useState(true);
+
+  useEffect(() => {
+    const loadConversations = async () => {
+      try {
+        const storedUser = localStorage.getItem("nepo-user");
+        const user = storedUser ? JSON.parse(storedUser) : null;
+
+        if (!user?.id) return;
+
+        const res = await fetch(`/api/conversations?user_id=${user.id}`);
+        const data = await res.json();
+
+        setConversations(data);
+      } catch (err) {
+        console.error("Failed to load conversations", err);
+      } finally {
+        setLoadingChats(false);
+      }
+    };
+
+    loadConversations();
+  }, []);
   const isComposingRef = useRef(false);
   const lastInputTypeRef = useRef("");
 
+  const params = useParams();
+  const currentChatId = params.slug; // or params.id depending on route
+
+  const router = useRouter();
+  const pathname = usePathname();
   function maskEmail(email) {
     const [localPart, domain] = email.split("@");
 
@@ -109,13 +140,21 @@ export default function Conversation({
 
     const newMessage = {
       id: crypto.randomUUID(),
-      created_at: Date.now(),
+      created_at: new Date().toISOString(),
       chatId,
       gameId,
       message: textMessage,
       sender_id: userId,
     };
     setMessages((prev) => [...prev, newMessage]);
+    setConversations((prev) =>
+      prev.map((chat) => {
+        
+        return String(chat.listing_id) === String(currentChatId)
+          ? { ...chat, lastmessage: textMessage }
+          : chat;
+      }),
+    );
     setTextMessage("");
     try {
       await fetch(`/api/c/${gameId}/send`, {
@@ -133,77 +172,98 @@ export default function Conversation({
     }
   };
   const formatTime = (time) => {
-    return new Date(time).toLocaleTimeString([], {
+    if (!time) return;
+    return new Date(time).toLocaleTimeString(undefined, {
       hour: "2-digit",
       minute: "2-digit",
     });
   };
+
+  const activeChat = conversations.find(
+    (chat) => String(chat.listing_id) === String(currentChatId),
+  );
   const lastIndex = sortedMessages.length - 1;
+
+  if (loadingChats) {
+    return <Loader />;
+  }
+
   return (
     <div className="h-dvh w-full overflow-hidden flex bg-cover bg-center">
-      <div className="p-4 md:grid hidden">
-        <div className="border border-blue-500/40 rounded-xl shadow-sm bg-white sm:min-w-60 lg:min-w-72 overflow-hidden">
-          {/* Header */}
-          <div className="px-4 py-3 border-b bg-blue-50">
-            <p className="font-semibold text-blue-700 text-center text-sm tracking-wide">
-              SELLER INFORMATION
+      <div className="md:grid hidden h-full">
+        <div className="border border-blue-500/30 shadow-md bg-white sm:w-70 lg:w-90 overflow-hidden flex flex-col h-full">
+          {/* HEADER */}
+          <div className="px-4 py-3 border-b border-gray-500/40 bg-blue-50/60 backdrop-blur-sm">
+            <p className="font-semibold text-blue-700 text-center text-xs tracking-[0.2em] uppercase">
+              Chats
             </p>
           </div>
 
-          <div className="flex px-4 py-4 items-center justify-between">
-            <div>
-              <p className="text-xs text-gray-500">Username</p>
-              <p className="font-semibold text-[#0000FF]">"game.username"</p>
-            </div>
+          {/* LIST */}
+          <div className="flex-1 overflow-y-auto thin-scroll">
+            {conversations.map((chat) => {
+              const isActive =
+                currentChatId &&
+                chat?.id &&
+                String(currentChatId) === String(chat.listing_id);
 
-            <img
-              src="{game.profile_image}"
-              className="w-11 h-11 rounded-full border-2 border-blue-500/60 object-cover"
-              alt="seller"
-            />
-          </div>
+              return (
+                <div
+                  key={chat.id}
+                  onClick={() =>
+                    router.push(
+                      `/c/${chat.listing_id}?user_id=${userId}&receiver_id=${chat.receiver_id}`,
+                    )
+                  }
+                  className={`flex items-center gap-3 px-4 py-3 cursor-pointer border-b border-gray-100
+              transition-all duration-150
+              ${isActive ? "bg-blue-100/60 border-l-4 border-blue-600" : "hover:bg-blue-50/50"}
+            `}
+                >
+                  {/* AVATAR */}
+                  <div className="relative flex-shrink-0">
+                    <img
+                      src={chat.profile_image || "/profile.png"}
+                      className="w-12 h-12 rounded-full object-cover"
+                    />
+                    {/* 
+                    {chat.isOnline && (
+                      <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full" />
+                    )} */}
+                  </div>
 
-          {/* Rating */}
-          <div className="px-4 pb-4 border-b">
-            <div className="flex items-center gap-1 mb-1">
-              {[...Array(5)].map((_, i) => (
-                <Star key={i} size={15} className="text-gray-300" />
-              ))}
-            </div>
-            <p className="text-xs text-gray-500">No ratings yet</p>
-          </div>
+                  {/* INFO */}
+                  <div className="flex-1 min-w-0">
+                    {/* top row */}
+                    <div className="flex justify-between items-center">
+                      <p className="text-sm font-medium text-gray-900 truncate">
+                        {chat.gamedetails}
+                      </p>
 
-          {/* Performance */}
-          <div className="px-4 py-4">
-            <p className="text-sm font-semibold text-[#0000FF] mb-3">
-              Seller Performance
-            </p>
+                      <p className="text-[10px] text-gray-400  shrink-0 ml-2">
+                        {formatTime(chat.lastmessagetime)}
+                      </p>
+                    </div>
 
-            <div className="flex justify-between items-center">
-              <div className="space-y-2 text-sm">
-                <p>
-                  <span className="text-[#0000FF]">Quality:</span>{" "}
-                  <span className="font-medium text-green-600">Excellent</span>
-                </p>
-                <p>
-                  <span className="text-[#0000FF]">Ratings:</span>{" "}
-                  <span className="font-medium text-yellow-600">Good</span>
-                </p>
-                <p>
-                  <span className="text-[#0000FF]">Response:</span>{" "}
-                  <span className="font-medium text-green-600">Fast</span>
-                </p>
-              </div>
+                    {/* bottom row */}
+                    <div className="flex items-center justify-between mt-1">
+                      <p className="text-xs text-gray-500 truncate pr-2">
+                        {chat.lastmessage || "Start a conversation..."}
+                      </p>
 
-              <img
-                src="/Vector (1).png"
-                className="h-14 opacity-80"
-                alt="performance"
-              />
-            </div>
+                      {chat.unreadcount > 0 && (
+                        <span className="bg-blue-600 text-white text-[10px] min-w-[18px] h-[18px] px-1 rounded-full flex items-center justify-center shadow-sm">
+                          {chat.unreadcount}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
-      </div>{" "}
+      </div>
       <div className="relative z-10 overflow-hidden flex flex-col w-full">
         <div className="relative z-10 h-screen flex flex-col w-full overflow-hidden">
           {/* background */}
@@ -217,25 +277,24 @@ export default function Conversation({
           <div className="relative z-10 flex flex-col h-full">
             {/* HEADER (NO FIXED) */}
             <div className="p-4 shrink-0">
-              <div className="w-full p-2 px-5 rounded-3xl bg-blue-500/15 border backdrop-blur-sm border-blue-700/50">
+              <div className="w-full p-2 px-5 rounded-3xl  bg-white/80 backdrop-blur-xl border backdrop-blur-sm border-blue-700/50">
                 <div className="flex gap-2 items-center">
                   <img
-                    src="/profile.png"
-                    className="h-10 w-10 rounded-full object-cover"
+                    src={activeChat?.profile_image || "/profile.png"}
+                    className="h-10 w-10 rounded-full border border-blue-600/80 object-cover"
                   />
                   <div>
                     <p className="text-sm font-semibold text-blue-700">
-                      UserName
+                      {activeChat?.username || "Unknown User"}
                     </p>
+
                     <p className="text-xs text-gray-800">
-                      {maskEmail("favourdomirin@gmail.com")}
+                      {maskEmail(activeChat?.email || "user@email.com")}
                     </p>
                   </div>
                 </div>
               </div>
             </div>
-
-            {/* MESSAGES (THIS IS THE KEY FIX) */}
             <div
               ref={containerRef}
               className="flex-1 overflow-y-auto px-6 pb-4  thin-scroll"
