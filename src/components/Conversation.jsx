@@ -149,7 +149,6 @@ export default function Conversation({
     setMessages((prev) => [...prev, newMessage]);
     setConversations((prev) =>
       prev.map((chat) => {
-        
         return String(chat.listing_id) === String(currentChatId)
           ? { ...chat, lastmessage: textMessage }
           : chat;
