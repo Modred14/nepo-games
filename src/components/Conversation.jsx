@@ -1,37 +1,105 @@
 "use client";
 
 import { useEffect, useRef, useState, useMemo } from "react";
-import { Send, Star } from "lucide-react";
+import { Send } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { usePathname } from "next/navigation";
 import { useParams } from "next/navigation";
 import Loader from "./Loader";
 
-export default function Conversation({
-  chatId,
-  gameId,
-  receiverId,
-  initialMessages,
-  userId,
-  loading,
-}) {
+export default function Conversation({ gameId, receiverId }) {
   const [textMessage, setTextMessage] = useState("");
   const [messages, setMessages] = useState([]);
+  const [serverMessages, setServerMessages] = useState([]);
   const [conversations, setConversations] = useState([]);
   const [loadingChats, setLoadingChats] = useState(true);
-
+  const [conversation, setConversation] = useState(null);
+  const [user, setUser] = useState([]);
+  const [isLast, setIsLast] = useState();
+  const [loading, setLoading] = useState(false);
   useEffect(() => {
-    const loadConversations = async () => {
+    let interval;
+
+    const load = async (isInitial = false) => {
       try {
         const storedUser = localStorage.getItem("nepo-user");
         const user = storedUser ? JSON.parse(storedUser) : null;
+        if (!gameId || !user?.id) return;
+        setUser(user);
+        if (isInitial) setLoading(true);
+        const res = await fetch(
+          `/api/c/${gameId}/messages?user_id=${user.id}&receiver_id=${receiverId}`,
+        );
+        const data = await res.json();
+        if (isInitial) {
+          setIsLast(data.messages);
+        }
+        setServerMessages(data.messages);
+        setConversation(data.conversation);
+      } catch (err) {
+        console.error("Polling failed:", err);
+      } finally {
+        if (isInitial) setLoading(false);
+      }
+    };
+    load(true);
+    interval = setInterval(() => load(false), 1500);
 
-        if (!user?.id) return;
+    return () => clearInterval(interval);
+  }, [gameId, receiverId]);
 
+  const initialMessages = messages;
+  const chatId = conversation?.id;
+  const userId = user?.id;
+  const groupConversations = (conversations, userId) => {
+    const map = new Map();
+
+    for (const convo of conversations) {
+      const key = convo.listing_id;
+
+      const existing = map.get(key);
+
+      if (!existing) {
+        map.set(key, { ...convo });
+        continue;
+      }
+
+      const isNewer =
+        new Date(convo.lastmessagetime) > new Date(existing.lastmessagetime);
+
+      if (isNewer) {
+        existing.lastmessage = convo.lastmessage;
+        existing.lastmessagetime = convo.lastmessagetime;
+      }
+
+      if (convo.receiver_id !== userId) {
+        existing.username = convo.username;
+        existing.profile_image = convo.profile_image;
+        existing.receiver_id = convo.receiver_id;
+      }
+
+      map.set(key, existing);
+    }
+
+    return Array.from(map.values());
+  };
+
+  useEffect(() => {
+    let interval;
+
+    const fetchAndSet = async () => {
+      const storedUser = localStorage.getItem("nepo-user");
+      const user = storedUser ? JSON.parse(storedUser) : null;
+      if (!user?.id) return;
+
+      try {
         const res = await fetch(`/api/conversations?user_id=${user.id}`);
+
         const data = await res.json();
 
-        setConversations(data);
+        const grouped = groupConversations(data, user.id);
+
+        setConversations(grouped);
       } catch (err) {
         console.error("Failed to load conversations", err);
       } finally {
@@ -39,13 +107,16 @@ export default function Conversation({
       }
     };
 
-    loadConversations();
+    fetchAndSet();
+    interval = setInterval(fetchAndSet, 1500);
+
+    return () => clearInterval(interval);
   }, []);
   const isComposingRef = useRef(false);
   const lastInputTypeRef = useRef("");
 
   const params = useParams();
-  const currentChatId = params.slug; // or params.id depending on route
+  const currentChatId = params.slug;
 
   const router = useRouter();
   const pathname = usePathname();
@@ -79,8 +150,6 @@ export default function Conversation({
   };
   const handleBeforeInput = (e) => {
     lastInputTypeRef.current = "beforeinput";
-
-    // Mobile keyboards often behave better here
     if (e.inputType === "insertLineBreak") {
       e.preventDefault();
       handleSend();
@@ -95,13 +164,45 @@ export default function Conversation({
     }
   };
   const bottomRef = useRef(null);
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
 
-  const sortedMessages = useMemo(() => {
-    return [...messages].sort((a, b) => new Date(a.time) - new Date(b.time));
-  }, [messages]);
+  const allMessages = useMemo(() => {
+    const merged = [...serverMessages, ...messages].sort(
+      (a, b) => new Date(a.created_at) - new Date(b.created_at),
+    );
+
+    const result = [];
+
+    let i = 0;
+
+    while (i < merged.length) {
+      const current = merged[i];
+      let count = 1;
+      while (
+        i + count < merged.length &&
+        merged[i + count].message === current.message &&
+        merged[i + count].sender_id === current.sender_id
+      ) {
+        count++;
+      }
+
+      const toShow = Math.ceil(count / 2);
+
+      for (let j = 0; j < toShow; j++) {
+        result.push(current);
+      }
+
+      i += count;
+    }
+
+    return result;
+  }, [serverMessages, messages]);
+useEffect(() => {
+  const timeout = setTimeout(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, 50);
+
+  return () => clearTimeout(timeout);
+}, [allMessages.length]);
   useEffect(() => {
     if (initialMessages?.length) {
       setMessages(initialMessages);
@@ -147,6 +248,7 @@ export default function Conversation({
       sender_id: userId,
     };
     setMessages((prev) => [...prev, newMessage]);
+    setIsLast(newMessage);
     setConversations((prev) =>
       prev.map((chat) => {
         return String(chat.listing_id) === String(currentChatId)
@@ -181,7 +283,7 @@ export default function Conversation({
   const activeChat = conversations.find(
     (chat) => String(chat.listing_id) === String(currentChatId),
   );
-  const lastIndex = sortedMessages.length - 1;
+  const lastIndex = allMessages.length - 1;
 
   if (loadingChats) {
     return <Loader />;
@@ -223,7 +325,7 @@ export default function Conversation({
                   <div className="relative flex-shrink-0">
                     <img
                       src={chat.profile_image || "/profile.png"}
-                      className="w-12 h-12 rounded-full object-cover"
+                      className="w-12 h-12 border rounded-full border-blue-600/50 object-cover"
                     />
                     {/* 
                     {chat.isOnline && (
@@ -306,7 +408,7 @@ export default function Conversation({
                 </div>
               ) : (
                 <div>
-                  {sortedMessages.map((message, index) => (
+                  {allMessages.map((message, index) => (
                     <div
                       key={message.id}
                       className={`flex ${index === lastIndex ? "mb-0" : "mb-1"} w-full ${

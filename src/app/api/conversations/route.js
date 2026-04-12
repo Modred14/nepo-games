@@ -17,6 +17,7 @@ SELECT
 
   u.username,
   u.profile_image,
+  u.email,
 
   COALESCE(
   l.title || ' (' || COALESCE(l.platform, '') || ')',
