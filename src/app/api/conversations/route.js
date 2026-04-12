@@ -31,7 +31,15 @@ SELECT
   CASE 
     WHEN c.sender_id = $1 THEN c.receiver_id
     ELSE c.sender_id
-  END AS receiver_id
+  END AS receiver_id,
+
+ COALESCE(
+    COUNT(m2.id) FILTER (
+      WHERE m2.created_at > COALESCE(cr.last_read_at, '1970-01-01')
+    ),
+    0
+  ) AS unreadcount
+
 
 FROM conversations c
 
@@ -52,7 +60,27 @@ LEFT JOIN LATERAL (
   LIMIT 1
 ) m ON true
 
+LEFT JOIN messages m2 
+  ON m2.conversation_id = c.id
+
+
+LEFT JOIN conversation_reads cr
+  ON cr.conversation_id = c.id
+ AND cr.user_id = $1
+
+
 WHERE c.sender_id = $1 OR c.receiver_id = $1
+
+GROUP BY 
+  c.id,
+  u.username,
+  u.profile_image,
+  u.email,
+  l.title,
+  l.platform,
+  m.message,
+  m.created_at,
+  cr.last_read_at
 
 ORDER BY m.created_at DESC NULLS LAST;
 `,

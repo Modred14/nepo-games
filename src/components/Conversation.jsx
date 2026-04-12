@@ -15,8 +15,9 @@ export default function Conversation({ gameId, receiverId }) {
   const [loadingChats, setLoadingChats] = useState(true);
   const [conversation, setConversation] = useState(null);
   const [user, setUser] = useState([]);
-  const [isLast, setIsLast] = useState();
+
   const [loading, setLoading] = useState(false);
+
   useEffect(() => {
     let interval;
 
@@ -31,9 +32,7 @@ export default function Conversation({ gameId, receiverId }) {
           `/api/c/${gameId}/messages?user_id=${user.id}&receiver_id=${receiverId}`,
         );
         const data = await res.json();
-        if (isInitial) {
-          setIsLast(data.messages);
-        }
+
         setServerMessages(data.messages);
         setConversation(data.conversation);
       } catch (err) {
@@ -43,7 +42,7 @@ export default function Conversation({ gameId, receiverId }) {
       }
     };
     load(true);
-    interval = setInterval(() => load(false), 1500);
+    interval = setInterval(() => load(false), 1000);
 
     return () => clearInterval(interval);
   }, [gameId, receiverId]);
@@ -108,7 +107,7 @@ export default function Conversation({ gameId, receiverId }) {
     };
 
     fetchAndSet();
-    interval = setInterval(fetchAndSet, 1500);
+    interval = setInterval(fetchAndSet, 1000);
 
     return () => clearInterval(interval);
   }, []);
@@ -190,19 +189,43 @@ export default function Conversation({ gameId, receiverId }) {
       for (let j = 0; j < toShow; j++) {
         result.push(current);
       }
-
       i += count;
     }
 
     return result;
   }, [serverMessages, messages]);
-useEffect(() => {
-  const timeout = setTimeout(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, 50);
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, 50);
 
-  return () => clearTimeout(timeout);
-}, [allMessages.length]);
+    return () => clearTimeout(timeout);
+  }, [allMessages.length]);
+  useEffect(() => {
+    if (!gameId || !userId || !conversation?.id) return;
+    if (!serverMessages) return;
+
+    const timeout = setTimeout(() => {
+      const markAsRead = async () => {
+        try {
+          await fetch(`/api/c/${gameId}/mark-read`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              user_id: userId,
+              gameId,
+            }),
+          });
+        } catch (err) {
+          console.error("Failed to mark as read", err);
+        }
+      };
+
+      markAsRead();
+    }, 500);
+
+    return () => clearTimeout(timeout);
+  }, [gameId, userId, conversation?.id, serverMessages]);
   useEffect(() => {
     if (initialMessages?.length) {
       setMessages(initialMessages);
@@ -248,14 +271,6 @@ useEffect(() => {
       sender_id: userId,
     };
     setMessages((prev) => [...prev, newMessage]);
-    setIsLast(newMessage);
-    setConversations((prev) =>
-      prev.map((chat) => {
-        return String(chat.listing_id) === String(currentChatId)
-          ? { ...chat, lastmessage: textMessage }
-          : chat;
-      }),
-    );
     setTextMessage("");
     try {
       await fetch(`/api/c/${gameId}/send`, {
