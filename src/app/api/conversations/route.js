@@ -33,13 +33,10 @@ SELECT
     ELSE c.sender_id
   END AS receiver_id,
 
- COALESCE(
-    COUNT(m2.id) FILTER (
-      WHERE m2.created_at > COALESCE(cr.last_read_at, '1970-01-01')
-    ),
-    0
-  ) AS unreadcount
-
+COUNT(m2.id) FILTER (
+  WHERE m2.created_at > COALESCE(cr.last_read_at, '1970-01-01')
+  AND m2.sender_id != $1
+) AS unreadcount
 
 FROM conversations c
 

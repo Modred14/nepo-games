@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
+import { useRouter } from "next/navigation";
 import useAuthGuard from "../hooks/useAuthGuard";
 import Reveal from "../reveal";
 import { Search, ShoppingCart, Verified, MessageCircle } from "lucide-react";
@@ -23,6 +24,12 @@ export default function Marketplace() {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
 
+  useEffect(() => {
+    const storedUser = localStorage.getItem("nepo-user");
+    const user = storedUser ? JSON.parse(storedUser) : null;
+    setUser(user);
+  }, []);
+  const user_id = user?.id;
   // close on outside click
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -104,7 +111,10 @@ export default function Marketplace() {
       );
     })
     .sort((a, b) => b.verified - a.verified);
-
+  const router = useRouter();
+  const openChat = () => {
+    router.push(`/c/1?user_id=${user_id}&receiver_id=1`);
+  };
   const isImagesReady =
     filteredGames.length === 0 || imagesLoaded >= filteredGames.length;
   useEffect(() => {
@@ -128,6 +138,7 @@ export default function Marketplace() {
   return (
     <div>
       <button
+        onClick={() => openChat()}
         className="
         fixed bottom-5 right-5
         z-[9999]

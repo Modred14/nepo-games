@@ -10,7 +10,8 @@ import Loader from "./Loader";
 export default function Conversation({ gameId, receiverId }) {
   const [textMessage, setTextMessage] = useState("");
   const [messages, setMessages] = useState([]);
-  const [serverMessages, setServerMessages] = useState([]);
+  const [chatMessages, setChatMessages] = useState([]);
+  const [adminMessages, setAdminMessages] = useState([]);
   const [conversations, setConversations] = useState([]);
   const [loadingChats, setLoadingChats] = useState(true);
   const [conversation, setConversation] = useState(null);
@@ -28,13 +29,25 @@ export default function Conversation({ gameId, receiverId }) {
         if (!gameId || !user?.id) return;
         setUser(user);
         if (isInitial) setLoading(true);
+        if (String(receiverId) === "1") {
+          const res = await fetch(`/api/system-messages?user_id=${user.id}`);
+          const data = await res.json();
+          setAdminMessages(Array.isArray(data) ? data : []);
+          setChatMessages([]);
+          setConversation(null);
+          return;
+        }
+
+        // 👇 NORMAL CHAT MODE
         const res = await fetch(
           `/api/c/${gameId}/messages?user_id=${user.id}&receiver_id=${receiverId}`,
         );
+
         const data = await res.json();
 
-        setServerMessages(data.messages);
-        setConversation(data.conversation);
+        setChatMessages(Array.isArray(data.messages) ? data.messages : []);
+        setAdminMessages([]);
+        setConversation(data.conversation || null);
       } catch (err) {
         console.error("Polling failed:", err);
       } finally {
@@ -46,7 +59,7 @@ export default function Conversation({ gameId, receiverId }) {
 
     return () => clearInterval(interval);
   }, [gameId, receiverId]);
-
+  const isAdmin = String(receiverId) === "1";
   const initialMessages = messages;
   const chatId = conversation?.id;
   const userId = user?.id;
@@ -165,10 +178,13 @@ export default function Conversation({ gameId, receiverId }) {
   const bottomRef = useRef(null);
 
   const allMessages = useMemo(() => {
-    const merged = [...serverMessages, ...messages].sort(
+    const source = String(receiverId) === "1" ? adminMessages : chatMessages;
+    const merged = [...(source || []), ...messages].sort(
       (a, b) => new Date(a.created_at) - new Date(b.created_at),
     );
-
+    if (isAdmin) {
+      return merged;
+    }
     const result = [];
 
     let i = 0;
@@ -183,9 +199,7 @@ export default function Conversation({ gameId, receiverId }) {
       ) {
         count++;
       }
-
       const toShow = Math.ceil(count / 2);
-
       for (let j = 0; j < toShow; j++) {
         result.push(current);
       }
@@ -193,7 +207,7 @@ export default function Conversation({ gameId, receiverId }) {
     }
 
     return result;
-  }, [serverMessages, messages]);
+  }, [adminMessages, chatMessages, receiverId, messages]);
   useEffect(() => {
     const timeout = setTimeout(() => {
       bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -201,31 +215,27 @@ export default function Conversation({ gameId, receiverId }) {
 
     return () => clearTimeout(timeout);
   }, [allMessages.length]);
+
+  const markAsRead = async () => {
+    try {
+      await fetch(`/api/c/${gameId}/mark-read`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_id: userId,
+          gameId,
+        }),
+      });
+    } catch (err) {
+      console.error("Failed to mark as read", err);
+    }
+  };
+
   useEffect(() => {
     if (!gameId || !userId || !conversation?.id) return;
-    if (!serverMessages) return;
-
-    const timeout = setTimeout(() => {
-      const markAsRead = async () => {
-        try {
-          await fetch(`/api/c/${gameId}/mark-read`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              user_id: userId,
-              gameId,
-            }),
-          });
-        } catch (err) {
-          console.error("Failed to mark as read", err);
-        }
-      };
-
-      markAsRead();
-    }, 500);
-
-    return () => clearTimeout(timeout);
-  }, [gameId, userId, conversation?.id, serverMessages]);
+    markAsRead();
+      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [allMessages.length]);
   useEffect(() => {
     if (initialMessages?.length) {
       setMessages(initialMessages);
@@ -283,6 +293,7 @@ export default function Conversation({ gameId, receiverId }) {
           receiverId,
         }),
       });
+      await markAsRead();
     } catch (err) {
       console.error("Send failed", err);
     }
@@ -342,26 +353,19 @@ export default function Conversation({ gameId, receiverId }) {
                       src={chat.profile_image || "/profile.png"}
                       className="w-12 h-12 border rounded-full border-blue-600/50 object-cover"
                     />
-                    {/* 
-                    {chat.isOnline && (
-                      <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full" />
-                    )} */}
                   </div>
 
-                  {/* INFO */}
                   <div className="flex-1 min-w-0">
-                    {/* top row */}
                     <div className="flex justify-between items-center">
                       <p className="text-sm font-medium text-gray-900 truncate">
                         {chat.gamedetails}
                       </p>
 
-                      <p className="text-[10px] text-gray-400  shrink-0 ml-2">
+                      <p className="text-[10px] text-gray-400 shrink-0 ml-2">
                         {formatTime(chat.lastmessagetime)}
                       </p>
                     </div>
 
-                    {/* bottom row */}
                     <div className="flex items-center justify-between mt-1">
                       <p className="text-xs text-gray-500 truncate pr-2">
                         {chat.lastmessage || "Start a conversation..."}
@@ -396,16 +400,24 @@ export default function Conversation({ gameId, receiverId }) {
               <div className="w-full p-2 px-5 rounded-3xl  bg-white/80 backdrop-blur-xl border backdrop-blur-sm border-blue-700/50">
                 <div className="flex gap-2 items-center">
                   <img
-                    src={activeChat?.profile_image || "/profile.png"}
+                    src={
+                      isAdmin
+                        ? "/conversation.png"
+                        : activeChat?.profile_image || "/profile.png"
+                    }
                     className="h-10 w-10 rounded-full border border-blue-600/80 object-cover"
                   />
                   <div>
                     <p className="text-sm font-semibold text-blue-700">
-                      {activeChat?.username || "Unknown User"}
+                      {isAdmin
+                        ? "Nepo Games"
+                        : activeChat?.username || "Unknown User"}
                     </p>
 
                     <p className="text-xs text-gray-800">
-                      {maskEmail(activeChat?.email || "user@email.com")}
+                      {isAdmin
+                        ? "nepogames.com@gmail.com"
+                        : maskEmail(activeChat?.email || "user@email.com")}
                     </p>
                   </div>
                 </div>
@@ -423,26 +435,83 @@ export default function Conversation({ gameId, receiverId }) {
                 </div>
               ) : (
                 <div>
+                  {isAdmin && (
+                    <div className="mb-4">
+                      <div className="bg-yellow-50 border border-yellow-300 rounded-xl p-4 text-sm text-gray-800 space-y-2">
+                        <p className="font-bold text-base text-yellow-700">
+                          Welcome to Nepo Games Chat 👋
+                        </p>
+
+                        <p>
+                          This is a secure space for buyers and sellers to
+                          discuss game listings and transactions.
+                        </p>
+
+                        <p className="font-semibold">Rules:</p>
+
+                        <ul className="list-disc pl-5 space-y-1">
+                          <li>
+                            <strong>Do not share sensitive information</strong>{" "}
+                            (passwords, personal details, etc.)
+                          </li>
+                          <li>
+                            <strong>
+                              Do not move conversations outside Nepo Games
+                            </strong>{" "}
+                            (WhatsApp, Telegram, etc.)
+                          </li>
+                          <li>
+                            <strong>
+                              Do not send or request account numbers
+                            </strong>
+                          </li>
+                          <li>
+                            <strong>Use only Nepo Games payment method</strong>{" "}
+                            for all transactions
+                          </li>
+                          <li>
+                            <strong>
+                              Do not release account login details until payment
+                              has been confirmed
+                            </strong>
+                          </li>
+                        </ul>
+
+                        <p className="text-red-600 font-semibold pt-2">
+                          Failure to comply will result in immediate account
+                          suspension.
+                        </p>
+                      </div>
+                    </div>
+                  )}
                   {allMessages.map((message, index) => (
                     <div
                       key={message.id}
                       className={`flex ${index === lastIndex ? "mb-0" : "mb-1"} w-full ${
-                        userId === message.sender_id
+                        !isAdmin && userId === message.sender_id
                           ? "justify-end"
                           : "justify-start"
                       }`}
                     >
                       <div
                         className={`max-w-[70%] px-4 py-2 rounded-2xl text-sm shadow-sm wrap-break-word  ${
-                          userId === message.sender_id
+                          !isAdmin && userId === message.sender_id
                             ? "bg-blue-600 text-white rounded-br-sm"
                             : "bg-white text-gray-800 border border-blue-100 rounded-bl-sm"
                         }`}
                       >
+                        {message.title && (
+                          <div>
+                            <p className="font-bold text-base">
+                              {" "}
+                              {message.title}
+                            </p>
+                          </div>
+                        )}
                         {message.message}
                         <p
                           className={`text-[10px] mt-1 ${
-                            userId === message.sender_id
+                            !isAdmin && userId === message.sender_id
                               ? "text-blue-100 text-right"
                               : "text-gray-400 text-left"
                           }`}
@@ -478,6 +547,12 @@ export default function Conversation({ gameId, receiverId }) {
                 <textarea
                   ref={inputRef}
                   type="text"
+                  disabled={loading || isAdmin}
+                  placeholder={
+                    isAdmin
+                      ? "This is an announcement channel"
+                      : "Type a message..."
+                  }
                   value={textMessage}
                   onChange={(e) => {
                     setTextMessage(e.target.value);
@@ -488,7 +563,6 @@ export default function Conversation({ gameId, receiverId }) {
                   onCompositionStart={handleCompositionStart}
                   onCompositionEnd={handleCompositionEnd}
                   rows={1}
-                  placeholder="Type a message..."
                   className="flex-1 min-w-0 max-h-30 thin-scroll resize-none bg-transparent outline-none text-gray-700 xs:text-base text-sm"
                 />
 
