@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useMemo } from "react";
-import { Send } from "lucide-react";
+import { ChevronLeft, Send } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { usePathname } from "next/navigation";
 import { useParams } from "next/navigation";
@@ -15,9 +15,17 @@ export default function Conversation({ gameId, receiverId }) {
   const [conversations, setConversations] = useState([]);
   const [loadingChats, setLoadingChats] = useState(true);
   const [conversation, setConversation] = useState(null);
+  const [view, setView] = useState("list");
   const [user, setUser] = useState([]);
-
   const [loading, setLoading] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 640);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   useEffect(() => {
     let interval;
@@ -212,9 +220,30 @@ export default function Conversation({ gameId, receiverId }) {
     const timeout = setTimeout(() => {
       bottomRef.current?.scrollIntoView({ behavior: "smooth" });
     }, 50);
-
     return () => clearTimeout(timeout);
   }, [allMessages.length]);
+  useEffect(() => {
+    if (isMobile) {
+      if (currentChatId) {
+        setView("chat");
+      } else {
+        setView("list");
+      }
+    } else {
+      setView("chat");
+    }
+  }, [isMobile, currentChatId]);
+  useEffect(() => {
+    if (isMobile) {
+      if (currentChatId && !isAdmin) {
+        setView("chat");
+      } else {
+        setView("list");
+      }
+    } else {
+      setView("chat");
+    }
+  }, [isMobile, currentChatId]);
 
   const markAsRead = async () => {
     try {
@@ -234,7 +263,7 @@ export default function Conversation({ gameId, receiverId }) {
   useEffect(() => {
     if (!gameId || !userId || !conversation?.id) return;
     markAsRead();
-      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [allMessages.length]);
   useEffect(() => {
     if (initialMessages?.length) {
@@ -317,266 +346,294 @@ export default function Conversation({ gameId, receiverId }) {
 
   return (
     <div className="h-dvh w-full overflow-hidden flex bg-cover bg-center">
-      <div className="md:grid hidden h-full">
-        <div className="border border-blue-500/30 shadow-md bg-white sm:w-70 lg:w-90 overflow-hidden flex flex-col h-full">
-          {/* HEADER */}
-          <div className="px-4 py-3 border-b border-gray-500/40 bg-blue-50/60 backdrop-blur-sm">
-            <p className="font-semibold text-blue-700 text-center text-xs tracking-[0.2em] uppercase">
-              Chats
-            </p>
-          </div>
+      {(!isMobile || view === "list") && (
+        <div className="sm:grid w-full h-full sm:w-70 lg:w-90 ">
+          <div className="border border-blue-500/30 shadow-md bg-white w-full sm:w-70 lg:w-90  overflow-hidden flex flex-col h-full">
+            {/* HEADER */}
+            <div className="relative px-4 py-3 flex items-center border-b border-gray-500/40 bg-blue-50/60 backdrop-blur-sm">
+              <button
+                onClick={() => router.push("/marketplace")}
+                className="absolute left-2 font-bold rounded-full active:scale-90 transition-transform duration-150"
+              >
+                <ChevronLeft size={24} className="text-blue-700" />
+              </button>
 
-          {/* LIST */}
-          <div className="flex-1 overflow-y-auto thin-scroll">
-            {conversations.map((chat) => {
-              const isActive =
-                currentChatId &&
-                chat?.id &&
-                String(currentChatId) === String(chat.listing_id);
+              <p className="w-full text-center font-semibold text-blue-700 tracking-[0.2em] uppercase">
+                Chats
+              </p>
+            </div>
 
-              return (
-                <div
-                  key={chat.id}
-                  onClick={() =>
-                    router.push(
-                      `/c/${chat.listing_id}?user_id=${userId}&receiver_id=${chat.receiver_id}`,
-                    )
-                  }
-                  className={`flex items-center gap-3 px-4 py-3 cursor-pointer border-b border-gray-100
+            {/* LIST */}
+            <div className="flex-1 overflow-y-auto thin-scroll">
+              {conversations.map((chat) => {
+                const isActive =
+                  currentChatId &&
+                  chat?.id &&
+                  String(currentChatId) === String(chat.listing_id);
+
+                return (
+                  <div
+                    key={chat.id}
+                    onClick={() => {
+                      router.push(
+                        `/c/${chat.listing_id}?user_id=${userId}&receiver_id=${chat.receiver_id}`,
+                      );
+                      if (isMobile) {
+                        setLoadingChats(true);
+                        setView("chat");
+                      }
+                    }}
+                    className={`flex items-center gap-3 px-4 py-3 cursor-pointer border-b border-gray-100
               transition-all duration-150
               ${isActive ? "bg-blue-100/60 border-l-4 border-blue-600" : "hover:bg-blue-50/50"}
             `}
-                >
-                  {/* AVATAR */}
-                  <div className="relative flex-shrink-0">
-                    <img
-                      src={chat.profile_image || "/profile.png"}
-                      className="w-12 h-12 border rounded-full border-blue-600/50 object-cover"
-                    />
-                  </div>
-
-                  <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-center">
-                      <p className="text-sm font-medium text-gray-900 truncate">
-                        {chat.gamedetails}
-                      </p>
-
-                      <p className="text-[10px] text-gray-400 shrink-0 ml-2">
-                        {formatTime(chat.lastmessagetime)}
-                      </p>
+                  >
+                    {/* AVATAR */}
+                    <div className="relative flex-shrink-0">
+                      <img
+                        src={chat.profile_image || "/profile.png"}
+                        className="w-12 h-12 border rounded-full border-blue-600/50 object-cover"
+                      />
                     </div>
 
-                    <div className="flex items-center justify-between mt-1">
-                      <p className="text-xs text-gray-500 truncate pr-2">
-                        {chat.lastmessage || "Start a conversation..."}
-                      </p>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex justify-between items-center">
+                        <p className="text-sm font-medium text-gray-900 truncate">
+                          {chat.gamedetails}
+                        </p>
 
-                      {chat.unreadcount > 0 && (
-                        <span className="bg-blue-600 text-white text-[10px] min-w-[18px] h-[18px] px-1 rounded-full flex items-center justify-center shadow-sm">
-                          {chat.unreadcount}
-                        </span>
-                      )}
+                        <p className="text-[10px] text-gray-400 shrink-0 ml-2">
+                          {formatTime(chat.lastmessagetime)}
+                        </p>
+                      </div>
+
+                      <div className="flex items-center justify-between mt-1">
+                        <p className="text-xs text-gray-500 truncate pr-2">
+                          {chat.lastmessage || "Start a conversation..."}
+                        </p>
+
+                        {chat.unreadcount > 0 && (
+                          <span className="bg-blue-600 text-white text-[10px] min-w-[18px] h-[18px] px-1 rounded-full flex items-center justify-center shadow-sm">
+                            {chat.unreadcount}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
         </div>
-      </div>
-      <div className="relative z-10 overflow-hidden flex flex-col w-full">
-        <div className="relative z-10 h-screen flex flex-col w-full overflow-hidden">
-          {/* background */}
-          <div
-            className="absolute inset-0 bg-cover bg-center"
-            style={{ backgroundImage: "url('/conversation.png')" }}
-          />
-          <div className="absolute inset-0 bg-white/80" />
+      )}
+      {(view === "chat" || !isMobile) && (
+        <div className="relative z-10 overflow-hidden flex flex-col w-full">
+          <div className="relative z-10 h-screen flex flex-col w-full overflow-hidden">
+            {/* background */}
+            <div
+              className="absolute inset-0 bg-cover bg-center"
+              style={{ backgroundImage: "url('/conversation.png')" }}
+            />
+            <div className="absolute inset-0 bg-white/80" />
 
-          {/* CONTENT WRAPPER */}
-          <div className="relative z-10 flex flex-col h-full">
-            {/* HEADER (NO FIXED) */}
-            <div className="p-4 shrink-0">
-              <div className="w-full p-2 px-5 rounded-3xl  bg-white/80 backdrop-blur-xl border backdrop-blur-sm border-blue-700/50">
-                <div className="flex gap-2 items-center">
-                  <img
-                    src={
-                      isAdmin
-                        ? "/conversation.png"
-                        : activeChat?.profile_image || "/profile.png"
-                    }
-                    className="h-10 w-10 rounded-full border border-blue-600/80 object-cover"
-                  />
-                  <div>
-                    <p className="text-sm font-semibold text-blue-700">
-                      {isAdmin
-                        ? "Nepo Games"
-                        : activeChat?.username || "Unknown User"}
-                    </p>
+            {/* CONTENT WRAPPER */}
+            <div className="relative z-10 flex flex-col h-full">
+              {/* HEADER (NO FIXED) */}
+              <div className="p-4 shrink-0">
+                <div className="w-full p-2 px-5 rounded-3xl  bg-white/80 backdrop-blur-xl border backdrop-blur-sm border-blue-700/50">
+                  <div className="flex gap-2 items-center">
+                    {isMobile && (
+                      <button
+                        onClick={() => {
+                          setView("list");
+                        }}
+                        className="-ml-4 font-bold rounded-full active:scale-90 transition-transform duration-150"
+                      >
+                        <ChevronLeft size={24} className="text-blue-700" />
+                      </button>
+                    )}
+                    <img
+                      src={
+                        isAdmin
+                          ? "/conversation.png"
+                          : activeChat?.profile_image || "/profile.png"
+                      }
+                      className="h-10 w-10 rounded-full border border-blue-600/80 object-cover"
+                    />
+                    <div>
+                      <p className="text-sm font-semibold text-blue-700">
+                        {isAdmin
+                          ? "Nepo Games"
+                          : activeChat?.username || "Unknown User"}
+                      </p>
 
-                    <p className="text-xs text-gray-800">
-                      {isAdmin
-                        ? "nepogames.com@gmail.com"
-                        : maskEmail(activeChat?.email || "user@email.com")}
-                    </p>
+                      <p className="text-xs text-gray-800">
+                        {isAdmin
+                          ? "nepogames.com@gmail.com"
+                          : maskEmail(activeChat?.email || "user@email.com")}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-            <div
-              ref={containerRef}
-              className="flex-1 overflow-y-auto px-6 pb-4  thin-scroll"
-            >
-              {loading ? (
-                <div className="h-full justify-center flex items-center">
-                  <p className="text-black font-semibold">
-                    Loading Chat<span className="loading-dots"></span>
-                  </p>
-                </div>
-              ) : (
-                <div>
-                  {isAdmin && (
-                    <div className="mb-4">
-                      <div className="bg-yellow-50 border border-yellow-300 rounded-xl p-4 text-sm text-gray-800 space-y-2">
-                        <p className="font-bold text-base text-yellow-700">
-                          Welcome to Nepo Games Chat 👋
-                        </p>
+              <div
+                ref={containerRef}
+                className="flex-1 overflow-y-auto px-6 pb-4  thin-scroll"
+              >
+                {loading ? (
+                  <div className="h-full justify-center flex items-center">
+                    <p className="text-black font-semibold">
+                      Loading Chat<span className="loading-dots"></span>
+                    </p>
+                  </div>
+                ) : (
+                  <div>
+                    {isAdmin && (
+                      <div className="mb-4">
+                        <div className="bg-yellow-50 border border-yellow-300 rounded-xl p-4 text-sm text-gray-800 space-y-2">
+                          <p className="font-bold text-base text-yellow-700">
+                            Welcome to Nepo Games Chat 👋
+                          </p>
 
-                        <p>
-                          This is a secure space for buyers and sellers to
-                          discuss game listings and transactions.
-                        </p>
+                          <p>
+                            This is a secure space for buyers and sellers to
+                            discuss game listings and transactions.
+                          </p>
 
-                        <p className="font-semibold">Rules:</p>
+                          <p className="font-semibold">Rules:</p>
 
-                        <ul className="list-disc pl-5 space-y-1">
-                          <li>
-                            <strong>Do not share sensitive information</strong>{" "}
-                            (passwords, personal details, etc.)
-                          </li>
-                          <li>
-                            <strong>
-                              Do not move conversations outside Nepo Games
-                            </strong>{" "}
-                            (WhatsApp, Telegram, etc.)
-                          </li>
-                          <li>
-                            <strong>
-                              Do not send or request account numbers
-                            </strong>
-                          </li>
-                          <li>
-                            <strong>Use only Nepo Games payment method</strong>{" "}
-                            for all transactions
-                          </li>
-                          <li>
-                            <strong>
-                              Do not release account login details until payment
-                              has been confirmed
-                            </strong>
-                          </li>
-                        </ul>
+                          <ul className="list-disc pl-5 space-y-1">
+                            <li>
+                              <strong>
+                                Do not share sensitive information
+                              </strong>{" "}
+                              (passwords, personal details, etc.)
+                            </li>
+                            <li>
+                              <strong>
+                                Do not move conversations outside Nepo Games
+                              </strong>{" "}
+                              (WhatsApp, Telegram, etc.)
+                            </li>
+                            <li>
+                              <strong>
+                                Do not send or request account numbers
+                              </strong>
+                            </li>
+                            <li>
+                              <strong>
+                                Use only Nepo Games payment method
+                              </strong>{" "}
+                              for all transactions
+                            </li>
+                            <li>
+                              <strong>
+                                Do not release account login details until
+                                payment has been confirmed
+                              </strong>
+                            </li>
+                          </ul>
 
-                        <p className="text-red-600 font-semibold pt-2">
-                          Failure to comply will result in immediate account
-                          suspension.
-                        </p>
+                          <p className="text-red-600 font-semibold pt-2">
+                            Failure to comply will result in immediate account
+                            suspension.
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                  )}
-                  {allMessages.map((message, index) => (
-                    <div
-                      key={message.id}
-                      className={`flex ${index === lastIndex ? "mb-0" : "mb-1"} w-full ${
-                        !isAdmin && userId === message.sender_id
-                          ? "justify-end"
-                          : "justify-start"
-                      }`}
-                    >
+                    )}
+                    {allMessages.map((message, index) => (
                       <div
-                        className={`max-w-[70%] px-4 py-2 rounded-2xl text-sm shadow-sm wrap-break-word  ${
+                        key={message.id}
+                        className={`flex ${index === lastIndex ? "mb-0" : "mb-1"} w-full ${
                           !isAdmin && userId === message.sender_id
-                            ? "bg-blue-600 text-white rounded-br-sm"
-                            : "bg-white text-gray-800 border border-blue-100 rounded-bl-sm"
+                            ? "justify-end"
+                            : "justify-start"
                         }`}
                       >
-                        {message.title && (
-                          <div>
-                            <p className="font-bold text-base">
-                              {" "}
-                              {message.title}
-                            </p>
-                          </div>
-                        )}
-                        {message.message}
-                        <p
-                          className={`text-[10px] mt-1 ${
+                        <div
+                          className={`max-w-[70%] px-4 py-2 rounded-2xl text-sm shadow-sm wrap-break-word  ${
                             !isAdmin && userId === message.sender_id
-                              ? "text-blue-100 text-right"
-                              : "text-gray-400 text-left"
+                              ? "bg-blue-600 text-white rounded-br-sm"
+                              : "bg-white text-gray-800 border border-blue-100 rounded-bl-sm"
                           }`}
                         >
-                          {formatTime(message.created_at)}
-                        </p>
+                          {message.title && (
+                            <div>
+                              <p className="font-bold text-base">
+                                {" "}
+                                {message.title}
+                              </p>
+                            </div>
+                          )}
+                          {message.message}
+                          <p
+                            className={`text-[10px] mt-1 ${
+                              !isAdmin && userId === message.sender_id
+                                ? "text-blue-100 text-right"
+                                : "text-gray-400 text-left"
+                            }`}
+                          >
+                            {formatTime(message.created_at)}
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+                    ))}
+                  </div>
+                )}
 
-              <div ref={bottomRef} />
-            </div>
+                <div ref={bottomRef} />
+              </div>
 
-            {/* INPUT (NO FIXED) */}
-            <div className="p-4  shrink-0">
-              <div
-                onClick={() => inputRef.current?.focus()}
-                className="flex items-center gap-3  min-w-0
+              <div className="p-4  shrink-0">
+                <div
+                  onClick={() => inputRef.current?.focus()}
+                  className="flex items-center gap-3  min-w-0
           bg-white/80 backdrop-blur-xl 
           border border-blue-700/50
           rounded-full px-4 py-2
           shadow-xs cursor-text"
-              >
-                <div className="w-9 h-9 rounded-full overflow-hidden border border-gray-200 shrink-0">
-                  <img
-                    src="/conversation.png"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-
-                <textarea
-                  ref={inputRef}
-                  type="text"
-                  disabled={loading || isAdmin}
-                  placeholder={
-                    isAdmin
-                      ? "This is an announcement channel"
-                      : "Type a message..."
-                  }
-                  value={textMessage}
-                  onChange={(e) => {
-                    setTextMessage(e.target.value);
-                    handleResize();
-                  }}
-                  onKeyDown={handleKeyButDown}
-                  onBeforeInput={handleBeforeInput}
-                  onCompositionStart={handleCompositionStart}
-                  onCompositionEnd={handleCompositionEnd}
-                  rows={1}
-                  className="flex-1 min-w-0 max-h-30 thin-scroll resize-none bg-transparent outline-none text-gray-700 xs:text-base text-sm"
-                />
-
-                <button
-                  onClick={handleSend}
-                  className="inline-flex min-w-0 items-center justify-center w-10 h-10 rounded-full bg-blue-600 text-white hover:bg-blue-700 active:scale-95 transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <Send size={18} />
-                </button>
+                  <div className="w-9 h-9 rounded-full overflow-hidden border border-gray-200 shrink-0">
+                    <img
+                      src="/conversation.png"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+
+                  <textarea
+                    ref={inputRef}
+                    type="text"
+                    disabled={loading || isAdmin}
+                    placeholder={
+                      isAdmin
+                        ? "This is an announcement channel"
+                        : "Type a message..."
+                    }
+                    value={textMessage}
+                    onChange={(e) => {
+                      setTextMessage(e.target.value);
+                      handleResize();
+                    }}
+                    onKeyDown={handleKeyButDown}
+                    onBeforeInput={handleBeforeInput}
+                    onCompositionStart={handleCompositionStart}
+                    onCompositionEnd={handleCompositionEnd}
+                    rows={1}
+                    className="flex-1 min-w-0 max-h-30 thin-scroll resize-none bg-transparent outline-none text-gray-700 xs:text-base text-sm"
+                  />
+
+                  <button
+                    onClick={handleSend}
+                    className="inline-flex min-w-0 items-center justify-center w-10 h-10 rounded-full bg-blue-600 text-white hover:bg-blue-700 active:scale-95 transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Send size={18} />
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
