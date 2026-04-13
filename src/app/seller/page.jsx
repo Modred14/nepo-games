@@ -21,7 +21,7 @@ export default function Seller() {
     if (!storedUser) return;
 
     const user = JSON.parse(storedUser);
-console.log(user)
+    console.log(user);
     if (user.phone_verified === true) {
       router.replace("/sell-game");
     }
@@ -83,14 +83,14 @@ console.log(user)
     const code = otp.join("");
     console.log(code);
     if (!code) {
-    setErrorAdd("OTP is required");
-    return;
-  }
+      setErrorAdd("OTP is required");
+      return;
+    }
 
-  if (code.length !== 6) {
-    setErrorAdd("OTP must be 6 digits");
-    return;
-  }
+    if (code.length !== 6) {
+      setErrorAdd("OTP must be 6 digits");
+      return;
+    }
 
     setPhone("");
 
@@ -248,7 +248,6 @@ console.log(user)
                         <p className="text-gray-500 text-center text-sm mt-3 mb-5">
                           Enter your phone number to receive a verification code
                         </p>
-                       
 
                         {/* INPUT */}
                         <div className="mt-2">
@@ -263,7 +262,7 @@ console.log(user)
                             dropdownClass="!rounded-xl !border-blue-400/50 !border !shadow-md"
                           />
                         </div>
- <p className="text-red-500 mt-2 font-semibold text-sm text-center">
+                        <p className="text-red-500 mt-2 font-semibold text-sm text-center">
                           {error}
                         </p>
                         {/* BUTTON */}
@@ -383,21 +382,16 @@ console.log(user)
                   {/* Buttons */}
                   <div className="items-center sm:text-sm flex text-xs gap-3 mt-4">
                     {/* VIEW DETAILS */}
-                    <a href="/marketplace">
+                    <a onClick={() => router.push(`/marketplace`)}>
                       {" "}
-                      <button
-                        onClick={() => {
-                          // replace with actual slug logic
-                          window.location.href = `/game/${slug}`;
-                        }}
-                        className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition"
-                      >
+                      <button className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition">
                         Marketplace
                       </button>
                     </a>
 
                     {/* LIST ANOTHER */}
-                    <a href="/sell-game">
+
+                    <a onClick={() => router.push(`/sell-game`)}>
                       <button
                         onClick={() => {
                           setSuccess(false);

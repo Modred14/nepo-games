@@ -245,39 +245,38 @@ export default function Login() {
                 </div>
                 <div className="w-full lg:w-1/2 items-center h-full form-scroll lg:overflow-y-auto flex justify-center px-6 py-12 lg:py-25">
                   {" "}
-                <div className="w-full max-w-md mb-30 lg:mb-0 mx-auto bg-white rounded-3xl border border-gray-900/20 shadow-lg p-8 flex flex-col items-center text-center">
+                  <div className="w-full max-w-md mb-30 lg:mb-0 mx-auto bg-white rounded-3xl border border-gray-900/20 shadow-lg p-8 flex flex-col items-center text-center">
+                    {/* ICON WRAPPER */}
+                    <div className="relative mb-6">
+                      <div className="absolute inset-0 bg-blue-500/20 blur-2xl rounded-full"></div>
+                      <img
+                        className="relative h-24 w-24 object-contain"
+                        src="/verification.png"
+                        alt="Success Verification"
+                      />
+                    </div>
 
-  {/* ICON WRAPPER */}
-  <div className="relative mb-6">
-    <div className="absolute inset-0 bg-blue-500/20 blur-2xl rounded-full"></div>
-    <img
-      className="relative h-24 w-24 object-contain"
-      src="/verification.png"
-      alt="Success Verification"
-    />
-  </div>
+                    {/* TITLE */}
+                    <h2 className="text-2xl font-bold text-gray-800 mb-2">
+                      Password Reset Successful 🎉
+                    </h2>
 
-  {/* TITLE */}
-  <h2 className="text-2xl font-bold text-gray-800 mb-2">
-    Password Reset Successful 🎉
-  </h2>
+                    {/* SUBTEXT */}
+                    <p className="text-gray-500 text-sm mb-8">
+                      Your password has been updated successfully. You can now
+                      log in with your new credentials.
+                    </p>
 
-  {/* SUBTEXT */}
-  <p className="text-gray-500 text-sm mb-8">
-    Your password has been updated successfully. You can now log in with your new credentials.
-  </p>
-
-  {/* BUTTON */}
-  <a href="/login" className="w-full">
-    <button
-      type="button"
-      className="w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white text-lg font-semibold py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5 active:scale-95"
-    >
-      Continue to Login →
-    </button>
-  </a>
-
-</div>
+                    {/* BUTTON */}
+                    <a onClick={() => router.push(`/login`)} className="w-full">
+                      <button
+                        type="button"
+                        className="w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white text-lg font-semibold py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5 active:scale-95"
+                      >
+                        Continue to Login →
+                      </button>
+                    </a>
+                  </div>
                 </div>
 
                 <div className="hidden border-l-2 border-[#6060FF] lg:flex lg:w-1/2 items-center justify-center bg-white">

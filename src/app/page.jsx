@@ -20,6 +20,7 @@ import RevealRight from "./revealfright";
 import RevealLeft from "./revealfrleft";
 import PageLoader from "@/components/PageLoader";
 import { signOut } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
   const [open, setOpen] = useState(false);
@@ -36,7 +37,7 @@ export default function Home() {
       setUser(JSON.parse(stored));
     }
   }, []);
-
+  const router = useRouter();
   const ref = useRef(null);
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -334,7 +335,7 @@ export default function Home() {
                     />
                     <div className="hidden md:flex font-medium justify-center gap-9">
                       <a
-                        href="/marketplace"
+                        onClick={() => router.push("/marketplace")}
                         className="
 relative inline-block
 
@@ -365,7 +366,7 @@ hover:text-[#0000FF]
                         Marketplace
                       </a>
                       <a
-                        href=""
+                        onClick={() => router.push("/pricing")}
                         className="    relative inline-block
 
     after:content-['']
@@ -393,7 +394,7 @@ hover:text-[#0000FF]
                       </a>
 
                       <a
-                        href=""
+                        onClick={() => router.push("/contact")}
                         className="
 relative inline-block
 
@@ -430,7 +431,7 @@ hover:text-[#0000FF]
                           <div className="flex border  text-blue-700 font-medium transition-all duration-200  hover:text-blue-800 border-blue-600/70 text-sm items-center rounded-2xl w-fit overflow-hidden">
                             {/* Sign In */}
                             <a
-                              href="/login"
+                              onClick={() => router.push("/login")}
                               className="px-4 py-2 pr-5 hover:bg-blue-50 -mr-2"
                             >
                               Sign In
@@ -438,7 +439,7 @@ hover:text-[#0000FF]
 
                             {/* Sign Up */}
                             <a
-                              href="/signup"
+                              onClick={() => router.push("/signup")}
                               className="px-4 py-2 bg-blue-700 text-white rounded-l-2xl font-medium transition-all duration-200 hover:bg-blue-800 hover:scale-102 active:scale-95"
                             >
                               Sign Up
@@ -462,12 +463,12 @@ hover:text-[#0000FF]
 
                               {/* Dropdown */}
                               {refOpen && (
-                                <>
+                                <div className="cursor-pointer">
                                   {" "}
-                                  <div className="absolute right-0 mt-1 bg-white/95  backdrop-blur-md border  border-[#7A7AFE]/50 shadow-sm rounded-sm z-50 overflow-hidden transition-all duration-200">
+                                  <div className="absolute  right-0 mt-1 bg-white/95  backdrop-blur-md border  border-[#7A7AFE]/50 shadow-sm rounded-sm z-50 overflow-hidden transition-all duration-200">
                                     {/* Profile */}
                                     <a
-                                      href="/profile"
+                                      onClick={() => router.push("/profile")}
                                       className="flex items-center gap-3 px-4 py-3 text-xs text-gray-700 hover:bg-gray-100/80 transition"
                                     >
                                       <span className="text-xs">👤</span>
@@ -475,7 +476,9 @@ hover:text-[#0000FF]
                                     </a>{" "}
                                     <div className="h-px bg-gray-200 mx-2"></div>
                                     <a
-                                      href="/marketplace"
+                                      onClick={() =>
+                                        router.push("/marketplace")
+                                      }
                                       className="flex items-center gap-3 px-4 py-3 text-xs text-gray-700 hover:bg-gray-100/80 transition"
                                     >
                                       <span className="text-xs">🛒</span>
@@ -486,13 +489,13 @@ hover:text-[#0000FF]
                                     {/* Logout */}
                                     <button
                                       onClick={handleLogout}
-                                      className="flex items-center gap-3 w-full px-4 py-3 text-xs text-red-500 hover:bg-red-50 transition"
+                                      className="flex items-center cursor-pointer gap-3 w-full px-4 py-3 text-xs text-red-500 hover:bg-red-50 transition"
                                     >
                                       <span className="text-xs">🚪</span>
                                       Logout
                                     </button>
                                   </div>{" "}
-                                </>
+                                </div>
                               )}
                             </div>
                           </>
@@ -564,7 +567,7 @@ hover:text-[#0000FF]
                             </div>
                             <p>
                               <a
-                                href="/login"
+                                onClick={() => router.push("/login")}
                                 className="font-semibold text-blue-600"
                               >
                                 Sign In
@@ -578,7 +581,7 @@ hover:text-[#0000FF]
                     )}
                     <div className="flex text-base text-[#262626]  flex-col gap-6 h-full font-semibold -mb-2.5">
                       <div className="flex flex-col -mb-6 -mx-6">
-                        <a href="/marketplace">
+                        <a onClick={() => router.push("/marketplace")}>
                           <button
                             onClick={() => setActive("Marketplace")}
                             className={`${linkClass("Marketplace")}   group`}
@@ -634,7 +637,7 @@ hover:text-[#0000FF]
                               />
                             </div>
                             <a
-                              href="/profile"
+                              onClick={() => router.push("/profile")}
                               className="mr-6
                  flex items-center justify-center
       py-2 px-3 rounded-xl border 
@@ -662,7 +665,7 @@ hover:text-[#0000FF]
                               />
                             </div>
                             <a
-                              href="/signup"
+                              onClick={() => router.push("/signup")}
                               className="mr-6
                  flex items-center justify-center
       py-2 px-3 rounded-xl border 

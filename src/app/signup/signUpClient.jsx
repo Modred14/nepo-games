@@ -49,21 +49,21 @@ export default function Login() {
     }
   }
   const handleGoogleSignIn = async () => {
-  if (loading) return;
+    if (loading) return;
 
-  try {
-    setLoading(true);
-    setGoogleLoad(true);
+    try {
+      setLoading(true);
+      setGoogleLoad(true);
 
-    await signIn("google", {
-      callbackUrl: "/marketplace",
-    });
-  } catch (err) {
-    console.error("Google login failed:", err);
-    setLoading(false);
-    setGoogleLoad(false);
-  }
-};
+      await signIn("google", {
+        callbackUrl: "/marketplace",
+      });
+    } catch (err) {
+      console.error("Google login failed:", err);
+      setLoading(false);
+      setGoogleLoad(false);
+    }
+  };
 
   const handleSignUp = async (e) => {
     e.preventDefault();
@@ -432,7 +432,7 @@ export default function Login() {
                     <div>
                       <span className="text-gray-600">I have to the </span>
                       <a
-                        href="/terms-of-service"
+                        onClick={() => router.push(`/terms-of-service`)}
                         agreed
                         className=" relative inline-block
 
@@ -459,7 +459,7 @@ export default function Login() {
                       </a>
                       <span className="text-gray-600"> and </span>{" "}
                       <a
-                        href="/privacy-policy"
+                        onClick={() => router.push(`/privacy-policy`)}
                         className=" relative inline-block
 
     after:content-['']
@@ -535,7 +535,7 @@ export default function Login() {
                   Already have an account?{" "}
                 </span>
                 <a
-                  href="/login"
+                  onClick={() => router.push(`/login`)}
                   className="relative inline-block
 
     after:content-['']

@@ -782,11 +782,17 @@ function DataTab() {
           By using{" "}
           <span className="text-blue-600 font-semibold">Nepogames</span> you
           agree to these terms and conditions. Please read our{" "}
-          <a href="/terms-of-service" className="text-blue-600 font-semibold">
+          <a
+            onClick={() => router.push(`/terms-of-service`)}
+            className="text-blue-600 font-semibold"
+          >
             Terms of Service
           </a>{" "}
           and{" "}
-          <a href="/privacy-policy" className="text-blue-600 font-semibold">
+          <a
+            onClick={() => router.push(`/privacy-policy`)}
+            className="text-blue-600 font-semibold"
+          >
             Privacy Policy
           </a>{" "}
           carefully before using our platform
@@ -811,7 +817,7 @@ function DataTab() {
               Last updated: April 2026
             </p>
           </div>
-          <a href="/terms-of-service">
+          <a onClick={() => router.push(`/terms-of-service`)}>
             <button
               className="w-full sm:w-auto px-5 py-2.5 rounded-lg bg-[#0000FF] text-white text-sm font-medium
         hover:opacity-90 transition active:scale-[0.98]"
@@ -831,7 +837,7 @@ function DataTab() {
               Last updated: April 2026
             </p>
           </div>
-          <a href="/privacy-policy">
+          <a onClick={() => router.push(`/privacy-policy`)}>
             <button
               className="w-full sm:w-auto px-5 py-2.5 rounded-lg bg-[#0000FF] text-white text-sm font-medium
         hover:opacity-90 transition active:scale-[0.98]"

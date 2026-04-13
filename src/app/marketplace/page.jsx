@@ -177,7 +177,7 @@ export default function Marketplace() {
                 />
               </div>
               {!user?.phone_verified && (
-                <a href="/seller">
+                <a onClick={() => router.push(`/seller`)}>
                   <div className="sm:block hidden">
                     <p className="text-xs md:text-sm bg-blue-500 text-gray-50 rounded-lg p-2 px-3">
                       Become a seller
@@ -205,7 +205,7 @@ export default function Marketplace() {
                       {" "}
                       <div className="absolute right-0 mt-1 bg-white/95 backdrop-blur-md border  border-[#7A7AFE]/50 shadow-sm rounded-sm z-50 overflow-hidden transition-all duration-200">
                         <a
-                          href="/profile"
+                          onClick={() => router.push(`/profile`)}
                           className="flex items-center gap-3 px-4 py-3 text-xs text-gray-700 hover:bg-gray-100/80 transition"
                         >
                           <span className="text-xs">👤</span>
@@ -216,7 +216,7 @@ export default function Marketplace() {
                             {" "}
                             <div className="h-px bg-gray-200 mx-2"></div>
                             <a
-                              href="/seller"
+                              onClick={() => router.push(`/seller`)}
                               className="flex items-center gap-3 px-4 py-3 text-xs text-gray-700 hover:bg-gray-100/80 transition  whitespace-nowrap"
                             >
                               <span className="text-xs">📦</span>
@@ -229,7 +229,7 @@ export default function Marketplace() {
                         {/* Logout */}
                         <button
                           onClick={handleLogout}
-                          className="flex items-center gap-3 w-full px-4 py-3 text-xs text-red-500 hover:bg-red-50 transition"
+                          className="flex items-center cursor-pointer gap-3 w-full px-4 py-3 text-xs text-red-500 hover:bg-red-50 transition"
                         >
                           <span className="text-xs">🚪</span>
                           Logout
@@ -442,7 +442,9 @@ export default function Marketplace() {
                                 </div>
                                 <div>{formatGamePrice(game.price)}</div>
                               </div>
-                              <a href={`/game${game.slug}`}>
+                              <a
+                                onClick={() => router.push(`/game${game.slug}`)}
+                              >
                                 <button className="flex  text-white p-1.5 rounded-lg border border-[#0038C9] bg-linear-to-b from-[#4F8CFF] to-[#8A38F5] b items-center gap-1 sm:text-sm text-xs">
                                   Buy{" "}
                                   <ShoppingCart

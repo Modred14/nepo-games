@@ -1,7 +1,9 @@
 import React from "react";
 import { X, Instagram, Music2, Mail } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export default function Footer() {
+
   return (
     <footer className="w-full text-white">
       <div className="mx-auto w-full max-w-7xl px-6 py-10">
@@ -78,6 +80,7 @@ export default function Footer() {
 }
 
 function FooterCol({ title, links }) {
+    const router = useRouter();
   return (
     <div className="space-y-4">
       <h4 className="text-base font-semibold">{title}</h4>
@@ -85,7 +88,7 @@ function FooterCol({ title, links }) {
         {links.map((l) => (
           <li key={l.label}>
             <a
-              href={l.href}
+              onClick={() => router.push(`${l.href}`)}
               className="text-sm text-white/85 hover:text-white transition-colors"
             >
               {l.label}
@@ -98,9 +101,10 @@ function FooterCol({ title, links }) {
 }
 
 function SocialIcon({ href, label, children }) {
+    const router = useRouter();
   return (
     <a
-      href={href}
+      onClick={() => router.push(`${href}`)}
       aria-label={label}
       className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-black/20 ring-1 ring-white/15 hover:bg-black/30 hover:ring-white/25 transition"
     >

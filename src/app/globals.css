@@ -42,6 +42,10 @@ input[type="number"]::-webkit-inner-spin-button {
   width: 4px; /* VERY thin */
 }
 
+a {
+  cursor: pointer;
+}
+
 .thin-scroll::-webkit-scrollbar-track {
   background: transparent;
 }

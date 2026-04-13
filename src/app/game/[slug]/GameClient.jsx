@@ -63,7 +63,7 @@ export default function GameClient({ game, images, similarGames }) {
       <div className="w-full flex px-2 justify-center"></div>{" "}
       <div className="px-[3%] sm:pt-5 pt-3">
         <a
-          href="/marketplace"
+          onClick={() => router.push("/marketplace")}
           className="text-xs text-gray-500 hover:text-[#0000FF] transition inline-flex items-center gap-1"
         >
           <span>←</span> Back to marketplace
@@ -318,7 +318,7 @@ export default function GameClient({ game, images, similarGames }) {
               <div className="flex justify-between">
                 {" "}
                 <p className="font-semibold">Similar Accounts</p>
-                <a href="/marketplace">
+                <a onClick={() => router.push(`/marketplace`)}>
                   <button className="text-[#0000FF] text-sm px-3 rounded py-1 bg-[#C4C6FF]">
                     View All
                   </button>
@@ -360,7 +360,7 @@ export default function GameClient({ game, images, similarGames }) {
                             </p>
                           </div>
 
-                          <a href={`/game/${game.slug}`}>
+                          <a onClick={() => router.push(`/game/${game.slug}`)}>
                             <button className="flex  text-white p-1.5 rounded-lg border border-[#0038C9] bg-linear-to-b from-[#4F8CFF] to-[#8A38F5] b items-center gap-1 sm:text-sm text-xs">
                               Buy{" "}
                               <ShoppingCart

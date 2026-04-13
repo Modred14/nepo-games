@@ -23,9 +23,7 @@ export default function PrivacyPolicy() {
             How Nepogames collects, uses, and protects your data.
           </p>
 
-          <p className="text-sm text-gray-400 mt-3">
-            Last Updated: 06/04/2026
-          </p>
+          <p className="text-sm text-gray-400 mt-3">Last Updated: 06/04/2026</p>
         </div>
 
         {/* CONTENT */}
@@ -35,9 +33,7 @@ export default function PrivacyPolicy() {
               key={index}
               className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition"
             >
-              <h2 className="text-lg font-semibold mb-3">
-                {section.title}
-              </h2>
+              <h2 className="text-lg font-semibold mb-3">{section.title}</h2>
               <div className="text-gray-600 text-sm leading-relaxed">
                 {section.content}
               </div>
@@ -54,7 +50,10 @@ const sections = [
     title: "1. Introduction",
     content: (
       <p>
-        <span className="font-semibold">Nepogames</span> ("we", "our", "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, and safeguard your information when you use our platform.
+        <span className="font-semibold">Nepogames</span> ("we", "our", "us") is
+        committed to protecting your privacy. This Privacy Policy explains how
+        we collect, use, and safeguard your information when you use our
+        platform.
       </p>
     ),
   },
@@ -86,7 +85,9 @@ const sections = [
     title: "4. Payments and Transactions",
     content: (
       <p>
-        Nepogames acts as an intermediary between users. Payments may be held temporarily until delivery is confirmed. We do not store full financial details; payments are processed by trusted third-party providers.
+        Nepogames acts as an intermediary between users. Payments may be held
+        temporarily until delivery is confirmed. We do not store full financial
+        details; payments are processed by trusted third-party providers.
       </p>
     ),
   },
@@ -94,7 +95,9 @@ const sections = [
     title: "5. Sharing of Information",
     content: (
       <p>
-        We do not sell your data. We may share data with trusted services such as hosting, analytics, email providers, and payment processors to operate the platform.
+        We do not sell your data. We may share data with trusted services such
+        as hosting, analytics, email providers, and payment processors to
+        operate the platform.
       </p>
     ),
   },
@@ -102,7 +105,8 @@ const sections = [
     title: "6. Data Security",
     content: (
       <p>
-        We use encryption, secure storage, and access controls to protect your data. However, no system is fully secure.
+        We use encryption, secure storage, and access controls to protect your
+        data. However, no system is fully secure.
       </p>
     ),
   },
@@ -110,7 +114,8 @@ const sections = [
     title: "7. Data Retention",
     content: (
       <p>
-        We retain data only as long as necessary to provide services, comply with legal obligations, and resolve disputes.
+        We retain data only as long as necessary to provide services, comply
+        with legal obligations, and resolve disputes.
       </p>
     ),
   },
@@ -128,7 +133,8 @@ const sections = [
     title: "9. Age Restriction",
     content: (
       <p>
-        Nepogames is accessible to users aged 3 and above. Users under 13 must use the platform under parental supervision.
+        Nepogames is accessible to users aged 3 and above. Users under 13 must
+        use the platform under parental supervision.
       </p>
     ),
   },
@@ -136,7 +142,8 @@ const sections = [
     title: "10. Cookies",
     content: (
       <p>
-        We use cookies to improve user experience, analyze traffic, and enhance performance.
+        We use cookies to improve user experience, analyze traffic, and enhance
+        performance.
       </p>
     ),
   },
@@ -144,7 +151,8 @@ const sections = [
     title: "11. Jurisdiction",
     content: (
       <p>
-        This Privacy Policy is governed by the laws of the Federal Republic of Nigeria.
+        This Privacy Policy is governed by the laws of the Federal Republic of
+        Nigeria.
       </p>
     ),
   },
@@ -152,7 +160,8 @@ const sections = [
     title: "12. Changes to This Policy",
     content: (
       <p>
-        We may update this Privacy Policy at any time. Updates will be reflected on this page.
+        We may update this Privacy Policy at any time. Updates will be reflected
+        on this page.
       </p>
     ),
   },

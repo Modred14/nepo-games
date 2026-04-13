@@ -272,7 +272,7 @@ export default function LoginClient() {
                 Can't remember your password?{" "}
               </span>
               <a
-                href="/resetpassword"
+                onClick={() => router.push(`/resetpassword`)}
                 className=" relative inline-block
 
     after:content-['']
@@ -345,7 +345,7 @@ export default function LoginClient() {
           <div className="text-center text-sm   pb-20 ">
             <span className="text-gray-600">Don’t have an account yet? </span>
             <a
-              href="/signup"
+              onClick={() => router.push(`/signup`)}
               className=" relative inline-block
 
     after:content-['']

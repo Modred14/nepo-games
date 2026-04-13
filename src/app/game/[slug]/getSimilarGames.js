@@ -17,7 +17,7 @@ export async function getSimilarGames(currentGame) {
     ORDER BY RANDOM()
     LIMIT 2
     `,
-    [currentGame.id, minPrice, maxPrice]
+    [currentGame.id, minPrice, maxPrice],
   );
 
   // 2. If not enough → fallback to verified sellers
@@ -32,7 +32,7 @@ export async function getSimilarGames(currentGame) {
       ORDER BY RANDOM()
       LIMIT 2
       `,
-      [currentGame.id]
+      [currentGame.id],
     );
   }
 
@@ -47,7 +47,7 @@ export async function getSimilarGames(currentGame) {
       ORDER BY RANDOM()
       LIMIT 2
       `,
-      [currentGame.id]
+      [currentGame.id],
     );
   }
 
