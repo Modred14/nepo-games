@@ -21,6 +21,7 @@ export default function LoginClient() {
   const [successOpen, setSuccessOpen] = useState(false);
   const [googleLoad, setGoogleLoad] = useState(false);
 
+  
   const router = useRouter();
   const params = useSearchParams();
   const msg = params.get("msg");
