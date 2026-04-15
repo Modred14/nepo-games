@@ -22,6 +22,7 @@ export default function Marketplace() {
   const [priceRange, setPriceRange] = useState([0, 5000000]);
   const [imagesLoaded, setImagesLoaded] = useState(0);
   const [open, setOpen] = useState(false);
+  const [logOpen, setLogOpen] = useState(false);
   const ref = useRef(null);
 
   useEffect(() => {
@@ -137,6 +138,35 @@ export default function Marketplace() {
 
   return (
     <div>
+      {logOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="w-[90%] max-w-sm rounded-xl bg-white p-5 shadow-lg">
+            <h2 className="text-lg font-semibold">Confirm logout</h2>
+            <p className="text-sm text-gray-600 mt-2">
+              Are you sure you want to log out of this device?
+            </p>
+
+            <div className="flex justify-end gap-3 mt-5">
+              <button
+                onClick={() => setLogOpen(false)}
+                className="px-4 py-2 text-sm rounded-lg border hover:bg-gray-100"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={() => {
+                  setLogOpen(false);
+                  handleLogout();
+                }}
+                className="px-4 py-2 text-sm rounded-lg bg-red-600 text-white hover:bg-red-700"
+              >
+                Yes, log out
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <button
         onClick={() => openChat()}
         className="
@@ -188,7 +218,10 @@ export default function Marketplace() {
               <div className="flex items-center">
                 <div
                   ref={ref}
-                  onMouseEnter={() => setOpen(true)}
+                  onMouseEnter={() => {
+                    setOpen(true);
+                    setLogOpen(false);
+                  }}
                   className="relative w-fit"
                 >
                   <a>
@@ -228,7 +261,10 @@ export default function Marketplace() {
                         <div className="h-px bg-gray-200 mx-2"></div>
                         {/* Logout */}
                         <button
-                          onClick={handleLogout}
+                          onClick={() => {
+                            setOpen(false);
+                            setLogOpen(true);
+                          }}
                           className="flex items-center cursor-pointer gap-3 w-full px-4 py-3 text-xs text-red-500 hover:bg-red-50 transition"
                         >
                           <span className="text-xs">🚪</span>

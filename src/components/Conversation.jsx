@@ -118,8 +118,20 @@ export default function Conversation({ gameId, receiverId }) {
         const data = await res.json();
 
         const grouped = groupConversations(data, user.id);
+        const NEPO_CHAT = {
+          id: "nepo-system",
+          listing_id: "nepo-system",
+          gamedetails: "NepoGames",
+          username: "Nepo Games",
+          email: "nepogames.com@gmail.com",
+          profile_image: "/conversation.png",
+          receiver_id: 1,
+          lastmessage: "This is an announcement channel",
+          lastmessagetime: new Date().toISOString(),
+          unreadcount: 0,
+        };
 
-        setConversations(grouped);
+        setConversations([NEPO_CHAT, ...grouped]);
       } catch (err) {
         console.error("Failed to load conversations", err);
       } finally {
@@ -222,9 +234,10 @@ export default function Conversation({ gameId, receiverId }) {
     }, 50);
     return () => clearTimeout(timeout);
   }, [allMessages.length]);
+
   useEffect(() => {
     if (isMobile) {
-      if (currentChatId) {
+      if (currentChatId && Number(currentChatId) !== 1) {
         setView("chat");
       } else {
         setView("list");
@@ -232,18 +245,7 @@ export default function Conversation({ gameId, receiverId }) {
     } else {
       setView("chat");
     }
-  }, [isMobile, currentChatId]);
-  useEffect(() => {
-    if (isMobile) {
-      if (currentChatId && !isAdmin) {
-        setView("chat");
-      } else {
-        setView("list");
-      }
-    } else {
-      setView("chat");
-    }
-  }, [isMobile, currentChatId]);
+  }, [isMobile, currentChatId ]);
 
   const markAsRead = async () => {
     try {
@@ -358,7 +360,7 @@ export default function Conversation({ gameId, receiverId }) {
                 <ChevronLeft size={24} className="text-blue-700" />
               </button>
 
-              <p className="w-full text-center font-semibold text-blue-700 tracking-[0.2em] uppercase">
+              <p className="w-full text-center font-semibold text-blue-700 uppercase">
                 Chats
               </p>
             </div>
@@ -375,6 +377,7 @@ export default function Conversation({ gameId, receiverId }) {
                   <div
                     key={chat.id}
                     onClick={() => {
+                   
                       router.push(
                         `/c/${chat.listing_id}?user_id=${userId}&receiver_id=${chat.receiver_id}`,
                       );
@@ -385,7 +388,7 @@ export default function Conversation({ gameId, receiverId }) {
                     }}
                     className={`flex items-center gap-3 px-4 py-3 cursor-pointer border-b border-gray-100
               transition-all duration-150
-              ${isActive ? "bg-blue-100/60 border-l-4 border-blue-600" : "hover:bg-blue-50/50"}
+              ${isActive && !isMobile ? "bg-blue-100/60 border-l-4 border-blue-600" : "hover:bg-blue-50/50"}
             `}
                   >
                     {/* AVATAR */}
@@ -463,7 +466,7 @@ export default function Conversation({ gameId, receiverId }) {
                     <div>
                       <p className="text-sm font-semibold text-blue-700">
                         {isAdmin
-                          ? "Nepo Games"
+                          ? "NepoGames"
                           : activeChat?.username || "Unknown User"}
                       </p>
 

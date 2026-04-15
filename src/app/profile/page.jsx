@@ -11,7 +11,9 @@ import {
   Bell,
   Link,
   Camera,
+  LogOut,
 } from "lucide-react";
+import { signOut } from "next-auth/react";
 import Loader from "@/components/Loader";
 
 export default function AccountSettingsPage() {
@@ -158,6 +160,14 @@ function ProfileTab() {
   const [loading, setLoading] = useState(false);
   const [imgLoading, setImgLoading] = useState(true);
   const [selectedFile, setSelectedFile] = useState(null);
+  const [open, setOpen] = useState(false);
+  const handleLogout = async () => {
+    localStorage.removeItem("nepo-user");
+
+    await signOut({
+      callbackUrl: "/login",
+    });
+  };
 
   useEffect(() => {
     const stored = localStorage.getItem("nepo-user");
@@ -375,6 +385,55 @@ function ProfileTab() {
           <div>
             <div className="">
               <p>Listed games</p>
+            </div>
+          </div>
+        </div>
+      )}
+      <div className="mt-5 w-full rounded-sm border border-red-200 bg-red-50 p-5 flex items-start justify-between gap-4 shadow-sm">
+        {/* Left content */}
+        <div className="flex items-start gap-3">
+          <div>
+            <h3 className="text-sm font-semibold text-gray-900">Log out</h3>
+            <p className="text-sm text-gray-600 mt-1">
+              You’ll be signed out of this device. You can sign in again
+              anytime.
+            </p>
+          </div>
+        </div>
+
+        {/* Button */}
+        <button
+          onClick={() => setOpen(true)}
+          className="shrink-0 gap-2 flex items-center bg-red-600 hover:bg-red-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-all duration-150 active:scale-95"
+        >
+          <LogOut size={14} /> Log out
+        </button>
+      </div>
+      {open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="w-[90%] max-w-sm rounded-xl bg-white p-5 shadow-lg">
+            <h2 className="text-lg font-semibold">Confirm logout</h2>
+            <p className="text-sm text-gray-600 mt-2">
+              Are you sure you want to log out of this device?
+            </p>
+
+            <div className="flex justify-end gap-3 mt-5">
+              <button
+                onClick={() => setOpen(false)}
+                className="px-4 py-2 text-sm rounded-lg border hover:bg-gray-100"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={() => {
+                  setOpen(false);
+                  handleLogout();
+                }}
+                className="px-4 py-2 text-sm rounded-lg bg-red-600 text-white hover:bg-red-700"
+              >
+                Yes, log out
+              </button>
             </div>
           </div>
         </div>

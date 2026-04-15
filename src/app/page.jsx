@@ -30,6 +30,7 @@ export default function Home() {
   const [active, setActive] = useState("");
   const [activeIndex, setActiveIndex] = useState(null);
   const [refOpen, setOpenRef] = useState(false);
+  const [logOpen, setLogOpen] = useState(false);
 
   useEffect(() => {
     const stored = localStorage.getItem("nepo-user");
@@ -318,6 +319,35 @@ export default function Home() {
 
   return (
     <PageLoader>
+      {logOpen && (
+        <div className="fixed inset-0 z-150 flex items-center justify-center bg-black/50">
+          <div className="w-[90%] max-w-sm rounded-xl bg-white p-5 shadow-lg">
+            <h2 className="text-lg font-semibold">Confirm logout</h2>
+            <p className="text-sm text-gray-600 mt-2">
+              Are you sure you want to log out of this device?
+            </p>
+
+            <div className="flex justify-end gap-3 mt-5">
+              <button
+                onClick={() => setLogOpen(false)}
+                className="px-4 py-2 text-sm rounded-lg border hover:bg-gray-100"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={() => {
+                  setLogOpen(false);
+                  handleLogout();
+                }}
+                className="px-4 py-2 text-sm rounded-lg bg-red-600 text-white hover:bg-red-700"
+              >
+                Yes, log out
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="min-h-screen bg-linear-to-b">
         <div>
           <div className="w-full px-[5%] mt-5 bg-transparent fixed z-100">
@@ -488,7 +518,10 @@ hover:text-[#0000FF]
                                     <div className="h-px bg-gray-200 mx-2"></div>
                                     {/* Logout */}
                                     <button
-                                      onClick={handleLogout}
+                                      onClick={() => {
+                                        setOpenRef(false);
+                                        setLogOpen(true);
+                                      }}
                                       className="flex items-center cursor-pointer gap-3 w-full px-4 py-3 text-xs text-red-500 hover:bg-red-50 transition"
                                     >
                                       <span className="text-xs">🚪</span>
