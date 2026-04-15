@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useMemo } from "react";
-import { ChevronLeft, Send } from "lucide-react";
+import { ChevronLeft, CreditCard, Send } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { usePathname } from "next/navigation";
 import { useParams } from "next/navigation";
@@ -153,11 +153,21 @@ export default function Conversation({ gameId, receiverId }) {
   const router = useRouter();
   const pathname = usePathname();
   function maskEmail(email) {
+    const isMobile = window.innerWidth < 400;
+
+    if (isMobile) {
+      const [localPart, domain] = email.split(".");
+      if (!localPart || localPart.length < 3) {
+        return email;
+      }
+      const start = localPart.slice(0, 2);
+      const end = localPart.slice(-1);
+      return `${start}***${end}.${domain}`;
+    }
+
     const [localPart, domain] = email.split("@");
 
-    if (!localPart || localPart.length < 3) {
-      return email;
-    }
+    if (!localPart || localPart.length < 3) return email;
 
     const start = localPart.slice(0, 2);
     const end = localPart.slice(-2);
@@ -245,7 +255,7 @@ export default function Conversation({ gameId, receiverId }) {
     } else {
       setView("chat");
     }
-  }, [isMobile, currentChatId ]);
+  }, [isMobile, currentChatId]);
 
   const markAsRead = async () => {
     try {
@@ -377,7 +387,6 @@ export default function Conversation({ gameId, receiverId }) {
                   <div
                     key={chat.id}
                     onClick={() => {
-                   
                       router.push(
                         `/c/${chat.listing_id}?user_id=${userId}&receiver_id=${chat.receiver_id}`,
                       );
@@ -443,7 +452,7 @@ export default function Conversation({ gameId, receiverId }) {
             <div className="relative z-10 flex flex-col h-full">
               {/* HEADER (NO FIXED) */}
               <div className="p-4 shrink-0">
-                <div className="w-full p-2 px-5 rounded-3xl  bg-white/80 backdrop-blur-xl border backdrop-blur-sm border-blue-700/50">
+                <div className="w-full p-2 px-5 rounded-3xl flex justify-between bg-white/80 backdrop-blur-xl border backdrop-blur-sm border-blue-700/50">
                   <div className="flex gap-2 items-center">
                     {isMobile && (
                       <button
@@ -461,7 +470,7 @@ export default function Conversation({ gameId, receiverId }) {
                           ? "/conversation.png"
                           : activeChat?.profile_image || "/profile.png"
                       }
-                      className="h-10 w-10 rounded-full border border-blue-600/80 object-cover"
+                      className="h-10 -ml-1 xs:ml-0 w-10 rounded-full border border-blue-600/80 object-cover"
                     />
                     <div>
                       <p className="text-sm font-semibold text-blue-700">
@@ -477,6 +486,17 @@ export default function Conversation({ gameId, receiverId }) {
                       </p>
                     </div>
                   </div>
+                  {!isAdmin && (
+                    <div className="h-10  flex items-center">
+                      <button
+                        // onClick={}
+                        className="inline-flex sm:h-8 h-7 p-2 gap-1 sm:gap-2 min-w-0 rounded-md text-xs sm:text-sm items-center justify-center bg-blue-600 text-white hover:bg-blue-700 active:scale-95 transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <CreditCard size={15} />{" "}
+                        <p className="inline-flex ">Pay Now</p>
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
               <div
@@ -624,13 +644,14 @@ export default function Conversation({ gameId, receiverId }) {
                     rows={1}
                     className="flex-1 min-w-0 max-h-30 thin-scroll resize-none bg-transparent outline-none text-gray-700 xs:text-base text-sm"
                   />
-
-                  <button
-                    onClick={handleSend}
-                    className="inline-flex min-w-0 items-center justify-center w-10 h-10 rounded-full bg-blue-600 text-white hover:bg-blue-700 active:scale-95 transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <Send size={18} />
-                  </button>
+                  {!isAdmin && (
+                    <button
+                      onClick={handleSend}
+                      className="inline-flex min-w-0 items-center justify-center w-10 h-10 rounded-full bg-blue-600 text-white hover:bg-blue-700 active:scale-95 transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <Send size={18} />
+                    </button>
+                  )}
                 </div>
               </div>
             </div>

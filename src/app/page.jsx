@@ -579,7 +579,10 @@ hover:text-[#0000FF]
                         <p className="pb-3 pt-1 text-xs">
                           Not you?{" "}
                           <button
-                            onClick={handleLogout}
+                            onClick={() => {
+                              setOpen(false);
+                              setLogOpen(true);
+                            }}
                             className="text-red-600"
                           >
                             Log out
