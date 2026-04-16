@@ -826,7 +826,10 @@ hover:text-[#0000FF]
               </Reveal>
               <div className="grid overflow-hidden sm:grid-cols-2 xl:grid-cols-4 gap-10 px-[5%]  items-stretch">
                 <RevealLeft>
-                  <div className="bg-linear-to-b h-full from-[#4F8CFF]/50 rounded-xl pb-0 p-7 shadow-md to-[#8A38F5]/50  transition-all duration-500">
+                  <div
+                    onClick={() => router.push("/signup")}
+                    className="bg-linear-to-b h-full from-[#4F8CFF]/50 rounded-xl pb-0 p-7 shadow-md to-[#8A38F5]/50  transition-all duration-500"
+                  >
                     <div className="flex gap-3 items-center">
                       <div className=" bg-white rounded-[50%] p-3">
                         <div className="border-[#6D62FA] rounded-[50%] border-3">
@@ -868,7 +871,10 @@ hover:text-[#0000FF]
                   </div>
                 </RevealLeft>
                 <RevealRight>
-                  <div className="bg-linear-to-b h-full from-[#4F8CFF]/50 rounded-xl pb-0 p-7 shadow-md to-[#8A38F5]/50  transition-all duration-500">
+                  <div
+                    onClick={() => router.push("/sell-game")}
+                    className="bg-linear-to-b h-full from-[#4F8CFF]/50 rounded-xl pb-0 p-7 shadow-md to-[#8A38F5]/50  transition-all duration-500"
+                  >
                     <div className="flex gap-3 items-center">
                       <div className=" bg-white rounded-[50%] p-3">
                         <div className="">
@@ -894,7 +900,10 @@ hover:text-[#0000FF]
                 </RevealRight>
                 <RevealLeft>
                   {" "}
-                  <div className="bg-linear-to-b h-full from-[#4F8CFF]/50 rounded-xl pb-0 p-7 shadow-md to-[#8A38F5]/50  transition-all duration-500">
+                  <div
+                    onClick={() => router.push("/marketplace")}
+                    className="bg-linear-to-b h-full from-[#4F8CFF]/50 rounded-xl pb-0 p-7 shadow-md to-[#8A38F5]/50  transition-all duration-500"
+                  >
                     <div className="flex gap-3 items-center">
                       <div className=" bg-white rounded-[50%] p-3">
                         <div>
@@ -933,13 +942,18 @@ hover:text-[#0000FF]
                   </div>
                 </RevealLeft>{" "}
                 <RevealRight>
-                  <div className="bg-linear-to-b h-full from-[#4F8CFF]/50 rounded-xl pb-0 p-7 shadow-md to-[#8A38F5]/50  transition-all duration-500">
+                  <div
+                    onClick={() =>
+                      router.push(`/c/1?user_id=${user?.id}&receiver_id=1`)
+                    }
+                    className="bg-linear-to-b h-full from-[#4F8CFF]/50 rounded-xl pb-0 p-7 shadow-md to-[#8A38F5]/50  transition-all duration-500"
+                  >
                     <div className="flex gap-3 items-center">
                       <div className=" bg-white rounded-[50%] p-3">
                         <div>
                           <SlidersHorizontal
                             size={25}
-                            className="text-[#6D62FA] "
+                            className="text-[#6D62FA]"
                           />
                         </div>
                       </div>

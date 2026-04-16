@@ -19,7 +19,7 @@ export default function Marketplace() {
   const [platform, setPlatform] = useState("");
   const [type, setType] = useState("");
   const [verifiedOnly, setVerifiedOnly] = useState(false);
-  const [priceRange, setPriceRange] = useState([0, 5000000]);
+  const [priceRange, setPriceRange] = useState([0, 50000000]);
   const [imagesLoaded, setImagesLoaded] = useState(0);
   const [open, setOpen] = useState(false);
   const [logOpen, setLogOpen] = useState(false);
@@ -367,7 +367,7 @@ export default function Marketplace() {
                             }
                             let value = Number(val);
 
-                            if (value > 5000000) value = 5000000;
+                            if (value > 50000000) value = 50000000;
                             if (value < priceRange[0]) value = priceRange[0];
                             if (priceRange[0] !== "" && value < priceRange[0]) {
                               value = priceRange[0];
@@ -386,7 +386,7 @@ export default function Marketplace() {
                     thumbClassName="w-2 h-2 bg-blue-600 rounded-full cursor-grab focus:outline-none"
                     trackClassName="h-1 bg-gray-300 rounded-full"
                     min={0}
-                    max={5000000}
+                    max={50000000}
                     value={priceRange}
                     onChange={(val) => setPriceRange(val)}
                     pearling
@@ -424,7 +424,7 @@ export default function Marketplace() {
                     setType("");
                     setVerifiedOnly(false);
                     setSearch("");
-                    setPriceRange([0, 5000000]);
+                    setPriceRange([0, 50000000]);
                   }}
                   className="ml-auto  px-2 py-1 border border-blue-600/30 text-[13px] rounded-lg bg-blue-100 hover:bg-blue-200 transition"
                 >
