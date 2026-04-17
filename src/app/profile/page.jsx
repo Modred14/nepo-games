@@ -1,5 +1,5 @@
 "use client";
-
+import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import {
   Eye,
@@ -829,6 +829,7 @@ function LInkedTab() {
 }
 
 function DataTab() {
+  const router = useRouter()
   return (
     <div className="bg-white rounded-2xl shadow p-4 sm:p-6 space-y-6">
       {/* Header */}
