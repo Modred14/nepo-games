@@ -39,7 +39,7 @@ export default function AccountSettingsPage() {
       </h1>
 
       {/* Mobile Tabs */}
-      <div className="flex md:hidden overflow-x-auto gap-2 mb-4 ">
+      <div className="flex md:hidden overflow-x-auto thin-scroll gap-2 mb-4 ">
         <MobileTab
           label="Profile"
           active={activeTab === "profile"}
@@ -389,7 +389,7 @@ function ProfileTab() {
           </div>
         </div>
       )}
-      <div className="mt-5 w-full rounded-sm border border-red-200 bg-red-50 p-5 flex items-start justify-between gap-4 shadow-sm">
+      <div className="mt-5 w-full flex items-center rounded-sm border border-red-200 bg-red-50 p-5  justify-between gap-4 shadow-sm">
         {/* Left content */}
         <div className="flex items-start gap-3">
           <div>
