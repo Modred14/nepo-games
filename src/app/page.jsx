@@ -944,7 +944,7 @@ hover:text-[#0000FF]
                 <RevealRight>
                   <div
                     onClick={() =>
-                      router.push(`/c/nepo-system?receiver_id=1`)
+                      router.push(`/c/1?receiver_id=1`)
                     }
                     className="bg-linear-to-b h-full from-[#4F8CFF]/50 rounded-xl pb-0 p-7 shadow-md to-[#8A38F5]/50  transition-all duration-500"
                   >

@@ -103,33 +103,29 @@ export default function Conversation({ gameId, receiverId }) {
 
     return Array.from(map.values());
   };
+  const NEPO_CHAT = {
+    id: "nepo-system",
+    listing_id: "nepo-system",
+    gamedetails: "NepoGames",
+    username: "Nepo Games",
+    email: "nepogames.com@gmail.com",
+    profile_image: "/conversation.png",
+    receiver_id: 1,
+    lastmessage: "This is an announcement channel",
+    lastmessagetime: new Date().toISOString(),
+    unreadcount: 0,
+  };
 
   useEffect(() => {
     let interval;
 
     const fetchAndSet = async () => {
-      const storedUser = localStorage.getItem("nepo-user");
-      const user = storedUser ? JSON.parse(storedUser) : null;
-      if (!user?.id) return;
-
       try {
-        const res = await fetch(`/api/conversations?user_id=${user.id}`);
+        const res = await fetch(`/api/conversations`);
 
         const data = await res.json();
 
-        const grouped = groupConversations(data, user.id);
-        const NEPO_CHAT = {
-          id: "nepo-system",
-          listing_id: "nepo-system",
-          gamedetails: "NepoGames",
-          username: "Nepo Games",
-          email: "nepogames.com@gmail.com",
-          profile_image: "/conversation.png",
-          receiver_id: 1,
-          lastmessage: "This is an announcement channel",
-          lastmessagetime: new Date().toISOString(),
-          unreadcount: 0,
-        };
+        const grouped = groupConversations(data);
 
         setConversations([NEPO_CHAT, ...grouped]);
       } catch (err) {
@@ -272,7 +268,7 @@ export default function Conversation({ gameId, receiverId }) {
   };
 
   useEffect(() => {
-    if (!gameId  || !conversation?.id) return;
+    if (!gameId || !conversation?.id) return;
     markAsRead();
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [allMessages.length]);
@@ -346,11 +342,13 @@ export default function Conversation({ gameId, receiverId }) {
     });
   };
 
-  const activeChat = conversations.find(
-    (chat) => String(chat.listing_id) === String(currentChatId),
-  );
   const lastIndex = allMessages.length - 1;
-
+  const isSystemChat = String(gameId) === "1" && String(receiverId) === "1";
+  const activeChat = isSystemChat
+    ? NEPO_CHAT
+    : conversations.find(
+        (chat) => String(chat.listing_id) === String(currentChatId),
+      );
   if (loadingChats) {
     return <Loader />;
   }
@@ -377,10 +375,11 @@ export default function Conversation({ gameId, receiverId }) {
             {/* LIST */}
             <div className="flex-1 overflow-y-auto thin-scroll">
               {conversations.map((chat) => {
-                const isActive =
-                  currentChatId &&
-                  chat?.id &&
-                  String(currentChatId) === String(chat.listing_id);
+                const isActive = isSystemChat
+                  ? chat.receiver_id === 1 && chat.listing_id === "nepo-system"
+                  : currentChatId &&
+                    chat?.id &&
+                    String(currentChatId) === String(chat.listing_id);
 
                 return (
                   <div
