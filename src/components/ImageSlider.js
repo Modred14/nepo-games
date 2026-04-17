@@ -123,7 +123,7 @@ export default function ImageSlider({ images }) {
               setIndex(i);
               startTimeRef.current = Date.now();
             }}
-            className={`items-center bg-gray-200 flex cursor-pointer border-2 rounded overflow-hidden ${
+            className={`items-center bg-gray-200 sm:h-30 h-25 flex cursor-pointer border-2 rounded overflow-hidden ${
               i === index ? "border-blue-600/60" : "border-gray-300"
             }`}
           >
