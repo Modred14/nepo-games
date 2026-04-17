@@ -306,7 +306,7 @@ export default function Marketplace() {
             <div className="w-full mt-3">
               <div className="flex flex-wrap items-center gap-3 sm:gap-4 bg-white border border-blue-600/20 rounded-xl p-3 shadow-sm">
                 <div className="flex sm:hidden w-full gap-3 px-2 bg-blue-400/30 rounded-sm py-3">
-                  <div className=" flex relative w-full ">
+                  <div className=" flex items-center relative w-full ">
                     <Search
                       size={15}
                       className="absolute left-3 -mt-[0.25px] top-1/2 -translate-y-1/2 text-gray-500"
