@@ -186,7 +186,7 @@ export default function Marketplace() {
       </button>
       <Reveal className="overflow-auto">
         <div className="pb-20">
-          <div className="flex border-b border-[#0000FF]/40 justify-between py-2 sm:py-4 px-7 items-center">
+          <div className="flex border-b border-[#0000FF]/40 justify-between py-3 sm:py-4 px-7 items-center">
             <p className="text-base sm:text-lg font-bold">
               Hello, {user?.username}
             </p>
@@ -277,7 +277,7 @@ export default function Marketplace() {
               </div>
             </div>
           </div>
-          <div className="flex sm:hidden gap-3 px-5 bg-blue-400/30 py-3 mb-4">
+          {/* <div className="flex sm:hidden gap-3 px-5 bg-blue-400/30 py-3 mb-4">
             <div className=" flex relative w-full ">
               <Search
                 size={15}
@@ -301,10 +301,35 @@ export default function Marketplace() {
                 </div>
               </a>
             )}
-          </div>
+          </div> */}
           <div className="px-[3%] w-full ">
             <div className="w-full mt-3">
               <div className="flex flex-wrap items-center gap-3 sm:gap-4 bg-white border border-blue-600/20 rounded-xl p-3 shadow-sm">
+                <div className="flex sm:hidden w-full gap-3 px-2 bg-blue-400/30 rounded-sm py-3">
+                  <div className=" flex relative w-full ">
+                    <Search
+                      size={15}
+                      className="absolute left-3 -mt-[0.25px] top-1/2 -translate-y-1/2 text-gray-500"
+                    />
+
+                    <input
+                      type="search"
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      className="bg-gray-200 w-full p-2 pl-9 text-xs sm:text-sm  rounded-2xl border border-blue-600/40"
+                      placeholder="Search gaming accounts"
+                    />
+                  </div>
+                  {!user?.phone_verified && (
+                    <a onClick={() => router.push(`/seller`)}>
+                      <div className="">
+                        <p className="text-xs whitespace-nowrap md:text-sm bg-blue-500 text-gray-50 rounded-lg p-2 px-3">
+                          Become a seller
+                        </p>
+                      </div>
+                    </a>
+                  )}
+                </div>
                 <div className="flex flex-col flex-1 min-w-40">
                   <label className="text-xs text-gray-500">Game</label>
                   <select
