@@ -13,6 +13,7 @@
     "cloudinary": "^2.9.0",
     "crypto": "^1.0.1",
     "framer-motion": "^12.38.0",
+    "jsonwebtoken": "^9.0.3",
     "libphonenumber-js": "^1.12.41",
     "lucide-react": "^0.564.0",
     "next": "16.1.6",

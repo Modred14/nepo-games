@@ -1,10 +1,16 @@
 import pool from "../../../../lib/db";
 
+import { requireUser } from "../../../../lib/auth";
+
 export async function GET(req) {
   try {
-    const { searchParams } = new URL(req.url);
-    const user_id = searchParams.get("user_id");
+    const user = await requireUser();
 
+    if (!user) {
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const user_id = user.id;
     if (!user_id) {
       return Response.json({ error: "Missing user_id" }, { status: 400 });
     }

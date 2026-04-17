@@ -114,7 +114,7 @@ export default function Marketplace() {
     .sort((a, b) => b.verified - a.verified);
   const router = useRouter();
   const openChat = () => {
-    router.push(`/c/1?user_id=${user_id}&receiver_id=1`);
+    router.push(`/c/nepo-system?receiver_id=1`);
   };
   const isImagesReady =
     filteredGames.length === 0 || imagesLoaded >= filteredGames.length;

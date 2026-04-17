@@ -21,7 +21,6 @@ export default function LoginClient() {
   const [successOpen, setSuccessOpen] = useState(false);
   const [googleLoad, setGoogleLoad] = useState(false);
 
-  
   const router = useRouter();
   const params = useSearchParams();
   const msg = params.get("msg");
@@ -67,12 +66,14 @@ export default function LoginClient() {
   };
   const handleLogin = async (e) => {
     e.preventDefault();
+
     if (!email?.trim()) {
       setMessage("Email address is required.");
       setErrorOpen(true);
       setErrorTrigger((prev) => prev + 1);
       return;
     }
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email.trim())) {
       setMessage("Please enter a valid email address.");
@@ -80,44 +81,51 @@ export default function LoginClient() {
       setErrorTrigger((prev) => prev + 1);
       return;
     }
+
     if (!password) {
       setMessage("Password is required.");
       setErrorOpen(true);
       setErrorTrigger((prev) => prev + 1);
       return;
     }
+
     try {
       setLoading(true);
-      const res = await fetch("/api/auth", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email,
-          password,
-        }),
+
+      const res = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
       });
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        setLoading(false);
-        setMessage(data.error || "Login failed");
+      setLoading(false);
+      if (res?.error) {
+        setSuccessOpen(false);
+        console.log(res.error);
+        if (res.error.includes("EMAIL_NOT_VERIFIED")) {
+          setMessage(
+            "Email not verified. Please verify your email address before logging in.",
+          );
+        } else if (res.error.includes("INVALID_CREDENTIALS")) {
+          setMessage("Invalid email or password.");
+        } else {
+          setMessage("Login failed. Try again.");
+        }
         setErrorOpen(true);
+        console.log(res.error);
         setErrorTrigger((prev) => prev + 1);
         return;
       }
-      console.log(data);
-      if (data.user) {
-        localStorage.setItem("nepo-user", JSON.stringify(data.user));
+
+      if (res?.ok) {
+        setErrorOpen(false);
+        setMessage("Login successful!");
+        setSuccessOpen(true);
+
+        setTimeout(() => {
+          router.push("/marketplace");
+        }, 1500);
       }
-      setErrorOpen(false);
-      setMessage("Login successful!");
-      setSuccessOpen(true);
-      setTimeout(() => {
-        router.push("/marketplace");
-      }, 3000);
     } catch (err) {
       setLoading(false);
       setMessage("Network error. Try again.");

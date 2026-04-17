@@ -30,7 +30,7 @@ export default function GameClient({ game, images, similarGames }) {
   const router = useRouter();
 
   const openChat = (listingId, receiverId) => {
-    router.push(`/c/${listingId}?user_id=${user_id}&receiver_id=${receiverId}`);
+    router.push(`/c/${listingId}?receiver_id=${receiverId}`);
   };
   const handleReport = (reason) => {
     if (reason === "Others") {

@@ -263,7 +263,6 @@ export default function Conversation({ gameId, receiverId }) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          user_id: userId,
           gameId,
         }),
       });
@@ -273,7 +272,7 @@ export default function Conversation({ gameId, receiverId }) {
   };
 
   useEffect(() => {
-    if (!gameId || !userId || !conversation?.id) return;
+    if (!gameId  || !conversation?.id) return;
     markAsRead();
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [allMessages.length]);
@@ -327,8 +326,8 @@ export default function Conversation({ gameId, receiverId }) {
       await fetch(`/api/c/${gameId}/send`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
-          user_id: userId,
           text: newMessage.message,
           gameId,
           receiverId,
@@ -388,7 +387,7 @@ export default function Conversation({ gameId, receiverId }) {
                     key={chat.id}
                     onClick={() => {
                       router.push(
-                        `/c/${chat.listing_id}?user_id=${userId}&receiver_id=${chat.receiver_id}`,
+                        `/c/${chat.listing_id}?receiver_id=${chat.receiver_id}`,
                       );
                       if (isMobile) {
                         setLoadingChats(true);

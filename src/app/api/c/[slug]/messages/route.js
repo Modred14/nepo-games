@@ -1,4 +1,5 @@
 import pool from "../../../../../../lib/db";
+import { requireUser } from "../../../../../../lib/auth";
 
 export async function GET(req, context) {
   try {
@@ -6,7 +7,15 @@ export async function GET(req, context) {
     const listing_id = params.slug;
 
     const { searchParams } = new URL(req.url);
-    const sender_id = searchParams.get("user_id");
+     const user = await requireUser();
+    console.log(user)
+
+    if (!user) {
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const sender_id  = user.id;
+
     const receiver_id = searchParams.get("receiver_id"); // REQUIRED for chat model
 
     if (!sender_id || !receiver_id || !listing_id) {
