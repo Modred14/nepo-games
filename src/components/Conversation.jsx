@@ -48,7 +48,7 @@ export default function Conversation({ gameId, receiverId }) {
 
         // 👇 NORMAL CHAT MODE
         const res = await fetch(
-          `/api/c/${gameId}/messages?user_id=${user.id}&receiver_id=${receiverId}`,
+          `/api/c/${gameId}/messages?receiver_id=${receiverId}`,
         );
 
         const data = await res.json();
@@ -67,10 +67,14 @@ export default function Conversation({ gameId, receiverId }) {
 
     return () => clearInterval(interval);
   }, [gameId, receiverId]);
+  const hasScrolledRef = useRef(false);
   const isAdmin = String(receiverId) === "1";
   const initialMessages = messages;
   const chatId = conversation?.id;
   const userId = user?.id;
+  useEffect(() => {
+    hasScrolledRef.current = false;
+  }, [gameId, receiverId]);
   const groupConversations = (conversations, userId) => {
     const map = new Map();
 
@@ -234,12 +238,6 @@ export default function Conversation({ gameId, receiverId }) {
 
     return result;
   }, [adminMessages, chatMessages, receiverId, messages]);
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, 50);
-    return () => clearTimeout(timeout);
-  }, [allMessages.length]);
 
   useEffect(() => {
     if (isMobile) {
@@ -268,9 +266,14 @@ export default function Conversation({ gameId, receiverId }) {
   };
 
   useEffect(() => {
-    if (!gameId || !conversation?.id) return;
-    markAsRead();
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (!bottomRef.current) return;
+
+    requestAnimationFrame(() => {
+      bottomRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "end",
+      });
+    });
   }, [allMessages.length]);
   useEffect(() => {
     if (initialMessages?.length) {
@@ -318,6 +321,12 @@ export default function Conversation({ gameId, receiverId }) {
     };
     setMessages((prev) => [...prev, newMessage]);
     setTextMessage("");
+    requestAnimationFrame(() => {
+      bottomRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "end",
+      });
+    });
     try {
       await fetch(`/api/c/${gameId}/send`, {
         method: "POST",
@@ -341,6 +350,13 @@ export default function Conversation({ gameId, receiverId }) {
       minute: "2-digit",
     });
   };
+  useEffect(() => {
+    if (hasScrolledRef.current) return;
+    const timeout = setTimeout(() => {
+      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, 50);
+    return () => clearTimeout(timeout);
+  }, [allMessages.length]);
 
   const lastIndex = allMessages.length - 1;
   const isSystemChat = String(gameId) === "1" && String(receiverId) === "1";
