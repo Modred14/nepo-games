@@ -350,6 +350,7 @@ export default function Conversation({ gameId, receiverId }) {
       minute: "2-digit",
     });
   };
+  
   useEffect(() => {
     if (hasScrolledRef.current) return;
     const timeout = setTimeout(() => {
