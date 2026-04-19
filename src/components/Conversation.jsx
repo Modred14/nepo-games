@@ -350,7 +350,7 @@ export default function Conversation({ gameId, receiverId }) {
       minute: "2-digit",
     });
   };
-  
+
   useEffect(() => {
     if (hasScrolledRef.current) return;
     const timeout = setTimeout(() => {
@@ -358,6 +358,7 @@ export default function Conversation({ gameId, receiverId }) {
     }, 50);
     return () => clearTimeout(timeout);
   }, [allMessages.length]);
+  
 
   const lastIndex = allMessages.length - 1;
   const isSystemChat = String(gameId) === "1" && String(receiverId) === "1";
