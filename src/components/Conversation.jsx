@@ -359,7 +359,6 @@ export default function Conversation({ gameId, receiverId }) {
     return () => clearTimeout(timeout);
   }, [allMessages.length]);
   
-
   const lastIndex = allMessages.length - 1;
   const isSystemChat = String(gameId) === "1" && String(receiverId) === "1";
   const activeChat = isSystemChat
