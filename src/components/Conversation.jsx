@@ -343,6 +343,7 @@ export default function Conversation({ gameId, receiverId }) {
       console.error("Send failed", err);
     }
   };
+  
   const formatTime = (time) => {
     if (!time) return;
     return new Date(time).toLocaleTimeString(undefined, {
