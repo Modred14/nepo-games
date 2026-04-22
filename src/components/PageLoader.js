@@ -26,29 +26,38 @@ export default function PageLoader({ children }) {
     };
   }, []);
 
-  if (!loaded) {
-    return (
-      <div className="fixed inset-0 z-9999 flex items-center justify-center bg-white">
-        <div className="flex flex-col items-center gap-4">
-          <div className="bg-blue-700 p-3 rounded-2xl">
-            {" "}
-            <img
-              src="/logo.png"
-              alt="Nepogames"
-              className="w-16 animate-pulse"
-            />
-          </div>
+  return (
+    <>
+      {!loaded && (
+        <div className="fixed  h-svh min-h-screen inset-0 z-9999 flex items-center justify-center bg-white">
+          <div className="flex flex-col items-center gap-4">
+            <div className="bg-blue-700 p-3 rounded-2xl">
+              {" "}
+              <img
+                src="/logo.png"
+                alt="Nepogames"
+                className="w-16 animate-pulse"
+              />
+            </div>
 
-          <p className="text-blue-700 font-semibold">
-            Loading Nepogames<span className="loading-dots"></span>
-          </p>
+            <p className="text-blue-700 font-semibold">
+              Loading Nepogames<span className="loading-dots"></span>
+            </p>
 
-          <div className="w-40 h-1 bg-gray-200 rounded overflow-hidden">
-            <div className="h-full bg-blue-600 animate-loading w-1/2"></div>
+            <div className="w-40 h-1 bg-gray-200 rounded overflow-hidden">
+              <div className="h-full bg-blue-600 animate-loading w-1/2"></div>
+            </div>
           </div>
         </div>
+      )}
+
+      <div
+        className={`transition-opacity duration-500 ${
+          loaded ? "opacity-100 visible" : "opacity-0 invisible"
+        }`}
+      >
+        {children}
       </div>
-    );
-  }
-  return <>{children}</>;
+    </>
+  );
 }
