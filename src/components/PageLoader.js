@@ -29,7 +29,7 @@ export default function PageLoader({ children }) {
   return (
     <>
       {!loaded && (
-        <div className="fixed  h-svh min-h-screen inset-0 z-9999 flex items-center justify-center bg-white">
+        <div className="fixed  h-dvh min-h-screen inset-0 z-9999 flex items-center justify-center bg-white">
           <div className="flex flex-col items-center gap-4">
             <div className="bg-blue-700 p-3 rounded-2xl">
               {" "}
