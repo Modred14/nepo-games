@@ -13,6 +13,7 @@ export default function GameClient({ game, images, similarGames }) {
   const [user, setUser] = useState([]);
   const [selectedReason, setSelectedReason] = useState(null);
   const [customReason, setCustomReason] = useState("");
+  const [confirmData, setConfirmData] = useState(null);
 
   useEffect(() => {
     const storedUser = localStorage.getItem("nepo-user");
@@ -37,18 +38,29 @@ export default function GameClient({ game, images, similarGames }) {
       setSelectedReason("Others");
       return;
     }
-    setMessage(
-      `You've reported ${game.username} for ${reason}. We will review it.`,
-    );
-    setReport(true);
+
+    setConfirmData({ reason });
   };
   const handleCustomSubmit = () => {
     if (!customReason.trim()) return;
 
+    setConfirmData({ reason: customReason });
+  };
+  const confirmReport = () => {
+    if (!confirmData) return;
+
     setMessage(
-      `You've reported ${game.username} for ${customReason}. We will review it.`,
+      `You've reported ${game.username} for ${confirmData.reason}. We will review it.`,
     );
+
     setReport(true);
+    setConfirmData(null);
+    setSelectedReason(null);
+    setCustomReason("");
+  };
+
+  const cancelConfirm = () => {
+    setConfirmData(null);
   };
   const reasons = [
     "Abusive or Inappropriate Language",
@@ -220,72 +232,115 @@ export default function GameClient({ game, images, similarGames }) {
               {/* Body */}
               {!report ? (
                 <div className="p-3 space-y-3">
-                  {/* Reason List OR Custom Reason */}
-                  {selectedReason === "Others" ? (
-                    <div className="w-full mt-2 bg-white border border-gray-200 rounded-xl shadow-sm p-4 flex flex-col gap-4">
-                      {/* Helper text */}
-                      <p className="text-sm text-gray-500">
-                        Please describe the issue clearly so we can review it
-                        faster.
-                      </p>
+                  {!confirmData ? (
+                    <div>
+                      {selectedReason === "Others" ? (
+                        <div className="w-full mt-2 bg-white border border-gray-200 rounded-xl shadow-sm p-4 flex flex-col gap-4">
+                          {/* Helper text */}
+                          <p className="text-sm text-gray-500">
+                            Please describe the issue clearly so we can review
+                            it faster.
+                          </p>
 
-                      {/* Textarea */}
-                      <div className="flex flex-col gap-2">
-                        <textarea
-                          value={customReason}
-                          onChange={(e) => setCustomReason(e.target.value)}
-                          placeholder="E.g. This listing is a scam, seller is unresponsive..."
-                          rows={4}
-                          className="w-full border border-gray-300 rounded-xl p-3 text-sm outline-none resize-none transition focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        />
+                          {/* Textarea */}
+                          <div className="flex flex-col gap-2">
+                            <textarea
+                              value={customReason}
+                              onChange={(e) => setCustomReason(e.target.value)}
+                              placeholder="E.g. This listing is a scam, seller is unresponsive..."
+                              rows={4}
+                              className="w-full border border-gray-300 rounded-xl p-3 text-sm outline-none resize-none transition focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            />
 
-                        <div className="flex justify-between items-center text-xs text-gray-400">
-                          <span>Be specific</span>
-                          <span>{customReason.length}/200</span>
-                        </div>
-                      </div>
+                            <div className="flex justify-between items-center text-xs text-gray-400">
+                              <span>Be specific</span>
+                              <span>{customReason.length}/200</span>
+                            </div>
+                          </div>
 
-                      {/* Actions */}
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => {
-                            setSelectedReason(null);
-                            setCustomReason("");
-                          }}
-                          className="flex-1 py-2.5 rounded-xl text-sm font-medium border border-gray-300 text-gray-600 hover:bg-gray-100 transition"
-                        >
-                          Cancel
-                        </button>
+                          {/* Actions */}
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => {
+                                setSelectedReason(null);
+                                setCustomReason("");
+                              }}
+                              className="flex-1 py-2.5 rounded-xl text-sm font-medium border border-gray-300 text-gray-600 hover:bg-gray-100 transition"
+                            >
+                              Cancel
+                            </button>
 
-                        <button
-                          onClick={handleCustomSubmit}
-                          disabled={customReason.trim().length < 10}
-                          className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition
+                            <button
+                              onClick={handleCustomSubmit}
+                              disabled={customReason.trim().length < 10}
+                              className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition
                 ${
                   customReason.trim().length < 10
                     ? "bg-gray-200 text-gray-400 cursor-not-allowed"
                     : "bg-blue-600 text-white hover:bg-blue-700"
                 }`}
-                        >
-                          Submit Report
-                        </button>
-                      </div>
+                            >
+                              Submit Report
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        /* Reason Buttons */
+                        <div className="space-y-2">
+                          {reasons.map((reason) => (
+                            <button
+                              key={reason}
+                              onClick={() => handleReport(reason)}
+                              className="w-full flex justify-between items-center py-2.5 px-3 border border-[#cbcbe1] bg-[#E6E6FF] hover:bg-[#ceceea] transition rounded-md"
+                            >
+                              <span className="text-sm">{reason}</span>
+                              <span className="text-lg font-semibold text-[#0000FF]">
+                                &gt;
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+                      )}{" "}
                     </div>
                   ) : (
-                    /* Reason Buttons */
-                    <div className="space-y-2">
-                      {reasons.map((reason) => (
-                        <button
-                          key={reason}
-                          onClick={() => handleReport(reason)}
-                          className="w-full flex justify-between items-center py-2.5 px-3 border border-[#cbcbe1] bg-[#E6E6FF] hover:bg-[#ceceea] transition rounded-md"
-                        >
-                          <span className="text-sm">{reason}</span>
-                          <span className="text-lg font-semibold text-[#0000FF]">
-                            &gt;
-                          </span>
-                        </button>
-                      ))}
+                    <div className="flex items-center justify-center z-50 px-4">
+                      <div className="bg-white p-4 space-y-4 animate-in fade-in zoom-in-95">
+                        <h2 className="text-lg font-semibold text-center">
+                          Confirm Report
+                        </h2>
+
+                        <p className="text-sm text-gray-600 text-center">
+                          Are you sure you want to report{" "}
+                          <span className="font-medium text-black">
+                            {game.username}
+                          </span>{" "}
+                          for:
+                        </p>
+
+                        <div className="bg-gray-100 rounded-lg p-3 text-sm text-center font-medium">
+                          {confirmData.reason}
+                        </div>
+
+                        <p className="text-xs text-gray-400 text-center">
+                          This action will be reviewed by our team.
+                        </p>
+
+                        <div className="flex gap-2 pt-2">
+                          <button
+                            onClick={cancelConfirm}
+                            className="flex-1 text-sm py-2.5 rounded-xl border border-gray-300 text-gray-600 hover:bg-gray-100 transition"
+                          >
+                            Cancel
+                          </button>
+
+                          <button
+                            onClick={confirmReport}
+                            className="flex-1 text-sm py-2.5 rounded-xl bg-red-600 text-white hover:bg-red-700 transition"
+                          >
+                            Yes, Report
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   )}
                 </div>
