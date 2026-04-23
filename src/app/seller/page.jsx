@@ -214,29 +214,8 @@ export default function Seller() {
           {step != 1 && step != 4 && (
             <Reveal>
               <div className="lg:max-h-screen flex overflow-hidden flex-col lg:flex-row bg-white">
-                {/* <div className="w-full lg:hidden lg:w-1/2 flex justify-center items-center bg-white">
-                  <img
-                    src="/phoneno.png"
-                    alt="Phone number Illustration"
-                    className="w-64 md:w-80 lg:max-w-2xl object-contain mt-10 lg:mt-0"
-                  />
-                </div>
-
-                <div className="w-full lg:hidden ">
-                  <svg
-                    viewBox="0 0 1440 120"
-                    className="w-full h-12"
-                    preserveAspectRatio="none"
-                  >
-                    <path
-                      d="M0,60 C300,120 600,0 900,60 C1200,120 1440,40 1440,40"
-                      stroke="#1D4ED8"
-                      strokeWidth="3"
-                      fill="transparent"
-                    />
-                  </svg>
-                </div> */}
-                <div className="w-full min-h-screen bg-blue-50/20 lg:w-1/2 form-scroll lg:overflow-y-auto flex justify-center px-6 py-30 lg:py-25">
+               
+                <div className="w-full bg-blue-50/20 lg:w-1/2 form-scroll lg:overflow-y-auto flex justify-center px-6 py-30 lg:py-25">
                   {step === 2 && (
                     <div className=" flex items-center justify-center px-4">
                       <div className="w-full max-w-md border border-blue-600/20 bg-white rounded-2xl shadow-lg p-6 sm:p-8">
@@ -363,7 +342,7 @@ export default function Seller() {
             </Reveal>
           )}{" "}
           {step === 4 && (
-            <div className="flex min-h-screen flex-col items-center justify-center text-center py-10 gap-4">
+            <div className="flex  flex-col items-center justify-center text-center py-10 gap-4">
               <Reveal>
                 <div className=" w-full flex gap-4 justify-center items-center flex-col max-w-md sm:border border-blue-600/20 bg-white rounded-2xl sm:shadow-lg p-6 sm:p-8">
                   {/* Success Emoji */}
