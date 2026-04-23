@@ -214,7 +214,7 @@ export default function Seller() {
           {step != 1 && step != 4 && (
             <Reveal>
               <div className="lg:max-h-screen flex overflow-hidden flex-col lg:flex-row bg-white">
-                <div className="w-full h-full bg-blue-50/20 lg:w-1/2 form-scroll lg:overflow-y-auto flex justify-center px-6 py-30 lg:py-25">
+                <div className="w-full h-screen bg-blue-50/20 lg:w-1/2 form-scroll lg:overflow-y-auto flex justify-center px-6 py-30 lg:py-25">
                   {step === 2 && (
                     <div className=" flex items-center justify-center px-4">
                       <div className="w-full max-w-md border border-blue-600/20 bg-white rounded-2xl shadow-lg p-6 sm:p-8">
@@ -341,7 +341,7 @@ export default function Seller() {
             </Reveal>
           )}{" "}
           {step === 4 && (
-            <div className="flex h-full flex-col items-center justify-center text-center py-10 gap-4">
+            <div className="flex h-screen flex-col items-center justify-center text-center py-10 gap-4">
               <Reveal>
                 <div className=" w-full flex gap-4 justify-center items-center flex-col max-w-md sm:border border-blue-600/20 bg-white rounded-2xl sm:shadow-lg p-6 sm:p-8">
                   {/* Success Emoji */}
