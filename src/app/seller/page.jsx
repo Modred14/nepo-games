@@ -299,7 +299,7 @@ export default function Seller() {
                             <input
                               key={index}
                               ref={(el) => (inputs.current[index] = el)}
-                              type="text"
+                              type="number"
                               maxLength="1"
                               value={digit}
                               onChange={(e) =>
