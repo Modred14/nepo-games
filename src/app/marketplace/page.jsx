@@ -31,7 +31,7 @@ export default function Marketplace() {
     setUser(user);
   }, []);
   const user_id = user?.id;
-  // close on outside click
+ 
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (ref.current && !ref.current.contains(e.target)) {

@@ -109,7 +109,7 @@ export default function LoginClient() {
         } else if (res.error.includes("INVALID_CREDENTIALS")) {
           setMessage("Invalid email or password.");
         } else {
-          setMessage("Login failed. Try again.");
+          setMessage("Network error. Please try again.");
         }
         setErrorOpen(true);
         console.log(res.error);

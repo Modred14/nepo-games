@@ -419,18 +419,18 @@ export default function Login() {
                   </button>
                 </div>
 
-                {/* FORGOT PASSWORD */}
-                <div className="text-sm  items-center text-center mb-7 pt-3">
-                  <div className="flex items-center gap-3">
+                <div className="text-sm  items-center text-start mb-7 pt-3">
+                  <div className="flex items-center gap-3 justify-center cursor-pointer">
                     <input
                       type="checkbox"
                       name="checkbox"
+                      className="items-start"
                       id="checkbox"
                       checked={checked}
                       onChange={(e) => setChecked(e.target.checked)}
                     />
                     <div>
-                      <span className="text-gray-600">I have to the </span>
+                      <span className="text-gray-600"> I agree to the </span>
                       <a
                         onClick={() => router.push(`/terms-of-service`)}
                         agreed

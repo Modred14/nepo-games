@@ -150,7 +150,7 @@ export default function Seller() {
   return (
     <PageLoader>
       <Reveal>
-        <div className="min-h-screen">
+        <div className="h-svh">
           {step === 1 && (
             <div className="py-7 sm:px-10 px-5 min-w-full">
               <p className="text-[#0000FF] text-3xl">Become a Seller</p>
