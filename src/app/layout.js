@@ -1,5 +1,6 @@
 import { Poppins } from "next/font/google";
 import "./globals.css";
+import RouteLoader from "@/components/RouteLoader";
 import Providers from "./Provider";
 
 const poppins = Poppins({
@@ -25,7 +26,10 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body className={`${poppins.variable} antialiased`}>
         {" "}
-        <Providers>{children}</Providers>
+        <Providers>
+          <RouteLoader />
+          {children}
+        </Providers>
       </body>
     </html>
   );

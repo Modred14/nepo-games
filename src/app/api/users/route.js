@@ -70,12 +70,62 @@ export async function POST(req) {
       to: email,
       subject: "Verify your email",
       html: `
-        <h2>Welcome to Nepo Games!</h2>
-        <p>Click the button below to verify your email. This link expires in 1 hour.</p>
-        <a href="${verifyLink}" style="display:inline-block;padding:10px 20px;background:#0070f3;color:white;text-decoration:none;border-radius:5px;">Verify Email</a>
-        <p>If the button doesn't work, copy and paste this link in your browser:</p>
-        <p>${verifyLink}</p>
-      `,
+  <div style="margin:0;padding:0;background-color:#f4f6f8;font-family:Arial,Helvetica,sans-serif;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f4f6f8;padding: 0 0 20px 0;">
+
+            <!-- HERO IMAGE -->
+            <tr>
+              <td>
+                <img src="https://res.cloudinary.com/dagot597u/image/upload/v1776988411/welcome_mfzptd.png"
+                     alt="Gaming Banner"
+                     width="100%"
+                     style="display:block;border:none;">
+              </td>
+            </tr>
+
+            <!-- CONTENT -->
+            <tr>
+              <td style="padding:30px;">
+                <h2 style="margin-top:0;color:#111827;">Verify your email</h2>
+                <p style="color:#4b5563;font-size:16px;">
+                  Welcome to <strong>Nepogames</strong>! You're one step away from unlocking your gaming experience.
+                </p>
+                <p style="color:#4b5563;font-size:16px;">
+                  Click the button below to verify your email address. This link expires in <strong>1 hour</strong>.
+                </p>
+
+                <!-- BUTTON -->
+                <div style="text-align:center;margin:30px 0;">
+                  <a href="${verifyLink}"
+                     style="background:#2563eb;color:#ffffff;box-shadow: 0 4px 12px rgba(0,0,0,0.15);padding:14px 28px;text-decoration:none;border-radius:6px;font-weight:bold;display:inline-block;">
+                     Verify Email
+                  </a>
+                </div>
+
+                <!-- FALLBACK LINK -->
+                <p style="color:#6b7280;font-size:14px;">
+                  If the button doesn't work, copy and paste this link into your browser:
+                </p>
+                <p style="word-break:break-all;color:#2563eb;font-size:13px;">
+                  ${verifyLink}
+                </p>
+              </td>
+            </tr>
+
+            <!-- FOOTER -->
+            <tr>
+              <td style="background:#f9fafb;padding:20px;text-align:center;font-size:12px;color:#9ca3af;">
+                <p style="margin:0;">© ${new Date().getFullYear()} Nepo Games. All rights reserved.</p>
+                <p style="margin:5px 0 0;">If you didn’t create an account, you can ignore this email.</p>
+              </td>
+            </tr>
+
+          </table>
+        </td>
+      </tr>
+    </table>
+  </div>
+  `,
       text: `Welcome to Nepo Games!
 Verify your email by clicking the link below (expires in 1 hour):
 ${verifyLink}`,
