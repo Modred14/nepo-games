@@ -96,7 +96,7 @@ export const authOptions = {
               <td style="padding:30px;">
                 <h2 style="margin-top:0;color:#111827;">Verify your email</h2>
                 <p style="color:#4b5563;font-size:16px;">
-                  Welcome to <strong>Nepogames</strong>! You're one step away from unlocking your gaming experience.
+                  Welcome to <strong>Nepogames</strong>! You’re one step away from buying and selling games securely.
                 </p>
                 <p style="color:#4b5563;font-size:16px;">
                   Click the button below to verify your email address. This link expires in <strong>1 hour</strong>.
