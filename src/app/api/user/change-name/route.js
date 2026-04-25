@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import pool from "../../../../../lib/db";
+import pool from "../../../../lib/db";
 
 export async function POST(req) {
   try {
@@ -12,7 +12,10 @@ export async function POST(req) {
     const user = result.rows;
 
     if (!first_name) {
-      return NextResponse.json({ error: "First name is required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "First name is required" },
+        { status: 400 },
+      );
     }
     if (!user.length) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });

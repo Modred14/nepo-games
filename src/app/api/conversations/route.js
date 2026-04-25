@@ -1,6 +1,6 @@
-import pool from "../../../../lib/db";
+import pool from "../../../lib/db";
 
-import { requireUser } from "../../../../lib/auth";
+import { requireUser } from "../../../lib/auth";
 
 export async function GET(req) {
   try {

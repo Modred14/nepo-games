@@ -1,24 +1,21 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcrypt";
-import pool from "../../../../lib/db";
+import pool from "../../../lib/db";
 
 export async function POST(req) {
   try {
     const { token, newPassword } = await req.json();
- console.log(token, newPassword)
+    console.log(token, newPassword);
     // 1. basic validation
     if (!token || !newPassword) {
       return NextResponse.json(
         { error: "Missing token or password" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (newPassword.length < 6) {
-      return NextResponse.json(
-        { error: "Password too weak" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Password too weak" }, { status: 400 });
     }
 
     // 2. find user with valid token + not expired
@@ -26,7 +23,7 @@ export async function POST(req) {
       `SELECT * FROM users 
        WHERE reset_token = $1 
        AND reset_token_expiry > NOW()`,
-      [token]
+      [token],
     );
 
     const user = result.rows[0];
@@ -34,7 +31,7 @@ export async function POST(req) {
     if (!user) {
       return NextResponse.json(
         { error: "Invalid or expired reset link" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -48,7 +45,7 @@ export async function POST(req) {
            reset_token = NULL,
            reset_token_expiry = NULL
        WHERE id = $2`,
-      [hashedPassword, user.id]
+      [hashedPassword, user.id],
     );
 
     return NextResponse.json({
@@ -58,9 +55,6 @@ export async function POST(req) {
   } catch (err) {
     console.error("Reset password error:", err);
 
-    return NextResponse.json(
-      { error: "Server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

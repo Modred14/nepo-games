@@ -31,6 +31,7 @@ export default function Seller() {
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
+  const [genOtp, setGenOtp] = useState("");
   const [error, setError] = useState("");
   const [errorAdd, setErrorAdd] = useState("");
   const inputs = useRef([]);
@@ -82,6 +83,7 @@ export default function Seller() {
   const handleVerify = () => {
     const code = otp.join("");
     console.log(code);
+
     if (!code) {
       setErrorAdd("OTP is required");
       return;
@@ -91,9 +93,11 @@ export default function Seller() {
       setErrorAdd("OTP must be 6 digits");
       return;
     }
-
+    if (code != genOtp) {
+      setErrorAdd("OTP is incorrect");
+      return;
+    }
     setPhone("");
-
     setStep(4);
   };
 
@@ -123,30 +127,70 @@ export default function Seller() {
   const handleJoin = () => {
     setStep(2);
   };
-  const handleSave = () => {
-    setError("");
-    if (phone == 0) {
-      setError("Phone number is required");
-      return;
-    }
-    const parsed = parsePhoneNumberFromString(phone);
 
-    if (!parsed || !parsed.isValid()) {
-      setError("Invalid phone number format");
-      return;
-    }
-
-    setError(""); // clear previous errors
-
-    const countryCode = `+${parsed.countryCallingCode}`;
-    const digits = parsed.nationalNumber;
-
-    if (digits.length <= 4) {
-      return `${countryCode} ${digits}`;
-    }
-    setStep(3);
+  const generateOTP = () => {
+    return crypto.randomInt(100000, 1000000).toString();
   };
 
+  const sendSMS = async (phone, message) => {
+    try {
+      const res = await fetch("/api/send-sms", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          to: phone,
+          message,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data?.error || "Failed to send SMS");
+      }
+
+      return data;
+    } catch (error) {
+      console.error("SMS Error:", error.message);
+      throw error;
+    }
+  };
+
+  const handleSave = async () => {
+    try {
+      setError("");
+      setLoading(true);
+      if (!phone) {
+        setError("Phone number is required");
+        return;
+      }
+
+      const parsed = parsePhoneNumberFromString(phone);
+
+      if (!parsed || !parsed.isValid()) {
+        setError("Invalid phone number format");
+        return;
+      }
+
+      const formattedPhone = parsed.number.replace("+", "");
+
+      const otp = generateOTP();
+      setGenOtp(otp);
+
+      await sendSMS(
+        formattedPhone,
+        `Your verification code is ${otp}. It expires in 5 minutes.`,
+      );
+
+      setStep(3);
+      setLoading(false);
+    } catch (err) {
+      setLoading(false);
+      setError(err.message || "Something went wrong");
+    }
+  };
   return (
     <PageLoader>
       <Reveal>

@@ -1,10 +1,10 @@
-import pool from "../../../../../../lib/db";
-import { requireUser } from "../../../../../../lib/auth";
+import pool from "../../../../../lib/db";
+import { requireUser } from "../../../../../lib/auth";
 
 export async function POST(req) {
   try {
     const user = await requireUser();
-  
+
     if (!user) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -32,10 +32,10 @@ export async function POST(req) {
       [gameId, user_id, receiverId],
     );
 
-       if (convo.rows.length === 0) {
+    if (convo.rows.length === 0) {
       return Response.json(
         { error: "Not allowed to send message here" },
-        { status: 403 }
+        { status: 403 },
       );
     }
 

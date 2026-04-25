@@ -3,8 +3,8 @@ import GoogleProvider from "next-auth/providers/google";
 import crypto from "crypto";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcrypt";
-import pool from "../../../../../lib/db";
-import { resend } from "../../../../../lib/resend";
+import pool from "../../../../lib/db";
+import { resend } from "../../../../lib/resend";
 
 const defaultAvatar = "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
 
@@ -148,6 +148,7 @@ ${verifyLink}`,
             username: user.username,
             profile_image: normalizeImage(user.profile_image),
             phone_verified: user.phone_verified,
+            is_verified: user.is_verified,
           };
         } catch (err) {
           console.error("Credentials Auth Error:", err);
@@ -203,7 +204,8 @@ ${verifyLink}`,
             profile_image,
             provider,
             email_verified,
-            phone_verified
+            phone_verified,
+            is_verified
           )
           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
           [
@@ -238,7 +240,7 @@ ${verifyLink}`,
       // On subsequent requests → refresh from DB
       if (token?.user?.email) {
         const result = await pool.query(
-          `SELECT id, email, first_name, surname, username, profile_image, phone_verified
+          `SELECT id, email, first_name, surname, username, profile_image, phone_verified, is_verified
            FROM users WHERE email = $1`,
           [token.user.email],
         );

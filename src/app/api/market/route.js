@@ -1,4 +1,4 @@
-import pool from "../../../../lib/db";
+import pool from "../../../lib/db";
 
 export async function GET(req) {
   try {
@@ -10,7 +10,7 @@ export async function GET(req) {
       FROM listings
       WHERE deleted_at IS NULL
       ORDER BY created_at DESC
-      `
+      `,
     );
 
     const listings = result.rows;
@@ -44,7 +44,7 @@ export async function GET(req) {
         message: "Listings fetched successfully",
         games,
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (err) {
     console.error("[GET LISTINGS ERROR]", {
@@ -57,7 +57,7 @@ export async function GET(req) {
         error: "Failed to fetch listings",
         details: err.message,
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

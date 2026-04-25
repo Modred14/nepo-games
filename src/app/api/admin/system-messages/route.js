@@ -1,4 +1,4 @@
-import pool from "../../../../../lib/db";
+import pool from "../../../../lib/db";
 
 export async function POST(req) {
   try {
@@ -14,7 +14,7 @@ export async function POST(req) {
       VALUES ($1, $2)
       RETURNING *
       `,
-      [title, message]
+      [title, message],
     );
 
     return Response.json(result.rows[0]);

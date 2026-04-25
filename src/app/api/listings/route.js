@@ -1,5 +1,5 @@
-import pool from "../../../../lib/db";
-import { uploadImage } from "../../../../lib/uploadImage";
+import pool from "../../../lib/db";
+import { uploadImage } from "../../../lib/uploadImage";
 import crypto from "crypto";
 
 export async function POST(req) {
@@ -29,7 +29,7 @@ export async function POST(req) {
       console.error("[ERROR] Missing required fields");
       return Response.json(
         { error: "Missing fields", step: "validation" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -43,7 +43,7 @@ export async function POST(req) {
           step: "image-validation",
           received: files?.length || 0,
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -64,7 +64,9 @@ export async function POST(req) {
           const url = await uploadImage(buffer);
 
           if (!url) {
-            console.error(`[UPLOAD ERROR] No URL returned for image ${index + 1}`);
+            console.error(
+              `[UPLOAD ERROR] No URL returned for image ${index + 1}`,
+            );
             throw new Error("Upload returned empty URL");
           }
 
@@ -74,7 +76,7 @@ export async function POST(req) {
           console.error(`[UPLOAD FAILED] Image ${index + 1}`, err);
           throw new Error(`Image ${index + 1} upload failed`);
         }
-      })
+      }),
     );
 
     console.log("[STEP 5] All images uploaded", imageUrls);
@@ -113,7 +115,7 @@ export async function POST(req) {
             platform,
             cover_image,
             imageUrls,
-          ]
+          ],
         );
 
         console.log("[DB SUCCESS] Listing created");
@@ -137,7 +139,7 @@ export async function POST(req) {
       console.error("[FATAL] All DB insert attempts failed");
       return Response.json(
         { error: "Failed to create listing after retries" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -148,7 +150,7 @@ export async function POST(req) {
         message: "Listing created successfully",
         listing: result.rows[0],
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (err) {
     console.error("[SERVER CRASH]", {
@@ -161,7 +163,7 @@ export async function POST(req) {
         error: "Server error",
         details: err.message,
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

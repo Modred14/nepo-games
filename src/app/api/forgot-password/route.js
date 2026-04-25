@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
-import pool from "../../../../lib/db";
+import pool from "../../../lib/db";
 import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -20,7 +20,7 @@ export async function POST(req) {
 
     const user = result.rows[0];
 
-   if (!user) {
+    if (!user) {
       return NextResponse.json(
         { error: "Email not associated with any account" },
         { status: 404 },
@@ -29,12 +29,12 @@ export async function POST(req) {
 
     // generate token
     const token = crypto.randomBytes(32).toString("hex");
-    const expiry = new Date(Date.now() + 15 * 60 * 1000).toISOString();; // 15 min
+    const expiry = new Date(Date.now() + 15 * 60 * 1000).toISOString(); // 15 min
 
     // store token
-    console.log(token, expiry)
-   
- await pool.query(
+    console.log(token, expiry);
+
+    await pool.query(
       `UPDATE users 
        SET reset_token = $1, reset_token_expiry = $2
        WHERE email = $3`,
@@ -42,7 +42,6 @@ export async function POST(req) {
     );
     const resetLink = `${process.env.NEXT_PUBLIC_BASE_URL}/reset/${token}`;
 
-  
     await resend.emails.send({
       from: "Support <onboarding@resend.dev>",
       to: email,

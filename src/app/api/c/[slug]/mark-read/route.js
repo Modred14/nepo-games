@@ -1,11 +1,11 @@
-import pool from "../../../../../../lib/db";
-import { requireUser } from "../../../../../../lib/auth";
+import pool from "../../../../../lib/db";
+import { requireUser } from "../../../../../lib/auth";
 
 export async function POST(req) {
   try {
     const { gameId } = await req.json();
-     const user = await requireUser();
-  
+    const user = await requireUser();
+
     if (!user) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }

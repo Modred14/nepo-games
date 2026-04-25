@@ -1,4 +1,4 @@
-import pool from "../../../../lib/db";
+import pool from "../../../lib/db";
 
 export async function GET(req) {
   try {
@@ -26,7 +26,7 @@ export async function GET(req) {
         AND smr.user_id = $1
       ORDER BY sm.created_at DESC
       `,
-      [user_id]
+      [user_id],
     );
 
     return Response.json(result.rows);

@@ -1,4 +1,4 @@
-import pool from "../../../../../lib/db";
+import pool from "../../../../lib/db";
 
 export async function POST(req) {
   try {
@@ -14,7 +14,7 @@ export async function POST(req) {
       VALUES ($1, $2)
       ON CONFLICT DO NOTHING
       `,
-      [user_id, message_id]
+      [user_id, message_id],
     );
 
     return Response.json({ success: true });

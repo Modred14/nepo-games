@@ -1,4 +1,4 @@
-import pool from "../../../../lib/db";
+import pool from "../../../lib/db";
 import GameClient from "./GameClient";
 import { getSimilarGames } from "./getSimilarGames";
 

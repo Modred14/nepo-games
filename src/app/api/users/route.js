@@ -1,7 +1,7 @@
-import pool from "../../../../lib/db";
+import pool from "../../../lib/db";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
-import { resend } from "../../../../lib/resend";
+import { resend } from "../../../lib/resend";
 
 export async function POST(req) {
   try {
