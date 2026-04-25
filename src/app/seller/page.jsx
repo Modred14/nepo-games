@@ -31,10 +31,18 @@ export default function Seller() {
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
-  const [genOtp, setGenOtp] = useState("");
   const [error, setError] = useState("");
   const [errorAdd, setErrorAdd] = useState("");
   const inputs = useRef([]);
+  const [storedPhone, setStoredPhone] = useState("");
+
+  useEffect(() => {
+  const phone = sessionStorage.getItem("verify-phone");
+  if (phone) {
+    setStoredPhone(phone);
+    setStep(3);
+  }
+}, []);
 
   const handleChange = (value, index) => {
     if (!/^[0-9]?$/.test(value)) return;
@@ -47,7 +55,6 @@ export default function Seller() {
   };
   const distort = (phone) => {
     if (!phone) {
-      setError("Phone number is required");
       return "";
     }
 
@@ -80,25 +87,57 @@ export default function Seller() {
     }
   };
 
-  const handleVerify = () => {
-    const code = otp.join("");
-    console.log(code);
+  const handleVerify = async () => {
+    try {
+      setErrorAdd("");
+      setLoading(true);
 
-    if (!code) {
-      setErrorAdd("OTP is required");
-      return;
-    }
+      const code = otp.join("");
 
-    if (code.length !== 6) {
-      setErrorAdd("OTP must be 6 digits");
-      return;
+      if (!code) {
+        setErrorAdd("OTP is required");
+        setLoading(false);
+        return;
+      }
+
+      if (code.length !== 6) {
+        setErrorAdd("OTP must be 6 digits");
+        setLoading(false);
+        return;
+      }
+
+      const formattedPhone = sessionStorage.getItem("verify-phone");
+
+      if (!formattedPhone) {
+        setErrorAdd("Session expired. Please request a new code.");
+        setLoading(false);
+        return;
+      }
+      const res = await fetch("/api/verify-otp", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          phone: formattedPhone,
+          otp: code,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data?.error || "Verification failed");
+      }
+
+      setPhone("");
+      setStep(4);
+      sessionStorage.removeItem("verify-phone");
+    } catch (err) {
+      setErrorAdd(err.message || "Invalid OTP");
+    } finally {
+      setLoading(false);
     }
-    if (code != genOtp) {
-      setErrorAdd("OTP is incorrect");
-      return;
-    }
-    setPhone("");
-    setStep(4);
   };
 
   const steps = [
@@ -128,42 +167,13 @@ export default function Seller() {
     setStep(2);
   };
 
-  const generateOTP = () => {
-    return crypto.randomInt(100000, 1000000).toString();
-  };
-
-  const sendSMS = async (phone, message) => {
-    try {
-      const res = await fetch("/api/send-sms", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          to: phone,
-          message,
-        }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data?.error || "Failed to send SMS");
-      }
-
-      return data;
-    } catch (error) {
-      console.error("SMS Error:", error.message);
-      throw error;
-    }
-  };
-
   const handleSave = async () => {
     try {
       setError("");
       setLoading(true);
       if (!phone) {
         setError("Phone number is required");
+        setLoading(false);
         return;
       }
 
@@ -171,24 +181,31 @@ export default function Seller() {
 
       if (!parsed || !parsed.isValid()) {
         setError("Invalid phone number format");
+        setLoading(false);
         return;
       }
 
-      const formattedPhone = parsed.number.replace("+", "");
+      const formattedPhone = parsed.number;
 
-      const otp = generateOTP();
-      setGenOtp(otp);
+      const res = await fetch("/api/send-otp", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ phone: formattedPhone.replace("+", "") }),
+      });
+      sessionStorage.setItem("verify-phone", formattedPhone);
 
-      await sendSMS(
-        formattedPhone,
-        `Your verification code is ${otp}. It expires in 5 minutes.`,
-      );
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data?.error || "Failed to send OTP");
+      }
 
       setStep(3);
-      setLoading(false);
     } catch (err) {
-      setLoading(false);
       setError(err.message || "Something went wrong");
+    } finally {
+      setLoading(false);
     }
   };
   return (
@@ -335,7 +352,7 @@ export default function Seller() {
                           </span>
                         )}
                         <p className="mt-2 font-semibold text-lg">
-                          {distort(phone)}
+                          {distort(storedPhone)}
                         </p>
 
                         <div className="flex justify-between mt-6 gap-3">
@@ -343,8 +360,9 @@ export default function Seller() {
                             <input
                               key={index}
                               ref={(el) => (inputs.current[index] = el)}
-                              type="number"
-                              maxLength="1"
+                              type="text"
+                              inputMode="numeric"
+                              maxLength={1}
                               value={digit}
                               onChange={(e) =>
                                 handleChange(e.target.value, index)
