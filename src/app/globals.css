@@ -1,9 +1,9 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap");
 @import "tailwindcss";
 @config "../../tailwind.config.js";
 
 body {
-  font-family: 'Poppins', Arial, Helvetica, sans-serif;
+  font-family: "Poppins", Arial, Helvetica, sans-serif;
 }
 
 :root {
@@ -27,25 +27,29 @@ input[type="number"]::-webkit-inner-spin-button {
   content: "";
   animation: dots 1.5s steps(4, end) infinite;
 }
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #2563eb90 transparent;
+}
 
+/* WebKit */
+*::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: #2563eb90;
+  border-radius: 10px;
+}
 .thin-scroll {
   scrollbar-width: thin; /* Firefox */
   scrollbar-color: #2563eb10 transparent; /* blue-600 subtle */
 }
-@keyframes pulseSoft {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-  100% { transform: scale(1); }
-}
-/* Chrome, Edge, Safari */
-.thin-scroll::-webkit-scrollbar {
-  width: 4px; /* VERY thin */
-}
-
-a {
-  cursor: pointer;
-}
-
 .thin-scroll::-webkit-scrollbar-track {
   background: transparent;
 }
@@ -59,13 +63,42 @@ a {
 .thin-scroll::-webkit-scrollbar-thumb:hover {
   background: rgba(37, 99, 235, 0.45);
 }
+@keyframes pulseSoft {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+/* Chrome, Edge, Safari */
+.thin-scroll::-webkit-scrollbar {
+  width: 4px; /* VERY thin */
+}
+
+a {
+  cursor: pointer;
+}
 
 @keyframes dots {
-  0% { content: ""; }
-  25% { content: "."; }
-  50% { content: ".."; }
-  75% { content: "..."; }
-  100% { content: ""; }
+  0% {
+    content: "";
+  }
+  25% {
+    content: ".";
+  }
+  50% {
+    content: "..";
+  }
+  75% {
+    content: "...";
+  }
+  100% {
+    content: "";
+  }
 }
 
 /* Firefox */
@@ -74,8 +107,12 @@ input[type="number"] {
 }
 
 @keyframes loading {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(200%); }
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(200%);
+  }
 }
 
 .animate-loading {
@@ -145,7 +182,7 @@ input[type="number"] {
   }
 
   to {
-   transform: translateY(calc(-50% - 12px));
+    transform: translateY(calc(-50% - 12px));
   }
 }
 .reviewGrid {
@@ -173,7 +210,7 @@ input[type="number"] {
 
 @keyframes scrollDown {
   from {
-   transform: translateY(calc(-50% - 12px));
+    transform: translateY(calc(-50% - 12px));
   }
 
   to {

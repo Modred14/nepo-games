@@ -184,7 +184,7 @@ export default function Marketplace() {
         <MessageCircle size={24} />
         <span className="absolute top-1 right-1 w-3 h-3 bg-red-500 rounded-full border border-white" />
       </button>
-      <Reveal className="overflow-auto thin-scroll h-screen flex flex-col">
+      <Reveal className=" h-screen flex flex-col">
         <div className="flex flex-col flex-1 pb-20">
           <div className="flex border-b border-[#0000FF]/40 justify-between py-3 sm:py-4 px-7 items-center">
             <p className="text-base sm:text-lg font-bold">
