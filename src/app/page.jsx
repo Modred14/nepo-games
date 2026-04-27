@@ -632,7 +632,7 @@ hover:text-[#0000FF]
                           </button>
                         </a>
 
-                        <a href="">
+                        <a  onClick={() => router.push("/pricing")}>
                           <button
                             onClick={() => setActive("Pricing")}
                             className={`${linkClass("Pricing")} group`}
