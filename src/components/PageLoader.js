@@ -57,7 +57,7 @@ export default function PageLoader({ children }) {
           loaded ? "opacity-100 visible" : "opacity-0 invisible"
         }`}
       >
-        <Reveal>{children}</Reveal>
+       {children}
       </div>
     </>
   );

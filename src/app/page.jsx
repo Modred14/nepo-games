@@ -943,9 +943,7 @@ hover:text-[#0000FF]
                 </RevealLeft>{" "}
                 <RevealRight>
                   <div
-                    onClick={() =>
-                      router.push(`/c/1?receiver_id=1`)
-                    }
+                    onClick={() => router.push(`/c/1?receiver_id=1`)}
                     className="bg-linear-to-b h-full from-[#4F8CFF]/50 rounded-xl pb-0 p-7 shadow-md to-[#8A38F5]/50  transition-all duration-500"
                   >
                     <div className="flex gap-3 items-center">
@@ -1020,21 +1018,45 @@ hover:text-[#0000FF]
             </Reveal>
             <div className="bg-white">
               {" "}
-              <Reveal>
-                <div className="from-[#8A38F5]/50 px-[5%] to-[#4F8CFF]/50 bg-linear-to-b w-full mt-15 grid md:grid-cols-2">
-                  <div className="py-15 h-full gap-6 flex flex-col justify-between ">
-                    <p className="text-white font-bold text-3xl">
-                      What Our Users Are Saying About{" "}
-                      <span className="text-[#402BBA]"> Nepo Games</span>
-                    </p>
-                    <p className="text-white md:mb-0 -mb-15">
-                      At Nepo Games, player satisfaction is our top priority.
-                      Here’s what real users have to say about their buying and
-                      selling experience on our platform. From secure
-                      transactions to fast delivery, their feedback reflects the
-                      trust and reliability we strive to maintain.
-                    </p>
-                    <div className="md:flex hidden px-[10%]">
+              <div className="from-[#8A38F5]/50 px-[5%] mt-15  to-[#4F8CFF]/50 bg-linear-to-b w-full">
+                <Reveal>
+                  <div className="  grid md:grid-cols-2">
+                    <div className="py-15 h-full gap-6 flex flex-col justify-between ">
+                      <p className="text-white font-bold text-3xl">
+                        What Our Users Are Saying About{" "}
+                        <span className="text-[#402BBA]"> Nepo Games</span>
+                      </p>
+                      <p className="text-white md:mb-0 -mb-15">
+                        At Nepo Games, player satisfaction is our top priority.
+                        Here’s what real users have to say about their buying
+                        and selling experience on our platform. From secure
+                        transactions to fast delivery, their feedback reflects
+                        the trust and reliability we strive to maintain.
+                      </p>
+                      <div className="md:flex hidden px-[10%]">
+                        <div className="p-3 rounded-2xl pb-0 bg-linear-to-b from-[#4F8CFF] to-[#8A38F5]">
+                          <div className="flex gap-1.5 justify-center text-white text-xl pb-2">
+                            <span>
+                              {" "}
+                              <StatCard value={"100k+"} />{" "}
+                            </span>
+                            Active Users{" "}
+                          </div>
+
+                          <div className="px-6 ">
+                            <img
+                              src="/user-list.png"
+                              className="rounded-t-2xl"
+                              alt=""
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>{" "}
+                    <div className=" sm:px-10 md:px-0 lg:px-10 py-10 ">
+                      <Reviews />
+                    </div>
+                    <div className="md:hidden px-[10%] pb-10">
                       <div className="p-3 rounded-2xl pb-0 bg-linear-to-b from-[#4F8CFF] to-[#8A38F5]">
                         <div className="flex gap-1.5 justify-center text-white text-xl pb-2">
                           <span>
@@ -1043,7 +1065,6 @@ hover:text-[#0000FF]
                           </span>
                           Active Users{" "}
                         </div>
-
                         <div className="px-6 ">
                           <img
                             src="/user-list.png"
@@ -1053,77 +1074,61 @@ hover:text-[#0000FF]
                         </div>
                       </div>
                     </div>
-                  </div>{" "}
-                  <div className=" sm:px-10 md:px-0 lg:px-10 py-10 ">
-                    <Reviews />
                   </div>
-                  <div className="md:hidden px-[10%] pb-10">
-                    <div className="p-3 rounded-2xl pb-0 bg-linear-to-b from-[#4F8CFF] to-[#8A38F5]">
-                      <div className="flex gap-1.5 justify-center text-white text-xl pb-2">
-                        <span>
-                          {" "}
-                          <StatCard value={"100k+"} />{" "}
-                        </span>
-                        Active Users{" "}
-                      </div>
-                      <div className="px-6 ">
-                        <img
-                          src="/user-list.png"
-                          className="rounded-t-2xl"
-                          alt=""
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </Reveal>{" "}
+                </Reveal>{" "}
+              </div>{" "}
             </div>
             <div className="px-[5%]">
-              <div className=" flex text-center justify-center pt-13">
-                <p className="font-bold sm:text-4xl text-3xl">
-                  Frequently Asked
-                  <span className="text-[#402BBA]"> Questions</span>
-                </p>
-              </div>
-              <div className="flex pt-3 justify-center text-center">
-                {" "}
-                <p>
-                  Everything you need to know about Nepo Games and our products
-                </p>
-              </div>
-              <div className="pt-10 pb-15">
-                <div className="space-y-4 max-w-xl mx-auto">
-                  {faqs.map((faq, index) => (
-                    <div
-                      key={index}
-                      className="rounded-xl bg-linear-to-r from-[#8A38F5] to-[#4F8CFF] p-[2px]"
-                    >
-                      <div className="bg-white rounded-xl">
-                        <button
-                          onClick={() => toggleFAQ(index)}
-                          className="w-full flex justify-between items-center p-5 text-left"
-                        >
-                          <span className="font-medium text-lg">
-                            {faq.question}
-                          </span>
-
-                          <ChevronDown
-                            className={`transition-transform duration-300 ${
-                              activeIndex === index ? "rotate-180" : ""
-                            }`}
-                          />
-                        </button>
-
-                        {activeIndex === index && (
-                          <div className="px-5 pb-5 text-gray-600">
-                            {faq.reply}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
+              <Reveal>
+                <div className=" flex text-center justify-center pt-13">
+                  <p className="font-bold sm:text-4xl text-3xl">
+                    Frequently Asked
+                    <span className="text-[#402BBA]"> Questions</span>
+                  </p>
                 </div>
-              </div>
+                <div className="flex pt-3 justify-center text-center">
+                  {" "}
+                  <p>
+                    Everything you need to know about Nepo Games and our
+                    products
+                  </p>
+                </div>
+              </Reveal>
+              <Reveal>
+                <div className="pt-10 pb-15">
+                  <div className="space-y-4 max-w-xl mx-auto">
+                    {faqs.map((faq, index) => (
+                      <div
+                        key={index}
+                        className="rounded-xl bg-linear-to-r from-[#8A38F5] to-[#4F8CFF] p-[2px]"
+                      >
+                        <div className="bg-white rounded-xl">
+                          <button
+                            onClick={() => toggleFAQ(index)}
+                            className="w-full flex justify-between items-center p-5 text-left"
+                          >
+                            <span className="font-medium text-lg">
+                              {faq.question}
+                            </span>
+
+                            <ChevronDown
+                              className={`transition-transform duration-300 ${
+                                activeIndex === index ? "rotate-180" : ""
+                              }`}
+                            />
+                          </button>
+
+                          {activeIndex === index && (
+                            <div className="px-5 pb-5 text-gray-600">
+                              {faq.reply}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </Reveal>
             </div>
             <section className="w-full bg-linear-to-b from-[#4F8CFF] to-[#8A38F5]">
               <Reveal>
