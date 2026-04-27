@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Reveal from "@/app/reveal";
 
 export default function PageLoader({ children }) {
   const [loaded, setLoaded] = useState(false);
@@ -56,7 +57,7 @@ export default function PageLoader({ children }) {
           loaded ? "opacity-100 visible" : "opacity-0 invisible"
         }`}
       >
-        {children}
+        <Reveal>{children}</Reveal>
       </div>
     </>
   );
