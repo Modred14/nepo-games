@@ -12,6 +12,13 @@ const normalizeImage = (img) => {
   if (typeof img === "string" && img.trim() !== "") return img;
   return defaultAvatar;
 };
+const computeIsVerified = (user) => {
+  return (
+    (user.subscription_status || "").toLowerCase() === "active" &&
+    user.subscription_end &&
+    new Date(user.subscription_end).getTime() > Date.now()
+  );
+};
 
 export const authOptions = {
   providers: [
@@ -140,6 +147,7 @@ ${verifyLink}`,
             });
             throw new Error("EMAIL_NOT_VERIFIED");
           }
+
           return {
             id: user.id,
             email: user.email,
@@ -148,7 +156,7 @@ ${verifyLink}`,
             username: user.username,
             profile_image: normalizeImage(user.profile_image),
             phone_verified: user.phone_verified,
-            is_verified: user.is_verified,
+            is_verified: computeIsVerified(user),
           };
         } catch (err) {
           console.error("Credentials Auth Error:", err);
@@ -205,7 +213,6 @@ ${verifyLink}`,
             provider,
             email_verified,
             phone_verified,
-            is_verified
           )
           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
           [
@@ -240,8 +247,21 @@ ${verifyLink}`,
       // On subsequent requests → refresh from DB
       if (token?.user?.email) {
         const result = await pool.query(
-          `SELECT id, email, first_name, surname, username, profile_image, phone_verified, is_verified
-           FROM users WHERE email = $1`,
+          `SELECT 
+    id,
+    email,
+    first_name,
+    surname,
+    username,
+    profile_image,
+    phone_verified,
+    plan,
+    subscription_status,
+    subscription_start,
+    subscription_end,
+    payment_provider
+   FROM users 
+   WHERE email = $1`,
           [token.user.email],
         );
 
@@ -249,9 +269,21 @@ ${verifyLink}`,
           const dbUser = result.rows[0];
 
           token.user = {
-            ...dbUser,
-            profile_image: normalizeImage(dbUser.profile_image),
             id: dbUser.id,
+            email: dbUser.email,
+            first_name: dbUser.first_name,
+            surname: dbUser.surname,
+            username: dbUser.username,
+            profile_image: normalizeImage(dbUser.profile_image),
+            phone_verified: dbUser.phone_verified,
+
+            plan: dbUser.plan,
+            subscription_status: dbUser.subscription_status,
+            subscription_start: dbUser.subscription_start,
+            subscription_end: dbUser.subscription_end,
+            payment_provider: dbUser.payment_provider,
+
+            is_verified: computeIsVerified(dbUser),
           };
         }
       }

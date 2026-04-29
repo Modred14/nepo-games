@@ -1,11 +1,14 @@
 "use client";
 
 const features = [
-  "Higher chance of quick deals",
-  "Your account appears above free users",
-  "Priority listing in search results",
-  "In-site support",
-  "Stronger visibility to buyers",
+  "Lower selling fees on every transaction",
+  "Top placement in search results",
+  "Featured listings on homepage",
+  "“Verified Seller” badge (build buyer trust)",
+  "Faster payouts",
+  "Priority dispute resolution",
+  "Advanced sales & performance analytics",
+  "Access to high-value buyers",
 ];
 
 const plans = [
@@ -25,7 +28,7 @@ const plans = [
   },
   {
     name: "Plus",
-    price: "8,900",
+    price: "8,500",
     duration: "/ 3 months",
     type: "paid",
     button: "Upgrade to Plus",
@@ -40,6 +43,21 @@ const plans = [
 ];
 
 export default function PricingPage() {
+  const handleUpgrade = async (plan) => {
+  const res = await fetch("/api/paystack/initialize", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ plan }),
+  });
+
+  const data = await res.json();
+
+  if (data.url) {
+    window.location.href = data.url;
+  }
+};
   return (
     <div className="w-full min-h-screen flex flex-col items-center justify-center py-16 px-4">
       <div className="text-center mb-12">
@@ -53,7 +71,7 @@ export default function PricingPage() {
         {plans.map((plan, index) => (
           <div
             key={index}
-            className={`rounded-2xl border shadow-lg p-6 flex flex-col justify-between ${
+            className={`rounded-2xl border hover:scale-102 duration-300 transition-all shadow-lg p-6 flex flex-col justify-between ${
               plan.name === "Free"
                 ? "bg-gray-200 border-black/20"
                 : "bg-linear-to-b border-black/20 from-blue-700 to-blue-900 text-white"
@@ -72,17 +90,19 @@ export default function PricingPage() {
 
               <hr
                 className={`my-4  ${
-                  plan.name === "Free"
-                    ? "border-white/60 "
-                    : "border-white/20"
+                  plan.name === "Free" ? "border-white/60 " : "border-white/20"
                 }`}
               />
 
               <ul className="space-y-2 text-sm">
                 {plan.type === "free" ? (
                   <>
-                    <li>✔ Basic Listing</li>
-                    <li>✔ In-site support</li>
+                    <li>✔ List and sell game accounts</li>
+                    <li>✔ Standard visibility in search results</li>
+                    <li>✔ Basic seller profile</li>
+                    <li>✔ Platform-secured transactions</li>
+                    <li>✔ Standard withdrawal speed</li>
+                    <li>✔ Basic support access</li>
                   </>
                 ) : (
                   features.map((item, i) => <li key={i}>✔ {item}</li>)
@@ -96,6 +116,7 @@ export default function PricingPage() {
                   ? "border border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white"
                   : "bg-gray-200 text-blue-800 hover:bg-white"
               }`}
+              onClick={() => handleUpgrade(plan.name.toLowerCase())}
             >
               {plan.button}
             </button>
