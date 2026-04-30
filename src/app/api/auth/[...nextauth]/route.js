@@ -176,44 +176,50 @@ ${verifyLink}`,
           [email],
         );
 
-        // ✅ USER EXISTS
-        if (existing.rows.length > 0) {
-          const dbUser = existing.rows[0];
+        let dbUser;
 
-          // ❌ Block Google login if registered with credentials
+        if (existing.rows.length === 0) {
+          // 🟢 CREATE USER ONLY IF NOT EXISTING
+          const inserted = await pool.query(
+            `INSERT INTO users (
+          first_name,
+          surname,
+          username,
+          email,
+          password_hash,
+          profile_image,
+          provider,
+          email_verified,
+          phone_verified
+        )
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+        RETURNING *`,
+            [
+              first_name,
+              surname,
+              email.split("@")[0],
+              email,
+              null,
+              normalizeImage(image),
+              "google",
+              true,
+              false,
+            ],
+          );
+
+          dbUser = inserted.rows[0];
+        } else {
+          dbUser = existing.rows[0];
+
+          // ❌ block mismatch login
           if (dbUser.provider === "credentials") {
             return "/login?msg=Email already registered. Please login with email/password.&oauthError=true";
           }
-
-          return true;
         }
 
-        // ✅ CREATE NEW GOOGLE USER
-        await pool.query(
-          `INSERT INTO users (
-            first_name,
-            surname,
-            username,
-            email,
-            password_hash,
-            profile_image,
-            provider,
-            email_verified,
-            phone_verified
-          )
-          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
-          [
-            first_name,
-            surname,
-            email.split("@")[0],
-            email,
-            null,
-            normalizeImage(image),
-            "google",
-            true,
-            false,
-          ],
-        );
+        // attach user id for JWT
+        user.id = dbUser.id;
+        user.email = dbUser.email;
 
         return true;
       } catch (err) {
@@ -225,11 +231,8 @@ ${verifyLink}`,
     // 🔥 ATTACH USER TO TOKEN
     async jwt({ token, user }) {
       // On login
-       if (user) {
-        token.user = {
-          id: user.id,
-          email: user.email,
-        };
+      if (user) {
+        token.user = user;
       }
       return token;
     },

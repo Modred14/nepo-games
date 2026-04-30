@@ -21,22 +21,42 @@ import RevealLeft from "./revealfrleft";
 import PageLoader from "@/components/PageLoader";
 import { signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { Verified } from "lucide-react";
+import Loader from "@/components/Loader";
 
 export default function Home() {
   const [open, setOpen] = useState(false);
   const [ready, setReady] = useState(false);
   const innerRef = useRef(null);
-  const [user, setUser] = useState("");
+  const [user, setUser] = useState(null);
   const [active, setActive] = useState("");
   const [activeIndex, setActiveIndex] = useState(null);
   const [refOpen, setOpenRef] = useState(false);
   const [logOpen, setLogOpen] = useState(false);
+  const [load, setLoad] = useState(true);
 
   useEffect(() => {
-    const stored = localStorage.getItem("nepo-user");
-    if (stored) {
-      setUser(JSON.parse(stored));
-    }
+    const fetchUser = async () => {
+      try {
+        const res = await fetch("/api/user/me");
+        const data = await res.json();
+
+        if (!res.ok) {
+          setUser(null);
+          router.push("/login");
+          return;
+        }
+
+        setUser(data);
+      } catch (err) {
+        console.error(err);
+        router.push("/login");
+      } finally {
+        setLoad(false);
+      }
+    };
+
+    fetchUser();
   }, []);
   const router = useRouter();
   const ref = useRef(null);
@@ -316,6 +336,9 @@ export default function Home() {
       scrollerInner.appendChild(clone);
     });
   }, []);
+  if (load) {
+    return <Loader />;
+  }
 
   return (
     <PageLoader>
@@ -489,6 +512,12 @@ hover:text-[#0000FF]
                                   alt="Nepo Games"
                                   className="border-blue-600/70 border w-10 h-10 rounded-full object-cover cursor-pointer"
                                 />
+                                {user?.plan && user.plan !== "free" && (
+                                  <Verified
+                                    className="fill-green-600 fixed -mt-3 ml-6 text-green-100"
+                                    size={16}
+                                  />
+                                )}
                               </a>
 
                               {/* Dropdown */}
@@ -568,6 +597,12 @@ hover:text-[#0000FF]
                               alt="Profile"
                               className="w-full h-full object-cover"
                             />
+                            {user?.plan && user.plan !== "free" && (
+                              <Verified
+                                className="fill-green-600 fixed -mt-3 ml-7 text-green-100"
+                                size={16}
+                              />
+                            )}
                           </div>
                           <p>
                             Welcome back,{" "}
@@ -632,7 +667,7 @@ hover:text-[#0000FF]
                           </button>
                         </a>
 
-                        <a  onClick={() => router.push("/pricing")}>
+                        <a onClick={() => router.push("/pricing")}>
                           <button
                             onClick={() => setActive("Pricing")}
                             className={`${linkClass("Pricing")} group`}
@@ -671,6 +706,12 @@ hover:text-[#0000FF]
                                 alt="Profile"
                                 className="w-full h-full object-cover"
                               />
+                              {user?.plan && user.plan !== "free" && (
+                                <Verified
+                                  className="fill-green-600 fixed -mt-3 ml-6 text-green-100"
+                                  size={16}
+                                />
+                              )}
                             </div>
                             <a
                               onClick={() => router.push("/profile")}

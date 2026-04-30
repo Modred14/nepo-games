@@ -11,7 +11,6 @@ import { signOut } from "next-auth/react";
 import Loader from "@/components/Loader";
 
 export default function Marketplace() {
-
   const [user, setUser] = useState(null);
   const [search, setSearch] = useState("");
   const [games, setGames] = useState([]);
@@ -26,32 +25,29 @@ export default function Marketplace() {
   const [logOpen, setLogOpen] = useState(false);
   const ref = useRef(null);
 
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const res = await fetch("/api/user/me");
+        const data = await res.json();
 
-useEffect(() => {
-  const fetchUser = async () => {
-    try {
-      const res = await fetch("/api/user/me");
-      const data = await res.json();
+        if (!res.ok) {
+          setUser(null);
+          router.push("/login");
+          return;
+        }
 
-      if (!res.ok) {
-        setUser(null);
+        setUser(data);
+      } catch (err) {
+        console.error(err);
         router.push("/login");
-        return;
+      } finally {
+        setLoad(false);
       }
+    };
 
-      setUser(data);
-    } catch (err) {
-      console.error(err);
-      router.push("/login");
-    } finally {
-      setLoad(false);
-    }
-  };
-
-  fetchUser();
-}, []);
-
- 
+    fetchUser();
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -79,6 +75,8 @@ useEffect(() => {
     }
   }, []);
 
+  const isSeller = user?.phone_verified;
+  const hasPlan = user?.plan && user.plan !== "free";
   useEffect(() => {
     const fetchGames = async () => {
       try {
@@ -157,8 +155,8 @@ useEffect(() => {
     });
   }, [filteredGames]);
 
-    if(load){
-    return<Loader/>
+  if (load) {
+    return <Loader />;
   }
   return (
     <div>
@@ -230,15 +228,25 @@ useEffect(() => {
                   placeholder="Search gaming accounts"
                 />
               </div>
-              {!user?.phone_verified && (
-                <a onClick={() => router.push(`/seller`)}>
-                  <div className="sm:block hidden">
-                    <p className="text-xs md:text-sm bg-blue-500 text-gray-50 rounded-lg p-2 px-3">
-                      Become a seller
-                    </p>
-                  </div>
-                </a>
-              )}
+              {!isSeller ? (
+                <button
+                  onClick={() => router.push("/seller")}
+                  className="sm:block hidden"
+                >
+                  <p className="text-xs md:text-sm bg-blue-500 text-gray-50 rounded-lg p-2 px-3">
+                    Become a seller
+                  </p>
+                </button>
+              ) : !hasPlan ? (
+                <button
+                  onClick={() => router.push("/pricing")}
+                  className="sm:block hidden"
+                >
+                  <p className="text-xs md:text-sm bg-blue-500 text-gray-50 rounded-lg p-2 px-3">
+                    Become verified
+                  </p>
+                </button>
+              ) : null}
               <div className="flex items-center">
                 <div
                   ref={ref}
@@ -255,6 +263,12 @@ useEffect(() => {
                       alt="Nepo Games"
                       className="border-blue-600/70 border w-9 h-9 rounded-full object-cover cursor-pointer"
                     />
+                    {user?.plan && user.plan !== "free" && (
+                      <Verified
+                        className="fill-green-600 fixed -mt-3 ml-5 text-green-100"
+                        size={16}
+                      />
+                    )}
                   </a>
 
                   {open && (
@@ -268,7 +282,7 @@ useEffect(() => {
                           <span className="text-xs">👤</span>
                           Profile
                         </a>{" "}
-                        {!user?.phone_verified && (
+                        {!isSeller ? (
                           <div className="w-full">
                             {" "}
                             <div className="h-px bg-gray-200 mx-2"></div>
@@ -280,7 +294,19 @@ useEffect(() => {
                               Become Seller{" "}
                             </a>
                           </div>
-                        )}
+                        ) : !hasPlan ? (
+                          <div className="w-full">
+                            {" "}
+                            <div className="h-px bg-gray-200 mx-2"></div>
+                            <a
+                              onClick={() => router.push("/pricing")}
+                              className="flex items-center gap-3 px-4 py-3 text-xs text-gray-700 hover:bg-gray-100/80 transition  whitespace-nowrap"
+                            >
+                              <span className="text-xs">📦</span>
+                              Become verified{" "}
+                            </a>
+                          </div>
+                        ) : null}
                         {/* Divider */}
                         <div className="h-px bg-gray-200 mx-2"></div>
                         {/* Logout */}
@@ -344,7 +370,8 @@ useEffect(() => {
                       placeholder="Search gaming accounts"
                     />
                   </div>
-                  {!user?.phone_verified && (
+
+                  {!isSeller ? (
                     <a onClick={() => router.push(`/seller`)}>
                       <div className="">
                         <p className="text-xs whitespace-nowrap md:text-sm bg-blue-500 text-gray-50 rounded-lg p-2 px-3">
@@ -352,7 +379,15 @@ useEffect(() => {
                         </p>
                       </div>
                     </a>
-                  )}
+                  ) : !hasPlan ? (
+                    <a onClick={() => router.push("/pricing")}>
+                      <div className="">
+                        <p className="text-xs whitespace-nowrap md:text-sm bg-blue-500 text-gray-50 rounded-lg p-2 px-3">
+                          Become verified
+                        </p>
+                      </div>
+                    </a>
+                  ) : null}
                 </div>
                 <div className="flex flex-col flex-1 min-w-40">
                   <label className="text-xs text-gray-500">Game</label>
@@ -506,11 +541,16 @@ useEffect(() => {
                 </button>
               </div>
             </div>
-            <div className="min-h-[60vh] flex items-center justify-center">
+            <div className="flex items-center justify-center">
               {loading || !isImagesReady ? (
-                <SmallLoader />
+                <div className="min-h-[60vh] flex items-center justify-center">
+                  <SmallLoader />
+                </div>
               ) : filteredGames.length === 0 ? (
-                <NoGame />
+                <div className="min-h-[60vh] flex items-center justify-center">
+                  {" "}
+                  <NoGame />
+                </div>
               ) : (
                 <div className="grid py-3 sm:py-10 grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 3xl:flex gap-2 sm:gap-5 flex-wrap">
                   {filteredGames.map((game, index) => {
@@ -522,7 +562,7 @@ useEffect(() => {
                               {" "}
                               <div className="-mb-93">
                                 <div className="flex  relative mt-2 py-0.5 w-fit rounded-2xl border px-2 gap-1 bg-green-100 text-xs text-green-800 items-center">
-                                  Verified Trader{" "}
+                                  Verified Seller{" "}
                                   <Verified
                                     className="fill-green-600 text-green-100"
                                     size={16}

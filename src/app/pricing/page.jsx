@@ -2,6 +2,7 @@
 
 import Loader from "@/components/Loader";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 const features = [
   "Lower selling fees on every transaction",
@@ -45,23 +46,23 @@ const plans = [
   },
 ];
 
-
 export default function PricingPage() {
   const [load, setLoad] = useState(true);
-  const [user, setUser] = useState(null)
-  const router = useRouter()
+  const [user, setUser] = useState(null);
+  const router = useRouter();
+  const [upgrading, setUpgrading] = useState(false);
   useEffect(() => {
     const fetchUser = async () => {
       try {
         const res = await fetch("/api/user/me");
         const data = await res.json();
-  
+
         if (!res.ok) {
           setUser(null);
           router.push("/login");
           return;
         }
-  
+
         setUser(data);
       } catch (err) {
         console.error(err);
@@ -70,28 +71,56 @@ export default function PricingPage() {
         setLoad(false);
       }
     };
-  
+
     fetchUser();
   }, []);
-  
-  const handleUpgrade = async (plan) => {
-  const res = await fetch("/api/paystack/initialize", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ plan }),
-  });
+  const currentPlan = user?.plan;
 
-  const data = await res.json();
+ const handleUpgrade = async (plan) => {
+  if (!user) {
+    router.push("/login");
+    return;
+  }
 
-  if (data.url) {
-    window.location.href = data.url;
+  if (!user.phone_verified) {
+    router.push("/seller");
+    return;
+  }
+
+  if (user?.plan === plan) return;
+
+  try {
+    setUpgrading(true);
+
+    const res = await fetch("/api/paystack/initialize", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ plan }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error || "Something went wrong");
+    }
+
+    if (data.url) {
+      window.location.href = data.url;
+    } else {
+      throw new Error("No payment link returned");
+    }
+  } catch (err) {
+    console.error("Upgrade error:", err);
+    alert(err.message); // replace with toast later
+  } finally {
+    setUpgrading(false);
   }
 };
-if(load){
-  return<Loader/>
-}
+  if (load || upgrading) {
+    return <Loader />;
+  }
   return (
     <div className="w-full min-h-screen flex flex-col items-center justify-center py-16 px-4">
       <div className="text-center mb-12">
@@ -113,9 +142,15 @@ if(load){
           >
             <div>
               <h2 className="text-xl font-semibold">{plan.name}</h2>
-              <p className="text-sm opacity-80 mb-4">
-                Same benefits, different duration
-              </p>
+              {plan.name === "Free" ? (
+                <p className="text-sm opacity-80 mb-4">
+                  Perfect to start selling and explore the platform
+                </p>
+              ) : (
+                <p className="text-sm opacity-80 mb-4">
+                  Same benefits, different duration
+                </p>
+              )}
 
               <h3 className="text-3xl font-bold">
                 {plan.price}
@@ -145,14 +180,19 @@ if(load){
             </div>
 
             <button
+              disabled={currentPlan === plan.name.toLowerCase()}
               className={`mt-6 rounded-lg py-2 transition ${
-                plan.name === "Free"
-                  ? "border border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white"
-                  : "bg-gray-200 text-blue-800 hover:bg-white"
+                currentPlan === plan.name.toLowerCase()
+                  ? "bg-green-500 text-white cursor-not-allowed"
+                  : plan.name === "Free"
+                    ? "border border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white"
+                    : "bg-gray-200 text-blue-800 hover:bg-white"
               }`}
               onClick={() => handleUpgrade(plan.name.toLowerCase())}
             >
-              {plan.button}
+              {currentPlan === plan.name.toLowerCase()
+                ? "Current Plan"
+                : plan.button}
             </button>
           </div>
         ))}

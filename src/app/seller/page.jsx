@@ -10,31 +10,30 @@ import { useRouter } from "next/navigation";
 import { parsePhoneNumberFromString } from "libphonenumber-js";
 
 export default function Seller() {
- 
   const router = useRouter();
 
-useEffect(() => {
-  const checkUser = async () => {
-    try {
-      const res = await fetch("/api/user/me");
+  useEffect(() => {
+    const checkUser = async () => {
+      try {
+        const res = await fetch("/api/user/me");
 
-      if (!res.ok) {
+        if (!res.ok) {
+          router.replace("/login");
+          return;
+        }
+
+        const user = await res.json();
+
+        if (user.phone_verified) {
+          router.replace("/sell-game");
+        }
+      } catch (err) {
         router.replace("/login");
-        return;
       }
+    };
 
-      const user = await res.json();
-
-      if (user.phone_verified) {
-        router.replace("/seller");
-      }
-    } catch (err) {
-      router.replace("/login");
-    }
-  };
-
-  checkUser();
-}, [router]);
+    checkUser();
+  }, [router]);
 
   const [step, setStep] = useState(1);
   const [phone, setPhone] = useState("");
@@ -46,12 +45,12 @@ useEffect(() => {
   const [storedPhone, setStoredPhone] = useState("");
 
   useEffect(() => {
-  const phone = sessionStorage.getItem("verify-phone");
-  if (phone) {
-    setStoredPhone(phone);
-    setStep(3);
-  }
-}, []);
+    const phone = sessionStorage.getItem("verify-phone");
+    if (phone) {
+      setStoredPhone(phone);
+      setStep(3);
+    }
+  }, []);
 
   const handleChange = (value, index) => {
     if (!/^[0-9]?$/.test(value)) return;
@@ -203,16 +202,30 @@ useEffect(() => {
         },
         body: JSON.stringify({ phone: formattedPhone.replace("+", "") }),
       });
-      sessionStorage.setItem("verify-phone", formattedPhone);
 
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data?.error || "Failed to send OTP");
+      let data;
+      try {
+        data = await res.json();
+      } catch {
+        throw new Error("Invalid server response");
       }
+      if (!res.ok) {
+        if (data?.error === "Phone number already in use") {
+          setError("This number is already linked to an account");
+        } else {
+          setError(data?.error || "Failed to send OTP");
+        }
+        return;
+      }
+      sessionStorage.setItem("verify-phone", formattedPhone);
 
       setStep(3);
     } catch (err) {
-      setError(err.message || "Something went wrong");
+      if (err.name === "TypeError") {
+        setError("Network error. Check your connection.");
+      } else {
+        setError(err.message || "Something went wrong");
+      }
     } finally {
       setLoading(false);
     }

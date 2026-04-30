@@ -46,10 +46,33 @@ useEffect(() => {
   const [amount, setAmount] = useState("");
   const [step, setStep] = useState("idle");
   const [timer, setTimer] = useState(10);
+  const [user, setUser] =useState(null)
   const [images, setImages] = useState([]);
   const [success, setSuccess] = useState(false);
   const [slug, setSlug] = useState("");
 
+    useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const res = await fetch("/api/user/me");
+        const data = await res.json();
+
+        if (!res.ok) {
+          setUser(null);
+          router.push("/login");
+          return;
+        }
+
+        setUser(data);
+      } catch (err) {
+        console.error(err);
+        router.push("/login");
+      } 
+      
+    };
+
+    fetchUser();
+  }, []);
   const handleUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -117,8 +140,6 @@ useEffect(() => {
     // FINAL SUBMIT (LOADING STATE)
     if (step === "ready") {
       setStep("submitting");
-
-      const user = JSON.parse(localStorage.getItem("nepo-user"));
 
       if (!user?.id) {
         alert("You are not logged in");

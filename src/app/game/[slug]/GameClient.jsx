@@ -6,6 +6,7 @@ import { ShoppingCart, Star } from "lucide-react";
 import PageLoader from "@/components/PageLoader";
 import { useRouter } from "next/navigation";
 import Loader from "@/components/Loader";
+import { Verified } from "lucide-react";
 
 export default function GameClient({ game, images, similarGames }) {
   const [index, setIndex] = useState(0);
@@ -34,7 +35,7 @@ export default function GameClient({ game, images, similarGames }) {
         console.error(err);
         router.push("/login");
       } finally {
-        setLoad(false);
+        setLoading(false);
       }
     };
 
@@ -90,6 +91,10 @@ export default function GameClient({ game, images, similarGames }) {
     "Scam Attempt",
     "Others",
   ];
+  const cleanDescription = game.description
+    .replace(/\s+\n/g, "\n") // remove trailing spaces before new lines
+    .replace(/\n{3,}/g, "\n\n") // collapse too many line breaks
+    .trim();
   if (loading) {
     return <Loader />;
   }
@@ -160,8 +165,8 @@ export default function GameClient({ game, images, similarGames }) {
                     </span>
                   </p>
 
-                  <p className="text-sm text-gray-800 mt-1 leading-relaxed">
-                    {game.description}
+                  <p className="text-sm text-gray-800 mt-1 leading-relaxed whitespace-pre-wrap">
+                    {cleanDescription}
                   </p>
                 </div>
               </div>
@@ -196,12 +201,19 @@ export default function GameClient({ game, images, similarGames }) {
                     {game.username}
                   </p>
                 </div>
-
-                <img
-                  src={game.profile_image}
-                  className="w-11 h-11 rounded-full border-2 border-blue-500/60 object-cover"
-                  alt="seller"
-                />
+                <div>
+                  <img
+                    src={game.profile_image}
+                    className="w-11 h-11 rounded-full border-2 border-blue-500/60 object-cover"
+                    alt="seller"
+                  />
+                  {game.plan !== "free" && game.phone_verified && (
+                    <Verified
+                      className="fill-green-600 absolute -mt-3 ml-7 text-green-100"
+                      size={16}
+                    />
+                  )}
+                </div>
               </div>
 
               {/* Rating */}
@@ -237,12 +249,12 @@ export default function GameClient({ game, images, similarGames }) {
                       <span className="font-medium text-green-600">Fast</span>
                     </p>
                   </div>
-
+                  {/* 
                   <img
                     src="/Vector (1).png"
                     className="h-14 opacity-80"
                     alt="performance"
-                  />
+                  /> */}
                 </div>
               </div>
             </div>

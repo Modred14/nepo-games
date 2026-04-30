@@ -4,14 +4,16 @@ export async function GET(req) {
   try {
     console.log("[STEP 1] Fetching listings");
 
-    const result = await pool.query(
-      `
-      SELECT *
-      FROM listings
-      WHERE deleted_at IS NULL
-      ORDER BY created_at DESC
-      `,
-    );
+    const result = await pool.query(`
+  SELECT 
+    l.*,
+    u.plan,
+    u.phone_verified
+  FROM listings l
+  JOIN users u ON l.user_id = u.id
+  WHERE l.deleted_at IS NULL
+  ORDER BY l.created_at DESC
+`);
 
     const listings = result.rows;
 
@@ -34,7 +36,7 @@ export async function GET(req) {
       created_at: item.created_at,
       updated_at: item.updated_at,
       deleted_at: item.deleted_at,
-      verified: item.status === "Active",
+      verified: item.plan !== "free",
     }));
 
     console.log("[STEP 3] Transformed games ready");

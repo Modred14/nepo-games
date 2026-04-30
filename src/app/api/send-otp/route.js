@@ -1,6 +1,6 @@
-
 import { saveOTP } from "@/lib/otpStore";
 import crypto from "crypto";
+import pool from "@/lib/db";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -14,6 +14,16 @@ export default async function handler(req, res) {
   }
 
   try {
+    const existingUser = await pool.query(
+      "SELECT id FROM users WHERE phone_number = $1 LIMIT 1",
+      [phone],
+    );
+
+    if (existingUser.rows.length > 0) {
+      return res.status(400).json({
+        error: "Phone number already in use",
+      });
+    }
     // ✅ Generate OTP on server
     const otp = crypto.randomInt(100000, 1000000).toString();
 
