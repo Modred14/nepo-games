@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../../auth/[...nextauth]/route";
-import pool from "@/lib/db";
 
 export async function GET(req) {
   const session = await getServerSession(authOptions);
@@ -10,7 +9,6 @@ export async function GET(req) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  
   const { searchParams } = new URL(req.url);
   const reference = searchParams.get("reference");
 
@@ -36,18 +34,12 @@ export async function GET(req) {
     );
   }
 
-  const plan = data.data.metadata.plan;
- const userId = session.user.id;
+  const status = data.data.status;
 
-  await pool.query(
-    `UPDATE users
-     SET plan = $1,
-         subscription_status = 'active',
-         subscription_start = NOW(),
-         subscription_end = NOW() + interval '1 month'
-     WHERE id = $2`,
-    [plan, userId],
-  );
-
-  return NextResponse.json({ success: true });
+  return NextResponse.json({
+    success: status === "success",
+    status,
+    amount: data.data.amount,
+    reference: data.data.reference,
+  });
 }

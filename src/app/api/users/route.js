@@ -66,7 +66,7 @@ export async function POST(req) {
     const verifyLink = `${process.env.NEXT_PUBLIC_BASE_URL}/verify?token=${token}`;
 
     await resend.emails.send({
-      from: "Nepo Games <nepo-games@resend.dev>",
+      from: "Nepogames <nepo-games@resend.dev>",
       to: email,
       subject: "Verify your email",
       html: `

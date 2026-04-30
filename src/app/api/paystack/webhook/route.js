@@ -1,53 +1,125 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
 import pool from "@/lib/db";
+import { sendSellerWelcomeEmail } from "@/lib/emails/sendSellerWelcome";
 
 export async function POST(req) {
   const rawBody = await req.text();
 
-  const hash = crypto
-    .createHmac("sha512", process.env.PAYSTACK_SECRET_KEY)
-    .update(rawBody)
-    .digest("hex");
+  try {
+    // =========================
+    // VERIFY SIGNATURE
+    // =========================
+    const signature = req.headers.get("x-paystack-signature");
 
-  const signature = req.headers.get("x-paystack-signature");
+    const hash = crypto
+      .createHmac("sha512", process.env.PAYSTACK_SECRET_KEY)
+      .update(rawBody)
+      .digest("hex");
 
-  if (hash !== signature) {
-    return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
-  }
+    if (hash !== signature) {
+      console.error("❌ Invalid Paystack signature");
+      return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
+    }
 
-  const event = JSON.parse(rawBody);
+    // =========================
+    // PARSE EVENT SAFELY
+    // =========================
+    let event;
 
-  if (event.event === "charge.success") {
+    try {
+      event = JSON.parse(rawBody);
+    } catch (err) {
+      console.error("❌ Invalid JSON from Paystack:", err);
+      return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    }
+
+    if (event?.event !== "charge.success") {
+      return NextResponse.json({ status: "ignored" });
+    }
+
     const data = event.data;
 
-    const userId = data.metadata.userId;
-    const plan = data.metadata.plan;
-    const reference = data.reference;
+    // =========================
+    // SAFE METADATA ACCESS
+    // =========================
+    const userId = data?.metadata?.userId;
+    const reference = data?.reference;
 
-    // prevent duplicate processing
+    if (!userId || !reference) {
+      console.error("❌ Missing metadata:", data);
+      return NextResponse.json(
+        { error: "Missing metadata" },
+        { status: 400 }
+      );
+    }
+
+    // =========================
+    // AMOUNT HANDLING
+    // =========================
+    const amount = Math.round(data.amount / 100);
+
+    const PLAN_BY_AMOUNT = {
+      2900: { plan: "pro", days: 30, label: "1 month" },
+      8500: { plan: "plus", days: 90, label: "3 months" },
+      32000: { plan: "premium", days: 365, label: "12 months" },
+    };
+
+    const planData = PLAN_BY_AMOUNT[amount];
+
+    if (!planData) {
+      console.error("❌ Invalid amount:", amount);
+      return NextResponse.json(
+        { error: "Invalid amount" },
+        { status: 400 }
+      );
+    }
+
+    const { plan, days, label } = planData;
+
+    // =========================
+    // CHECK USER
+    // =========================
+    const userRes = await pool.query(
+      "SELECT id, email FROM users WHERE id = $1",
+      [userId]
+    );
+
+    const user = userRes.rows[0];
+
+    if (!user) {
+      console.error("❌ User not found:", userId);
+      return NextResponse.json(
+        { error: "User not found" },
+        { status: 404 }
+      );
+    }
+
+    // =========================
+    // IDENTITY PROTECTION (NO DUPLICATES)
+    // =========================
     const existing = await pool.query(
-      `SELECT * FROM payments WHERE reference = $1`,
+      "SELECT id FROM payments WHERE reference = $1",
       [reference]
     );
 
     if (existing.rows.length > 0) {
+      console.log("⚠️ Duplicate webhook ignored:", reference);
       return NextResponse.json({ status: "already processed" });
     }
 
-    // save payment
+    // =========================
+    // SAVE PAYMENT
+    // =========================
     await pool.query(
       `INSERT INTO payments (user_id, amount, reference, status)
        VALUES ($1,$2,$3,$4)`,
       [userId, data.amount, reference, "success"]
     );
 
-    // determine duration
-    let duration = "30 days";
-    if (plan === "plus") duration = "90 days";
-    if (plan === "premium") duration = "365 days";
-
-    // update user
+    // =========================
+    // UPDATE USER
+    // =========================
     await pool.query(
       `UPDATE users
        SET 
@@ -57,14 +129,27 @@ export async function POST(req) {
          subscription_end = 
            CASE 
              WHEN subscription_end > NOW() 
-             THEN subscription_end + INTERVAL '${duration}'
-             ELSE NOW() + INTERVAL '${duration}'
+             THEN subscription_end + ($2 * interval '1 day')
+             ELSE NOW() + ($2 * interval '1 day')
            END,
-         paystack_reference = $2
-       WHERE id = $3`,
-      [plan, reference, userId]
+         paystack_reference = $3
+       WHERE id = $4`,
+      [plan, days, reference, userId]
+    );
+
+    // =========================
+    // EMAIL (NON-BLOCKING)
+    // =========================
+    sendSellerWelcomeEmail(label, user.email, plan)
+      .then(() => console.log("📧 Email sent"))
+      .catch((err) => console.error("❌ Email failed:", err));
+
+    return NextResponse.json({ status: "ok" });
+  } catch (err) {
+    console.error("🔥 WEBHOOK CRASH:", err);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
     );
   }
-
-  return NextResponse.json({ status: "ok" });
 }
