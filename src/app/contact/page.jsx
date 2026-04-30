@@ -1,5 +1,3 @@
-"use client"
-
 import ContactClient from "./ContactClient";
 
 export const metadata = {
