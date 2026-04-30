@@ -12,13 +12,6 @@ const normalizeImage = (img) => {
   if (typeof img === "string" && img.trim() !== "") return img;
   return defaultAvatar;
 };
-const computeIsVerified = (user) => {
-  return (
-    (user.subscription_status || "").toLowerCase() === "active" &&
-    user.subscription_end &&
-    new Date(user.subscription_end).getTime() > Date.now()
-  );
-};
 
 export const authOptions = {
   providers: [
@@ -151,12 +144,6 @@ ${verifyLink}`,
           return {
             id: user.id,
             email: user.email,
-            first_name: user.first_name,
-            surname: user.surname,
-            username: user.username,
-            profile_image: normalizeImage(user.profile_image),
-            phone_verified: user.phone_verified,
-            is_verified: computeIsVerified(user),
           };
         } catch (err) {
           console.error("Credentials Auth Error:", err);
@@ -181,7 +168,7 @@ ${verifyLink}`,
 
         if (!email) return false;
 
-        const first_name = name?.split(" ")[0] || "User";
+        const first_name = name?.split(" ")[0] || "Nepo User";
         const surname = name?.split(" ")[1] || "";
 
         const existing = await pool.query(
@@ -212,7 +199,7 @@ ${verifyLink}`,
             profile_image,
             provider,
             email_verified,
-            phone_verified,
+            phone_verified
           )
           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
           [
@@ -238,56 +225,12 @@ ${verifyLink}`,
     // 🔥 ATTACH USER TO TOKEN
     async jwt({ token, user }) {
       // On login
-      if (user) {
-        token.user = user;
-        token.user.id = user.id;
-        return token;
+       if (user) {
+        token.user = {
+          id: user.id,
+          email: user.email,
+        };
       }
-
-      // On subsequent requests → refresh from DB
-      if (token?.user?.email) {
-        const result = await pool.query(
-          `SELECT 
-    id,
-    email,
-    first_name,
-    surname,
-    username,
-    profile_image,
-    phone_verified,
-    plan,
-    subscription_status,
-    subscription_start,
-    subscription_end,
-    payment_provider
-   FROM users 
-   WHERE email = $1`,
-          [token.user.email],
-        );
-
-        if (result.rows.length > 0) {
-          const dbUser = result.rows[0];
-
-          token.user = {
-            id: dbUser.id,
-            email: dbUser.email,
-            first_name: dbUser.first_name,
-            surname: dbUser.surname,
-            username: dbUser.username,
-            profile_image: normalizeImage(dbUser.profile_image),
-            phone_verified: dbUser.phone_verified,
-
-            plan: dbUser.plan,
-            subscription_status: dbUser.subscription_status,
-            subscription_start: dbUser.subscription_start,
-            subscription_end: dbUser.subscription_end,
-            payment_provider: dbUser.payment_provider,
-
-            is_verified: computeIsVerified(dbUser),
-          };
-        }
-      }
-
       return token;
     },
 

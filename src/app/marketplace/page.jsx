@@ -2,20 +2,21 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import useAuthGuard from "../hooks/useAuthGuard";
 import Reveal from "../reveal";
 import { Search, ShoppingCart, Verified, MessageCircle } from "lucide-react";
 import NoGame from "@/components/NoGame";
 import ReactSlider from "react-slider";
 import SmallLoader from "@/components/smallLoader";
 import { signOut } from "next-auth/react";
+import Loader from "@/components/Loader";
 
 export default function Marketplace() {
-  useAuthGuard();
+
   const [user, setUser] = useState(null);
   const [search, setSearch] = useState("");
   const [games, setGames] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [load, setLoad] = useState(true);
   const [platform, setPlatform] = useState("");
   const [type, setType] = useState("");
   const [verifiedOnly, setVerifiedOnly] = useState(false);
@@ -25,12 +26,32 @@ export default function Marketplace() {
   const [logOpen, setLogOpen] = useState(false);
   const ref = useRef(null);
 
-  useEffect(() => {
-    const storedUser = localStorage.getItem("nepo-user");
-    const user = storedUser ? JSON.parse(storedUser) : null;
-    setUser(user);
-  }, []);
-  const user_id = user?.id;
+
+useEffect(() => {
+  const fetchUser = async () => {
+    try {
+      const res = await fetch("/api/user/me");
+      const data = await res.json();
+
+      if (!res.ok) {
+        setUser(null);
+        router.push("/login");
+        return;
+      }
+
+      setUser(data);
+    } catch (err) {
+      console.error(err);
+      router.push("/login");
+    } finally {
+      setLoad(false);
+    }
+  };
+
+  fetchUser();
+}, []);
+
+ 
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -136,6 +157,9 @@ export default function Marketplace() {
     });
   }, [filteredGames]);
 
+    if(load){
+    return<Loader/>
+  }
   return (
     <div>
       {logOpen && (

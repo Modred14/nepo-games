@@ -7,25 +7,34 @@ import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
 import PageLoader from "@/components/PageLoader";
 import { useRouter } from "next/navigation";
-import useAuthGuard from "../hooks/useAuthGuard";
 import { parsePhoneNumberFromString } from "libphonenumber-js";
 
 export default function Seller() {
-  useAuthGuard();
-
+ 
   const router = useRouter();
 
-  useEffect(() => {
-    const storedUser = localStorage.getItem("nepo-user");
+useEffect(() => {
+  const checkUser = async () => {
+    try {
+      const res = await fetch("/api/user/me");
 
-    if (!storedUser) return;
+      if (!res.ok) {
+        router.replace("/login");
+        return;
+      }
 
-    const user = JSON.parse(storedUser);
-    console.log(user);
-    if (user.phone_verified === true) {
-      router.replace("/sell-game");
+      const user = await res.json();
+
+      if (user.phone_verified) {
+        router.replace("/seller");
+      }
+    } catch (err) {
+      router.replace("/login");
     }
-  }, [router]);
+  };
+
+  checkUser();
+}, [router]);
 
   const [step, setStep] = useState(1);
   const [phone, setPhone] = useState("");

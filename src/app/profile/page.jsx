@@ -16,19 +16,39 @@ import {
 import { signOut } from "next-auth/react";
 import Loader from "@/components/Loader";
 
+
 export default function AccountSettingsPage() {
+const router = useRouter();
   const [activeTab, setActiveTab] = useState("profile");
   const [loading, setLoading] = useState(false);
-  const [user, setUser] = useState("");
+  const [user, setUser] = useState(null);
   const [globalLoading, setGlobalLoading] = useState(false);
+  const [load, setLoad] = useState(true);
   useEffect(() => {
-    const stored = localStorage.getItem("nepo-user");
-    if (stored) {
-      setUser(JSON.parse(stored));
-    }
+    const fetchUser = async () => {
+      try {
+        const res = await fetch("/api/user/me");
+        const data = await res.json();
+
+        if (!res.ok) {
+          setUser(null);
+          router.push("/login");
+          return;
+        }
+
+        setUser(data);
+      } catch (err) {
+        console.error(err);
+        router.push("/login");
+      } finally {
+        setLoad(false);
+      }
+    };
+
+    fetchUser();
   }, []);
 
-  if (loading) {
+  if (loading || load) {
     return <Loader />;
   }
 
@@ -156,11 +176,36 @@ function ProfileTab() {
   const [list, setList] = useState([]);
   const [error, setError] = useState("");
   const [correct, setCorrect] = useState("");
-  const [user, setUser] = useState("");
+  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(false);
   const [imgLoading, setImgLoading] = useState(true);
   const [selectedFile, setSelectedFile] = useState(null);
   const [open, setOpen] = useState(false);
+  const [load, setLoad] = useState(true);
+useEffect(() => {
+  const fetchUser = async () => {
+    try {
+      const res = await fetch("/api/user/me");
+      const data = await res.json();
+
+      if (!res.ok) {
+        setUser(null);
+        router.push("/login");
+        return;
+      }
+
+      setUser(data);
+    } catch (err) {
+      console.error(err);
+      router.push("/login");
+    } finally {
+      setLoad(false);
+    }
+  };
+
+  fetchUser();
+}, []);
+
   const handleLogout = async () => {
     localStorage.removeItem("nepo-user");
 
@@ -169,13 +214,8 @@ function ProfileTab() {
     });
   };
 
-  useEffect(() => {
-    const stored = localStorage.getItem("nepo-user");
-    if (stored) {
-      setUser(JSON.parse(stored));
-    }
-  }, []);
-  if (loading) {
+
+  if (loading || load) {
     return <Loader />;
   }
   const handleUpload = async (e) => {
@@ -560,14 +600,33 @@ function PasswordTab({ setGlobalLoading }) {
     uppercase: /[A-Z]/.test(form.newPass),
   };
   const [correct, setCorrect] = useState("");
-  const [user, setUser] = useState("");
+  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(false);
-  useEffect(() => {
-    const stored = localStorage.getItem("nepo-user");
-    if (stored) {
-      setUser(JSON.parse(stored));
+  const [load, setLoad] = useState(true);
+useEffect(() => {
+  const fetchUser = async () => {
+    try {
+      const res = await fetch("/api/user/me");
+      const data = await res.json();
+
+      if (!res.ok) {
+        setUser(null);
+        router.push("/login");
+        return;
+      }
+
+      setUser(data);
+    } catch (err) {
+      console.error(err);
+      router.push("/login");
+    } finally {
+      setLoad(false);
     }
-  }, []);
+  };
+
+  fetchUser();
+}, []);
+
 
   const handleChangePassword = async () => {
     if (loading) return; // prevent spam clicks
@@ -829,7 +888,7 @@ function LInkedTab() {
 }
 
 function DataTab() {
-  const router = useRouter()
+  const router = useRouter();
   return (
     <div className="bg-white rounded-2xl shadow p-4 sm:p-6 space-y-6">
       {/* Header */}

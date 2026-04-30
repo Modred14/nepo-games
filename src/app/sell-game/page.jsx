@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import useAuthGuard from "../hooks/useAuthGuard";
 
 const gameData = {
   "Blood Strike": "bloodstrike-ac.png",
@@ -16,20 +15,29 @@ const gameData = {
 };
 
 export default function SellGame() {
-  useAuthGuard();
-
   const router = useRouter();
 
 useEffect(() => {
-  const storedUser = localStorage.getItem("nepo-user");
+  const checkUser = async () => {
+    try {
+      const res = await fetch("/api/user/me");
 
-  if (!storedUser) return;
+      if (!res.ok) {
+        router.replace("/login");
+        return;
+      }
 
-  const user = JSON.parse(storedUser);
+      const user = await res.json();
 
-  if (user.phone_verified === false) {
-    router.replace("/seller");
-  }
+      if (!user.phone_verified) {
+        router.replace("/seller");
+      }
+    } catch (err) {
+      router.replace("/login");
+    }
+  };
+
+  checkUser();
 }, [router]);
 
   const [selectedGame, setSelectedGame] = useState("");

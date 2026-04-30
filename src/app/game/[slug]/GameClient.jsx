@@ -5,21 +5,42 @@ import ImageSlider from "@/components/ImageSlider";
 import { ShoppingCart, Star } from "lucide-react";
 import PageLoader from "@/components/PageLoader";
 import { useRouter } from "next/navigation";
+import Loader from "@/components/Loader";
 
 export default function GameClient({ game, images, similarGames }) {
   const [index, setIndex] = useState(0);
   const [message, setMessage] = useState("");
   const [report, setReport] = useState(false);
-  const [user, setUser] = useState([]);
+  const [user, setUser] = useState(null);
   const [selectedReason, setSelectedReason] = useState(null);
   const [customReason, setCustomReason] = useState("");
   const [confirmData, setConfirmData] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("nepo-user");
-    const user = storedUser ? JSON.parse(storedUser) : null;
-    setUser(user);
+    const fetchUser = async () => {
+      try {
+        const res = await fetch("/api/user/me");
+        const data = await res.json();
+
+        if (!res.ok) {
+          setUser(null);
+          router.push("/login");
+          return;
+        }
+
+        setUser(data);
+      } catch (err) {
+        console.error(err);
+        router.push("/login");
+      } finally {
+        setLoad(false);
+      }
+    };
+
+    fetchUser();
   }, []);
+
   const user_id = user?.id;
   function formatGamePrice(price) {
     return Number(price).toLocaleString();
@@ -69,7 +90,9 @@ export default function GameClient({ game, images, similarGames }) {
     "Scam Attempt",
     "Others",
   ];
-
+  if (loading) {
+    return <Loader />;
+  }
   return (
     <PageLoader>
       <div className="w-full flex px-2 justify-center"></div>{" "}

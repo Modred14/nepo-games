@@ -1,5 +1,8 @@
 "use client";
 
+import Loader from "@/components/Loader";
+import { useRouter } from "next/navigation";
+
 const features = [
   "Lower selling fees on every transaction",
   "Top placement in search results",
@@ -42,7 +45,35 @@ const plans = [
   },
 ];
 
+
 export default function PricingPage() {
+  const [load, setLoad] = useState(true);
+  const [user, setUser] = useState(null)
+  const router = useRouter()
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const res = await fetch("/api/user/me");
+        const data = await res.json();
+  
+        if (!res.ok) {
+          setUser(null);
+          router.push("/login");
+          return;
+        }
+  
+        setUser(data);
+      } catch (err) {
+        console.error(err);
+        router.push("/login");
+      } finally {
+        setLoad(false);
+      }
+    };
+  
+    fetchUser();
+  }, []);
+  
   const handleUpgrade = async (plan) => {
   const res = await fetch("/api/paystack/initialize", {
     method: "POST",
@@ -58,6 +89,9 @@ export default function PricingPage() {
     window.location.href = data.url;
   }
 };
+if(load){
+  return<Loader/>
+}
   return (
     <div className="w-full min-h-screen flex flex-col items-center justify-center py-16 px-4">
       <div className="text-center mb-12">
