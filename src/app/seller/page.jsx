@@ -16,11 +16,18 @@ export default function Seller() {
     const checkUser = async () => {
       try {
         const res = await fetch("/api/user/me");
+      if (res.status === 401) {
+        setUser(null);
+        router.push("/login");
+        return;
+      }
 
-        if (!res.ok) {
-          router.replace("/login");
-          return;
-        }
+      // ❌ Other errors (500, 404, etc)
+      if (!res.ok) {
+        console.error("Server error:", res.status);
+        setUser(null);
+        return; // stay on page
+      }
 
         const user = await res.json();
 

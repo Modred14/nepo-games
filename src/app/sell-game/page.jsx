@@ -7,7 +7,7 @@ const gameData = {
   "Blood Strike": "bloodstrike-ac.png",
   "Call of Duty": "call-of-duty.png",
   "Delta Force": "delta.png",
-  "DLS": "dls.png",
+  DLS: "dls.png",
   "EA Sports": "fifa.png",
   Efootball: "efootball.png",
   "Free Fire": "freefire-ac.png",
@@ -17,28 +17,36 @@ const gameData = {
 export default function SellGame() {
   const router = useRouter();
 
-useEffect(() => {
-  const checkUser = async () => {
-    try {
-      const res = await fetch("/api/user/me");
+  useEffect(() => {
+    const checkUser = async () => {
+      try {
+        const res = await fetch("/api/user/me");
 
-      if (!res.ok) {
+        if (res.status === 401) {
+          setUser(null);
+          router.push("/login");
+          return;
+        }
+
+        // ❌ Other errors (500, 404, etc)
+        if (!res.ok) {
+          console.error("Server error:", res.status);
+          setUser(null);
+          return; // stay on page
+        }
+
+        const user = await res.json();
+
+        if (!user.phone_verified) {
+          router.replace("/seller");
+        }
+      } catch (err) {
         router.replace("/login");
-        return;
       }
+    };
 
-      const user = await res.json();
-
-      if (!user.phone_verified) {
-        router.replace("/seller");
-      }
-    } catch (err) {
-      router.replace("/login");
-    }
-  };
-
-  checkUser();
-}, [router]);
+    checkUser();
+  }, [router]);
 
   const [selectedGame, setSelectedGame] = useState("");
   const [platform, setPlatform] = useState("");
@@ -46,29 +54,37 @@ useEffect(() => {
   const [amount, setAmount] = useState("");
   const [step, setStep] = useState("idle");
   const [timer, setTimer] = useState(10);
-  const [user, setUser] =useState(null)
+  const [user, setUser] = useState(null);
   const [images, setImages] = useState([]);
   const [success, setSuccess] = useState(false);
   const [slug, setSlug] = useState("");
 
-    useEffect(() => {
+  useEffect(() => {
     const fetchUser = async () => {
       try {
         const res = await fetch("/api/user/me");
-        const data = await res.json();
 
-        if (!res.ok) {
+        // 🔥 ONLY redirect if truly unauthorized
+        if (res.status === 401) {
           setUser(null);
           router.push("/login");
           return;
         }
 
+        // ❌ Other errors (500, 404, etc)
+        if (!res.ok) {
+          console.error("Server error:", res.status);
+          setUser(null);
+          return; // stay on page
+        }
+
+        const data = await res.json();
         setUser(data);
       } catch (err) {
-        console.error(err);
-        router.push("/login");
-      } 
-      
+        // 🌐 Network error lands here
+        console.error("Network error:", err);
+        setUser(null);
+      }
     };
 
     fetchUser();

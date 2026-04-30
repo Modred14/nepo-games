@@ -32,10 +32,31 @@ export default function Conversation({ gameId, receiverId }) {
 
     const load = async (isInitial = false) => {
       try {
-        const storedUser = localStorage.getItem("nepo-user");
-        const user = storedUser ? JSON.parse(storedUser) : null;
-        if (!gameId || !user?.id) return;
-        setUser(user);
+        try {
+          const res = await fetch("/api/user/me");
+
+          // 🔥 ONLY redirect if truly unauthorized
+          if (res.status === 401) {
+            setUser(null);
+            router.push("/login");
+            return;
+          }
+
+          // ❌ Other errors (500, 404, etc)
+          if (!res.ok) {
+            console.error("Server error:", res.status);
+            setUser(null);
+            return; // stay on page
+          }
+
+          const data = await res.json();
+          setUser(data);
+        } catch (err) {
+          // 🌐 Network error lands here
+          console.error("Network error:", err);
+          setUser(null);
+        }
+
         if (isInitial) setLoading(true);
         if (String(receiverId) === "1") {
           const res = await fetch(`/api/system-messages?user_id=${user.id}`);
@@ -343,7 +364,7 @@ export default function Conversation({ gameId, receiverId }) {
       console.error("Send failed", err);
     }
   };
-  
+
   const formatTime = (time) => {
     if (!time) return;
     return new Date(time).toLocaleTimeString(undefined, {
@@ -359,7 +380,7 @@ export default function Conversation({ gameId, receiverId }) {
     }, 50);
     return () => clearTimeout(timeout);
   }, [allMessages.length]);
-  
+
   const lastIndex = allMessages.length - 1;
   const isSystemChat = String(gameId) === "1" && String(receiverId) === "1";
   const activeChat = isSystemChat

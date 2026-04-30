@@ -27,19 +27,29 @@ const router = useRouter();
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const res = await fetch("/api/user/me");
-        const data = await res.json();
+       const res = await fetch("/api/user/me");
 
-        if (!res.ok) {
-          setUser(null);
-          router.push("/login");
-          return;
-        }
-
-        setUser(data);
-      } catch (err) {
-        console.error(err);
+      // 🔥 ONLY redirect if truly unauthorized
+      if (res.status === 401) {
+        setUser(null);
         router.push("/login");
+        return;
+      }
+
+      // ❌ Other errors (500, 404, etc)
+      if (!res.ok) {
+        console.error("Server error:", res.status);
+        setUser(null);
+        return; // stay on page
+      }
+
+      const data = await res.json();
+      setUser(data);
+
+    } catch (err) {
+      // 🌐 Network error lands here
+      console.error("Network error:", err);
+      setUser(null);
       } finally {
         setLoad(false);
       }
@@ -185,19 +195,29 @@ function ProfileTab() {
 useEffect(() => {
   const fetchUser = async () => {
     try {
-      const res = await fetch("/api/user/me");
-      const data = await res.json();
+  const res = await fetch("/api/user/me");
 
-      if (!res.ok) {
+      // 🔥 ONLY redirect if truly unauthorized
+      if (res.status === 401) {
         setUser(null);
         router.push("/login");
         return;
       }
 
+      // ❌ Other errors (500, 404, etc)
+      if (!res.ok) {
+        console.error("Server error:", res.status);
+        setUser(null);
+        return; // stay on page
+      }
+
+      const data = await res.json();
       setUser(data);
+
     } catch (err) {
-      console.error(err);
-      router.push("/login");
+      // 🌐 Network error lands here
+      console.error("Network error:", err);
+      setUser(null);
     } finally {
       setLoad(false);
     }
@@ -606,19 +626,29 @@ function PasswordTab({ setGlobalLoading }) {
 useEffect(() => {
   const fetchUser = async () => {
     try {
-      const res = await fetch("/api/user/me");
-      const data = await res.json();
+       const res = await fetch("/api/user/me");
 
-      if (!res.ok) {
+      // 🔥 ONLY redirect if truly unauthorized
+      if (res.status === 401) {
         setUser(null);
         router.push("/login");
         return;
       }
 
+      // ❌ Other errors (500, 404, etc)
+      if (!res.ok) {
+        console.error("Server error:", res.status);
+        setUser(null);
+        return; // stay on page
+      }
+
+      const data = await res.json();
       setUser(data);
+
     } catch (err) {
-      console.error(err);
-      router.push("/login");
+      // 🌐 Network error lands here
+      console.error("Network error:", err);
+      setUser(null);
     } finally {
       setLoad(false);
     }

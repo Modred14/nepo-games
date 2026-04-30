@@ -4,6 +4,7 @@ import pool from "@/lib/db";
 import { sendSellerWelcomeEmail } from "@/lib/emails/sendSellerWelcome";
 
 export async function POST(req) {
+  console.log("🔥 PAYSTACK WEBHOOK HIT");
   const rawBody = await req.text();
 
   try {
