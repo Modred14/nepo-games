@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { usePathname } from "next/navigation";
 import { useParams } from "next/navigation";
 import Loader from "./Loader";
+import { Verified } from "lucide-react";
 
 export default function Conversation({ gameId, receiverId }) {
   const [textMessage, setTextMessage] = useState("");
@@ -26,37 +27,27 @@ export default function Conversation({ gameId, receiverId }) {
     window.addEventListener("resize", check);
     return () => window.removeEventListener("resize", check);
   }, []);
+  useEffect(() => {
+    const fetchUser = async () => {
+      const res = await fetch("/api/user/me");
+
+      if (res.status === 401) {
+        router.push("/login");
+        return;
+      }
+
+      const data = await res.json();
+      setUser(data);
+    };
+
+    fetchUser();
+  }, []);
 
   useEffect(() => {
     let interval;
 
     const load = async (isInitial = false) => {
       try {
-        try {
-          const res = await fetch("/api/user/me");
-
-          // 🔥 ONLY redirect if truly unauthorized
-          if (res.status === 401) {
-            setUser(null);
-            router.push("/login");
-            return;
-          }
-
-          // ❌ Other errors (500, 404, etc)
-          if (!res.ok) {
-            console.error("Server error:", res.status);
-            setUser(null);
-            return; // stay on page
-          }
-
-          const data = await res.json();
-          setUser(data);
-        } catch (err) {
-          // 🌐 Network error lands here
-          console.error("Network error:", err);
-          setUser(null);
-        }
-
         if (isInitial) setLoading(true);
         if (String(receiverId) === "1") {
           const res = await fetch(`/api/system-messages?user_id=${user.id}`);
@@ -443,6 +434,12 @@ export default function Conversation({ gameId, receiverId }) {
                         src={chat.profile_image || "/profile.png"}
                         className="w-12 h-12 border rounded-full border-blue-600/50 object-cover"
                       />
+                      {chat?.plan && chat.plan !== "free" && (
+                        <Verified
+                          className="fill-green-600 fixed -mt-3 ml-7 text-green-100"
+                          size={16}
+                        />
+                      )}
                     </div>
 
                     <div className="flex-1 min-w-0">
@@ -509,6 +506,12 @@ export default function Conversation({ gameId, receiverId }) {
                       }
                       className="h-10 -ml-1 xs:ml-0 w-10 rounded-full border border-blue-600/80 object-cover"
                     />
+                    {activeChat?.plan && activeChat.plan !== "free" && (
+                      <Verified
+                        className="fill-green-600 fixed mt-7 ml-7 text-green-100"
+                        size={16}
+                      />
+                    )}
                     <div>
                       <p className="text-sm font-semibold text-blue-700">
                         {isAdmin
@@ -540,67 +543,107 @@ export default function Conversation({ gameId, receiverId }) {
                 ref={containerRef}
                 className="flex-1 overflow-y-auto px-6 pb-4  thin-scroll"
               >
-                {loading ? (
-                  <div className="h-full justify-center flex items-center">
-                    <p className="text-black font-semibold">
-                      Loading Chat<span className="loading-dots"></span>
-                    </p>
-                  </div>
-                ) : (
-                  <div>
-                    {isAdmin && (
-                      <div className="mb-4">
-                        <div className="bg-yellow-50 border border-yellow-300 rounded-xl p-4 text-sm text-gray-800 space-y-2">
-                          <p className="font-bold text-base text-yellow-700">
-                            Welcome to Nepo Games Chat 👋
-                          </p>
+                {allMessages.length == 0 && !loading && !isAdmin && (
+                  <div className="h-full flex items-center justify-center ">
+                    <div className="bg-white/40 backdrop-blur-sm shadow-2xs px-4 py-5 rounded-xl border border-white/20">
+                      <div className="flex flex-col items-center text-center space-y-3">
+                        <div className="bg-gradient-to-br from-indigo-500 to-purple-600 p-4 rounded-full shadow-sm">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-8 w-8 text-white"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.77 9.77 0 01-4-.8L3 20l1.8-3.6A7.963 7.963 0 013 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                            />
+                          </svg>
+                        </div>
 
-                          <p>
-                            This is a secure space for buyers and sellers to
-                            discuss game listings and transactions.
-                          </p>
-
-                          <p className="font-semibold">Rules:</p>
-
-                          <ul className="list-disc pl-5 space-y-1">
-                            <li>
-                              <strong>
-                                Do not share sensitive information
-                              </strong>{" "}
-                              (passwords, personal details, etc.)
-                            </li>
-                            <li>
-                              <strong>
-                                Do not move conversations outside Nepo Games
-                              </strong>{" "}
-                              (WhatsApp, Telegram, etc.)
-                            </li>
-                            <li>
-                              <strong>
-                                Do not send or request account numbers
-                              </strong>
-                            </li>
-                            <li>
-                              <strong>
-                                Use only Nepo Games payment method
-                              </strong>{" "}
-                              for all transactions
-                            </li>
-                            <li>
-                              <strong>
-                                Do not release account login details until
-                                payment has been confirmed
-                              </strong>
-                            </li>
-                          </ul>
-
-                          <p className="text-red-600 font-semibold pt-2">
-                            Failure to comply will result in immediate account
-                            suspension.
+                        <div>
+                          <h2 className="text-lg font-semibold text-gray-900">
+                            No Messages Yet
+                          </h2>
+                          <p className="text-gray-500 text-sm mt-1">
+                            Start a conversation and trade instantly.
                           </p>
                         </div>
                       </div>
-                    )}
+                    </div>
+                  </div>
+                )}
+                {isAdmin && (
+                  <div className="mb-4">
+                    <div className="bg-yellow-50 border border-yellow-300 rounded-xl p-4 text-sm text-gray-800 space-y-2">
+                      <p className="font-bold text-base text-yellow-700">
+                        Welcome to Nepo Games Chat 👋
+                      </p>
+
+                      <p>
+                        This is a secure space for buyers and sellers to discuss
+                        game listings and transactions.
+                      </p>
+
+                      <p className="font-semibold">Rules:</p>
+
+                      <ul className="list-disc pl-5 space-y-1">
+                        <li>
+                          <strong>Do not share sensitive information</strong>{" "}
+                          (passwords, personal details, etc.)
+                        </li>
+                        <li>
+                          <strong>
+                            Do not move conversations outside Nepo Games
+                          </strong>{" "}
+                          (WhatsApp, Telegram, etc.)
+                        </li>
+                        <li>
+                          <strong>
+                            Do not send or request account numbers
+                          </strong>
+                        </li>
+                        <li>
+                          <strong>Use only Nepo Games payment method</strong>{" "}
+                          for all transactions
+                        </li>
+                        <li>
+                          <strong>
+                            Do not release account login details until payment
+                            has been confirmed
+                          </strong>
+                        </li>
+                      </ul>
+
+                      <p className="text-red-600 font-semibold pt-2">
+                        Failure to comply will result in immediate account
+                        suspension.
+                      </p>
+                    </div>
+                  </div>
+                )}
+                {loading && !isAdmin ? (
+                  <div className="h-full flex items-center justify-center">
+                    <div className="flex flex-col shadow-2xs items-center space-y-2 bg-white/40 backdrop-blur-sm px-4 py-5 pt-6 rounded-xl border border-white/20">
+                      {/* Chat-style loader */}
+                      <div className="flex space-x-1">
+                        <div className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce"></div>
+                        <div className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce [animation-delay:0.15s]"></div>
+                        <div className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce [animation-delay:0.3s]"></div>
+                      </div>
+
+                      {/* Text */}
+                      <p className="text-gray-800 text-sm font-bold">
+                        Loading chat
+                        <span className="ml-1 loading-dots"></span>
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div>
                     {allMessages.map((message, index) => (
                       <div
                         key={message.id}
@@ -611,7 +654,7 @@ export default function Conversation({ gameId, receiverId }) {
                         }`}
                       >
                         <div
-                          className={`max-w-[70%] px-4 py-2 rounded-2xl text-sm shadow-sm wrap-break-word  ${
+                          className={`max-w-[70%] px-4 py-2 rounded-2xl whitespace-pre-wrap text-sm shadow-sm wrap-break-word  ${
                             !isAdmin && userId === message.sender_id
                               ? "bg-blue-600 text-white rounded-br-sm"
                               : "bg-white text-gray-800 border border-blue-100 rounded-bl-sm"

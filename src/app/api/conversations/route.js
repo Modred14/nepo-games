@@ -24,6 +24,7 @@ SELECT
   u.username,
   u.profile_image,
   u.email,
+  u.plan,
 
   COALESCE(
   l.title || ' (' || COALESCE(l.platform, '') || ')',
@@ -78,7 +79,8 @@ GROUP BY
   c.id,
   u.username,
   u.profile_image,
-  u.email,
+  u.email, 
+  u.plan,
   l.title,
   l.platform,
   m.message,
