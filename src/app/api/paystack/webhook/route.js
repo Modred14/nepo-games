@@ -5,12 +5,10 @@ import { sendSellerWelcomeEmail } from "@/lib/emails/sendSellerWelcome";
 
 export async function POST(req) {
   console.log("🔥 PAYSTACK WEBHOOK HIT");
+
   const rawBody = await req.text();
 
   try {
-    // =========================
-    // VERIFY SIGNATURE
-    // =========================
     const signature = req.headers.get("x-paystack-signature");
 
     const hash = crypto
@@ -23,9 +21,6 @@ export async function POST(req) {
       return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
     }
 
-    // =========================
-    // PARSE EVENT SAFELY
-    // =========================
     let event;
 
     try {
@@ -40,68 +35,35 @@ export async function POST(req) {
     }
 
     const data = event.data;
-
-    // =========================
-    // SAFE METADATA ACCESS
-    // =========================
+    const metadata = data?.metadata || {};
     const userId = data?.metadata?.userId;
+    const purpose = metadata?.purpose;
+    const amount = Math.round(data.amount / 100);
     const reference = data?.reference;
 
-    if (!userId || !reference) {
-      console.error("❌ Missing metadata:", data);
+    if (!reference || !userId || !purpose) {
+      console.error("❌ Missing critical data:", data);
       return NextResponse.json(
-        { error: "Missing metadata" },
-        { status: 400 }
+        { error: "Missing required fields" },
+        { status: 400 },
       );
     }
 
-    // =========================
-    // AMOUNT HANDLING
-    // =========================
-    const amount = Math.round(data.amount / 100);
-
-    const PLAN_BY_AMOUNT = {
-      2900: { plan: "pro", days: 30, label: "1 month" },
-      8500: { plan: "plus", days: 90, label: "3 months" },
-      32000: { plan: "premium", days: 365, label: "12 months" },
-    };
-
-    const planData = PLAN_BY_AMOUNT[amount];
-
-    if (!planData) {
-      console.error("❌ Invalid amount:", amount);
-      return NextResponse.json(
-        { error: "Invalid amount" },
-        { status: 400 }
-      );
-    }
-
-    const { plan, days, label } = planData;
-
-    // =========================
-    // CHECK USER
-    // =========================
     const userRes = await pool.query(
       "SELECT id, email FROM users WHERE id = $1",
-      [userId]
+      [userId],
     );
 
     const user = userRes.rows[0];
 
     if (!user) {
       console.error("❌ User not found:", userId);
-      return NextResponse.json(
-        { error: "User not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // =========================
-    // IDENTITY PROTECTION (NO DUPLICATES)
-    // =========================
     const existing = await pool.query(
-      "SELECT id FROM payments WHERE reference = $1",
-      [reference]
+      "SELECT id FROM users_transactions WHERE reference = $1",
+      [reference],
     );
 
     if (existing.rows.length > 0) {
@@ -109,20 +71,51 @@ export async function POST(req) {
       return NextResponse.json({ status: "already processed" });
     }
 
-    // =========================
-    // SAVE PAYMENT
-    // =========================
-    await pool.query(
-      `INSERT INTO payments (user_id, amount, reference, status)
-       VALUES ($1,$2,$3,$4)`,
-      [userId, data.amount, reference, "success"]
-    );
+    if (purpose === "wallet") {
+      await pool.query(
+        `
+        INSERT INTO users_transactions (user_id, type, amount, status, description, reference)
+        VALUES ($1, 'credit', $2, 'success', 'Wallet funding', $3)
+        `,
+        [userId, amount, reference],
+      );
 
-    // =========================
-    // UPDATE USER
-    // =========================
-    await pool.query(
-      `UPDATE users
+      console.log("💰 Wallet funded:", amount);
+
+      return NextResponse.json({ status: "wallet credited" });
+    }
+
+    if (purpose === "subscription") {
+      const PLAN_BY_AMOUNT = {
+        2900: { plan: "pro", days: 30, label: "1 month" },
+        8500: { plan: "plus", days: 90, label: "3 months" },
+        32000: { plan: "premium", days: 365, label: "12 months" },
+      };
+
+      const planData = PLAN_BY_AMOUNT[amount];
+
+      if (!planData) {
+        console.error("❌ Invalid amount:", amount);
+        return NextResponse.json({ error: "Invalid amount" }, { status: 400 });
+      }
+
+      const { plan, days, label } = planData;
+
+      await pool.query(
+        `INSERT INTO payments (user_id, amount, reference, status)
+       VALUES ($1,$2,$3,$4)`,
+        [userId, data.amount, reference, "success"],
+      );
+      await pool.query(
+        `
+  INSERT INTO users_transactions (user_id, type, amount, status, description, reference)
+  VALUES ($1, 'debit', $2, 'success', 'Subscription payment', $3)
+  `,
+        [userId, amount, reference],
+      );
+
+      await pool.query(
+        `UPDATE users
        SET 
          plan = $1,
          subscription_status = 'active',
@@ -135,22 +128,22 @@ export async function POST(req) {
            END,
          paystack_reference = $3
        WHERE id = $4`,
-      [plan, days, reference, userId]
-    );
+        [plan, days, reference, userId],
+      );
 
-    // =========================
-    // EMAIL (NON-BLOCKING)
-    // =========================
-    sendSellerWelcomeEmail(label, user.email, plan)
-      .then(() => console.log("📧 Email sent"))
-      .catch((err) => console.error("❌ Email failed:", err));
+      sendSellerWelcomeEmail(label, user.email, plan)
+        .then(() => console.log("📧 Email sent"))
+        .catch((err) => console.error("❌ Email failed:", err));
+
+      return NextResponse.json({ status: "subscription activated" });
+    }
 
     return NextResponse.json({ status: "ok" });
   } catch (err) {
     console.error("🔥 WEBHOOK CRASH:", err);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
