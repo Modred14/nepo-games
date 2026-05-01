@@ -692,15 +692,7 @@ function AccountTab() {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(value);
-  const canWithdraw = (plan) => {
-    const today = new Date().getDay();
 
-    if (plan === "free") {
-      return today === 2; // Tuesday only
-    }
-
-    return true; // paid users anytime
-  };
   useEffect(() => {
     const fetchBanks = async () => {
       const res = await fetch("https://api.paystack.co/bank?country=nigeria", {
@@ -734,12 +726,6 @@ function AccountTab() {
     // ❌ exceeds balance
     if (value > balance) {
       setWithdrawError("Insufficient balance");
-      return;
-    }
-
-    // ❌ plan restriction (extra safety)
-    if (!canWithdraw(userPlan)) {
-      setWithdrawError("Withdrawals are only allowed on Tuesday");
       return;
     }
 
@@ -910,13 +896,6 @@ function AccountTab() {
       <div className="space-y-5">
         <div className="relative bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-2xl p-5 shadow overflow-hidden">
           {" "}
-          {!canWithdraw(userPlan) && (
-            <p className="text-xs text-yellow-200 font-semibold">
-              {userPlan === "free"
-                ? "Free users can only withdraw on Tuesdays."
-                : "Withdrawals are currently unavailable."}
-            </p>
-          )}
           <div className="flex items-center gap-3 mt-1">
             <div>
               {" "}
@@ -965,13 +944,8 @@ function AccountTab() {
             </button>
             <button
               onClick={() => setShowWithdrawModal(true)}
-              disabled={!canWithdraw(userPlan)}
               className={`border border-white px-4 py-2 rounded-md text-sm transition
-    ${
-      canWithdraw(userPlan)
-        ? "hover:bg-white/10"
-        : "opacity-40 cursor-not-allowed"
-    }`}
+    ${"hover:bg-white/10"}`}
             >
               Withdraw
             </button>

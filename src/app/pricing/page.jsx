@@ -181,7 +181,7 @@ export default function PricingPage() {
                     <li>✔ Standard visibility in search results</li>
                     <li>✔ Basic seller profile</li>
                     <li>✔ Platform-secured transactions</li>
-                    <li>✔ Withdrawals processed weekly (Tuesdays only)</li>
+                    <li>✔ Withdraw funds anytime (standard processing time applies)</li>
                     <li>✔ Basic customer support access</li>
                   </>
                 ) : (

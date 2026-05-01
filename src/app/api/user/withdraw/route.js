@@ -49,15 +49,15 @@ export async function POST(req) {
 
     const userId = user.id;
 
-    // 2. Plan restriction (FREE users only Tuesday)
-    const today = new Date().getDay();
-    if (user.plan === "free" && today !== 2) {
-      await client.query("ROLLBACK");
-      return NextResponse.json(
-        { error: "Free users can only withdraw on Tuesdays" },
-        { status: 403 },
-      );
-    }
+    //2. Plan restriction (FREE users only Tuesday)
+    // const today = new Date().getDay();
+    // if (user.plan === "free" && today !== 2) {
+    //   await client.query("ROLLBACK");
+    //   return NextResponse.json(
+    //     { error: "Free users can only withdraw on Tuesdays" },
+    //     { status: 403 },
+    //   );
+    // }
 
     // 3. Get balance
     const balanceRes = await client.query(
@@ -149,7 +149,7 @@ export async function POST(req) {
       },
       body: JSON.stringify({
         source: "balance",
-        amount: amount * 100, // kobo
+        amount: amount * 100,
         recipient:  recipientCode, 
         reason: "Wallet withdrawal",
         reference,
