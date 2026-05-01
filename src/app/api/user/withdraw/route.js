@@ -13,8 +13,7 @@ export async function POST(req) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { amount, accountNumber, bankCode } = await req.json();
-
+    const { amount, accountNumber, bankCode, accountName } = await req.json();
 
     if (!amount || amount <= 0) {
       return NextResponse.json({ error: "Invalid amount" }, { status: 400 });
@@ -85,7 +84,6 @@ export async function POST(req) {
       );
     }
 
-
     let recipientCode = user.recipient_code;
 
     if (!recipientCode) {
@@ -104,7 +102,7 @@ export async function POST(req) {
             bank_code: bankCode,
             currency: "NGN",
           }),
-        }
+        },
       );
 
       const recipientData = await recipientRes.json();
@@ -113,20 +111,53 @@ export async function POST(req) {
         await client.query("ROLLBACK");
         return NextResponse.json(
           { error: recipientData.message },
-          { status: 400 }
+          { status: 400 },
         );
       }
 
       recipientCode = recipientData.data.recipient_code;
 
-      await client.query(
-        "UPDATE users SET recipient_code = $1 WHERE id = $2",
-        [recipientCode, userId]
-      );
+      await client.query("UPDATE users SET recipient_code = $1 WHERE id = $2", [
+        recipientCode,
+        userId,
+      ]);
     }
 
     // 5. Create reference
     const reference = `WD_${Date.now()}_${userId}`;
+
+// BEFORE INSERT INTO user_banks
+const banksRes = await fetch("https://api.paystack.co/bank?country=nigeria", {
+  headers: {
+    Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+  },
+});
+
+const banksData = await banksRes.json();
+
+if (!banksRes.ok) {
+  await client.query("ROLLBACK");
+  return NextResponse.json(
+    { error: "Unable to fetch bank list" },
+    { status: 400 }
+  );
+}
+const bankName =
+  banksData.data.find((b) => b.code === bankCode)?.name || "Unknown Bank";
+
+  await pool.query(
+  `
+  INSERT INTO user_banks 
+  (user_id, account_number, account_name, bank_code, bank_name, created_at)
+  VALUES ($1, $2, $3, $4, $5, NOW())
+  ON CONFLICT (user_id, account_number, bank_code)
+  DO UPDATE SET 
+    account_name = EXCLUDED.account_name,
+    bank_name = EXCLUDED.bank_name,
+    created_at = NOW()
+  `,
+  [userId, accountNumber, accountName, bankCode, bankName]
+);
 
     // 6. Insert pending transaction FIRST
     await client.query(
@@ -150,7 +181,7 @@ export async function POST(req) {
       body: JSON.stringify({
         source: "balance",
         amount: amount * 100,
-        recipient:  recipientCode, 
+        recipient: recipientCode,
         reason: "Wallet withdrawal",
         reference,
       }),

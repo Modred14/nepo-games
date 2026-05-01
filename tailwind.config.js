@@ -3,6 +3,7 @@ export default {
     extend: {
       screens: {
         xs: "350px",
+        "2xs": "300px",
       },
     },
   },

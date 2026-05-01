@@ -104,11 +104,11 @@ export default function AccountSettingsPage() {
           active={activeTab === "data"}
           onClick={() => !globalLoading && setActiveTab("data")}
         />
-        <MobileTab
+        {/* <MobileTab
           label="Notifications"
           active={activeTab === "notifications"}
           onClick={() => !globalLoading && setActiveTab("notifications")}
-        />
+        /> */}
       </div>
 
       <div className="flex flex-col md:flex-row gap-4 sm:gap-6">
@@ -149,13 +149,13 @@ export default function AccountSettingsPage() {
             onClick={() => setActiveTab("data")}
             disabled={globalLoading}
           />
-          <TabButton
+          {/* <TabButton
             icon={<Bell size={16} />}
             label="Notifications"
             active={activeTab === "notifications"}
             onClick={() => setActiveTab("notifications")}
             disabled={globalLoading}
-          />
+          /> */}
         </div>
 
         {/* Content */}
@@ -171,7 +171,7 @@ export default function AccountSettingsPage() {
           )}
           {activeTab === "linked" && <LInkedTab />}
           {activeTab === "data" && <DataTab />}
-          {activeTab === "notifications" && <NotificationTab />}
+          {/* {activeTab === "notifications" && <NotificationTab />} */}
         </div>
       </div>
     </div>
@@ -596,12 +596,15 @@ function AccountTab() {
   const [showModal, setShowModal] = useState(false);
   const [userPlan, setUserPlan] = useState("free");
   const [amount, setAmount] = useState("");
+  const [savedBanks, setSavedBanks] = useState([]);
   const [loadingPay, setLoadingPay] = useState(false);
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
   const [withdrawAmount, setWithdrawAmount] = useState("");
   const [withdrawError, setWithdrawError] = useState("");
   const [loadingWithdraw, setLoadingWithdraw] = useState(false);
   const [accountNumber, setAccountNumber] = useState("");
+  const [accountName, setAccountName] = useState("");
+  const [gettingAccountName, setGettingAccountName] = useState(true);
   const [bankCode, setBankCode] = useState("");
   const [banks, setBanks] = useState([]);
   const [page, setPage] = useState(1);
@@ -610,29 +613,63 @@ function AccountTab() {
   const end = start + ITEMS_PER_PAGE;
 
   const currentTransactions = transactions.slice(start, end);
-
   useEffect(() => {
-    const fetchAccount = async () => {
-      try {
-        const res = await fetch("/api/user/account");
+    if (accountNumber.length !== 10 || !bankCode) return;
 
-        if (!res.ok) {
-          console.error("Failed to load account");
-          return;
-        }
+    setGettingAccountName(true);
+    setAccountName("");
+
+    const timeout = setTimeout(async () => {
+      try {
+        const res = await fetch("/api/paystack/resolve-account", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ accountNumber, bankCode }),
+        });
 
         const data = await res.json();
 
-        setBalance(Number(data.balance || 0));
-        setTransactions(data.transactions || []);
-        setUserPlan(data.plan);
-      } catch (err) {
-        console.error("Network error:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
+        if (!res.ok) {
+          setAccountName("");
+          return;
+        }
 
+        setAccountName(data.account_name); // ✅ correct key
+      } catch (err) {
+        console.error(err);
+        setAccountName("");
+      } finally {
+        setGettingAccountName(false);
+      }
+    }, 800);
+
+    return () => clearTimeout(timeout);
+  }, [accountNumber, bankCode]);
+
+  const fetchAccount = async () => {
+    try {
+      const res = await fetch("/api/user/account");
+
+      if (!res.ok) {
+        console.error("Failed to load account");
+        return;
+      }
+
+      const data = await res.json();
+
+      setBalance(Number(data.balance || 0));
+      setTransactions(data.transactions || []);
+      setUserPlan(data.plan);
+    } catch (err) {
+      console.error("Network error:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchAccount();
   }, []);
   const triggerAnimation = () => {
@@ -741,6 +778,7 @@ function AccountTab() {
           amount: value,
           accountNumber,
           bankCode,
+          accountName,
         }),
       });
 
@@ -765,6 +803,29 @@ function AccountTab() {
     } finally {
       setLoadingWithdraw(false);
     }
+  };
+  const fetchBanks = async () => {
+    const res = await fetch("/api/user/get-banks");
+    const data = await res.json();
+    setSavedBanks(data.banks || []);
+  };
+  useEffect(() => {
+    fetchBanks();
+  }, []);
+  const maskAccountNumber = (acc) => {
+    if (!acc || acc.length < 7) return acc;
+
+    const first = acc.slice(0, 4);
+    const last = acc.slice(-3);
+    const stars = "*".repeat(acc.length - 7);
+
+    return `${first}${stars}${last}`;
+  };
+  const getFirstTwoNames = (fullName) => {
+    return fullName.split(" ").slice(0, 2).join(" ");
+  };
+  const getFirstName = (fullName) => {
+    return fullName.split(" ").slice(0, 3).join(" ");
   };
   if (loading) {
     return <Loader />;
@@ -833,7 +894,35 @@ function AccountTab() {
             {withdrawError && (
               <p className="text-sm text-red-600">{withdrawError}</p>
             )}
+            {savedBanks.length > 0 && userPlan !== "free" && (
+              <div className="mt-2">
+                <p className="text-xs text-gray-500 mb-2">Recent accounts</p>
 
+                <div className="space-y-2 xs:grid grid-cols-3 gap-1">
+                  {savedBanks.map((b, i) => (
+                    <div
+                      key={i}
+                      onClick={() => {
+                        setAccountNumber(b.account_number);
+                        setAccountName(b.account_name);
+                        setBankCode(b.bank_code);
+                      }}
+                      className="p-1 border h-full overflow-hidden rounded-lg cursor-pointer hover:bg-gray-50"
+                    >
+                      <p className="text-xs font-medium">
+                        {getFirstTwoNames(b.account_name)}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {maskAccountNumber(b.account_number)}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {getFirstName(b.bank_name)}
+                      </p>{" "}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
             <input
               type="number"
               value={withdrawAmount}
@@ -842,7 +931,7 @@ function AccountTab() {
               className="w-full mt-4 border rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
             />
             <input
-              type="text"
+              type="number"
               value={accountNumber}
               onChange={(e) => setAccountNumber(e.target.value)}
               placeholder="Account Number"
@@ -861,13 +950,24 @@ function AccountTab() {
                 </option>
               ))}
             </select>
+            <input
+              type="number"
+              value={accountName}
+              placeholder="Account Name"
+              disabled
+              className="w-full mt-3 border rounded-lg px-3 py-2"
+            />
             <div className="flex gap-3 mt-5">
               <button
                 onClick={() => {
+                  fetchAccount();
                   setShowWithdrawModal(false);
                   setAccountNumber("");
+                  setAccountName("");
+                  setGettingAccountName(true);
                   setBankCode("");
                   setWithdrawAmount("");
+                  fetchBanks();
                   setWithdrawError("");
                 }}
                 className="flex-1 border rounded-lg py-2 text-sm"
@@ -877,7 +977,7 @@ function AccountTab() {
 
               <button
                 onClick={handleWithdraw}
-                disabled={loadingWithdraw}
+                disabled={gettingAccountName || loadingWithdraw}
                 className="flex-1 bg-blue-600 text-white rounded-lg py-2 text-sm flex items-center justify-center gap-2 disabled:opacity-60"
               >
                 {loadingWithdraw ? (

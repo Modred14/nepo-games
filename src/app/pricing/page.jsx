@@ -138,7 +138,10 @@ export default function PricingPage() {
         <h1 className="text-3xl sm:text-4xl font-bold text-blue-700">
           Simple, transparent pricing
         </h1>
-        <p className="text-gray-600 mt-2">No contracts. Cancel anytime.</p>
+        <p className="text-gray-600 mt-2">
+          Upgrade anytime — your remaining subscription time is automatically
+          carried over to your new plan.
+        </p>{" "}
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 w-full max-w-7xl">
@@ -181,7 +184,10 @@ export default function PricingPage() {
                     <li>✔ Standard visibility in search results</li>
                     <li>✔ Basic seller profile</li>
                     <li>✔ Platform-secured transactions</li>
-                    <li>✔ Withdraw funds anytime (standard processing time applies)</li>
+                    <li>
+                      ✔ Withdraw funds anytime (standard processing time
+                      applies)
+                    </li>
                     <li>✔ Basic customer support access</li>
                   </>
                 ) : (
