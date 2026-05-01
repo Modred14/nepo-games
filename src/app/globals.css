@@ -10,6 +10,24 @@ body {
   background-color: white;
 }
 
+@keyframes draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.animate-draw {
+  stroke: #00ff6a;
+  stroke-width: 3;
+  fill: none;
+
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+
+  animation: draw 2s ease-out infinite;
+  filter: drop-shadow(0 0 8px #00ff6a);
+}
+
 @theme inline {
   --color-background: var(--background);
   /* --font-sans: var(--font-geist-sans);

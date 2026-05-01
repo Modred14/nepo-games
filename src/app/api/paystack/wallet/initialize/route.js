@@ -1,12 +1,6 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "../../auth/[...nextauth]/route";
-
-const PLAN_PRICES = {
-  pro: 290000,
-  plus: 850000,
-  premium: 3200000,
-};
+import { authOptions } from "../../../auth/[...nextauth]/route";
 
 export async function POST(req) {
   const session = await getServerSession(authOptions);
@@ -15,12 +9,10 @@ export async function POST(req) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { plan } = await req.json();
+  const { amount } = await req.json();
 
-  const amount = PLAN_PRICES[plan];
-
-  if (!amount) {
-    return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
+  if (!amount || amount < 100) {
+    return NextResponse.json({ error: "Invalid amount" }, { status: 400 });
   }
 
   const response = await fetch(
@@ -33,13 +25,12 @@ export async function POST(req) {
       },
       body: JSON.stringify({
         email: session.user.email,
-        amount,
+        amount: Math.round(amount * 100), // kobo
         metadata: {
           userId: session.user.id,
-          purpose: "subscription",
-          plan,
+          purpose: "wallet",
         },
-        callback_url: `${process.env.NEXT_PUBLIC_BASE_URL}/payment-success`,
+        callback_url: `${process.env.NEXT_PUBLIC_BASE_URL}/profile?tab=account`,
       }),
     },
   );

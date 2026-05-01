@@ -6,13 +6,14 @@ import { useEffect, useState } from "react";
 
 const features = [
   "Lower selling fees on every transaction",
-  "Top placement in search results",
+  "Priority placement in search results",
   "Featured listings on homepage",
-  "“Verified Seller” badge (build buyer trust)",
-  "Faster payouts",
+  "Verified Seller badge for buyer trust",
+  "Fast-track payouts (get paid quicker)",
   "Priority dispute resolution",
   "Advanced sales & performance analytics",
-  "Access to high-value buyers",
+  "Access to high-intent, high-value buyers",
+  "Withdraw funds anytime, instantly",
 ];
 
 const plans = [
@@ -56,27 +57,26 @@ export default function PricingPage() {
       try {
         const res = await fetch("/api/user/me");
 
-      // 🔥 ONLY redirect if truly unauthorized
-      if (res.status === 401) {
+        // 🔥 ONLY redirect if truly unauthorized
+        if (res.status === 401) {
+          setUser(null);
+          router.push("/login");
+          return;
+        }
+
+        // ❌ Other errors (500, 404, etc)
+        if (!res.ok) {
+          console.error("Server error:", res.status);
+          setUser(null);
+          return; // stay on page
+        }
+
+        const data = await res.json();
+        setUser(data);
+      } catch (err) {
+        // 🌐 Network error lands here
+        console.error("Network error:", err);
         setUser(null);
-        router.push("/login");
-        return;
-      }
-
-      // ❌ Other errors (500, 404, etc)
-      if (!res.ok) {
-        console.error("Server error:", res.status);
-        setUser(null);
-        return; // stay on page
-      }
-
-      const data = await res.json();
-      setUser(data);
-
-    } catch (err) {
-      // 🌐 Network error lands here
-      console.error("Network error:", err);
-      setUser(null);
       } finally {
         setLoad(false);
       }
@@ -86,48 +86,49 @@ export default function PricingPage() {
   }, []);
   const currentPlan = user?.plan;
 
- const handleUpgrade = async (plan) => {
-  if (!user) {
-    router.push("/login");
-    return;
-  }
-
-  if (!user.phone_verified) {
-    router.push("/seller");
-    return;
-  }
-
-  if (user?.plan === plan) return;
-
-  try {
-    setUpgrading(true);
-
-    const res = await fetch("/api/paystack/initialize", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ plan }),
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      throw new Error(data.error || "Something went wrong");
+  const handleUpgrade = async (plan) => {
+    if (!user) {
+      router.push("/login");
+      return;
     }
 
-    if (data.url) {
-      window.location.href = data.url;
-    } else {
-      throw new Error("No payment link returned");
+    if (!user.phone_verified) {
+      router.push("/seller");
+      return;
     }
-  } catch (err) {
-    console.error("Upgrade error:", err);
-    alert(err.message); // replace with toast later
-  } finally {
-    setUpgrading(false);
-  }
-};
+
+    if (user?.plan === plan) return;
+
+    try {
+      setUpgrading(true);
+
+      const res = await fetch("/api/paystack/initialize", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ plan }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setUpgrading(false);
+        throw new Error(data.error || "Something went wrong");
+      }
+
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        setUpgrading(false);
+        throw new Error("No payment link returned");
+      }
+    } catch (err) {
+      console.error("Upgrade error:", err);
+      alert(err.message);
+      setUpgrading(false); // replace with toast later
+    }
+  };
   if (load || upgrading) {
     return <Loader />;
   }
@@ -180,8 +181,8 @@ export default function PricingPage() {
                     <li>✔ Standard visibility in search results</li>
                     <li>✔ Basic seller profile</li>
                     <li>✔ Platform-secured transactions</li>
-                    <li>✔ Standard withdrawal speed</li>
-                    <li>✔ Basic support access</li>
+                    <li>✔ Withdrawals processed weekly (Tuesdays only)</li>
+                    <li>✔ Basic customer support access</li>
                   </>
                 ) : (
                   features.map((item, i) => <li key={i}>✔ {item}</li>)

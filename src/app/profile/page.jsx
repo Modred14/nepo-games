@@ -12,44 +12,53 @@ import {
   Link,
   Camera,
   LogOut,
+  CreditCard,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
+import { useSearchParams } from "next/navigation";
 import Loader from "@/components/Loader";
 
-
 export default function AccountSettingsPage() {
-const router = useRouter();
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState("profile");
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState(null);
   const [globalLoading, setGlobalLoading] = useState(false);
   const [load, setLoad] = useState(true);
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const tab = searchParams.get("tab");
+
+    if (tab) {
+      setActiveTab(tab);
+    }
+  }, [searchParams]);
   useEffect(() => {
     const fetchUser = async () => {
       try {
-       const res = await fetch("/api/user/me");
+        const res = await fetch("/api/user/me");
 
-      // 🔥 ONLY redirect if truly unauthorized
-      if (res.status === 401) {
+        // 🔥 ONLY redirect if truly unauthorized
+        if (res.status === 401) {
+          setUser(null);
+          router.push("/login");
+          return;
+        }
+
+        // ❌ Other errors (500, 404, etc)
+        if (!res.ok) {
+          console.error("Server error:", res.status);
+          setUser(null);
+          return; // stay on page
+        }
+
+        const data = await res.json();
+        setUser(data);
+      } catch (err) {
+        // 🌐 Network error lands here
+        console.error("Network error:", err);
         setUser(null);
-        router.push("/login");
-        return;
-      }
-
-      // ❌ Other errors (500, 404, etc)
-      if (!res.ok) {
-        console.error("Server error:", res.status);
-        setUser(null);
-        return; // stay on page
-      }
-
-      const data = await res.json();
-      setUser(data);
-
-    } catch (err) {
-      // 🌐 Network error lands here
-      console.error("Network error:", err);
-      setUser(null);
       } finally {
         setLoad(false);
       }
@@ -74,6 +83,11 @@ const router = useRouter();
           label="Profile"
           active={activeTab === "profile"}
           onClick={() => !globalLoading && setActiveTab("profile")}
+        />
+        <MobileTab
+          label="Account"
+          active={activeTab === "account"}
+          onClick={() => !globalLoading && setActiveTab("account")}
         />
         <MobileTab
           label="Password"
@@ -105,6 +119,13 @@ const router = useRouter();
             label="Profile Information"
             active={activeTab === "profile"}
             onClick={() => setActiveTab("profile")}
+            disabled={globalLoading}
+          />
+          <TabButton
+            icon={<CreditCard size={16} />}
+            label="Account"
+            active={activeTab === "account"}
+            onClick={() => setActiveTab("account")}
             disabled={globalLoading}
           />
           <TabButton
@@ -144,6 +165,7 @@ const router = useRouter();
           }`}
         >
           {activeTab === "profile" && <ProfileTab />}
+          {activeTab === "account" && <AccountTab />}
           {activeTab === "password" && (
             <PasswordTab setGlobalLoading={setGlobalLoading} />
           )}
@@ -192,39 +214,38 @@ function ProfileTab() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [open, setOpen] = useState(false);
   const [load, setLoad] = useState(true);
-useEffect(() => {
-  const fetchUser = async () => {
-    try {
-  const res = await fetch("/api/user/me");
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const res = await fetch("/api/user/me");
 
-      // 🔥 ONLY redirect if truly unauthorized
-      if (res.status === 401) {
+        // 🔥 ONLY redirect if truly unauthorized
+        if (res.status === 401) {
+          setUser(null);
+          router.push("/login");
+          return;
+        }
+
+        // ❌ Other errors (500, 404, etc)
+        if (!res.ok) {
+          console.error("Server error:", res.status);
+          setUser(null);
+          return; // stay on page
+        }
+
+        const data = await res.json();
+        setUser(data);
+      } catch (err) {
+        // 🌐 Network error lands here
+        console.error("Network error:", err);
         setUser(null);
-        router.push("/login");
-        return;
+      } finally {
+        setLoad(false);
       }
+    };
 
-      // ❌ Other errors (500, 404, etc)
-      if (!res.ok) {
-        console.error("Server error:", res.status);
-        setUser(null);
-        return; // stay on page
-      }
-
-      const data = await res.json();
-      setUser(data);
-
-    } catch (err) {
-      // 🌐 Network error lands here
-      console.error("Network error:", err);
-      setUser(null);
-    } finally {
-      setLoad(false);
-    }
-  };
-
-  fetchUser();
-}, []);
+    fetchUser();
+  }, []);
 
   const handleLogout = async () => {
     localStorage.removeItem("nepo-user");
@@ -233,7 +254,6 @@ useEffect(() => {
       callbackUrl: "/login",
     });
   };
-
 
   if (loading || load) {
     return <Loader />;
@@ -502,6 +522,566 @@ useEffect(() => {
   );
 }
 
+function StatCard({ label, value }) {
+  const formatMoney = (val) =>
+    new Intl.NumberFormat("en-NG", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(val);
+
+  return (
+    <div className="bg-white shadow rounded-xl p-3">
+      <p className="text-xs text-gray-500">{label}</p>
+      <p className="text-sm font-semibold text-gray-900 mt-1">
+        ₦{formatMoney(value || 0)}
+      </p>
+    </div>
+  );
+}
+
+function TransactionItem({ tx }) {
+  const isCredit = tx.type === "credit";
+  const formatMoney = (value) =>
+    new Intl.NumberFormat("en-NG", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(value);
+
+  return (
+    <div className="flex justify-between items-center border-b pb-2 last:border-b-0">
+      <div>
+        <p className="text-sm font-medium">{tx.description}</p>
+        <p className="text-xs text-gray-400">
+          {new Date(tx.created_at).toLocaleString("en-NG", {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          })}
+        </p>
+      </div>
+
+      <div className="text-right">
+        <p
+          className={`text-sm font-semibold ${
+            isCredit ? "text-green-600" : "text-red-500"
+          }`}
+        >
+          {isCredit ? "+" : "-"}₦{formatMoney(Number(tx.amount || 0))}
+        </p>
+
+        <p
+          className={`text-xs ${
+            tx.status === "success"
+              ? "text-green-500"
+              : tx.status === "pending"
+                ? "text-yellow-500"
+                : "text-red-500"
+          }`}
+        >
+          {tx.status}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function AccountTab() {
+  const [balance, setBalance] = useState(0.0);
+  const [showLine, setShowLine] = useState(false);
+  const [error, setError] = useState("");
+  const [transactions, setTransactions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [userPlan, setUserPlan] = useState("free");
+  const [amount, setAmount] = useState("");
+  const [loadingPay, setLoadingPay] = useState(false);
+  const [showWithdrawModal, setShowWithdrawModal] = useState(false);
+  const [withdrawAmount, setWithdrawAmount] = useState("");
+  const [withdrawError, setWithdrawError] = useState("");
+  const [loadingWithdraw, setLoadingWithdraw] = useState(false);
+  const [accountNumber, setAccountNumber] = useState("");
+  const [bankCode, setBankCode] = useState("");
+  const [banks, setBanks] = useState([]);
+  const [page, setPage] = useState(1);
+  const ITEMS_PER_PAGE = 5;
+  const start = (page - 1) * ITEMS_PER_PAGE;
+  const end = start + ITEMS_PER_PAGE;
+
+  const currentTransactions = transactions.slice(start, end);
+
+  useEffect(() => {
+    const fetchAccount = async () => {
+      try {
+        const res = await fetch("/api/user/account");
+
+        if (!res.ok) {
+          console.error("Failed to load account");
+          return;
+        }
+
+        const data = await res.json();
+
+        setBalance(Number(data.balance || 0));
+        setTransactions(data.transactions || []);
+        setUserPlan(data.plan);
+      } catch (err) {
+        console.error("Network error:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAccount();
+  }, []);
+  const triggerAnimation = () => {
+    setShowLine(false);
+
+    requestAnimationFrame(() => {
+      setShowLine(true);
+    });
+  };
+  const searchParams = useSearchParams();
+  useEffect(() => {
+    const tab = searchParams.get("tab");
+
+    if (tab) {
+      triggerAnimation();
+    }
+  }, [searchParams]);
+
+  const handleAddMoney = async () => {
+    const value = Number(amount);
+
+    if (!value || value < 100) {
+      setError("Amount must be greater than ₦100.00");
+      return;
+    }
+
+    try {
+      setLoadingPay(true);
+
+      const res = await fetch("/api/paystack/wallet/initialize", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          amount: Number(amount),
+          purpose: "wallet",
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        console.error(data.error);
+        setLoadingPay(false);
+        return;
+      }
+
+      window.location.href = data.url;
+    } catch (err) {
+      console.error("Payment init failed:", err);
+      setLoadingPay(false);
+    }
+  };
+  const formatMoney = (value) =>
+    new Intl.NumberFormat("en-NG", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(value);
+  const canWithdraw = (plan) => {
+    const today = new Date().getDay();
+
+    if (plan === "free") {
+      return today === 2; // Tuesday only
+    }
+
+    return true; // paid users anytime
+  };
+  useEffect(() => {
+    const fetchBanks = async () => {
+      const res = await fetch("https://api.paystack.co/bank?country=nigeria", {
+        headers: {
+          Authorization: `Bearer ${process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY}`,
+        },
+      });
+
+      const data = await res.json();
+      setBanks(data.data);
+    };
+
+    fetchBanks();
+  }, []);
+
+  const handleWithdraw = async () => {
+    const value = Number(withdrawAmount);
+
+    // ❌ invalid input
+    if (!value || value <= 0) {
+      setWithdrawError("Enter a valid amount");
+      return;
+    }
+
+    // ❌ below minimum
+    if (value < 100) {
+      setWithdrawError("Minimum withdrawal is ₦100.00");
+      return;
+    }
+
+    // ❌ exceeds balance
+    if (value > balance) {
+      setWithdrawError("Insufficient balance");
+      return;
+    }
+
+    // ❌ plan restriction (extra safety)
+    if (!canWithdraw(userPlan)) {
+      setWithdrawError("Withdrawals are only allowed on Tuesday");
+      return;
+    }
+
+    try {
+      setLoadingWithdraw(true);
+
+      const res = await fetch("/api/user/withdraw", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          amount: value,
+          accountNumber,
+          bankCode,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setWithdrawError(data.error || "Withdrawal failed");
+        setLoadingWithdraw(false);
+        return;
+      }
+
+      // ✅ success
+      setShowWithdrawModal(false);
+      setWithdrawAmount("");
+      setWithdrawError("");
+
+      // refresh account
+      window.location.reload(); // quick way (you can optimize later)
+    } catch (err) {
+      console.error(err);
+      setWithdrawError("Network error");
+    } finally {
+      setLoadingWithdraw(false);
+    }
+  };
+  if (loading) {
+    return <Loader />;
+  }
+
+  return (
+    <div>
+      {showModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white w-[90%] max-w-sm rounded-2xl p-5 shadow-lg">
+            <h2 className="text-lg font-semibold text-gray-800">Fund Wallet</h2>
+
+            <p className="text-sm text-gray-500 mt-1">
+              Enter amount you want to add
+            </p>
+            {error && <p className="text-sm text-red-600">{error}</p>}
+            <input
+              type="number"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              placeholder="Enter amount (₦)"
+              className="w-full mt-4 border rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+            />
+
+            <div className="flex gap-3 mt-5">
+              <button
+                onClick={() => {
+                  setShowModal(false);
+                  setAmount("");
+                  setError("");
+                }}
+                className="flex-1 border rounded-lg py-2 text-sm"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={handleAddMoney}
+                disabled={loadingPay}
+                className="flex-1 bg-blue-600 text-white rounded-lg py-2 text-sm flex items-center justify-center gap-2 disabled:opacity-60"
+              >
+                {loadingPay ? (
+                  <>
+                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                    Processing...
+                  </>
+                ) : (
+                  "Continue"
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {showWithdrawModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white w-[90%] max-w-sm rounded-2xl p-5 shadow-lg">
+            <h2 className="text-lg font-semibold text-gray-800">
+              Withdraw Funds
+            </h2>
+
+            <p className="text-sm text-gray-500 mt-1">
+              Enter amount you want to withdraw
+            </p>
+
+            {withdrawError && (
+              <p className="text-sm text-red-600">{withdrawError}</p>
+            )}
+
+            <input
+              type="number"
+              value={withdrawAmount}
+              onChange={(e) => setWithdrawAmount(e.target.value)}
+              placeholder="Enter amount (₦)"
+              className="w-full mt-4 border rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <input
+              type="text"
+              value={accountNumber}
+              onChange={(e) => setAccountNumber(e.target.value)}
+              placeholder="Account Number"
+              className="w-full mt-3 border rounded-lg px-3 py-2"
+            />
+
+            <select
+              value={bankCode}
+              onChange={(e) => setBankCode(e.target.value)}
+              className="w-full mt-3 border rounded-lg px-3 py-2"
+            >
+              <option value="">Select Bank</option>
+              {banks.map((b) => (
+                <option key={b.code} value={b.code}>
+                  {b.name}
+                </option>
+              ))}
+            </select>
+            <div className="flex gap-3 mt-5">
+              <button
+                onClick={() => {
+                  setShowWithdrawModal(false);
+                  setAccountNumber("");
+                  setBankCode("");
+                  setWithdrawAmount("");
+                  setWithdrawError("");
+                }}
+                className="flex-1 border rounded-lg py-2 text-sm"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={handleWithdraw}
+                disabled={loadingWithdraw}
+                className="flex-1 bg-blue-600 text-white rounded-lg py-2 text-sm flex items-center justify-center gap-2 disabled:opacity-60"
+              >
+                {loadingWithdraw ? (
+                  <>
+                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                    Processing...
+                  </>
+                ) : (
+                  "Withdraw"
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      <div className="space-y-5">
+        <div className="relative bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-2xl p-5 shadow overflow-hidden">
+          {" "}
+          {!canWithdraw(userPlan) && (
+            <p className="text-xs text-yellow-200 font-semibold">
+              {userPlan === "free"
+                ? "Free users can only withdraw on Tuesdays."
+                : "Withdrawals are currently unavailable."}
+            </p>
+          )}
+          <div className="flex items-center gap-3 mt-1">
+            <div>
+              {" "}
+              <p className="text-sm opacity-80">Available Balance</p>
+              <h2 className="text-3xl font-semibold">
+                ₦{formatMoney(balance)}
+              </h2>
+            </div>
+            {/* {showLine && (
+              <svg
+                className="w-12 h-12"
+                viewBox="0 0 100 50"
+                preserveAspectRatio="none"
+              >
+                <defs>
+                  <marker
+                    id="arrowThin"
+                    viewBox="0 0 10 10"
+                    refX="10"
+                    refY="5"
+                    markerWidth="3"
+                    markerHeight="3"
+                    orient="auto"
+                  >
+                    <path d="M 0 0 L 10 5 L 0 10 Z" fill="#00ff6a" />
+                  </marker>
+                </defs>
+
+                <path
+                  d="M0 40 Q50 0 100 10"
+                  stroke="#00ff6a"
+                  strokeWidth="1.5"
+                  fill="none"
+                  markerEnd="url(#arrowThin)"
+                  className="animate-draw"
+                />
+              </svg>
+            )} */}
+          </div>
+          <div className="flex gap-3 mt-4">
+            <button
+              onClick={() => setShowModal(true)}
+              className="bg-white text-blue-600 px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-100"
+            >
+              Add Money
+            </button>
+            <button
+              onClick={() => setShowWithdrawModal(true)}
+              disabled={!canWithdraw(userPlan)}
+              className={`border border-white px-4 py-2 rounded-md text-sm transition
+    ${
+      canWithdraw(userPlan)
+        ? "hover:bg-white/10"
+        : "opacity-40 cursor-not-allowed"
+    }`}
+            >
+              Withdraw
+            </button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          <StatCard
+            label="Total Earned"
+            value={transactions
+              .filter((t) => t.type === "credit" && t.status === "success")
+              .reduce((sum, t) => sum + Number(t.amount || 0), 0)}
+          />
+
+          <StatCard
+            label="Total Withdrawn"
+            value={transactions
+              .filter((t) => t.type === "debit" && t.status === "success")
+              .reduce((sum, t) => sum + Number(t.amount || 0), 0)}
+          />
+          <div className="bg-white shadow rounded-xl p-3">
+            <p className="text-xs text-gray-500">Transactions</p>
+            <p className="text-sm font-semibold text-gray-900 mt-1">
+              {transactions.length}
+            </p>
+          </div>
+        </div>
+
+        {/* 📜 TRANSACTION HISTORY */}
+        <div className="bg-white rounded-2xl shadow p-4">
+          <div className="flex justify-between items-center mb-3">
+            <h3 className="font-semibold text-sm">Transaction History</h3>
+            <button
+              onClick={() =>
+                setPage((p) =>
+                  p < Math.ceil(transactions.length / ITEMS_PER_PAGE)
+                    ? p + 1
+                    : p,
+                )
+              }
+              className="text-blue-600 text-xs hover:underline"
+            >
+              View more
+            </button>
+          </div>
+
+          {transactions.length === 0 ? (
+            <p className="text-sm text-gray-400 text-center py-6">
+              No transactions yet
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {currentTransactions.map((tx) => (
+                <TransactionItem key={tx.id} tx={tx} />
+              ))}
+              <div className="flex items-center justify-between mt-5">
+                {/* Left: info */}
+                <p className="text-xs text-gray-500">
+                  Page{" "}
+                  <span className="font-semibold text-gray-700">{page}</span> of{" "}
+                  <span className="font-semibold text-gray-700">
+                    {Math.max(
+                      1,
+                      Math.ceil(transactions.length / ITEMS_PER_PAGE),
+                    )}
+                  </span>
+                </p>
+
+                {/* Right: controls */}
+                <div className="flex items-center gap-1">
+                  {/* Prev */}
+                  <button
+                    onClick={() => setPage((p) => Math.max(p - 1, 1))}
+                    disabled={page === 1}
+                    className="w-7 h-7 flex items-center justify-center rounded-md text-gray-500 hover:bg-gray-100 active:scale-95 transition disabled:opacity-30"
+                  >
+                    ‹
+                  </button>
+
+                  {/* Current Page */}
+                  <span className="text-xs font-semibold text-blue-600 px-1">
+                    {page}
+                  </span>
+
+                  {/* Next */}
+                  <button
+                    onClick={() =>
+                      setPage((p) =>
+                        p < Math.ceil(transactions.length / ITEMS_PER_PAGE)
+                          ? p + 1
+                          : p,
+                      )
+                    }
+                    disabled={
+                      page >= Math.ceil(transactions.length / ITEMS_PER_PAGE)
+                    }
+                    className="w-7 h-7 flex items-center justify-center rounded-md text-gray-500 hover:bg-gray-100 active:scale-95 transition disabled:opacity-30"
+                  >
+                    ›
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function Info({ label, value, user, setUser }) {
   const [editing, setEditing] = useState(false);
   const [input, setInput] = useState(value);
@@ -623,40 +1203,38 @@ function PasswordTab({ setGlobalLoading }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(false);
   const [load, setLoad] = useState(true);
-useEffect(() => {
-  const fetchUser = async () => {
-    try {
-       const res = await fetch("/api/user/me");
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const res = await fetch("/api/user/me");
 
-      // 🔥 ONLY redirect if truly unauthorized
-      if (res.status === 401) {
+        // 🔥 ONLY redirect if truly unauthorized
+        if (res.status === 401) {
+          setUser(null);
+          router.push("/login");
+          return;
+        }
+
+        // ❌ Other errors (500, 404, etc)
+        if (!res.ok) {
+          console.error("Server error:", res.status);
+          setUser(null);
+          return; // stay on page
+        }
+
+        const data = await res.json();
+        setUser(data);
+      } catch (err) {
+        // 🌐 Network error lands here
+        console.error("Network error:", err);
         setUser(null);
-        router.push("/login");
-        return;
+      } finally {
+        setLoad(false);
       }
+    };
 
-      // ❌ Other errors (500, 404, etc)
-      if (!res.ok) {
-        console.error("Server error:", res.status);
-        setUser(null);
-        return; // stay on page
-      }
-
-      const data = await res.json();
-      setUser(data);
-
-    } catch (err) {
-      // 🌐 Network error lands here
-      console.error("Network error:", err);
-      setUser(null);
-    } finally {
-      setLoad(false);
-    }
-  };
-
-  fetchUser();
-}, []);
-
+    fetchUser();
+  }, []);
 
   const handleChangePassword = async () => {
     if (loading) return; // prevent spam clicks
