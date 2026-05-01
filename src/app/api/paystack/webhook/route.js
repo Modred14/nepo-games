@@ -38,7 +38,7 @@ export async function POST(req) {
     const metadata = data?.metadata || {};
     const userId = data?.metadata?.userId;
     const purpose = metadata?.purpose;
-    const amount = Math.round(data.amount / 100);
+    const amount = data.amount / 100;
     const reference = data?.reference;
 
     if (!reference || !userId || !purpose) {
