@@ -1,6 +1,7 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
+import { useRef } from "react";
 import {
   Eye,
   EyeOff,
@@ -66,6 +67,11 @@ export default function AccountSettingsPage() {
 
     fetchUser();
   }, []);
+  const changeTab = (tab) => {
+    if (globalLoading) return;
+    setActiveTab(tab);
+    router.push(`?tab=${tab}`);
+  };
 
   if (loading || load) {
     return <Loader />;
@@ -82,27 +88,27 @@ export default function AccountSettingsPage() {
         <MobileTab
           label="Profile"
           active={activeTab === "profile"}
-          onClick={() => !globalLoading && setActiveTab("profile")}
+          onClick={() => changeTab("profile")}
         />
         <MobileTab
           label="Account"
           active={activeTab === "account"}
-          onClick={() => !globalLoading && setActiveTab("account")}
+          onClick={() => changeTab("account")}
         />
         <MobileTab
-          label="Password"
+          label="Security"
           active={activeTab === "password"}
-          onClick={() => !globalLoading && setActiveTab("password")}
+          onClick={() => changeTab("password")}
         />
         <MobileTab
           label="Linked Account"
           active={activeTab === "linked"}
-          onClick={() => !globalLoading && setActiveTab("linked")}
+          onClick={() => changeTab("linked")}
         />
         <MobileTab
           label="Data & Privacy "
           active={activeTab === "data"}
-          onClick={() => !globalLoading && setActiveTab("data")}
+          onClick={() => changeTab("data")}
         />
         {/* <MobileTab
           label="Notifications"
@@ -118,35 +124,35 @@ export default function AccountSettingsPage() {
             icon={<User size={16} />}
             label="Profile Information"
             active={activeTab === "profile"}
-            onClick={() => setActiveTab("profile")}
+            onClick={() => changeTab("profile")}
             disabled={globalLoading}
           />
           <TabButton
             icon={<CreditCard size={16} />}
             label="Account"
             active={activeTab === "account"}
-            onClick={() => setActiveTab("account")}
+            onClick={() => changeTab("account")}
             disabled={globalLoading}
           />
           <TabButton
             icon={<Lock size={16} />}
-            label="Change Password"
+            label="Security"
             active={activeTab === "password"}
-            onClick={() => setActiveTab("password")}
+            onClick={() => changeTab("password")}
             disabled={globalLoading}
           />
           <TabButton
             icon={<Link size={16} />}
             label="Linked Account"
             active={activeTab === "linked"}
-            onClick={() => setActiveTab("linked")}
+            onClick={() => changeTab("linked")}
             disabled={globalLoading}
           />
           <TabButton
             icon={<Shield size={16} />}
             label="Data & Privacy"
             active={activeTab === "data"}
-            onClick={() => setActiveTab("data")}
+            onClick={() => changeTab("data")}
             disabled={globalLoading}
           />
           {/* <TabButton
@@ -587,13 +593,82 @@ function TransactionItem({ tx }) {
   );
 }
 
+function PinGetInput({ value = "", onChange }) {
+  const inputs = useRef([]);
+
+  const handleChange = (e, index) => {
+    const val = e.target.value.replace(/\D/g, ""); // only numbers
+    if (!val) return;
+
+    const newValue = value.split("");
+    newValue[index] = val[0];
+
+    const final = newValue.join("").slice(0, 4);
+    onChange(final);
+
+    // auto move next
+    if (index < 3) {
+      inputs.current[index + 1]?.focus();
+    }
+  };
+
+  const handleKeyDown = (e, index) => {
+    if (e.key === "Backspace") {
+      const newValue = value.split("");
+      newValue[index] = "";
+      onChange(newValue.join(""));
+
+      // move back if empty
+      if (!value[index] && index > 0) {
+        inputs.current[index - 1]?.focus();
+      }
+    }
+  };
+
+  const handlePaste = (e) => {
+    e.preventDefault();
+    const paste = e.clipboardData
+      .getData("text")
+      .replace(/\D/g, "")
+      .slice(0, 4);
+    onChange(paste);
+
+    paste.split("").forEach((char, i) => {
+      if (inputs.current[i]) {
+        inputs.current[i].value = char;
+      }
+    });
+  };
+
+  return (
+    <div className="flex gap-3 mt-3 justify-center" onPaste={handlePaste}>
+      {[0, 1, 2, 3].map((i) => (
+        <input
+          key={i}
+          type="text"
+          maxLength={1}
+          ref={(el) => (inputs.current[i] = el)}
+          value={value[i] || ""}
+          onChange={(e) => handleChange(e, i)}
+          onKeyDown={(e) => handleKeyDown(e, i)}
+          className="w-10 h-10 text-center text-lg border rounded-lg
+                     focus:border-blue-500 focus:ring-2 focus:ring-blue-400 outline-none transition"
+        />
+      ))}
+    </div>
+  );
+}
+
 function AccountTab() {
   const [balance, setBalance] = useState(0.0);
+  const [showPinConfirm, setShowPinConfirm] = useState(false);
+  const [withdrawPin, setWithdrawPin] = useState("");
   const [showLine, setShowLine] = useState(false);
   const [error, setError] = useState("");
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [user, setUser] = useState(null);
   const [userPlan, setUserPlan] = useState("free");
   const [amount, setAmount] = useState("");
   const [savedBanks, setSavedBanks] = useState([]);
@@ -611,6 +686,37 @@ function AccountTab() {
   const ITEMS_PER_PAGE = 5;
   const start = (page - 1) * ITEMS_PER_PAGE;
   const end = start + ITEMS_PER_PAGE;
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const res = await fetch("/api/user/me");
+
+        // 🔥 ONLY redirect if truly unauthorized
+        if (res.status === 401) {
+          setUser(null);
+          router.push("/login");
+          return;
+        }
+
+        // ❌ Other errors (500, 404, etc)
+        if (!res.ok) {
+          console.error("Server error:", res.status);
+          setUser(null);
+          return; // stay on page
+        }
+
+        const data = await res.json();
+        setUser(data);
+      } catch (err) {
+        // 🌐 Network error lands here
+        console.error("Network error:", err);
+        setUser(null);
+      } 
+    };
+
+    fetchUser();
+  }, []);
 
   const currentTransactions = transactions.slice(start, end);
   useEffect(() => {
@@ -649,6 +755,7 @@ function AccountTab() {
   }, [accountNumber, bankCode]);
 
   const fetchAccount = async () => {
+   
     try {
       const res = await fetch("/api/user/account");
 
@@ -718,7 +825,7 @@ function AccountTab() {
         return;
       }
 
-      window.location.href = data.url;
+       window.location.href = data.url;
     } catch (err) {
       console.error("Payment init failed:", err);
       setLoadingPay(false);
@@ -753,6 +860,10 @@ function AccountTab() {
       setWithdrawError("Enter a valid amount");
       return;
     }
+    if (!withdrawPin || withdrawPin.length !== 4) {
+      setWithdrawError("Enter valid PIN");
+      return;
+    }
 
     // ❌ below minimum
     if (value < 100) {
@@ -779,6 +890,7 @@ function AccountTab() {
           accountNumber,
           bankCode,
           accountName,
+          pin: withdrawPin,
         }),
       });
 
@@ -795,8 +907,7 @@ function AccountTab() {
       setWithdrawAmount("");
       setWithdrawError("");
 
-      // refresh account
-      window.location.reload(); // quick way (you can optimize later)
+     fetchAccount();
     } catch (err) {
       console.error(err);
       setWithdrawError("Network error");
@@ -833,6 +944,73 @@ function AccountTab() {
 
   return (
     <div>
+      {showPinConfirm && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          {user?.pin_set ? (
+            <div className="w-[90%] border border-black/25 max-w-sm bg-white rounded-xl p-4 shadow-lg">
+              <p className="text-base font-semibold text-center">
+                Confirm Transaction PIN
+              </p>
+
+              <p className="text-xs text-gray-500 text-center mt-1">
+                Enter your PIN to complete withdrawal
+              </p>
+
+              {withdrawError && (
+                <p className="text-xs text-red-600 text-center mt-2">
+                  {withdrawError}
+                </p>
+              )}
+
+              {/* PIN INPUT */}
+              <div className="mt-4">
+                <PinGetInput value={withdrawPin} onChange={setWithdrawPin} />
+              </div>
+
+              <div className="flex gap-2 mt-5">
+                <button
+                  onClick={() => {
+                    setShowPinConfirm(false);
+                    setWithdrawPin("");
+                  }}
+                  className="flex-1 border py-2 rounded-md text-sm"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  onClick={handleWithdraw}
+                  disabled={loadingWithdraw}
+                  className="flex-1 bg-blue-600 text-white py-2 rounded-md text-sm"
+                >
+                  {loadingWithdraw ? "Processing..." : "Confirm"}
+                </button>
+              </div>
+            </div>
+          ) : (
+              <div className="w-[90%] max-w-sm bg-white rounded-xl border border-black/40 p-4 shadow-lg">
+              <p className=" font-semibold text-gray-900 text-center">
+                Transaction PIN Required
+              </p>
+
+              <p className="text-sm text-gray-600 text-center mt-2">
+                You need to set your transaction PIN before continuing.
+              </p>
+
+              <div className="flex justify-center mt-4">
+                <button
+                  onClick={() => {
+                    router.push("/profile?tab=password");
+                  }}
+                  className="bg-red-600 text-white px-3 py-1 rounded-lg text-sm font-medium hover:bg-red-700 transition duration-200"
+                >
+                  Set PIN
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white w-[90%] max-w-sm rounded-2xl p-5 shadow-lg">
@@ -976,18 +1154,19 @@ function AccountTab() {
               </button>
 
               <button
-                onClick={handleWithdraw}
-                disabled={gettingAccountName || loadingWithdraw}
-                className="flex-1 bg-blue-600 text-white rounded-lg py-2 text-sm flex items-center justify-center gap-2 disabled:opacity-60"
+                onClick={() => {
+                  setWithdrawError("");
+
+                  if (!withdrawAmount || !accountNumber || !bankCode) {
+                    setWithdrawError("Complete all fields");
+                    return;
+                  }
+
+                  setShowPinConfirm(true); // 👈 NEW STEP
+                }}
+                className="flex-1 bg-blue-600 text-white rounded-lg py-2 text-sm"
               >
-                {loadingWithdraw ? (
-                  <>
-                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                    Processing...
-                  </>
-                ) : (
-                  "Withdraw"
-                )}
+                Withdraw
               </button>
             </div>
           </div>
@@ -1259,6 +1438,72 @@ function Info({ label, value, user, setUser }) {
     </div>
   );
 }
+function PinInput({ value = "", onChange }) {
+  const inputs = useRef([]);
+
+  const handleChange = (e, index) => {
+    const val = e.target.value.replace(/\D/g, ""); // only numbers
+
+    if (!val) return;
+
+    const newValue = value.split("");
+    newValue[index] = val[0];
+
+    const final = newValue.join("").slice(0, 4);
+    onChange(final);
+
+    // move to next input
+    if (index < 3) {
+      inputs.current[index + 1]?.focus();
+    }
+  };
+
+  const handleKeyDown = (e, index) => {
+    if (e.key === "Backspace") {
+      if (!value[index]) {
+        inputs.current[index - 1]?.focus();
+      }
+
+      const newValue = value.split("");
+      newValue[index] = "";
+      onChange(newValue.join(""));
+    }
+  };
+
+  const handlePaste = (e) => {
+    e.preventDefault();
+    const paste = e.clipboardData
+      .getData("text")
+      .replace(/\D/g, "")
+      .slice(0, 4);
+    onChange(paste);
+
+    paste.split("").forEach((char, i) => {
+      if (inputs.current[i]) {
+        inputs.current[i].value = char;
+      }
+    });
+  };
+
+  return (
+    <div className="flex gap-3" onPaste={handlePaste}>
+      {[0, 1, 2, 3].map((i) => (
+        <input
+          key={i}
+          type="number"
+          maxLength={1}
+          ref={(el) => (inputs.current[i] = el)}
+          value={value[i] || ""}
+          onChange={(e) => handleChange(e, i)}
+          onKeyDown={(e) => handleKeyDown(e, i)}
+          className="w-10 h-10 text-center text-lg border border-gray-300 rounded-lg 
+                     focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none transition"
+        />
+      ))}
+    </div>
+  );
+}
+
 function PasswordTab({ setGlobalLoading }) {
   const [form, setForm] = useState({ current: "", newPass: "", confirm: "" });
   const [show, setShow] = useState({
@@ -1266,6 +1511,21 @@ function PasswordTab({ setGlobalLoading }) {
     newPass: false,
     confirm: false,
   });
+  const [pinForm, setPinForm] = useState({
+    currentPin: "",
+    newPin: "",
+    confirmPin: "",
+  });
+
+  const [pinError, setPinError] = useState("");
+  const [pinSuccess, setPinSuccess] = useState("");
+  const [pinLoading, setPinLoading] = useState(false);
+  const cleanNewPin = String(pinForm.newPin).trim();
+  const [correct, setCorrect] = useState("");
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [load, setLoad] = useState(true);
+
   const [error, setError] = useState("");
   const checks = {
     length: form.newPass.length >= 6,
@@ -1273,10 +1533,58 @@ function PasswordTab({ setGlobalLoading }) {
     special: /[^A-Za-z0-9]/.test(form.newPass),
     uppercase: /[A-Z]/.test(form.newPass),
   };
-  const [correct, setCorrect] = useState("");
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [load, setLoad] = useState(true);
+
+  const handleChangePin = async () => {
+    if (pinLoading) return;
+
+    setPinError("");
+    setPinSuccess("");
+
+    const cleanNewPin = String(pinForm.newPin).trim();
+
+    if (!/^\d{4}$/.test(cleanNewPin)) {
+      return setPinError("PIN must be exactly 4 digits");
+    }
+
+    if (pinForm.newPin !== pinForm.confirmPin) {
+      return setPinError("PINs do not match");
+    }
+
+    if (user?.pin_set && !pinForm.currentPin) {
+      return setPinError("Current PIN is required");
+    }
+
+    setPinLoading(true);
+
+    try {
+      const res = await fetch("/api/user/set-pin", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          currentPin: pinForm.currentPin,
+          newPin: pinForm.newPin,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setPinError(data.error);
+        return;
+      }
+
+      setPinSuccess("PIN updated successfully");
+      setPinForm({ currentPin: "", newPin: "", confirmPin: "" });
+    } catch (err) {
+      console.error(err);
+      setPinError("Error updating PIN");
+    } finally {
+      setPinLoading(false);
+    }
+  };
+
   useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -1366,102 +1674,179 @@ function PasswordTab({ setGlobalLoading }) {
       setGlobalLoading(false); // ✅ ADDED
     }
   };
+  if (load) {
+    return <Loader />;
+  }
 
   return (
     <div className="bg-white rounded-2xl shadow p-4 sm:p-6">
-      <h2 className="text-base sm:text-lg font-semibold mb-1">
-        Change Password
-      </h2>
-      <p className="text-gray-500 text-sm mb-4 sm:mb-6">
-        Enter your current password to change your password
-      </p>
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          handleChangePassword();
-        }}
-      >
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2">
-          <PasswordInput
-            label="Current Password"
-            value={form.current}
-            onChange={(v) => setForm({ ...form, current: v })}
-            show={show.current}
-            toggle={() => setShow({ ...show, current: !show.current })}
-            disabled={loading}
-          />
-          <PasswordInput
-            label="New Password"
-            value={form.newPass}
-            onChange={(v) => setForm({ ...form, newPass: v })}
-            show={show.newPass}
-            toggle={() => setShow({ ...show, newPass: !show.newPass })}
-            disabled={loading}
-          />
-          <PasswordInput
-            label="Confirm Password"
-            value={form.confirm}
-            onChange={(v) => setForm({ ...form, confirm: v })}
-            show={show.confirm}
-            toggle={() => setShow({ ...show, confirm: !show.confirm })}
-            disabled={loading}
-          />
-        </div>
-        {error ? (
-          <p className="text-red-500 text-sm mt-2">{error}</p>
-        ) : (
-          correct && <p className="text-green-500 text-sm mt-2">{correct}</p>
-        )}
-        <div className="text-xs sm:text-sm mt-2 space-y-1">
-          <CheckItem valid={checks.length} text="At least 6 characters" />
-          <CheckItem valid={checks.number} text="Contains a number" />
-          <CheckItem
-            valid={checks.special}
-            text="Contains a special character"
-          />
-          <CheckItem
-            valid={checks.uppercase}
-            text="Contains an uppercase letter"
-          />
-        </div>
+      <div className="mb-7">
+        <h2 className="text-base sm:text-lg font-semibold mb-1">
+          {user?.pin_set ? "Change PIN" : "Set PIN"}
+        </h2>
 
-        <div className="mt-6 flex justify-center sm:justify-end">
-          <button
-            disabled={loading}
-            type="submit"
-            className="w-full sm:w-auto bg-blue-600 text-white px-5 py-2 rounded-md flex justify-center items-center gap-2 disabled:opacity-60"
-          >
-            {loading ? (
-              <>
-                <svg
-                  className="animate-spin h-4 w-4"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  />
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 100 16v-4l-3 3 3 3v-4a8 8 0 01-8-8z"
-                  />
-                </svg>
-                Updating...
-              </>
-            ) : (
-              <>
-                <Lock size={16} /> Update password
-              </>
+        <p className="text-gray-500 text-sm mb-4">
+          {user?.pin_set
+            ? "Enter your current PIN to change it"
+            : "Set a 4-digit PIN for secure actions"}
+        </p>
+
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleChangePin();
+          }}
+        >
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-8 w-full">
+            {user?.pin_set && (
+              <div>
+                <p className="text-sm mb-1 text-blue-600">Current PIN</p>
+                <PinInput
+                  value={pinForm.currentPin}
+                  onChange={(val) =>
+                    setPinForm({ ...pinForm, currentPin: val })
+                  }
+                />
+              </div>
             )}
-          </button>
-        </div>
-      </form>
+
+            <div>
+              <p className="text-sm mb-1 text-blue-600">New PIN</p>
+              <PinInput
+                value={pinForm.newPin}
+                onChange={(val) => setPinForm({ ...pinForm, newPin: val })}
+              />
+            </div>
+
+            <div>
+              <p className="text-sm mb-1 text-blue-600">Confirm PIN</p>
+              <PinInput
+                value={pinForm.confirmPin}
+                onChange={(val) => setPinForm({ ...pinForm, confirmPin: val })}
+              />
+            </div>
+          </div>
+
+          {pinError && <p className="text-red-500 text-sm mt-2">{pinError}</p>}
+          {pinSuccess && (
+            <p className="text-green-500 text-sm mt-2">{pinSuccess}</p>
+          )}
+
+          <div className="mt-4 flex justify-end">
+            <button
+              disabled={pinLoading}
+              type="submit"
+              className="bg-blue-600 text-white px-5 py-2 rounded-md disabled:opacity-60"
+            >
+              {pinLoading ? (
+                <p className="flex items-center text-sm gap-2">Updating...</p>
+              ) : user?.pin_set ? (
+                <p className="flex items-center text-sm gap-2">Update PIN</p>
+              ) : (
+                <p className="flex items-center text-sm gap-2">
+                  <Lock size={16} /> Set PIN
+                </p>
+              )}
+            </button>
+          </div>
+        </form>
+      </div>
+      <hr className=" border-gray-300" />
+      <div>
+        <h2 className="text-base mt-7 sm:text-lg font-semibold mb-1">
+          Change Password
+        </h2>
+        <p className="text-gray-500 text-sm mb-4 sm:mb-6">
+          Enter your current password to change your password
+        </p>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleChangePassword();
+          }}
+        >
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2">
+            <PasswordInput
+              label="Current Password"
+              value={form.current}
+              onChange={(v) => setForm({ ...form, current: v })}
+              show={show.current}
+              toggle={() => setShow({ ...show, current: !show.current })}
+              disabled={loading}
+            />
+            <PasswordInput
+              label="New Password"
+              value={form.newPass}
+              onChange={(v) => setForm({ ...form, newPass: v })}
+              show={show.newPass}
+              toggle={() => setShow({ ...show, newPass: !show.newPass })}
+              disabled={loading}
+            />
+            <PasswordInput
+              label="Confirm Password"
+              value={form.confirm}
+              onChange={(v) => setForm({ ...form, confirm: v })}
+              show={show.confirm}
+              toggle={() => setShow({ ...show, confirm: !show.confirm })}
+              disabled={loading}
+            />
+          </div>
+          {error ? (
+            <p className="text-red-500 text-sm mt-2">{error}</p>
+          ) : (
+            correct && <p className="text-green-500 text-sm mt-2">{correct}</p>
+          )}
+          <div className="text-xs sm:text-sm mt-2 space-y-1">
+            <CheckItem valid={checks.length} text="At least 6 characters" />
+            <CheckItem valid={checks.number} text="Contains a number" />
+            <CheckItem
+              valid={checks.special}
+              text="Contains a special character"
+            />
+            <CheckItem
+              valid={checks.uppercase}
+              text="Contains an uppercase letter"
+            />
+          </div>
+
+          <div className="mt-6 flex justify-center sm:justify-end">
+            <button
+              disabled={loading}
+              type="submit"
+              className="w-full sm:w-auto bg-blue-600 text-white px-5 py-2 rounded-md flex justify-center items-center gap-2 disabled:opacity-60"
+            >
+              {loading ? (
+                <>
+                  <svg
+                    className="animate-spin h-4 w-4"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 100 16v-4l-3 3 3 3v-4a8 8 0 01-8-8z"
+                    />
+                  </svg>
+                  <p className="flex items-center text-sm gap-2">Updating...</p>
+                </>
+              ) : (
+                <p className="flex items-center text-sm gap-2">
+                  <Lock size={16} /> Update password
+                </p>
+              )}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

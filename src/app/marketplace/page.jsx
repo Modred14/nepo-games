@@ -9,6 +9,8 @@ import ReactSlider from "react-slider";
 import SmallLoader from "@/components/smallLoader";
 import { signOut } from "next-auth/react";
 import Loader from "@/components/Loader";
+import DashboardStats from "@/lib/seller-data";
+import { motion } from "framer-motion";
 
 export default function Marketplace() {
   const [user, setUser] = useState(null);
@@ -24,6 +26,28 @@ export default function Marketplace() {
   const [open, setOpen] = useState(false);
   const [logOpen, setLogOpen] = useState(false);
   const ref = useRef(null);
+  const [unread, setUnread] = useState(0);
+
+  useEffect(() => {
+    const fetchUnread = async () => {
+      try {
+        const res = await fetch("/api/user/unread");
+
+        if (!res.ok) {
+          throw new Error("Failed to fetch unread count");
+        }
+
+        const data = await res.json();
+
+        setUnread(data.unread || 0);
+      } catch (err) {
+        console.error("Unread fetch error:", err);
+        setUnread(0);
+      }
+    };
+
+    fetchUnread();
+  }, []);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -198,23 +222,43 @@ export default function Marketplace() {
           </div>
         </div>
       )}
-      <button
+      <motion.button
         onClick={() => openChat()}
+        initial={{ scale: 0.8, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
+        transition={{ type: "spring", stiffness: 300, damping: 20 }}
         className="
-        fixed bottom-5 right-5
-        z-[9999]
-        w-14 h-14
-        rounded-full
-        bg-blue-600 hover:bg-blue-700
-        text-white shadow-sm
-        flex items-center justify-center
-        transition-all duration-300
-        border-2 border-white
-      "
+    fixed bottom-5 right-5
+    z-[9999]
+    w-14 h-14
+    rounded-full
+    bg-blue-600 hover:bg-blue-700
+    text-white shadow-md
+    flex items-center justify-center
+    border-2 border-white
+  "
       >
         <MessageCircle size={24} />
-        <span className="absolute top-1 right-1 w-3 h-3 bg-red-500 rounded-full border border-white" />
-      </button>
+
+        {unread > 0 && (
+          <motion.span
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            className="
+        absolute -top-1 -right-1
+        p-1
+        bg-red-500
+        rounded-full
+        border border-white
+        text-xs
+      "
+          >
+            {unread}
+          </motion.span>
+        )}
+      </motion.button>
       <Reveal className=" h-screen flex flex-col">
         <div className="flex flex-col flex-1 pb-20">
           <div className="flex border-b border-[#0000FF]/40 justify-between py-3 sm:py-4 px-7 items-center">
@@ -550,6 +594,7 @@ export default function Marketplace() {
                 </button>
               </div>
             </div>
+            <div>{isSeller && <DashboardStats />}</div>
             <div className="flex items-center justify-center">
               {loading || !isImagesReady ? (
                 <div className="min-h-[60vh] flex items-center justify-center">

@@ -1,6 +1,7 @@
 import pool from "../../../lib/db";
 import GameClient from "./GameClient";
 import { getSimilarGames } from "./getSimilarGames";
+import GameNotFound from "./notfound";
 
 async function getGame(slug) {
   const result = await pool.query(
@@ -30,7 +31,12 @@ export default async function GamePage({ params }) {
 
   const game = await getGame(slug);
 
-  if (!game) return <div>Game not found</div>;
+  if (!game)
+    return (
+      <div>
+        <GameNotFound />
+      </div>
+    );
   const similarGames = await getSimilarGames(game);
 
   const images = Array.isArray(game.proof_image_url)

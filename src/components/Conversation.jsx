@@ -436,7 +436,7 @@ export default function Conversation({ gameId, receiverId }) {
                       />
                       {chat?.plan && chat.plan !== "free" && (
                         <Verified
-                          className="fill-green-600 fixed -mt-3 ml-7 text-green-100"
+                          className="fill-green-600 fixed -mt-3 ml-8 text-green-100"
                           size={16}
                         />
                       )}
@@ -508,7 +508,7 @@ export default function Conversation({ gameId, receiverId }) {
                     />
                     {activeChat?.plan && activeChat.plan !== "free" && (
                       <Verified
-                        className="fill-green-600 fixed mt-7 ml-7 text-green-100"
+                        className="fill-green-600 fixed mt-7 ml-10 sm:ml-7 text-green-100"
                         size={16}
                       />
                     )}

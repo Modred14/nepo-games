@@ -7,6 +7,73 @@ import PageLoader from "@/components/PageLoader";
 import { useRouter } from "next/navigation";
 import Loader from "@/components/Loader";
 import { Verified } from "lucide-react";
+import { useRef } from "react";
+
+function PinInput({ value = "", onChange }) {
+  const inputs = useRef([]);
+
+  const handleChange = (e, index) => {
+    const val = e.target.value.replace(/\D/g, ""); // only numbers
+    if (!val) return;
+
+    const newValue = value.split("");
+    newValue[index] = val[0];
+
+    const final = newValue.join("").slice(0, 4);
+    onChange(final);
+
+    // auto move next
+    if (index < 3) {
+      inputs.current[index + 1]?.focus();
+    }
+  };
+
+  const handleKeyDown = (e, index) => {
+    if (e.key === "Backspace") {
+      const newValue = value.split("");
+      newValue[index] = "";
+      onChange(newValue.join(""));
+
+      // move back if empty
+      if (!value[index] && index > 0) {
+        inputs.current[index - 1]?.focus();
+      }
+    }
+  };
+
+  const handlePaste = (e) => {
+    e.preventDefault();
+    const paste = e.clipboardData
+      .getData("text")
+      .replace(/\D/g, "")
+      .slice(0, 4);
+    onChange(paste);
+
+    paste.split("").forEach((char, i) => {
+      if (inputs.current[i]) {
+        inputs.current[i].value = char;
+      }
+    });
+  };
+
+  return (
+    <div className="flex gap-3 mt-3 justify-center" onPaste={handlePaste}>
+      {[0, 1, 2, 3].map((i) => (
+        <input
+          key={i}
+          type="text"
+          maxLength={1}
+          ref={(el) => (inputs.current[i] = el)}
+          value={value[i] || ""}
+          onChange={(e) => handleChange(e, i)}
+          onKeyDown={(e) => handleKeyDown(e, i)}
+          className="w-10 h-10 text-center text-lg border rounded-lg
+                     focus:border-blue-500 focus:ring-2 focus:ring-blue-400 outline-none transition"
+        />
+      ))}
+    </div>
+  );
+}
 
 export default function GameClient({ game, images, similarGames }) {
   const [index, setIndex] = useState(0);
@@ -17,6 +84,41 @@ export default function GameClient({ game, images, similarGames }) {
   const [customReason, setCustomReason] = useState("");
   const [confirmData, setConfirmData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [deletePassword, setDeletePassword] = useState("");
+  const [showDelete, setShowDelete] = useState(false);
+  const [error, setError] = useState("");
+  const [deleteLoad, setDeleteLoad] = useState(false);
+
+  const handleDelete = async () => {
+    try {
+      setDeleteLoad(true);
+      setError("");
+      const res = await fetch("/api/listing/delete", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          gameId: game.id,
+          pin: deletePassword,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error);
+        return;
+      }
+
+      router.push("/marketplace");
+    } catch (err) {
+      console.error(err);
+      setError(err?.message || "Something went wrong");
+    } finally {
+      setDeleteLoad(false);
+    }
+  };
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -110,6 +212,57 @@ export default function GameClient({ game, images, similarGames }) {
   return (
     <PageLoader>
       <div className="w-full flex px-2 justify-center"></div>{" "}
+      {showDelete && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center h-screen bg-black/40 backdrop-blur-sm">
+          <div className="w-[90%] max-w-sm p-4 border border-black/20 rounded-xl bg-white shadow-lg">
+            {user?.pin_set ? (
+              <div>
+                <p className="text-base font-medium text-gray-800">
+                  Enter transaction pin to delete listing
+                </p>
+                <p className="text-xs mt-1 font-medium text-red-600">{error}</p>
+                <PinInput value={deletePassword} onChange={setDeletePassword} />
+                <div className="flex gap-2 mt-4">
+                  <button
+                    onClick={() => {
+                      setDeletePassword("");
+                      setShowDelete(false);
+                      setError("");
+                    }}
+                    className="flex-1 border px-2 py-1 rounded-md text-sm hover:bg-gray-100 transition"
+                  >
+                    Cancel
+                  </button>{" "}
+                  <button
+                    onClick={handleDelete}
+                    className="flex-1 bg-red-600 text-white px-2 py-1 rounded-md text-sm hover:bg-red-700 transition"
+                  >
+                    {deleteLoad ? "Deleting" : "Confirm Delete"}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div>
+                <p className=" font-semibold text-gray-900 text-center">
+                  Transaction PIN Required
+                </p>
+
+                <p className="text-sm text-gray-600 text-center mt-2">
+                  You need to set your transaction PIN before continuing.
+                </p>
+
+                <div className="flex justify-center mt-4">
+                  <button 
+                 onClick={() =>{router.push("/profile?tab=password")}} 
+                  className="bg-red-600 text-white px-3 py-1 rounded-lg text-sm font-medium hover:bg-red-700 transition duration-200">
+                    Set PIN
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
       <div className="px-[3%] sm:pt-5 pt-3">
         <a
           onClick={() => router.push("/marketplace")}
@@ -124,13 +277,22 @@ export default function GameClient({ game, images, similarGames }) {
             <ImageSlider images={images} index={index} setIndex={setIndex} />
             <div className="text-sm  sm:text-base px-[5%] xs:px-[10%] py-4">
               {" "}
-              <button
-                onClick={() => openChat(game.id, game.user_id)}
-                className="w-full px-2 bg-[#4A4BFF] rounded-md gap-2 text-white py-2 flex justify-center items-center"
-              >
-                <ShoppingCart size={15} /> Buy account now (₦{" "}
-                {formatGamePrice(game.price)})
-              </button>
+              {user?.email === game.email ? (
+                <button
+                  onClick={() => setShowDelete(true)}
+                  className="w-full bg-red-600 text-white py-2 rounded-md"
+                >
+                  Delete Listing
+                </button>
+              ) : (
+                <button
+                  onClick={() => openChat(game.id, game.user_id)}
+                  className="w-full px-2 bg-[#4A4BFF] rounded-md gap-2 text-white py-2 flex justify-center items-center"
+                >
+                  <ShoppingCart size={15} /> Buy account now (₦{" "}
+                  {formatGamePrice(game.price)})
+                </button>
+              )}
             </div>
             <div className="h-fit md:mb-0 mb-4 border border-blue-500/40 rounded-xl shadow-sm p-4 sm:min-w-60 lg:min-w-70">
               {/* Header */}

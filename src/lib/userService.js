@@ -14,7 +14,8 @@ export const getUserByEmail = async (email) => {
       subscription_status,
       subscription_start,
       subscription_end,
-      payment_provider
+      payment_provider,
+      pin_set
      FROM users
      WHERE email = $1`,
     [email]
@@ -45,6 +46,7 @@ export const mapUserResponse = (user) => {
     subscription_start: user.subscription_start,
     subscription_end: user.subscription_end,
     payment_provider: user.payment_provider,
+    pin_set: user.pin_set,
     is_verified: computeIsVerified(user),
   };
 };

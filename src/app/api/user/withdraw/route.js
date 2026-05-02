@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../../auth/[...nextauth]/route";
 import pool from "@/lib/db";
+import bcrypt from "bcrypt";
 
 export async function POST(req) {
   const client = await pool.connect();
@@ -13,7 +14,8 @@ export async function POST(req) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { amount, accountNumber, bankCode, accountName } = await req.json();
+    const { amount, accountNumber, bankCode, accountName, pin } =
+      await req.json();
 
     if (!amount || amount <= 0) {
       return NextResponse.json({ error: "Invalid amount" }, { status: 400 });
@@ -31,10 +33,10 @@ export async function POST(req) {
     // 1. Get user + lock row
     const userRes = await client.query(
       `
-      SELECT id, plan, recipient_code, email
-      FROM users
-      WHERE email = $1
-      FOR UPDATE
+   SELECT id, plan, recipient_code, email, pin_hash
+FROM users
+WHERE email = $1
+FOR UPDATE
       `,
       [session.user.email],
     );
@@ -59,6 +61,13 @@ export async function POST(req) {
     // }
 
     // 3. Get balance
+
+    const isValid = await bcrypt.compare(pin, user.pin_hash);
+
+    if (!isValid) {
+      return Response.json({ error: "Incorrect PIN" }, { status: 403 });
+    }
+
     const balanceRes = await client.query(
       `
       SELECT COALESCE(SUM(
@@ -126,27 +135,38 @@ export async function POST(req) {
     // 5. Create reference
     const reference = `WD_${Date.now()}_${userId}`;
 
-// BEFORE INSERT INTO user_banks
-const banksRes = await fetch("https://api.paystack.co/bank?country=nigeria", {
-  headers: {
-    Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
-  },
-});
+    // BEFORE INSERT INTO user_banks
+    const banksRes = await fetch(
+      "https://api.paystack.co/bank?country=nigeria",
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+        },
+      },
+    );
 
-const banksData = await banksRes.json();
+    const banksData = await banksRes.json();
 
-if (!banksRes.ok) {
-  await client.query("ROLLBACK");
-  return NextResponse.json(
-    { error: "Unable to fetch bank list" },
-    { status: 400 }
-  );
-}
-const bankName =
-  banksData.data.find((b) => b.code === bankCode)?.name || "Unknown Bank";
+    if (!banksRes.ok) {
+      await client.query("ROLLBACK");
+      return NextResponse.json(
+        { error: "Unable to fetch bank list" },
+        { status: 400 },
+      );
+    }
+    const bankName =
+      banksData.data.find((b) => b.code === bankCode)?.name || "Unknown Bank";
 
-  await pool.query(
-  `
+    if (!accountName) {
+      await client.query("ROLLBACK");
+      return NextResponse.json(
+        { error: "Account name not resolved yet" },
+        { status: 400 },
+      );
+    }
+
+    await pool.query(
+      `
   INSERT INTO user_banks 
   (user_id, account_number, account_name, bank_code, bank_name, created_at)
   VALUES ($1, $2, $3, $4, $5, NOW())
@@ -156,8 +176,8 @@ const bankName =
     bank_name = EXCLUDED.bank_name,
     created_at = NOW()
   `,
-  [userId, accountNumber, accountName, bankCode, bankName]
-);
+      [userId, accountNumber, accountName, bankCode, bankName],
+    );
 
     // 6. Insert pending transaction FIRST
     await client.query(
