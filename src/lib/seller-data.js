@@ -38,17 +38,17 @@ export default function DashboardStats() {
     fetchSellerData();
   }, []);
   const formatNumber = (num) => {
-  if (num >= 1_000_000_000) {
-    return (num / 1_000_000_000).toFixed(1).replace(/\.0$/, "") + "B";
-  }
-  if (num >= 1_000_000) {
-    return (num / 1_000_000).toFixed(1).replace(/\.0$/, "") + "M";
-  }
-  if (num >= 1_000) {
-    return (num / 1_000).toFixed(1).replace(/\.0$/, "") + "K";
-  }
-  return num.toString();
-};
+    if (num >= 1_000_000_000) {
+      return (num / 1_000_000_000).toFixed(1).replace(/\.0$/, "") + "B";
+    }
+    if (num >= 1_000_000) {
+      return (num / 1_000_000).toFixed(1).replace(/\.0$/, "") + "M";
+    }
+    if (num >= 1_000) {
+      return (num / 1_000).toFixed(1).replace(/\.0$/, "") + "K";
+    }
+    return num.toString();
+  };
   const stats = [
     {
       title: "Listed Account",
@@ -65,8 +65,8 @@ export default function DashboardStats() {
       icon: FileText,
     },
     {
-      title: "Total Sale",
-      value: `₦ ${totalSales.toLocaleString()}`,
+      title: "Total Sales",
+      value: `₦ ${formatNumber(totalSales)}`,
       desc: `Total sales`,
       other1: `Total sales`,
       icon: ShoppingCart,
@@ -82,8 +82,8 @@ export default function DashboardStats() {
   ];
 
   return (
-    <div className="w-full sm:-mb-4 pt-4 space-y-4">
-      <div className="flex flex-wrap justify-center gap-2 lg:gap-4">
+    <div className="w-full sm:-mb-4 pt-3 sm:pt-4 space-y-4">
+      <div className="grid grid-cols-2 jt:flex flex-wrap justify-center gap-1.5 xs:gap-2 sm:gap-3 lg:gap-4">
         {stats.map((item, i) => (
           <motion.div
             key={i}
@@ -91,46 +91,58 @@ export default function DashboardStats() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.08 }}
           >
-            <div className="group rounded-xl h-full border justify-center border-gray-200 bg-white shadow-sm hover:shadow-md transition-all duration-300 px-3 py-2 flex flex-col gap-3">
+            <div className="group rounded-xl h-full border justify-center border-gray-200 bg-white shadow-sm hover:shadow-md transition-all duration-300 px-1.5 sm:px-3 py-2 flex flex-col gap-3">
               <div className="flex items-center gap-2">
-                <div className="p-2 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-sm group-hover:scale-105 transition">
-                  <item.icon size={16} />
+                <div className="p-1.5 sm:p-2 sm:rounded-lg sm:block jt:hidden rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-sm group-hover:scale-105 transition">
+                  <item.icon size={14} className="sm:w-4 sm:h-4" />
                 </div>
                 <div>
-                  <p className="text-xs flex justify-between items-center font-semibold text-gray-800">
+                  <p className="text-xs  flex justify-between sm:items-center font-semibold text-gray-800">
                     <span>{item.title}</span>
                     {item.stars >= 0 && (
-                      <span className="text-xs pt-0.5 text-gray-700">
+                      <span className="text-xs pt-0.5 font-bold text-gray-700">
                         {item.value}
                       </span>
                     )}
                   </p>
                   {item.stars >= 0 ? (
-                    <div className="flex items-center gap-1 mt-0.5">
-                      {[...Array(5)].map((_, index) => (
-                        <Star
-                          key={index}
-                          size={12}
-                          className={
-                            index < item.stars
-                              ? "fill-yellow-400 text-yellow-400"
-                              : "text-gray-300"
-                          }
-                        />
-                      ))}
+                    <div>
+                      <div className="flex items-center gap-1 mt-0.5">
+                        {[...Array(5)].map((_, index) => {
+                          const stars = Number(item.stars) || 0;
+
+                          return (
+                            <Star
+                              key={index}
+                              size={12}
+                              className={
+                                index < stars
+                                  ? "fill-yellow-400 text-yellow-400"
+                                  : "text-gray-300"
+                              }
+                            />
+                          );
+                        })}
+                      </div>
                     </div>
                   ) : (
                     <>
                       <p className="text-[10px] hidden lg:block text-gray-500">
                         <div>
-                          <span className="font-bold">  {formatNumber(item.value)}</span>{" "}
+                          <span className="font-bold">
+                            {" "}
+                            {formatNumber(item.value)}
+                          </span>{" "}
                           {item.desc}
                         </div>
                       </p>
                       <p className="text-[10px] lg:hidden text-gray-500">
                         <div className="flex items-center h-full gap-1">
                           {" "}
-                          <span className="font-bold">  {formatNumber(item.value)}</span>{" "}
+                          <span className="font-bold">
+                            {" "}
+                            {formatNumber(item.value)}
+                          </span>{" "}
                           {item.other1}
                         </div>
                       </p>
@@ -151,22 +163,23 @@ export default function DashboardStats() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: stats.length * 0.08 }}
         >
-          <div className="group  rounded-xl h-full border justify-center border-gray-200 bg-white shadow-sm hover:shadow-md transition-all duration-300 px-3 py-2 flex flex-col gap-3">
+          <div className="group bg-blue-100 rounded-xl h-full border justify-center border-gray-200 shadow-sm hover:shadow-md transition-all duration-300  px-2 sm:px-3 py-2 flex flex-col gap-3">
             <div className="flex items-center gap-2">
-              <div className="p-2 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-sm group-hover:scale-105 transition">
-                <Plus size={16} />
+              <div className="p-1.5 sm:p-2 rounded-md sm:rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-sm transition group-hover:scale-105">
+                <Plus size={14} className="sm:w-4 sm:h-4" />
               </div>
               <div>
                 <p className="text-xs font-semibold text-gray-800">
-                  List Gaming Accounts
+                  Sell Account
                 </p>
 
                 <p className="text-[10px] hidden lg:block text-gray-600">
                   {" "}
-                  Click here to list your account for sale
+                  <span className="font-semibold">Click here </span>to list your
+                  account for sale
                 </p>
-                <p className="text-[10px] lg:hidden text-gray-600">
-                  List your account
+                <p className="text-[10px] font-semibold lg:hidden text-gray-600">
+                  Start earning
                 </p>
               </div>
             </div>
