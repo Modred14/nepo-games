@@ -31,7 +31,7 @@ export async function POST(req) {
     }
     const data = event.data;
     const reference = data?.reference;
-    
+
     if (event?.event === "charge.success") {
       const metadata = data?.metadata || {};
       const userId = data?.metadata?.userId;
@@ -66,6 +66,88 @@ export async function POST(req) {
       if (existing.rows.length > 0) {
         console.log("⚠️ Duplicate webhook ignored:", reference);
         return NextResponse.json({ status: "already processed" });
+      }
+
+      if (purpose === "marketplace") {
+        const transactionId = metadata.transaction_id;
+        const listingId = metadata.listing_id;
+
+        if (!transactionId || !listingId) {
+          console.error("❌ Missing transaction metadata");
+          return NextResponse.json(
+            { error: "Missing metadata" },
+            { status: 400 },
+          );
+        }
+
+        // 1. Get transaction
+        const txRes = await pool.query(
+          `SELECT * FROM transactions WHERE id = $1`,
+          [transactionId],
+        );
+
+        const transaction = txRes.rows[0];
+
+        if (!transaction) {
+          console.error("❌ Transaction not found:", transactionId);
+          return NextResponse.json(
+            { error: "Transaction not found" },
+            { status: 404 },
+          );
+        }
+
+        // Prevent duplicate processing
+        if (transaction.payment_status === "paid") {
+          console.log("⚠️ Already processed:", transactionId);
+          return NextResponse.json({ status: "already processed" });
+        }
+
+        // 2. Update transaction
+        await pool.query(
+          `UPDATE transactions
+     SET 
+       payment_status = 'paid',
+       transaction_status = 'in_progress',
+       escrow_status = 'holding',
+       payment_provider_response = $1,
+       updated_at = NOW()
+     WHERE id = $2`,
+          [data, transactionId],
+        );
+
+        // 3. Update listing → pending
+        await pool.query(
+          `UPDATE listings
+     SET status = 'pending'
+     WHERE id = $1`,
+          [listingId],
+        );
+
+        // 4. Notify seller (chat system message)
+        await pool.query(
+          `INSERT INTO messages 
+    (conversation_id, sender_id, message, type, created_at)
+    VALUES (
+      (SELECT id FROM conversations WHERE listing_id = $1 LIMIT 1),
+      0,
+      'Buyer has made payment. Please provide login details.',
+      'payment_made',
+      NOW()
+    )`,
+          [listingId],
+        );
+
+        // 5. Insert buyer transaction record
+        await pool.query(
+          `INSERT INTO users_transactions 
+    (user_id, amount, status, description, type, reference)
+    VALUES ($1, $2, 'success', 'Marketplace payment', 'debit', $3)`,
+          [transaction.buyer_id, amount, reference],
+        );
+
+        console.log("✅ Marketplace payment processed:", transactionId);
+
+        return NextResponse.json({ status: "marketplace payment processed" });
       }
 
       if (purpose === "wallet") {
