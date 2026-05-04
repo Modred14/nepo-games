@@ -13,6 +13,7 @@ export async function getSimilarGames(currentGame) {
     FROM listings
     JOIN users ON listings.user_id = users.id
     WHERE listings.id != $1
+      AND listings.status = 'active'
     AND listings.price BETWEEN $2 AND $3
     ORDER BY RANDOM()
     LIMIT 2
@@ -28,6 +29,7 @@ export async function getSimilarGames(currentGame) {
       FROM listings
       JOIN users ON listings.user_id = users.id
       WHERE listings.id != $1
+        AND listings.status = 'active'
       AND users.is_verified = true
       ORDER BY RANDOM()
       LIMIT 2
@@ -44,6 +46,7 @@ export async function getSimilarGames(currentGame) {
       FROM listings
       JOIN users ON listings.user_id = users.id
       WHERE listings.id != $1
+        AND listings.status = 'active'
       ORDER BY RANDOM()
       LIMIT 2
       `,

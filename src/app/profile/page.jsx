@@ -33,8 +33,10 @@ export default function AccountSettingsPage() {
 
     if (tab) {
       setActiveTab(tab);
+    } else {
+      router.replace("/profile?tab=profile");
     }
-  }, [searchParams]);
+  }, [searchParams, router]);
   useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -712,7 +714,7 @@ function AccountTab() {
         // 🌐 Network error lands here
         console.error("Network error:", err);
         setUser(null);
-      } 
+      }
     };
 
     fetchUser();
@@ -755,7 +757,6 @@ function AccountTab() {
   }, [accountNumber, bankCode]);
 
   const fetchAccount = async () => {
-   
     try {
       const res = await fetch("/api/user/account");
 
@@ -825,7 +826,7 @@ function AccountTab() {
         return;
       }
 
-       window.location.href = data.url;
+      window.location.href = data.url;
     } catch (err) {
       console.error("Payment init failed:", err);
       setLoadingPay(false);
@@ -907,7 +908,7 @@ function AccountTab() {
       setWithdrawAmount("");
       setWithdrawError("");
 
-     fetchAccount();
+      fetchAccount();
     } catch (err) {
       console.error(err);
       setWithdrawError("Network error");
@@ -988,7 +989,7 @@ function AccountTab() {
               </div>
             </div>
           ) : (
-              <div className="w-[90%] max-w-sm bg-white rounded-xl border border-black/40 p-4 shadow-lg">
+            <div className="w-[90%] max-w-sm bg-white rounded-xl border border-black/40 p-4 shadow-lg">
               <p className=" font-semibold text-gray-900 text-center">
                 Transaction PIN Required
               </p>

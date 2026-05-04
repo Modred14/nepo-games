@@ -26,6 +26,9 @@ SELECT
   u.email,
   u.plan,
 
+  l.price AS price,
+  l.status AS status,
+
   COALESCE(
   l.title || ' (' || COALESCE(l.platform, '') || ')',
   l.title,
@@ -83,6 +86,8 @@ GROUP BY
   u.plan,
   l.title,
   l.platform,
+  l.price,
+  l.status,
   m.message,
   m.created_at,
   cr.last_read_at

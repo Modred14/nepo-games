@@ -1,15 +1,18 @@
 "use client";
 
 import { useEffect, useRef, useState, useMemo } from "react";
-import { ChevronLeft, CreditCard, Send } from "lucide-react";
+import { ChevronLeft, CreditCard, Send, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { usePathname } from "next/navigation";
 import { useParams } from "next/navigation";
 import Loader from "./Loader";
 import { Verified } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import LoginDropBox from "./LoginDropBox";
 
 export default function Conversation({ gameId, receiverId }) {
   const [textMessage, setTextMessage] = useState("");
+  const [load, setLoad] = useState(true);
   const [messages, setMessages] = useState([]);
   const [chatMessages, setChatMessages] = useState([]);
   const [adminMessages, setAdminMessages] = useState([]);
@@ -20,6 +23,134 @@ export default function Conversation({ gameId, receiverId }) {
   const [user, setUser] = useState([]);
   const [loading, setLoading] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [roleData, setRoleData] = useState(null);
+  const [successModal, setSuccessModal] = useState(false);
+  const [sellerLoad, setSellerLoad] = useState(true);
+  const [loginModal, setLoginModal] = useState(false);
+  const [loginData, setLoginData] = useState([]);
+  const [showDetails, setShowDetails] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(null);
+  const [buyModal, setBuyModal] = useState(false);
+  const [selectedListing, setSelectedListing] = useState(null);
+  const [buy, setBuy] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState(null);
+  const [payError, setPayError] = useState("");
+  const [loginDetails, setLoginDetails] = useState(false);
+  const [loadDet, setLoadDet] = useState(false);
+  const [cancel, setCancel] = useState(false);
+  const [disputeError, setDisputeError] = useState("");
+  const [disputeLoad, setDisputeLoad] = useState(false);
+
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const payment = searchParams.get("payment");
+
+    if (payment === "success") {
+      setSuccessModal(true);
+    }
+  }, [searchParams]);
+
+  // useEffect(() => {
+  //   if (!gameId || isSeller) return;
+
+  //   const fetchLogin = async () => {
+  //     try {
+  //       const res = await fetch(`/api/c/${gameId}/login-details`);
+  //       const data = await res.json();
+
+  //       if (data.hasLogin) {
+  //         setLoginData(data.login);
+  //         setLoginModal(true);
+  //       }
+  //     } catch (err) {
+  //       console.error(err);
+  //     }
+  //   };
+
+  //   fetchLogin();
+  //   const interval = setInterval(fetchLogin, 5000);
+
+  //   return () => clearInterval(interval);
+  // }, [gameId]);
+  const handleShowDetails = async () => {
+    const current = loginData?.[0];
+    if (!current) return;
+
+    setLoadDet(true);
+
+    try {
+      if (!current.expires_at) {
+        const res = await fetch(`/api/expire-check?conversationId=${chatId}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ deliveryId: current.id }),
+        });
+
+        const data = await res.json();
+
+        setLoginData((prev) =>
+          prev.map((item) =>
+            item.id === current.id ? { ...item, ...data.data } : item,
+          ),
+        );
+      }
+
+      // ALWAYS show details regardless
+      setShowDetails(true);
+    } catch (err) {
+      console.error("Failed to initialize expiry:", err);
+    } finally {
+      setLoadDet(false);
+    }
+  };
+  useEffect(() => {
+    if (!showDetails || loginData.length === 0) return;
+
+    let interval = "";
+    const current = loginData[0];
+    if (!current.expires_at) return;
+
+    const expiry = new Date(current.expires_at).getTime();
+
+    const updateTimer = () => {
+      const diff = expiry - Date.now();
+
+      if (diff <= 0) {
+        setTimeLeft("Elapsed");
+        clearInterval(interval);
+        return;
+      }
+
+      const mins = Math.floor(diff / 60000);
+      const secs = Math.floor((diff % 60000) / 1000);
+
+      setTimeLeft(`${mins}:${secs.toString().padStart(2, "0")}`);
+    };
+
+    updateTimer();
+    interval = setInterval(updateTimer, 1000);
+
+    return () => clearInterval(interval);
+  }, [loginData, showDetails]);
+  useEffect(() => {
+    if (!gameId) return;
+
+    const loadRole = async () => {
+      try {
+        const res = await fetch(`/api/c/${gameId}/role`);
+        const data = await res.json();
+        setRoleData(data);
+      } catch (err) {
+        console.error("Role fetch failed", err);
+      } finally {
+        setSellerLoad(false);
+      }
+    };
+
+    loadRole();
+  }, [gameId]);
+  const isSeller = roleData?.role === "seller";
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 640);
@@ -120,8 +251,8 @@ export default function Conversation({ gameId, receiverId }) {
     return Array.from(map.values());
   };
   const NEPO_CHAT = {
-    id: "nepo-system",
-    listing_id: "nepo-system",
+    id: "1",
+    listing_id: "1",
     gamedetails: "NepoGames",
     username: "Nepo Games",
     email: "nepogames.com@gmail.com",
@@ -131,25 +262,23 @@ export default function Conversation({ gameId, receiverId }) {
     lastmessagetime: new Date().toISOString(),
     unreadcount: 0,
   };
+  const fetchAndSet = async () => {
+    try {
+      const res = await fetch(`/api/conversations`);
 
+      const data = await res.json();
+
+      const grouped = groupConversations(data);
+
+      setConversations([NEPO_CHAT, ...grouped]);
+    } catch (err) {
+      console.error("Failed to load conversations", err);
+    } finally {
+      setLoadingChats(false);
+    }
+  };
   useEffect(() => {
     let interval;
-
-    const fetchAndSet = async () => {
-      try {
-        const res = await fetch(`/api/conversations`);
-
-        const data = await res.json();
-
-        const grouped = groupConversations(data);
-
-        setConversations([NEPO_CHAT, ...grouped]);
-      } catch (err) {
-        console.error("Failed to load conversations", err);
-      } finally {
-        setLoadingChats(false);
-      }
-    };
 
     fetchAndSet();
     interval = setInterval(fetchAndSet, 1000);
@@ -250,6 +379,26 @@ export default function Conversation({ gameId, receiverId }) {
 
     return result;
   }, [adminMessages, chatMessages, receiverId, messages]);
+
+  const fetchLoginDetails = async () => {
+    try {
+      const res = await fetch(`/api/login-delivery?conversationId=${chatId}`);
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data?.error || "Failed to fetch login details");
+      }
+      setLoginData(data.data || []);
+      if (data.data && data.data.length > 0) {
+        setLoginDetails(true);
+      }
+    } catch (err) {
+      console.error("Fetch login details error:", err.message);
+    } finally {
+      setLoad(false);
+    }
+  };
 
   useEffect(() => {
     if (isMobile) {
@@ -379,7 +528,44 @@ export default function Conversation({ gameId, receiverId }) {
     : conversations.find(
         (chat) => String(chat.listing_id) === String(currentChatId),
       );
-  if (loadingChats) {
+
+  const isSuccess = payError === "Payment successful";
+  useEffect(() => {
+    if (!activeChat) return;
+
+    const run = async () => {
+      try {
+        await markAsRead();
+      } catch (err) {
+        console.error("Failed to mark as read:", err);
+      }
+    };
+
+    run();
+  }, [activeChat?.listing_id, activeChat?.lastmessagetime]);
+  useEffect(() => {
+    if (String(receiverId) === "1") {
+      setLoad(false);
+      return;
+    }
+
+    if (!chatId) return;
+    if (loginDetails || cancel) return;
+
+    let interval;
+
+    const run = async () => {
+      await fetchLoginDetails();
+    };
+
+    run();
+
+    interval = setInterval(run, 3000);
+
+    return () => clearInterval(interval);
+  }, [chatId, receiverId]);
+
+  if (loadingChats || sellerLoad || load) {
     return <Loader />;
   }
 
@@ -402,11 +588,10 @@ export default function Conversation({ gameId, receiverId }) {
               </p>
             </div>
 
-            {/* LIST */}
             <div className="flex-1 overflow-y-auto thin-scroll">
               {conversations.map((chat) => {
                 const isActive = isSystemChat
-                  ? chat.receiver_id === 1 && chat.listing_id === "nepo-system"
+                  ? chat.receiver_id === 1 && chat.listing_id === "1"
                   : currentChatId &&
                     chat?.id &&
                     String(currentChatId) === String(chat.listing_id);
@@ -474,6 +659,186 @@ export default function Conversation({ gameId, receiverId }) {
       )}
       {(view === "chat" || !isMobile) && (
         <div className="relative z-10 overflow-hidden flex flex-col w-full">
+          {buyModal && selectedListing && (
+            <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+              <div className="bg-white w-[90%] max-w-md p-5 rounded-xl space-y-3 shadow-xl">
+                <h2 className="text-lg font-bold text-blue-700">
+                  Confirm Purchase
+                </h2>
+                {payError && (
+                  <p
+                    className="bg-red-50 border flex justify-center border-red-300 p-2 rounded text-sm "
+                    style={{ color: isSuccess ? "green" : "red" }}
+                  >
+                    {payError}
+                  </p>
+                )}
+                {/* GAME DETAILS */}
+                <div className="space-y-2 text-sm text-gray-700">
+                  <p>
+                    <strong>Game:</strong> {selectedListing.gamedetails}
+                  </p>
+                  <p>
+                    <strong>Seller:</strong> {selectedListing.username}
+                  </p>
+                  <p>
+                    <strong>Email:</strong> {selectedListing.email}
+                  </p>
+                  <p>
+                    <strong>Price:</strong> ₦
+                    {Number(selectedListing.price).toLocaleString()}
+                  </p>
+                </div>
+
+                {/* WARNING */}
+                <div className="bg-yellow-50 border border-yellow-300 p-3 rounded text-xs text-gray-700">
+                  Make sure you confirm all details before payment. Refunds are
+                  only possible via dispute system.
+                </div>
+                {/* PAYMENT METHOD */}
+                <div className="space-y-2">
+                  <p className="text-sm font-semibold">Choose Payment Method</p>
+
+                  <button
+                    onClick={() => setPaymentMethod("paystack")}
+                    className={`w-full py-2 rounded border ${
+                      paymentMethod === "paystack"
+                        ? "bg-blue-100 border-blue-500"
+                        : ""
+                    }`}
+                  >
+                    Pay with Paystack
+                  </button>
+
+                  <button
+                    onClick={() => setPaymentMethod("wallet")}
+                    className={`w-full py-2 rounded border ${
+                      paymentMethod === "wallet"
+                        ? "bg-blue-100 border-blue-500"
+                        : ""
+                    }`}
+                  >
+                    Pay with Account Balance
+                  </button>
+                </div>
+
+                {/* ACTIONS */}
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      setBuyModal(false);
+                      setPayError("");
+                      setPaymentMethod("");
+                    }}
+                    className="w-1/2 bg-gray-200 py-2 rounded"
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    onClick={async () => {
+                      if (!paymentMethod) {
+                        setPayError("Select a payment method");
+                        return;
+                      }
+
+                      try {
+                        setBuy(true);
+                        setPayError("");
+
+                        const res = await fetch(
+                          "/api/paystack/buy/initialize",
+                          {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                              listingId: selectedListing.listing_id || gameId,
+                              receiverId,
+                              paymentMethod, // 👈 IMPORTANT
+                            }),
+                          },
+                        );
+
+                        const data = await res.json();
+
+                        if (paymentMethod === "paystack") {
+                          if (data.authorization_url) {
+                            window.location.href = data.authorization_url;
+                          }
+                        } else {
+                          // wallet payment
+                          if (data.success) {
+                            setBuyModal(false);
+                            setSuccessModal(true);
+                          } else {
+                            setPayError(data.error);
+                          }
+                        }
+                      } catch (err) {
+                        console.error(err);
+                        setPayError("Payment error");
+                      } finally {
+                        setBuy(false);
+                      }
+                    }}
+                    disabled={buy}
+                    className="w-1/2 bg-blue-600 text-white py-2 rounded"
+                  >
+                    {!buy ? " Proceed to Pay" : "Loading..."}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+          {successModal && (
+            <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+              <div className="bg-white w-[90%] max-w-md p-6 rounded-xl shadow-xl text-center space-y-4">
+                {/* ICON */}
+                <div className="flex justify-center">
+                  <div className="bg-green-100 p-3 rounded-full">
+                    <svg
+                      className="w-8 h-8 text-green-600"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="3"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                  </div>
+                </div>
+
+                {/* TITLE */}
+                <h2 className="text-xl font-bold text-green-600">
+                  Payment Successful 🎉
+                </h2>
+
+                {/* MESSAGE */}
+                <p className="text-gray-600 text-sm">
+                  Your payment was successful.
+                </p>
+
+                <p className="text-sm text-gray-700 font-medium">
+                  The seller will be notified. Kindly stay available for the
+                  login details.
+                </p>
+
+                {/* ACTION */}
+                <button
+                  onClick={() => {
+                    setSuccessModal(false);
+                  }}
+                  className="w-full bg-blue-600 text-white py-2 rounded"
+                >
+                  Okay
+                </button>
+              </div>
+            </div>
+          )}
           <div className="relative z-10 h-screen flex flex-col w-full overflow-hidden">
             {/* background */}
             <div
@@ -526,15 +891,33 @@ export default function Conversation({ gameId, receiverId }) {
                       </p>
                     </div>
                   </div>
-                  {!isAdmin && (
+                  {!isAdmin && !isSeller && activeChat?.status == "active" && (
                     <div className="h-10  flex items-center">
                       <button
-                        // onClick={}
+                        onClick={() => {
+                          setSelectedListing(activeChat);
+                          setBuyModal(true);
+                        }}
                         className="inline-flex sm:h-8 h-7 p-2 gap-1 sm:gap-2 min-w-0 rounded-md text-xs sm:text-sm items-center justify-center bg-blue-600 text-white hover:bg-blue-700 active:scale-95 transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <CreditCard size={15} />{" "}
-                        <p className="inline-flex ">Pay Now</p>
+                        <p className="inline-flex ">Pay</p>
                       </button>
+                    </div>
+                  )}
+
+                  {cancel && showDetails && activeChat?.status != "active" && (
+                    <div className="h-10  flex items-center">
+                      {" "}
+                      <button
+                        onClick={() => {
+                          setLoginDetails(true);
+                          setCancel(false);
+                        }}
+                        className="inline-flex sm:h-8 h-7 p-2 gap-1 sm:gap-2 min-w-0 rounded-md text-xs sm:text-sm items-center justify-center bg-blue-600 text-white hover:bg-blue-700 active:scale-95 transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Details
+                      </button>{" "}
                     </div>
                   )}
                 </div>
@@ -644,6 +1027,136 @@ export default function Conversation({ gameId, receiverId }) {
                   </div>
                 ) : (
                   <div>
+                    <div className="flex justify-center w-full">
+                      <div className="fixed px-6">
+                        {isSeller &&
+                          activeChat?.status == "pending" &&
+                          !loginDetails && (
+                            <LoginDropBox
+                              conversationId={chatId}
+                              listingId={gameId}
+                            />
+                          )}
+                      </div>
+                    </div>
+                    {loginDetails &&
+                      !cancel &&
+                      !isSeller &&
+                      activeChat?.status == "pending" && (
+                        <div className="flex justify-center w-full">
+                          <div className="fixed bg-white w-[90%] max-w-md p-5 rounded-xl shadow-xl space-y-4">
+                       <div className="flex justify-between">
+                            <h2 className="text-lg font-bold text-blue-700">
+                              Login Released 🔓
+                            </h2>
+                       
+                            <button
+                              onClick={() => {
+                                setLoginDetails(false);
+                                setCancel(true);
+                              }}
+                              className="text-red-50 h-5 w-5 flex items-center hover:text-red-200 duration-200 transition-all rounded-3xl bg-red-500 hover:bg-red-700 p-1"
+                            >
+                              <X size={14} className="font-bold" />
+                            </button></div>
+
+                            <p className="text-sm text-gray-600">
+                              Seller has submitted login details.
+                            </p>
+                            {disputeError && (
+                              <div className="text-red-500 text-sm text-center">
+                                {disputeError}
+                              </div>
+                            )}
+                            {!showDetails && (
+                              <div className="space-y-3">
+                                <p className="text-red-600 text-sm font-medium">
+                                  ⚠️ You have 30 minutes to confirm once you
+                                  view details.
+                                </p>
+
+                                <p className="text-xs text-gray-500">
+                                  Make sure you have stable internet before
+                                  proceeding.
+                                </p>
+
+                                <button
+                                  onClick={handleShowDetails}
+                                  disabled={loadDet}
+                                  className="w-full bg-blue-600 text-white py-2 rounded-lg"
+                                >
+                                  {loadDet
+                                    ? "Loading..."
+                                    : "Show Login Details"}
+                                </button>
+                              </div>
+                            )}
+
+                            {showDetails && (
+                              <div className="space-y-3">
+                                {loginData.map((item, index) => (
+                                  <div
+                                    key={index}
+                                    className="bg-gray-100 p-3 rounded text-sm whitespace-pre-wrap"
+                                  >
+                                    {item.details}
+                                  </div>
+                                ))}
+
+                                <div className="text-center text-sm text-red-600 font-bold tracking-wide">
+                                  Time left: {timeLeft}
+                                </div>
+
+                                <button
+                                  onClick={() => {
+                                    setLoginDetails(false);
+                                    setCancel(true);
+                                  }}
+                                  className="w-full text-sm bg-green-600 text-white py-2 rounded-lg"
+                                >
+                                  Confirm Login Works
+                                </button>
+
+                                <button
+                                  onClick={async () => {
+                                    try {
+                                      setDisputeLoad(true);
+                                      setDisputeError("");
+                                      const res = await fetch(
+                                        `/api/c/${gameId}/dispute?conversationId=${chatId}`,
+                                        {
+                                          method: "POST",
+                                        },
+                                      );
+
+                                      const data = await res.json();
+
+                                      if (!res.ok) {
+                                        throw new Error(
+                                          data?.error ||
+                                            "Failed to raise dispute",
+                                        );
+                                      }
+                                      setLoginDetails(false);
+                                      setLoginModal(false);
+                                      setCancel(true);
+                                    } catch (err) {
+                                      setDisputeError(err.message);
+                                    } finally {
+                                      setDisputeLoad(false);
+                                    }
+                                  }}
+                                  className="w-full text-sm bg-red-600 text-white py-2 rounded-lg"
+                                >
+                                  {disputeLoad
+                                    ? "Loading..."
+                                    : "I didn’t get access"}
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     {allMessages.map((message, index) => (
                       <div
                         key={message.id}

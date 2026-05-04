@@ -17,8 +17,10 @@ async function getGame(slug) {
       users.plan,
     users.phone_verified
     FROM listings
+    
     JOIN users ON listings.user_id = users.id
     WHERE listings.slug = $1
+    AND listings.status = 'active'
     `,
     [slug],
   );

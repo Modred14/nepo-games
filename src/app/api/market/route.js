@@ -12,6 +12,7 @@ export async function GET(req) {
   FROM listings l
   JOIN users u ON l.user_id = u.id
   WHERE l.deleted_at IS NULL
+  AND l.status = 'active'
   ORDER BY l.created_at DESC
 `);
 
