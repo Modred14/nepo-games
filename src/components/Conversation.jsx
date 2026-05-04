@@ -40,6 +40,7 @@ export default function Conversation({ gameId, receiverId }) {
   const [cancel, setCancel] = useState(false);
   const [disputeError, setDisputeError] = useState("");
   const [disputeLoad, setDisputeLoad] = useState(false);
+  const [confirmLoad, setConfirmLoad] = useState(false);
 
   const searchParams = useSearchParams();
 
@@ -1045,20 +1046,21 @@ export default function Conversation({ gameId, receiverId }) {
                       activeChat?.status == "pending" && (
                         <div className="flex justify-center w-full">
                           <div className="fixed bg-white w-[90%] max-w-md p-5 rounded-xl shadow-xl space-y-4">
-                       <div className="flex justify-between">
-                            <h2 className="text-lg font-bold text-blue-700">
-                              Login Released 🔓
-                            </h2>
-                       
-                            <button
-                              onClick={() => {
-                                setLoginDetails(false);
-                                setCancel(true);
-                              }}
-                              className="text-red-50 h-5 w-5 flex items-center hover:text-red-200 duration-200 transition-all rounded-3xl bg-red-500 hover:bg-red-700 p-1"
-                            >
-                              <X size={14} className="font-bold" />
-                            </button></div>
+                            <div className="flex justify-between">
+                              <h2 className="text-lg font-bold text-blue-700">
+                                Login Released 🔓
+                              </h2>
+
+                              <button
+                                onClick={() => {
+                                  setLoginDetails(false);
+                                  setCancel(true);
+                                }}
+                                className="text-red-50 h-5 w-5 flex items-center hover:text-red-200 duration-200 transition-all rounded-3xl bg-red-500 hover:bg-red-700 p-1"
+                              >
+                                <X size={14} className="font-bold" />
+                              </button>
+                            </div>
 
                             <p className="text-sm text-gray-600">
                               Seller has submitted login details.
@@ -1108,13 +1110,41 @@ export default function Conversation({ gameId, receiverId }) {
                                 </div>
 
                                 <button
-                                  onClick={() => {
-                                    setLoginDetails(false);
-                                    setCancel(true);
+                                  onClick={async () => {
+                                    try {
+                                      setConfirmLoad(true);
+                                      setDisputeError("");
+                                      const res = await fetch(
+                                        `/api/c/${gameId}/confirm?conversationId=${chatId}`,
+                                        {
+                                          method: "POST",
+                                        },
+                                      );
+
+                                      const data = await res.json();
+
+                                      if (!res.ok) {
+                                        throw new Error(
+                                          data?.error ||
+                                            "Failed to raise dispute",
+                                        );
+                                      }
+                                      setLoginDetails(false);
+                                      setLoginModal(false);
+                                      setCancel(true);
+                                    } catch (err) {
+                                      setDisputeError(err.message);
+                                    } finally {
+                                      setConfirmLoad(false);
+                                    }
                                   }}
+                                   disabled={confirmLoad || disputeLoad}
                                   className="w-full text-sm bg-green-600 text-white py-2 rounded-lg"
                                 >
-                                  Confirm Login Works
+                                       {confirmLoad
+                                    ? "Loading..."
+                                    : "Confirm Login Works"}
+                                  
                                 </button>
 
                                 <button
@@ -1146,6 +1176,7 @@ export default function Conversation({ gameId, receiverId }) {
                                       setDisputeLoad(false);
                                     }
                                   }}
+                                  disabled={confirmLoad || disputeLoad}
                                   className="w-full text-sm bg-red-600 text-white py-2 rounded-lg"
                                 >
                                   {disputeLoad

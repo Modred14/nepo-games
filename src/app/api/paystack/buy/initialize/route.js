@@ -149,10 +149,6 @@ export async function POST(req) {
         return Response.json({ error: "Payment init failed" }, { status: 500 });
       }
 
-      await pool.query("UPDATE listings SET status = 'pending' WHERE id = $1", [
-        listingId,
-      ]);
-
       // 5. Save reference
       await pool.query(
         `UPDATE transactions
@@ -160,32 +156,7 @@ export async function POST(req) {
        WHERE id = $2`,
         [paystackData.data.reference, transaction.id],
       );
-
-      await pool.query(
-        `
-      INSERT INTO users_transactions
-      (user_id, type, amount, status, description, reference)
-      VALUES ($1, 'credit', $2, 'success', 'Wallet funding', $3)
-      `,
-        [user.id, amount, paystackData.data.reference],
-      );
-      await pool.query(
-        `
-      INSERT INTO users_transactions
-      (user_id, type, amount, status, description, reference)
-      VALUES ($1, 'debit', $2, 'success', 'Game account purchase', $3)
-      `,
-        [user.id, amount, paystackData.data.reference],
-      );
-
-      await pool.query(
-        `
-      INSERT INTO users_transactions
-      (user_id, type, amount, status, description, reference)
-      VALUES ($1, 'credit', $2, 'pending', 'Game account purchase', $3)
-      `,
-        [listing.user_id, amount, paystackData.data.reference],
-      );
+     
 
       return Response.json({
         authorization_url: paystackData.data.authorization_url,
