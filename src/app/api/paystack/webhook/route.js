@@ -58,16 +58,6 @@ export async function POST(req) {
         return NextResponse.json({ error: "User not found" }, { status: 404 });
       }
 
-      const existing = await pool.query(
-        "SELECT id FROM users_transactions WHERE reference = $1",
-        [reference],
-      );
-
-      if (existing.rows.length > 0) {
-        console.log("⚠️ Duplicate webhook ignored:", reference);
-        return NextResponse.json({ status: "already processed" });
-      }
-
       if (purpose === "marketplace") {
         const transactionId = metadata.transaction_id;
         const listingId = metadata.listing_id;
@@ -168,20 +158,21 @@ export async function POST(req) {
           [listingId],
         );
 
-        // 5. Insert buyer transaction record
-        await pool.query(
-          `INSERT INTO users_transactions 
-    (user_id, amount, status, description, type, reference)
-    VALUES ($1, $2, 'success', 'Marketplace payment', 'debit', $3)`,
-          [transaction.buyer_id, amount, reference],
-        );
-
         console.log("✅ Marketplace payment processed:", transactionId);
 
         return NextResponse.json({ status: "marketplace payment processed" });
       }
 
       if (purpose === "wallet") {
+        const existing = await pool.query(
+          "SELECT id FROM users_transactions WHERE reference = $1",
+          [reference],
+        );
+
+        if (existing.rows.length > 0) {
+          console.log("⚠️ Duplicate webhook ignored:", reference);
+          return NextResponse.json({ status: "already processed" });
+        }
         await pool.query(
           `
         INSERT INTO users_transactions (user_id, type, amount, status, description, reference)
@@ -252,6 +243,15 @@ export async function POST(req) {
       }
     }
     if (event.event === "transfer.success") {
+      const existing = await pool.query(
+        "SELECT id FROM users_transactions WHERE reference = $1",
+        [reference],
+      );
+
+      if (existing.rows.length > 0) {
+        console.log("⚠️ Duplicate webhook ignored:", reference);
+        return NextResponse.json({ status: "already processed" });
+      }
       await pool.query(
         `UPDATE users_transactions
          SET status = 'success'
