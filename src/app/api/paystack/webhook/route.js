@@ -96,11 +96,6 @@ export async function POST(req) {
           );
         }
 
-        // Prevent duplicate processing
-        if (transaction.payment_status === "paid") {
-          console.log("⚠️ Already processed:", transactionId);
-          return NextResponse.json({ status: "already processed" });
-        }
 
         // 2. Update transaction
         await pool.query(

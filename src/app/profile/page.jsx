@@ -541,7 +541,7 @@ function StatCard({ label, value }) {
     <div className="bg-white shadow rounded-xl p-3">
       <p className="text-xs text-gray-500">{label}</p>
       <p className="text-sm font-semibold text-gray-900 mt-1">
-        ₦{formatMoney(value || 0)}
+        ₦ {formatMoney(value || 0)}
       </p>
     </div>
   );
@@ -1181,7 +1181,7 @@ function AccountTab() {
               {" "}
               <p className="text-sm opacity-80">Available Balance</p>
               <h2 className="text-3xl font-semibold">
-                ₦{formatMoney(balance)}
+                ₦ {formatMoney(balance)}
               </h2>
             </div>
             {/* {showLine && (

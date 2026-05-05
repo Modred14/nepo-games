@@ -1138,13 +1138,12 @@ export default function Conversation({ gameId, receiverId }) {
                                       setConfirmLoad(false);
                                     }
                                   }}
-                                   disabled={confirmLoad || disputeLoad}
+                                  disabled={confirmLoad || disputeLoad}
                                   className="w-full text-sm bg-green-600 text-white py-2 rounded-lg"
                                 >
-                                       {confirmLoad
+                                  {confirmLoad
                                     ? "Loading..."
                                     : "Confirm Login Works"}
-                                  
                                 </button>
 
                                 <button
@@ -1192,16 +1191,20 @@ export default function Conversation({ gameId, receiverId }) {
                       <div
                         key={message.id}
                         className={`flex ${index === lastIndex ? "mb-0" : "mb-1"} w-full ${
-                          !isAdmin && userId === message.sender_id
-                            ? "justify-end"
-                            : "justify-start"
+                          message.sender_id === 1
+                            ? "justify-center"
+                            : !isAdmin && userId === message.sender_id
+                              ? "justify-end"
+                              : "justify-start"
                         }`}
                       >
                         <div
                           className={`max-w-[70%] px-4 py-2 rounded-2xl whitespace-pre-wrap text-sm shadow-sm wrap-break-word  ${
-                            !isAdmin && userId === message.sender_id
-                              ? "bg-blue-600 text-white rounded-br-sm"
-                              : "bg-white text-gray-800 border border-blue-100 rounded-bl-sm"
+                            message.sender_id === 1
+                              ? "bg-yellow-100 text-red-800  my-1  text-center"
+                              : !isAdmin && userId === message.sender_id
+                                ? "bg-blue-600 text-white rounded-br-sm"
+                                : "bg-white text-gray-800 border border-blue-100 rounded-bl-sm"
                           }`}
                         >
                           {message.title && (
@@ -1215,9 +1218,11 @@ export default function Conversation({ gameId, receiverId }) {
                           {message.message}
                           <p
                             className={`text-[10px] mt-1 ${
-                              !isAdmin && userId === message.sender_id
-                                ? "text-blue-100 text-right"
-                                : "text-gray-400 text-left"
+                              message.sender_id === 1
+                                ? " text-red-800 text-right"
+                                : !isAdmin && userId === message.sender_id
+                                  ? "text-blue-100 text-right"
+                                  : "text-gray-400 text-left"
                             }`}
                           >
                             {formatTime(message.created_at)}
