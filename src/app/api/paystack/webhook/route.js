@@ -98,7 +98,7 @@ export async function POST(req) {
           `UPDATE transactions
      SET 
        payment_status = 'paid',
-       transaction_status = 'in_progress',
+       transaction_status = 'pending',
        escrow_status = 'holding',
        payment_provider_response = $1,
        updated_at = NOW()
