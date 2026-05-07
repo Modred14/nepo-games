@@ -59,6 +59,7 @@ export async function POST(req) {
       }
 
       if (purpose === "marketplace") {
+        console.log("WEBHOOK EVENT HIT")
         const transactionId = metadata.transaction_id;
         const listingId = metadata.listing_id;
 
