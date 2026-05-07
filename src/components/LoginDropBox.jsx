@@ -43,22 +43,7 @@ export default function LoginDropBox({ conversationId, listingId }) {
     }
   };
 
-  if (submitted) {
-    return (
-      <div className="flex justify-center">
-        <div className="bg-green-50 border  border-green-300 p-4 rounded-xl text-sm space-y-2">
-          <p className="font-bold text-green-700 flex items-center gap-2">
-            <ShieldAlert size={16} />
-            Login Details Submitted
-          </p>
-          <p>
-            The buyer now have <strong>30 minutes</strong> to confirm the login
-            details after checking them.
-          </p>
-        </div>
-      </div>
-    );
-  }
+
 
   return (
     <div className="bg-white border border-blue-200 p-4 rounded-xl shadow-sm space-y-3">

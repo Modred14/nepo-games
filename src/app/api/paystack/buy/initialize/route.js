@@ -25,20 +25,20 @@ export async function POST(req) {
       return Response.json({ error: "Listing not available" }, { status: 400 });
     }
 
-    // const existing = await pool.query(
-    //   `SELECT * FROM transactions
-    //    WHERE listing_id = $1
-    //    AND buyer_id = $2
-    //    AND payment_status IN ('pending','paid')`,
-    //   [listingId, user.id],
-    // );
+    const existing = await pool.query(
+      `SELECT * FROM transactions
+       WHERE listing_id = $1
+       AND buyer_id = $2
+       AND payment_status IN ('pending','paid')`,
+      [listingId, user.id],
+    );
 
-    // if (existing.rows.length > 0) {
-    //   return Response.json(
-    //     { error: "Transaction already exists" },
-    //     { status: 400 },
-    //   );
-    // }
+    if (existing.rows.length > 0) {
+      return Response.json(
+        { error: "Transaction already exists" },
+        { status: 400 },
+      );
+    }
 
     const amount = Number(listing.price);
     if (paymentMethod === "wallet") {

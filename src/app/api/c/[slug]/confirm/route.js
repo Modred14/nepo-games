@@ -130,7 +130,7 @@ export async function POST(req, { params }) {
       [
         conversationId,
         SYSTEM_USER_ID,
-        "Buyer confirmed delivery. Money has released to seller.",
+        "Buyer confirmed delivery. Money has been released to seller.",
         "confirm",
       ],
     );

@@ -1,6 +1,6 @@
 import pool from "@/lib/db";
 import { requireUser } from "@/lib/auth";
-
+const SYSTEM_USER_ID = 1;
 export async function POST(req, { params }) {
   try {
     const user = await requireUser();
@@ -18,7 +18,7 @@ export async function POST(req, { params }) {
     // 1. Verify seller owns listing
     const listingRes = await pool.query(
       `SELECT * FROM listings WHERE id = $1`,
-      [listingId]
+      [listingId],
     );
 
     const listing = listingRes.rows[0];
@@ -27,13 +27,28 @@ export async function POST(req, { params }) {
       return Response.json({ error: "Not allowed" }, { status: 403 });
     }
 
-
     const transaction = txRes.rows[0];
 
     if (!transaction) {
-      return Response.json({ error: "No paid transaction found" }, { status: 400 });
+      return Response.json(
+        { error: "No paid transaction found" },
+        { status: 400 },
+      );
     }
-
+    await client.query(
+      `
+      INSERT INTO messages
+        (conversation_id, sender_id, message, type, created_at)
+      VALUES
+        ($1, $2, $3, $4, NOW())
+      `,
+      [
+        conversationId,
+        SYSTEM_USER_ID,
+        "Login Details Submitted. Buyer now has 30 minutes to confirm the login details after checking them.",
+        "confirm",
+      ],
+    );
     // 3. Save login details
     const expiry = new Date(Date.now() + 30 * 60 * 1000);
 
@@ -42,14 +57,7 @@ export async function POST(req, { params }) {
        (transaction_id, listing_id, seller_id, conversation_id, details, expires_at)
        VALUES ($1,$2,$3,$4,$5,$6)
        RETURNING *`,
-      [
-        transaction.id,
-        listingId,
-        user.id,
-        conversationId,
-        details,
-        expiry,
-      ]
+      [transaction.id, listingId, user.id, conversationId, details, expiry],
     );
 
     const login = loginRes.rows[0];
@@ -64,7 +72,7 @@ export async function POST(req, { params }) {
         user.id,
         "Login details have been submitted. Buyer has 30 minutes to confirm.",
         "login_submitted",
-      ]
+      ],
     );
 
     return Response.json({
