@@ -40,7 +40,7 @@ export async function POST(req) {
       );
     }
 
-    const amount = Number(listing.price);
+    const amount = Number(listing.price) * 1.05;
     if (paymentMethod === "wallet") {
       // 1. Check user balance
       const balanceResult = await pool.query(
@@ -156,7 +156,6 @@ export async function POST(req) {
        WHERE id = $2`,
         [paystackData.data.reference, transaction.id],
       );
-     
 
       return Response.json({
         authorization_url: paystackData.data.authorization_url,

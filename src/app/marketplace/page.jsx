@@ -166,7 +166,7 @@ export default function Marketplace() {
     .sort((a, b) => b.verified - a.verified);
   const router = useRouter();
   const openChat = () => {
-    router.push(`/c/1?receiver_id=1`);
+     router.push(`/c/1?receiver_id=1&from=marketplace`);
   };
   const isImagesReady =
     filteredGames.length === 0 || imagesLoaded >= filteredGames.length;
@@ -641,7 +641,7 @@ export default function Marketplace() {
                               <div>{formatGamePrice(game.price)}</div>
                             </div>
                             <a onClick={() => router.push(`/game${game.slug}`)}>
-                              <button className="flex  text-white p-1.5 rounded-lg border border-[#0038C9] bg-linear-to-b from-[#4F8CFF] to-[#8A38F5] b items-center gap-1 sm:text-sm text-xs">
+                              <button className="flex  text-white p-1.5 rounded-lg border border-[#0038C9]/40  bg-blue-700  items-center gap-1 sm:text-sm text-xs">
                                 Buy{" "}
                                 <ShoppingCart
                                   size={14}

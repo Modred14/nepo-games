@@ -22,7 +22,10 @@ export default function Conversation({ gameId, receiverId }) {
   const [view, setView] = useState("list");
   const [user, setUser] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== "undefined" ? window.innerWidth < 640 : false,
+  );
+  const [chatList, setChatList] = useState("");
   const [roleData, setRoleData] = useState(null);
   const [successModal, setSuccessModal] = useState(false);
   const [sellerLoad, setSellerLoad] = useState(true);
@@ -180,7 +183,10 @@ export default function Conversation({ gameId, receiverId }) {
 
     const load = async (isInitial = false) => {
       try {
-        if (isInitial) setLoading(true);
+        if (isInitial && !messagesCacheRef.current.has(String(gameId))) {
+          setLoading(true); // only show loader if not in cache
+        }
+
         if (String(receiverId) === "1") {
           const res = await fetch(`/api/system-messages?user_id=${user.id}`);
           const data = await res.json();
@@ -197,9 +203,11 @@ export default function Conversation({ gameId, receiverId }) {
 
         const data = await res.json();
 
-        setChatMessages(Array.isArray(data.messages) ? data.messages : []);
-        setAdminMessages([]);
+        const msgs = Array.isArray(data.messages) ? data.messages : [];
+        setChatMessages(msgs);
+        messagesCacheRef.current.set(String(gameId), msgs); // 👈 keep cache fresh
         setConversation(data.conversation || null);
+        setAdminMessages([]);
       } catch (err) {
         console.error("Polling failed:", err);
       } finally {
@@ -263,15 +271,44 @@ export default function Conversation({ gameId, receiverId }) {
     lastmessagetime: new Date().toISOString(),
     unreadcount: 0,
   };
+  // 1. Add a cache ref at the top with your other refs
+  const messagesCacheRef = useRef(new Map());
+
+  // 2. Preload all messages after conversations load
+  const preloadAllMessages = async (convos) => {
+    const fetches = convos
+      .filter((c) => String(c.listing_id) !== "1") // skip admin
+      .map(async (c) => {
+        try {
+          const res = await fetch(
+            `/api/c/${c.listing_id}/messages?receiver_id=${c.receiver_id}`,
+          );
+          const data = await res.json();
+          messagesCacheRef.current.set(
+            String(c.listing_id),
+            data.messages || [],
+          );
+        } catch (err) {
+          console.error("Preload failed for", c.listing_id, err);
+        }
+      });
+
+    await Promise.all(fetches);
+  };
+  const hasPrefetchedRef = useRef(false);
+
   const fetchAndSet = async () => {
     try {
       const res = await fetch(`/api/conversations`);
-
       const data = await res.json();
-
       const grouped = groupConversations(data);
-
-      setConversations([NEPO_CHAT, ...grouped]);
+      const allConvos = [NEPO_CHAT, ...grouped];
+      setConversations(allConvos);
+      setChatList(gameId || 1);
+      if (!hasPrefetchedRef.current) {
+        hasPrefetchedRef.current = true;
+        preloadAllMessages(grouped);
+      }
     } catch (err) {
       console.error("Failed to load conversations", err);
     } finally {
@@ -401,17 +438,19 @@ export default function Conversation({ gameId, receiverId }) {
     }
   };
 
-  useEffect(() => {
-    if (isMobile) {
-      if (currentChatId && Number(currentChatId) !== 1) {
-        setView("chat");
-      } else {
-        setView("list");
-      }
-    } else {
+useEffect(() => {
+  if (isMobile) {
+    const from = searchParams.get("from");
+
+    if (from === "marketplace") {
+      setView("list");
+    } else if (currentChatId) {
       setView("chat");
     }
-  }, [isMobile, currentChatId]);
+  } else {
+    setView("chat");
+  }
+}, [isMobile, currentChatId, searchParams]);
 
   const markAsRead = async () => {
     try {
@@ -566,9 +605,9 @@ export default function Conversation({ gameId, receiverId }) {
     return () => clearInterval(interval);
   }, [chatId, receiverId]);
 
-  if (loadingChats || sellerLoad || load) {
-    return <Loader />;
-  }
+  // if (loadingChats || sellerLoad || load) {
+  //   return <Loader />;
+  // }
 
   return (
     <div className="h-dvh w-full overflow-hidden flex bg-cover bg-center">
@@ -590,70 +629,89 @@ export default function Conversation({ gameId, receiverId }) {
             </div>
 
             <div className="flex-1 overflow-y-auto thin-scroll">
-              {conversations.map((chat) => {
-                const isActive = isSystemChat
-                  ? chat.receiver_id === 1 && chat.listing_id === "1"
-                  : currentChatId &&
-                    chat?.id &&
-                    String(currentChatId) === String(chat.listing_id);
+              {loadingChats
+                ? // 👇 show 6 skeletons while loading
+                  Array.from({ length: 6 }).map((_, i) => (
+                    <ConversationSkeleton key={i} />
+                  ))
+                : conversations.map((chat) => {
+                    const isActive = isSystemChat
+                      ? chat.receiver_id === 1 && chat.listing_id === "1"
+                      : currentChatId &&
+                        chat?.id &&
+                        String(currentChatId) === String(chat.listing_id);
 
-                return (
-                  <div
-                    key={chat.id}
-                    onClick={() => {
-                      router.push(
-                        `/c/${chat.listing_id}?receiver_id=${chat.receiver_id}`,
-                      );
-                      if (isMobile) {
-                        setLoadingChats(true);
-                        setView("chat");
-                      }
-                    }}
-                    className={`flex items-center gap-3 px-4 py-3 cursor-pointer border-b border-gray-100
+                    return (
+                      <div
+                        key={chat.id}
+                        onClick={() => {
+                          const cached = messagesCacheRef.current.get(
+                            String(chat.listing_id),
+                          );
+                          // if (cached) {
+                          //   setChatMessages(cached);
+                          //   setLoading(false);
+                          // } else {
+                          //   setLoading(true);
+                          // }
+                          setMessages([]);
+                          setAdminMessages([]);
+                          setConversation(null);
+
+                          router.replace(
+                            `/c/${chat.listing_id}?receiver_id=${chat.receiver_id}`,
+                            { scroll: false },
+                          );
+                          setChatList(chat.listing_id);
+                          if (chatList == chat.listing_id) {
+                            setView("chat");
+                          }
+                        }}
+                        className={`flex items-center gap-3 px-4 py-3 cursor-pointer border-b border-gray-100
               transition-all duration-150
               ${isActive && !isMobile ? "bg-blue-100/60 border-l-4 border-blue-600" : "hover:bg-blue-50/50"}
             `}
-                  >
-                    {/* AVATAR */}
-                    <div className="relative flex-shrink-0">
-                      <img
-                        src={chat.profile_image || "/profile.png"}
-                        className="w-12 h-12 border rounded-full border-blue-600/50 object-cover"
-                      />
-                      {chat?.plan && chat.plan !== "free" && (
-                        <Verified
-                          className="fill-green-600 fixed -mt-3 ml-8 text-green-100"
-                          size={16}
-                        />
-                      )}
-                    </div>
+                      >
+                        {/* AVATAR */}
+                        <div className="relative flex-shrink-0">
+                          <img
+                            src={chat.profile_image || "/profile.png"}
+                            className="w-12 h-12 border rounded-full border-blue-600/50 object-cover"
+                          />
+                          {chat?.plan && chat.plan !== "free" && (
+                            <Verified
+                              className="fill-green-600 absolute -mt-3 ml-8 text-green-100"
+                              size={16}
+                            />
+                          )}
+                        </div>
 
-                    <div className="flex-1 min-w-0">
-                      <div className="flex justify-between items-center">
-                        <p className="text-sm font-medium text-gray-900 truncate">
-                          {chat.gamedetails}
-                        </p>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex justify-between items-center">
+                            <p className="text-sm font-medium text-gray-900 truncate">
+                              {chat.gamedetails}
+                            </p>
 
-                        <p className="text-[10px] text-gray-400 shrink-0 ml-2">
-                          {formatTime(chat.lastmessagetime)}
-                        </p>
+                            <p className="text-[10px] text-gray-400 shrink-0 ml-2">
+                              {formatTime(chat.lastmessagetime)}
+                            </p>
+                          </div>
+
+                          <div className="flex items-center justify-between mt-1">
+                            <p className="text-xs text-gray-500 truncate pr-2">
+                              {chat.lastmessage || "Start a conversation..."}
+                            </p>
+
+                            {chat.unreadcount > 0 && (
+                              <span className="bg-blue-600 text-white text-[10px] min-w-[18px] h-[18px] px-1 rounded-full flex items-center justify-center shadow-sm">
+                                {chat.unreadcount}
+                              </span>
+                            )}
+                          </div>
+                        </div>
                       </div>
-
-                      <div className="flex items-center justify-between mt-1">
-                        <p className="text-xs text-gray-500 truncate pr-2">
-                          {chat.lastmessage || "Start a conversation..."}
-                        </p>
-
-                        {chat.unreadcount > 0 && (
-                          <span className="bg-blue-600 text-white text-[10px] min-w-[18px] h-[18px] px-1 rounded-full flex items-center justify-center shadow-sm">
-                            {chat.unreadcount}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+                    );
+                  })}
             </div>
           </div>
         </div>
@@ -687,12 +745,17 @@ export default function Conversation({ gameId, receiverId }) {
                   </p>
                   <p>
                     <strong>Price:</strong> ₦
-                    {Number(selectedListing.price).toLocaleString()}
+                    {Number(selectedListing.price * 1.05).toLocaleString()}
                   </p>
                 </div>
 
                 {/* WARNING */}
                 <div className="bg-yellow-50 border border-yellow-300 p-3 rounded text-xs text-gray-700">
+                  <p className="font-medium">
+                    Note: An additional 5% processing fee has been added to this
+                    payment.
+                  </p>
+                  <hr className="my-3 border-yellow-200" />
                   Make sure you confirm all details before payment. Refunds are
                   only possible via dispute system.
                 </div>
@@ -874,7 +937,7 @@ export default function Conversation({ gameId, receiverId }) {
                     />
                     {activeChat?.plan && activeChat.plan !== "free" && (
                       <Verified
-                        className="fill-green-600 fixed mt-7 ml-10 sm:ml-7 text-green-100"
+                        className="fill-green-600 absolute mt-7 ml-10 sm:ml-7 text-green-100"
                         size={16}
                       />
                     )}
@@ -1045,7 +1108,7 @@ export default function Conversation({ gameId, receiverId }) {
                       !isSeller &&
                       activeChat?.status == "pending" && (
                         <div className="flex justify-center w-full">
-                          <div className="fixed bg-white w-[90%] max-w-md p-5 rounded-xl shadow-xl space-y-4">
+                          <div className="fixed bg-white p-5 mx-6 rounded-xl shadow-xl space-y-4">
                             <div className="flex justify-between">
                               <h2 className="text-lg font-bold text-blue-700">
                                 Login Released 🔓
@@ -1290,3 +1353,17 @@ export default function Conversation({ gameId, receiverId }) {
     </div>
   );
 }
+const ConversationSkeleton = () => (
+  <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-100 animate-pulse">
+    {/* Avatar */}
+    <div className="w-12 h-12 rounded-full bg-gray-200 shrink-0" />
+
+    <div className="flex-1 min-w-0 space-y-2">
+      <div className="flex justify-between items-center">
+        <div className="h-3 bg-gray-200 rounded w-1/2" />
+        <div className="h-2 bg-gray-200 rounded w-10" />
+      </div>
+      <div className="h-2 bg-gray-200 rounded w-3/4" />
+    </div>
+  </div>
+);
