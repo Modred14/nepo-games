@@ -9,7 +9,10 @@ import {
   Lock,
   User,
   Shield,
-  Bell,
+  X,
+  Pencil,
+  Mail,
+  AtSign,
   Link as LinkIcon,
   Camera,
   LogOut,
@@ -209,6 +212,127 @@ function TabButton({ icon, label, active, onClick, disabled }) {
   );
 }
 
+function InfoRow({ icon: Icon, label, updateUser, user, value, editable }) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState("");
+
+  const handleOpen = () => {
+    setDraft(value === "Loading..." ? "" : value);
+    setErr("");
+    setEditing(true);
+  };
+
+  const handleSave = async () => {
+    if (!draft.trim()) {
+      setErr("This field cannot be empty.");
+      return;
+    }
+    setSaving(true);
+    setErr("");
+    try {
+      const [first, ...rest] = draft.trim().split(" ");
+      const res = await fetch("/api/user/change-name", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: user?.id,
+          first_name: first,
+          surname: rest.join(" "),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setErr(data.error || "Failed to save.");
+        return;
+      }
+      updateUser((user) => ({
+        ...user,
+        first_name: first,
+        surname: rest.join(" "),
+      }));
+      setEditing(false);
+    } catch {
+      setErr("Network error. Please try again.");
+    } finally {
+      setSaving(false);
+    }
+  };
+  return (
+    <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 border border-gray-100">
+      <div className="w-9 h-9 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0">
+        <Icon size={16} className="text-blue-600" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">
+          {label}
+        </p>
+        <p className="text-[13.5px] font-medium text-gray-900 truncate">
+          {value}
+        </p>
+      </div>
+      {editable && (
+        <button
+          onClick={handleOpen}
+          className="flex items-center gap-1 text-[11.5px] font-medium text-blue-600 border border-blue-200 px-2.5 py-1 rounded-md hover:bg-blue-50 transition-colors"
+        >
+          <Pencil size={11} />
+          Edit
+        </button>
+      )}
+      {editing && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="w-[88%] max-w-sm rounded-2xl bg-white p-6 shadow-xl">
+            <h2 className="text-base font-semibold text-gray-900 mb-1">
+              Edit {label}
+            </h2>
+            <p className="text-xs text-gray-400 mb-4">
+              Update your {label.toLowerCase()} below.
+            </p>
+            <input
+              type="text"
+              value={draft}
+              onChange={(e) => {
+                setDraft(e.target.value);
+                setErr("");
+              }}
+              placeholder={`Enter your ${label.toLowerCase()}`}
+              className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-900 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleSave();
+                if (e.key === "Escape") setEditing(false);
+              }}
+              autoFocus
+            />
+            {err && <p className="text-red-500 text-xs mt-1.5">{err}</p>}
+            <div className="flex justify-end gap-2.5 mt-5">
+              <button
+                onClick={() => setEditing(false)}
+                className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                className={`px-4 py-2 text-sm font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors flex items-center gap-1.5 ${
+                  saving ? "opacity-60 cursor-not-allowed" : ""
+                }`}
+              >
+                {saving && (
+                  <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                )}
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ProfileTab() {
   const [list, setList] = useState([]);
   const [error, setError] = useState("");
@@ -354,168 +478,196 @@ function ProfileTab() {
     }
   };
   return (
-    <div className="bg-white rounded-2xl shadow p-4 sm:p-6 border border-blue-400">
-      <div className="pb-1 sm:pb-0 sm:text-start sm:pl-36 text-center w-full">
-        {error ? (
-          <p className="text-red-500 text-sm mb-1">{error}</p>
-        ) : (
-          correct && <p className="text-green-500 text-sm mb-1">{correct}</p>
-        )}{" "}
-      </div>{" "}
-      <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
-        <div className="relative mx-auto sm:mx-0 w-25 h-25 sm:w-30 sm:h-30">
-          <input
-            type="file"
-            id="profile-upload"
-            accept="image/*"
-            className="hidden"
-            disabled={loading}
-            onChange={(e) => {
-              setCorrect("");
-              const file = e.target.files[0];
-              if (!file) return;
+    <div className="bg-white rounded-2xl border border-blue-200 shadow-sm overflow-hidden  w-full">
+      {/* ── Photo section ── */}
+      <div className="flex flex-col items-center gap-4 px-6 pb-5 border-b border-blue-100">
+        {/* Status message */}
+        <div className="h-4 text-center">
+          {error ? (
+            <p className="text-red-500 text-xs">{error}</p>
+          ) : correct ? (
+            <p className="text-green-600 text-xs">{correct}</p>
+          ) : null}
+        </div>
 
-              setSelectedFile(file);
+        {/* Avatar */}
+        <div className="flex  flex-col items-center gap-4 sm:flex-row sm:items-center sm:gap-8">
+          <div className="relative w-30 h-30">
+            <input
+              type="file"
+              id="profile-upload"
+              accept="image/*"
+              className="hidden"
+              disabled={loading}
+              onChange={(e) => {
+                setCorrect("");
+                const file = e.target.files[0];
+                if (!file) return;
+                setSelectedFile(file);
+                const imageUrl = URL.createObjectURL(file);
+                setUser((prev) => ({
+                  ...(prev || {}),
+                  profile_image: imageUrl,
+                }));
+                setError("Click Upload Photo to save your new picture.");
+              }}
+            />
+            <label
+              htmlFor="profile-upload"
+              className="cursor-pointer block w-full h-full"
+            >
+              <div className="w-full h-full rounded-full bg-blue-100 border-[2.5px] border-blue-500 overflow-hidden">
+                {imgLoading && (
+                  <div className="absolute inset-0 rounded-full flex items-center justify-center bg-gray-100">
+                    <div className="w-5 h-5 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
+                  </div>
+                )}
+                <img
+                  src={user?.profile_image || "/placeholder.png"}
+                  alt="Profile"
+                  className={`w-full h-full object-cover transition-opacity duration-300 ${
+                    imgLoading ? "opacity-0" : "opacity-100"
+                  }`}
+                  onLoad={() => setImgLoading(false)}
+                  onError={() => setImgLoading(false)}
+                />
+              </div>
+              <div className="absolute bottom-0.5 right-0.5 bg-blue-600 border-2 border-white rounded-full w-[26px] h-[26px] flex items-center justify-center">
+                <Camera size={13} className="text-white" />
+              </div>
+            </label>
+          </div>
 
-              const imageUrl = URL.createObjectURL(file);
-
-              setUser((prev) => ({
-                ...(prev || {}),
-                profile_image: imageUrl,
-              }));
-
-              setError(
-                "Click the upload button to update your profile picture",
-              );
-            }}
-          />
-
-          <label
-            htmlFor="profile-upload"
-            className="cursor-pointer block w-full h-full"
-          >
-            <div className="w-full h-full rounded-full bg-blue-200 border border-blue-600 overflow-hidden">
-              {imgLoading && (
-                <div className="absolute inset-0  rounded-full flex items-center justify-center bg-gray-100">
-                  <div className="w-6 h-6 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
-                </div>
-              )}
-              <img
-                src={user?.profile_image || "/placeholder.png"}
-                alt="Profile"
-                className={`w-full h-full object-cover transition-opacity duration-300 ${
-                  imgLoading ? "opacity-0" : "opacity-100"
+          {/* Buttons */}
+          <div className="flex flex-col items-center gap-2">
+            <div className="flex gap-2.5">
+              <button
+                onClick={handleUpload}
+                disabled={loading}
+                className={`flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-[13px] font-medium px-4 py-2 rounded-lg transition-colors ${
+                  loading ? "opacity-50 cursor-not-allowed" : ""
                 }`}
-                onLoad={() => setImgLoading(false)}
-                onError={() => setImgLoading(false)}
-              />
-            </div>
+              >
+                {loading ? (
+                  <>
+                    <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Uploading...
+                  </>
+                ) : (
+                  <>
+                    <Upload size={13} />
+                    Upload Photo
+                  </>
+                )}
+              </button>
 
-            <div className="absolute bottom-0 right-0 border mr-2 sm:mr-3 border-white bg-blue-600 p-1 rounded-full text-white">
-              <Camera size={15} />
+              <button
+                onClick={handleRemove}
+                disabled={loading}
+                className={`flex items-center gap-1.5 bg-white hover:bg-gray-50 text-gray-700 text-[13px] font-medium border border-gray-200 px-4 py-2 rounded-lg transition-colors ${
+                  loading ? "opacity-50 cursor-not-allowed" : ""
+                }`}
+              >
+                <X size={13} />
+                Remove
+              </button>
             </div>
-          </label>
-        </div>
-        <div className="w-full sm:w-fit flex flex-col gap-2 sm:items-start items-center">
-          <div className="flex flex-row gap-3 items-center ">
-            <button
-              onClick={handleUpload}
-              disabled={loading}
-              className={`bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md flex items-center gap-2 text-xs sm:text-sm transition-all duration-300 ${
-                loading ? "opacity-50 cursor-not-allowed" : ""
-              }`}
-            >
-              {loading ? (
-                <>
-                  <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                  Uploading...
-                </>
-              ) : (
-                <>
-                  <Upload size={14} /> Upload Photo
-                </>
-              )}
-            </button>
-            <button
-              disabled={loading}
-              onClick={handleRemove}
-              className={`border border-blue-400/70 bg-gray-100 hover:bg-gray-200 transition-all duration-300 px-4 py-2 rounded-md text-xs sm:text-sm   ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
-            >
-              Remove
-            </button>
+            <p className="text-[11.5px] text-gray-400">
+              JPG, PNG or WEBP. Max size of 2MB
+            </p>
           </div>
-          <p className="text-center text-xs sm:text-sm text-gray-500 w-full">
-            JPG, PNG or WEBP. Max size of 2MB
-          </p>
         </div>
       </div>
-      <hr className="my-4 sm:my-6 border-blue-400" />
-      <div className="sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 flex flex-wrap">
-        <Info
-          label="Full Name"
-          value={
-            user?.first_name
-              ? `${user.first_name} ${user.surname}`
-              : "Loading..."
-          }
-          user={user}
-          setUser={setUser}
-        />
-        <Info label="User Name" value={user?.username || "Loading..."} />
-        <Info label="E-Mail" value={user?.email || "Loading..."} />
+
+      {/* ── Profile Information ── */}
+      <div className="px-6 pt-4 pb-1">
+        <p className="text-[10.5px] font-semibold tracking-widest uppercase text-blue-600 mb-3">
+          Profile Information
+        </p>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-2.5">
+          <InfoRow
+            icon={User}
+            label="Full Name"
+            value={
+              user?.first_name
+                ? `${user.first_name} ${user.surname}`
+                : "Loading..."
+            }
+            user={user}
+            updateUser={setUser}
+            editable
+          />
+          <InfoRow
+            icon={AtSign}
+            label="User Name"
+            value={user?.username || "Loading..."}
+          />
+          <InfoRow
+            icon={Mail}
+            label="E-Mail"
+            value={user?.email || "Loading..."}
+          />
+        </div>
       </div>
+
+      {/* ── Listed Games (conditional) ── */}
       {list.length > 0 && (
-        <div>
-          <hr className="my-4 sm:my-6 border-blue-400" />
-          <div>
-            <div className="">
-              <p>Listed games</p>
-            </div>
-          </div>
+        <div className="px-6 pt-4">
+          <p className="text-[10.5px] font-semibold tracking-widest uppercase text-blue-600 mb-3">
+            Listed Games
+          </p>
+          {/* Render list items here */}
         </div>
       )}
-      <div className="mt-5 w-full flex items-center rounded-sm border border-red-200 bg-red-50 p-5  justify-between gap-4 shadow-sm">
-        {/* Left content */}
-        <div className="flex items-start gap-3">
+
+      {/* ── Log Out ── */}
+      <div className="px-6 pt-4 pb-5">
+        <p className="text-[10.5px] font-semibold tracking-widest uppercase text-blue-600 mb-3">
+          Log Out
+        </p>
+        <div className="flex items-center justify-between gap-4 bg-red-50 border border-red-100 rounded-xl px-4 py-3.5">
           <div>
-            <h3 className="text-sm font-semibold text-gray-900">Log out</h3>
-            <p className="text-sm text-gray-600 mt-1">
-              You’ll be signed out of this device. You can sign in again
+            <h3 className="text-[13px] font-semibold text-gray-900">
+              Sign out of this device
+            </h3>
+            <p className="text-[12px] text-gray-500 mt-0.5">
+              You'll be signed out of this device. You can sign in again
               anytime.
             </p>
           </div>
+          <button
+            onClick={() => setOpen(true)}
+            className="shrink-0 flex items-center gap-1.5 bg-red-600 hover:bg-red-700 text-white text-[12.5px] font-medium px-3.5 py-2 rounded-lg transition-colors active:scale-95"
+          >
+            <LogOut size={13} />
+            Log out
+          </button>
         </div>
-
-        {/* Button */}
-        <button
-          onClick={() => setOpen(true)}
-          className="shrink-0 gap-2 flex items-center bg-red-600 hover:bg-red-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-all duration-150 active:scale-95"
-        >
-          <LogOut size={14} /> Log out
-        </button>
       </div>
+
+      {/* ── Logout confirm modal ── */}
       {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="w-[90%] max-w-sm rounded-xl bg-white p-5 shadow-lg">
-            <h2 className="text-lg font-semibold">Confirm logout</h2>
-            <p className="text-sm text-gray-600 mt-2">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="w-[88%] max-w-sm rounded-2xl bg-white p-6 shadow-xl">
+            <h2 className="text-base font-semibold text-gray-900">
+              Confirm logout
+            </h2>
+            <p className="text-sm text-gray-500 mt-1.5">
               Are you sure you want to log out of this device?
             </p>
-
-            <div className="flex justify-end gap-3 mt-5">
+            <div className="flex justify-end gap-2.5 mt-5">
               <button
                 onClick={() => setOpen(false)}
-                className="px-4 py-2 text-sm rounded-lg border hover:bg-gray-100"
+                className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
               >
                 Cancel
               </button>
-
               <button
                 onClick={() => {
                   setOpen(false);
                   handleLogout();
                 }}
-                className="px-4 py-2 text-sm rounded-lg bg-red-600 text-white hover:bg-red-700"
+                className="px-4 py-2 text-sm font-medium rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors"
               >
                 Yes, log out
               </button>
@@ -528,46 +680,69 @@ function ProfileTab() {
 }
 function ProfileTabSkeleton() {
   return (
-    <div className="bg-white rounded-2xl shadow p-4 sm:p-6 border border-blue-400">
-      {/* Avatar + Buttons */}
-      <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
-        <div className="relative mx-auto sm:mx-0 w-25 h-25 sm:w-30 sm:h-30">
-          <div className="w-full h-full rounded-full bg-gray-200 animate-pulse" />
-          <div className="absolute bottom-0 right-0 mr-2 sm:mr-3 w-6 h-6 rounded-full bg-gray-300 animate-pulse border-2 border-white" />
-        </div>
-
-        <div className="w-full sm:w-fit flex flex-col gap-2 sm:items-start items-center">
-          <div className="flex flex-row gap-3 items-center">
-            <div className="h-9 w-28 rounded-md bg-gray-200 animate-pulse" />
-            <div className="h-9 w-20 rounded-md bg-gray-200 animate-pulse" />
+    <div className="bg-white rounded-2xl border border-blue-200 shadow-sm overflow-hidden w-full">
+      {/* ── Photo section skeleton ── */}
+      <div className="flex flex-col items-center gap-4 px-6 pb-5 border-b border-blue-100">
+        {/* Status message placeholder */}
+        <div className="h-4" />
+        <div className="flex  flex-col items-center gap-4 sm:flex-row sm:items-center sm:gap-8">
+          {/* Avatar */}
+          <div className="relative w-30 h-30">
+            <div className="w-full h-full rounded-full bg-gray-200 animate-pulse border-[2.5px] border-blue-100" />
+            <div className="absolute bottom-0.5 right-0.5 w-[26px] h-[26px] rounded-full bg-gray-300 animate-pulse border-2 border-white" />
           </div>
-          <div className="h-3 w-44 rounded bg-gray-200 animate-pulse" />
+
+          {/* Buttons */}
+          <div className="flex flex-col items-center gap-2">
+            <div className="flex gap-2.5">
+              <div className="h-9 w-32 rounded-lg bg-gray-200 animate-pulse" />
+              <div className="h-9 w-24 rounded-lg bg-gray-200 animate-pulse" />
+            </div>
+            <div className="h-3 w-44 rounded bg-gray-200 animate-pulse" />
+          </div>
+        </div>{" "}
+      </div>
+
+      {/* ── Profile Information skeleton ── */}
+      <div className="px-6 pt-4 pb-1">
+        <div className="h-3 w-36 rounded bg-gray-200 animate-pulse mb-3" />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-2.5">
+          {[...Array(3)].map((_, i) => (
+            <div
+              key={i}
+              className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 border border-gray-100"
+            >
+              {/* Icon bubble */}
+              <div className="w-9 h-9 rounded-full bg-gray-200 animate-pulse flex-shrink-0" />
+              {/* Text */}
+              <div className="flex-1 flex flex-col gap-1.5">
+                <div className="h-2.5 w-16 rounded bg-gray-200 animate-pulse" />
+                <div className="h-3.5 w-32 rounded bg-gray-200 animate-pulse" />
+              </div>
+              {/* Edit button only on first row */}
+              {i === 0 && (
+                <div className="h-6 w-14 rounded-md bg-gray-200 animate-pulse" />
+              )}
+            </div>
+          ))}
         </div>
       </div>
 
-      <hr className="my-4 sm:my-6 border-blue-400" />
-
-      {/* Info Grid */}
-      <div className="sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 flex flex-wrap">
-        {[...Array(3)].map((_, i) => (
-          <div key={i} className="flex flex-col gap-2">
-            <div className="h-3 w-16 rounded bg-gray-200 animate-pulse" />
-            <div className="h-5 w-32 rounded bg-gray-200 animate-pulse" />
+      {/* ── Log Out skeleton ── */}
+      <div className="px-6 pt-4 pb-5">
+        <div className="h-3 w-16 rounded bg-gray-200 animate-pulse mb-3" />
+        <div className="flex items-center justify-between gap-4 bg-red-50 border border-red-100 rounded-xl px-4 py-3.5">
+          <div className="flex flex-col gap-2">
+            <div className="h-3.5 w-36 rounded bg-red-200 animate-pulse" />
+            <div className="h-3 w-52 rounded bg-red-200 animate-pulse" />
           </div>
-        ))}
-      </div>
-
-      {/* Logout Bar */}
-      <div className="mt-5 w-full flex items-center rounded-sm border border-red-200 bg-red-50 p-5 justify-between gap-4 shadow-sm">
-        <div className="flex flex-col gap-2">
-          <div className="h-4 w-14 rounded bg-red-200 animate-pulse" />
-          <div className="h-3 w-56 rounded bg-red-200 animate-pulse" />
+          <div className="h-9 w-24 rounded-lg bg-red-300 animate-pulse shrink-0" />
         </div>
-        <div className="h-9 w-24 rounded-lg bg-red-300 animate-pulse shrink-0" />
       </div>
     </div>
   );
 }
+
 function StatCard({ label, value }) {
   const formatMoney = (val) =>
     new Intl.NumberFormat("en-NG", {
@@ -1754,7 +1929,6 @@ function PasswordTab({ setGlobalLoading }) {
         }),
       });
 
-      console.log(user.id, "this s=is it o");
       const data = await res.json();
 
       if (!res.ok) {

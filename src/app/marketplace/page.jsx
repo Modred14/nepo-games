@@ -356,6 +356,19 @@ export default function Marketplace() {
                             </Link>
                           </div>
                         ) : null}
+                        {isSeller && (
+                           <div className="w-full">
+                            {" "}
+                            <div className="h-px bg-gray-200 mx-2"></div>
+                            <Link
+                              href={"/sell-game"}
+                              className="flex items-center gap-3 px-4 py-3 text-xs text-gray-700 hover:bg-gray-100/80 transition  whitespace-nowrap"
+                            >
+                              <span className="text-xs">💰</span>
+                              Sell account
+                            </Link>
+                          </div>
+                        )}
                         {/* Divider */}
                         <div className="h-px bg-gray-200 mx-2"></div>
                         {/* Logout */}
