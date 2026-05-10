@@ -1,11 +1,11 @@
 import { Suspense } from "react";
-import AccountSettingsClient from "./AccountSettingsClient";
+import AccountSettingsPage from "./ProfileClient";
 import Loader from "@/components/Loader";
 
 export default function Page() {
   return (
     <Suspense fallback={<Loader/>}>
-      <AccountSettingsClient />
+      <AccountSettingsPage />
     </Suspense>
   );
 }
