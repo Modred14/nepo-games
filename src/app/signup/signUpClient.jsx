@@ -9,6 +9,7 @@ import SuccessModal from "../../components/SuccessModal";
 import { useRouter } from "next/navigation";
 import PageLoader from "@/components/PageLoader";
 import { signIn } from "next-auth/react";
+import Link from "next/link";
 
 export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
@@ -431,8 +432,8 @@ export default function Login() {
                     />
                     <div>
                       <span className="text-gray-600"> I agree to the </span>
-                      <a
-                        onClick={() => router.push(`/terms-of-service`)}
+                      <Link
+                        href={`/terms-of-service`}
                         agreed
                         className=" relative inline-block
 
@@ -456,10 +457,10 @@ export default function Login() {
     hover:after:scale-x-100 text-blue-600 font-medium"
                       >
                         Terms of Service
-                      </a>
+                      </Link>
                       <span className="text-gray-600"> and </span>{" "}
-                      <a
-                        onClick={() => router.push(`/privacy-policy`)}
+                      <Link
+                        href={`/privacy-policy`}
                         className=" relative inline-block
 
     after:content-['']
@@ -482,7 +483,7 @@ export default function Login() {
     hover:after:scale-x-100 text-blue-600 font-medium"
                       >
                         Privacy Policy
-                      </a>
+                      </Link>
                     </div>
                   </div>
                 </div>
@@ -534,8 +535,8 @@ export default function Login() {
                 <span className="text-gray-600  pb-20">
                   Already have an account?{" "}
                 </span>
-                <a
-                  onClick={() => router.push(`/login`)}
+                <Link
+                  href={`/login`}
                   className="relative inline-block
 
     after:content-['']
@@ -558,7 +559,7 @@ export default function Login() {
     hover:after:scale-x-100 text-blue-600 font-medium"
                 >
                   Sign in
-                </a>
+                </Link>
               </div>
             </div>
           </div>

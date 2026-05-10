@@ -11,6 +11,7 @@ import { signOut } from "next-auth/react";
 import Loader from "@/components/Loader";
 import DashboardStats from "@/lib/seller-data";
 import { motion } from "framer-motion";
+import Link from "next/link";
 
 export default function Marketplace() {
   const [user, setUser] = useState(null);
@@ -165,9 +166,7 @@ export default function Marketplace() {
     })
     .sort((a, b) => b.verified - a.verified);
   const router = useRouter();
-  const openChat = () => {
-     router.push(`/c/1?receiver_id=1&from=marketplace`);
-  };
+
   const isImagesReady =
     filteredGames.length === 0 || imagesLoaded >= filteredGames.length;
   useEffect(() => {
@@ -188,9 +187,7 @@ export default function Marketplace() {
     });
   }, [filteredGames]);
 
-  if (load) {
-    return <Loader />;
-  }
+  if (load) return <MarketplaceSkeleton />;
   return (
     <div>
       {logOpen && (
@@ -222,14 +219,14 @@ export default function Marketplace() {
           </div>
         </div>
       )}
-      <motion.button
-        onClick={() => openChat()}
-        initial={{ scale: 0.8, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.9 }}
-        transition={{ type: "spring", stiffness: 300, damping: 20 }}
-        className="
+      <Link href={"/c/1?receiver_id=1&from=marketplace"}>
+        <motion.button
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          transition={{ type: "spring", stiffness: 300, damping: 20 }}
+          className="
     fixed bottom-5 right-5
     z-[9999]
     w-14 h-14
@@ -239,14 +236,14 @@ export default function Marketplace() {
     flex items-center justify-center
     border-2 border-white
   "
-      >
-        <MessageCircle size={24} />
+        >
+          <MessageCircle size={24} />
 
-        {unread > 0 && (
-          <motion.span
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            className="
+          {unread > 0 && (
+            <motion.span
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              className="
         absolute -top-1 -right-1
         p-1
         bg-red-500
@@ -254,11 +251,12 @@ export default function Marketplace() {
         border border-white
         text-xs
       "
-          >
-            {unread}
-          </motion.span>
-        )}
-      </motion.button>
+            >
+              {unread}
+            </motion.span>
+          )}
+        </motion.button>
+      </Link>
       <Reveal className=" h-screen flex flex-col">
         <div className="flex flex-col flex-1 pb-20">
           <div className="flex border-b border-[#0000FF]/40 justify-between py-3 sm:py-4 px-7 items-center">
@@ -282,23 +280,21 @@ export default function Marketplace() {
                 />
               </div>
               {!isSeller ? (
-                <button
-                  onClick={() => router.push("/seller")}
-                  className="sm:block hidden"
-                >
-                  <p className="text-xs md:text-sm bg-blue-500 text-gray-50 rounded-lg p-2 px-3">
-                    Become a seller
-                  </p>
-                </button>
+                <Link href={"/seller"}>
+                  <button className="sm:block hidden">
+                    <p className="text-xs md:text-sm bg-blue-500 text-gray-50 rounded-lg p-2 px-3">
+                      Become a seller
+                    </p>
+                  </button>
+                </Link>
               ) : !hasPlan ? (
-                <button
-                  onClick={() => router.push("/pricing")}
-                  className="sm:block hidden"
-                >
-                  <p className="text-xs md:text-sm bg-blue-500 text-gray-50 rounded-lg p-2 px-3">
-                    Become verified
-                  </p>
-                </button>
+                <Link href={"/pricing"}>
+                  <button className="sm:block hidden">
+                    <p className="text-xs md:text-sm bg-blue-500 text-gray-50 rounded-lg p-2 px-3">
+                      Become verified
+                    </p>
+                  </button>
+                </Link>
               ) : null}
               <div className="flex items-center">
                 <div
@@ -328,36 +324,36 @@ export default function Marketplace() {
                     <>
                       {" "}
                       <div className="absolute right-0 mt-1 bg-white/95 backdrop-blur-md border  border-[#7A7AFE]/50 shadow-sm rounded-sm z-50 overflow-hidden transition-all duration-200">
-                        <a
-                          onClick={() => router.push(`/profile`)}
+                        <Link
+                          href={`/profile`}
                           className="flex items-center gap-3 px-4 py-3 text-xs text-gray-700 hover:bg-gray-100/80 transition"
                         >
                           <span className="text-xs">👤</span>
                           Profile
-                        </a>{" "}
+                        </Link>{" "}
                         {!isSeller ? (
                           <div className="w-full">
                             {" "}
                             <div className="h-px bg-gray-200 mx-2"></div>
-                            <a
-                              onClick={() => router.push(`/seller`)}
+                            <Link
+                              href={`/seller`}
                               className="flex items-center gap-3 px-4 py-3 text-xs text-gray-700 hover:bg-gray-100/80 transition  whitespace-nowrap"
                             >
                               <span className="text-xs">📦</span>
                               Become Seller{" "}
-                            </a>
+                            </Link>
                           </div>
                         ) : !hasPlan ? (
                           <div className="w-full">
                             {" "}
                             <div className="h-px bg-gray-200 mx-2"></div>
-                            <a
-                              onClick={() => router.push("/pricing")}
+                            <Link
+                              href={"/pricing"}
                               className="flex items-center gap-3 px-4 py-3 text-xs text-gray-700 hover:bg-gray-100/80 transition  whitespace-nowrap"
                             >
                               <span className="text-xs">📦</span>
                               Become verified{" "}
-                            </a>
+                            </Link>
                           </div>
                         ) : null}
                         {/* Divider */}
@@ -425,21 +421,21 @@ export default function Marketplace() {
                   </div>
 
                   {!isSeller ? (
-                    <a onClick={() => router.push(`/seller`)}>
+                    <Link href={`/seller`}>
                       <div className="">
                         <p className="text-xs whitespace-nowrap md:text-sm bg-blue-500 text-gray-50 rounded-lg p-2 px-3">
                           Become a seller
                         </p>
                       </div>
-                    </a>
+                    </Link>
                   ) : !hasPlan ? (
-                    <a onClick={() => router.push("/pricing")}>
+                    <Link href={"/pricing"}>
                       <div className="">
                         <p className="text-xs whitespace-nowrap md:text-sm bg-blue-500 text-gray-50 rounded-lg p-2 px-3">
                           Become verified
                         </p>
                       </div>
-                    </a>
+                    </Link>
                   ) : null}
                 </div>
                 <div className="flex flex-col flex-1 min-w-40">
@@ -597,8 +593,8 @@ export default function Marketplace() {
             <div>{isSeller && <DashboardStats />}</div>
             <div className="flex items-center justify-center">
               {loading || !isImagesReady ? (
-                <div className="min-h-[60vh] flex items-center justify-center">
-                  <SmallLoader />
+                <div className="w-full">
+                  <GameCardsSkeleton />
                 </div>
               ) : filteredGames.length === 0 ? (
                 <div className="min-h-[60vh] flex items-center justify-center">
@@ -640,7 +636,7 @@ export default function Marketplace() {
                               </div>
                               <div>{formatGamePrice(game.price)}</div>
                             </div>
-                            <a onClick={() => router.push(`/game${game.slug}`)}>
+                            <Link href={`/game${game.slug}`}>
                               <button className="flex  text-white p-1.5 rounded-lg border border-[#0038C9]/40  bg-blue-700  items-center gap-1 sm:text-sm text-xs">
                                 Buy{" "}
                                 <ShoppingCart
@@ -648,7 +644,7 @@ export default function Marketplace() {
                                   className="text-white fill-white"
                                 />
                               </button>
-                            </a>
+                            </Link>
                           </div>
                         </div>
                       </div>
@@ -660,6 +656,85 @@ export default function Marketplace() {
           </div>{" "}
         </div>
       </Reveal>
+    </div>
+  );
+}
+function MarketplaceSkeleton() {
+  return (
+    <div>
+      {/* Navbar */}
+      <div className="flex justify-between items-center py-3 sm:py-4 px-7 border-b border-blue-400/40 bg-white">
+        <div className="h-4 w-32 rounded bg-gray-200 animate-pulse" />
+        <div className="flex items-center gap-3 sm:gap-5">
+          <div className="hidden sm:block h-9 w-64 rounded-2xl bg-gray-200 animate-pulse" />
+          <div className="hidden sm:block h-8 w-28 rounded-lg bg-gray-200 animate-pulse" />
+          <div className="w-9 h-9 rounded-full bg-gray-200 animate-pulse" />
+        </div>
+      </div>
+
+      <div className="px-[3%] w-full">
+        {/* Filter bar */}
+        <div className="w-full mt-3 bg-white border border-blue-600/20 rounded-xl p-3 shadow-sm flex flex-wrap gap-3 sm:gap-4 items-center">
+          <div className="flex flex-col flex-1 min-w-40 gap-1.5">
+            <div className="h-3 w-10 rounded bg-gray-200 animate-pulse" />
+            <div className="h-9 w-full rounded-lg bg-gray-200 animate-pulse" />
+          </div>
+          <div className="flex flex-col flex-1 min-w-40 gap-1.5">
+            <div className="h-3 w-14 rounded bg-gray-200 animate-pulse" />
+            <div className="h-9 w-full rounded-lg bg-gray-200 animate-pulse" />
+          </div>
+          <div className="flex flex-col flex-1 min-w-45 gap-1.5">
+            <div className="h-3 w-8 rounded bg-gray-200 animate-pulse" />
+            <div className="flex gap-2">
+              <div className="h-7 w-24 rounded bg-gray-200 animate-pulse" />
+              <div className="h-7 w-24 rounded bg-gray-200 animate-pulse" />
+            </div>
+            <div className="h-1.5 w-full rounded-full bg-gray-200 animate-pulse mt-1" />
+          </div>
+          <div className="h-3.5 w-28 rounded bg-gray-200 animate-pulse" />
+          <div className="h-8 w-14 rounded-lg bg-gray-200 animate-pulse ml-auto" />
+        </div>
+
+        {/* Cards grid */}
+        <div className="grid py-3 sm:py-10 grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-5">
+          {[...Array(10)].map((_, i) => (
+            <div
+              key={i}
+              className="border rounded-md overflow-hidden border-blue-400 bg-white"
+            >
+              <div className="h-48 w-full bg-gray-200 animate-pulse" />
+              <div className="px-2 py-3 flex items-center justify-between">
+                <div className="flex flex-col gap-2">
+                  <div className="h-3.5 w-20 rounded bg-gray-200 animate-pulse" />
+                  <div className="h-3 w-14 rounded bg-gray-200 animate-pulse" />
+                </div>
+                <div className="h-8 w-12 rounded-lg bg-gray-200 animate-pulse" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+function GameCardsSkeleton() {
+  return (
+    <div className="grid py-3 sm:py-10 grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-5 w-full">
+      {[...Array(10)].map((_, i) => (
+        <div
+          key={i}
+          className="border rounded-md overflow-hidden border-blue-400 bg-white"
+        >
+          <div className="h-48 w-full bg-gray-200 animate-pulse" />
+          <div className="px-2 py-3 flex items-center justify-between">
+            <div className="flex flex-col gap-2">
+              <div className="h-3.5 w-20 rounded bg-gray-200 animate-pulse" />
+              <div className="h-3 w-14 rounded bg-gray-200 animate-pulse" />
+            </div>
+            <div className="h-8 w-12 rounded-lg bg-gray-200 animate-pulse" />
+          </div>
+        </div>
+      ))}
     </div>
   );
 }

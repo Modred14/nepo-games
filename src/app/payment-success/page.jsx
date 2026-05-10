@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Loader from "@/components/Loader";
+import Link from "next/link";
 
 export default function PaymentSuccess() {
   const searchParams = useSearchParams();
@@ -46,12 +47,11 @@ export default function PaymentSuccess() {
           Something went wrong. Please contact support.
         </p>
 
-        <button
-          onClick={() => router.push("/pricing")}
-          className="mt-6 bg-blue-600 text-white px-6 py-2 rounded-lg"
-        >
-          Go Back
-        </button>
+        <Link href={"/pricing"}>
+          <button className="mt-6 bg-blue-600 text-white px-6 py-2 rounded-lg">
+            Go Back
+          </button>
+        </Link>
       </div>
     );
   }
@@ -64,13 +64,11 @@ export default function PaymentSuccess() {
       <p className="text-gray-600 mt-2">
         Your subscription has been activated successfully.
       </p>
-
-      <button
-        onClick={() => router.push("/marketplace")}
-        className="mt-6 bg-blue-600 text-white px-6 py-2 rounded-lg"
-      >
-        Go to Marketplace
-      </button>
+      <Link href={"/marketplace"}>
+        <button className="mt-6 bg-blue-600 text-white px-6 py-2 rounded-lg">
+          Go to Marketplace
+        </button>
+      </Link>
     </div>
   );
 }

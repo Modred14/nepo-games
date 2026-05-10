@@ -8,6 +8,7 @@ import "react-phone-input-2/lib/style.css";
 import PageLoader from "@/components/PageLoader";
 import { useRouter } from "next/navigation";
 import { parsePhoneNumberFromString } from "libphonenumber-js";
+import Link from "next/link";
 
 export default function Seller() {
   const router = useRouter();
@@ -16,18 +17,18 @@ export default function Seller() {
     const checkUser = async () => {
       try {
         const res = await fetch("/api/user/me");
-      if (res.status === 401) {
-        setUser(null);
-        router.push("/login");
-        return;
-      }
+        if (res.status === 401) {
+          setUser(null);
+          router.push("/login");
+          return;
+        }
 
-      // ❌ Other errors (500, 404, etc)
-      if (!res.ok) {
-        console.error("Server error:", res.status);
-        setUser(null);
-        return; // stay on page
-      }
+        // ❌ Other errors (500, 404, etc)
+        if (!res.ok) {
+          console.error("Server error:", res.status);
+          setUser(null);
+          return; // stay on page
+        }
 
         const user = await res.json();
 
@@ -451,16 +452,16 @@ export default function Seller() {
                   {/* Buttons */}
                   <div className="items-center sm:text-sm flex text-xs gap-3 mt-4">
                     {/* VIEW DETAILS */}
-                    <a onClick={() => router.push(`/marketplace`)}>
+                    <Link href={`/marketplace`}>
                       {" "}
                       <button className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition">
                         Marketplace
                       </button>
-                    </a>
+                    </Link>
 
                     {/* LIST ANOTHER */}
 
-                    <a onClick={() => router.push(`/sell-game`)}>
+                    <Link href={`/sell-game`}>
                       <button
                         onClick={() => {
                           setSuccess(false);
@@ -470,7 +471,7 @@ export default function Seller() {
                       >
                         List your first game
                       </button>
-                    </a>
+                    </Link>
                   </div>
                 </div>
               </Reveal>

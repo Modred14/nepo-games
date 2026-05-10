@@ -6,6 +6,7 @@ import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 import Reveal from "../../reveal";
 import PageLoader from "@/components/PageLoader";
 import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
@@ -268,14 +269,14 @@ export default function Login() {
                     </p>
 
                     {/* BUTTON */}
-                    <a onClick={() => router.push(`/login`)} className="w-full">
+                    <Link href={`/login`} className="w-full">
                       <button
                         type="button"
                         className="w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white text-lg font-semibold py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5 active:scale-95"
                       >
                         Continue to Login →
                       </button>
-                    </a>
+                    </Link>
                   </div>
                 </div>
 

@@ -9,6 +9,7 @@ import ErrorModal from "../../components/ErrorModal";
 import SuccessModal from "../../components/SuccessModal";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
+import Link from "next/link";
 
 export default function LoginClient() {
   const [showPassword, setShowPassword] = useState(false);
@@ -280,8 +281,8 @@ export default function LoginClient() {
               <span className="text-gray-600">
                 Can't remember your password?{" "}
               </span>
-              <a
-                onClick={() => router.push(`/resetpassword`)}
+              <Link
+                href="/resetpassword"
                 className=" relative inline-block
 
     after:content-['']
@@ -304,7 +305,7 @@ export default function LoginClient() {
     hover:after:scale-x-100 text-blue-600 font-medium"
               >
                 Forgot Password
-              </a>
+              </Link>
             </div>
 
             {/* SIGN IN BUTTON */}
@@ -353,8 +354,7 @@ export default function LoginClient() {
           {/* CREATE ACCOUNT */}
           <div className="text-center text-sm   pb-20 ">
             <span className="text-gray-600">Don’t have an account yet? </span>
-            <a
-              onClick={() => router.push(`/signup`)}
+         <Link href="/signup"
               className=" relative inline-block
 
     after:content-['']
@@ -377,7 +377,7 @@ export default function LoginClient() {
     hover:after:scale-x-100 text-blue-600 font-medium"
             >
               Create an account
-            </a>
+            </Link>
           </div>
         </div>
       </div>

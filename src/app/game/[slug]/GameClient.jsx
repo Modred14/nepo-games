@@ -252,9 +252,12 @@ export default function GameClient({ game, images, similarGames }) {
                 </p>
 
                 <div className="flex justify-center mt-4">
-                  <button 
-                 onClick={() =>{router.push("/profile?tab=password")}} 
-                  className="bg-red-600 text-white px-3 py-1 rounded-lg text-sm font-medium hover:bg-red-700 transition duration-200">
+                  <button
+                    onClick={() => {
+                      router.push("/profile?tab=password");
+                    }}
+                    className="bg-red-600 text-white px-3 py-1 rounded-lg text-sm font-medium hover:bg-red-700 transition duration-200"
+                  >
                     Set PIN
                   </button>
                 </div>

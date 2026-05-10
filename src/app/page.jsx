@@ -18,14 +18,15 @@ import Reviews from "./review";
 import Footer from "./footer";
 import RevealRight from "./revealfright";
 import RevealLeft from "./revealfrleft";
-import PageLoader from "@/components/PageLoader";
 import { signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Verified } from "lucide-react";
+import Link from "next/link";
 import Loader from "@/components/Loader";
 
 export default function Home() {
   const [open, setOpen] = useState(false);
+  const [fading, setFading] = useState(false);
   const [ready, setReady] = useState(false);
   const innerRef = useRef(null);
   const [user, setUser] = useState(null);
@@ -60,7 +61,8 @@ export default function Home() {
         console.error("Network error:", err);
         setUser(null);
       } finally {
-        setLoad(false);
+        setFading(true); // trigger skeleton fade-out
+        setTimeout(() => setLoad(false), 300);
       }
     };
 
@@ -344,12 +346,25 @@ export default function Home() {
       scrollerInner.appendChild(clone);
     });
   }, []);
+
+  // const [loader, setLoader] = useState(true);
+
+  // useEffect(() => {
+  //   setTimeout(() => {
+  //     setLoad(false);
+  //   }, 600000); // 10 minutes in milliseconds
+  // }, []);
+
+  // if (load) {
+  //    return <HomeSkeleton fading={fading} />;
+  // }
+
   if (load) {
     return <Loader />;
   }
 
   return (
-    <PageLoader>
+    <div>
       {logOpen && (
         <div className="fixed inset-0 z-150 flex items-center justify-center bg-black/50">
           <div className="w-[90%] max-w-sm rounded-xl bg-white p-5 shadow-lg">
@@ -395,8 +410,8 @@ export default function Home() {
                       className="w-9 h-9 p-2 rounded-[50%] bg-blue-700 object-cover"
                     />
                     <div className="hidden md:flex font-medium justify-center gap-9">
-                      <a
-                        onClick={() => router.push("/marketplace")}
+                      <Link
+                        href={"/marketplace"}
                         className="
 relative inline-block
 
@@ -425,9 +440,9 @@ hover:text-[#0000FF]
 "
                       >
                         Marketplace
-                      </a>
-                      <a
-                        onClick={() => router.push("/pricing")}
+                      </Link>
+                      <Link
+                        href={"/pricing"}
                         className="    relative inline-block
 
     after:content-['']
@@ -452,10 +467,10 @@ hover:text-[#0000FF]
     hover:after:scale-x-100"
                       >
                         Pricing
-                      </a>
+                      </Link>
 
-                      <a
-                        onClick={() => router.push("/contact")}
+                      <Link
+                        href={"/contact"}
                         className="
 relative inline-block
 
@@ -484,27 +499,27 @@ hover:text-[#0000FF]
 "
                       >
                         Contact
-                      </a>
+                      </Link>
                     </div>
                     <div>
                       <div className="hidden md:flex justify-end">
                         {!user?.profile_image ? (
                           <div className="flex border  text-blue-700 font-medium transition-all duration-200  hover:text-blue-800 border-blue-600/70 text-sm items-center rounded-2xl w-fit overflow-hidden">
                             {/* Sign In */}
-                            <a
-                              onClick={() => router.push("/login")}
+                            <Link
+                              href={"/login"}
                               className="px-4 py-2 pr-5 hover:bg-blue-50 -mr-2"
                             >
                               Sign In
-                            </a>
+                            </Link>
 
                             {/* Sign Up */}
-                            <a
-                              onClick={() => router.push("/signup")}
+                            <Link
+                              href={"/signup"}
                               className="px-4 py-2 bg-blue-700 text-white rounded-l-2xl font-medium transition-all duration-200 hover:bg-blue-800 hover:scale-102 active:scale-95"
                             >
                               Sign Up
-                            </a>
+                            </Link>
                           </div>
                         ) : (
                           <>
@@ -534,23 +549,21 @@ hover:text-[#0000FF]
                                   {" "}
                                   <div className="absolute  right-0 mt-1 bg-white/95  backdrop-blur-md border  border-[#7A7AFE]/50 shadow-sm rounded-sm z-50 overflow-hidden transition-all duration-200">
                                     {/* Profile */}
-                                    <a
-                                      onClick={() => router.push("/profile")}
+                                    <Link
+                                      href={"/profile"}
                                       className="flex items-center gap-3 px-4 py-3 text-xs text-gray-700 hover:bg-gray-100/80 transition"
                                     >
                                       <span className="text-xs">👤</span>
                                       Profile
-                                    </a>{" "}
+                                    </Link>{" "}
                                     <div className="h-px bg-gray-200 mx-2"></div>
-                                    <a
-                                      onClick={() =>
-                                        router.push("/marketplace")
-                                      }
+                                    <Link
+                                      href={"/marketplace"}
                                       className="flex items-center gap-3 px-4 py-3 text-xs text-gray-700 hover:bg-gray-100/80 transition"
                                     >
                                       <span className="text-xs">🛒</span>
                                       Marketplace
-                                    </a>
+                                    </Link>
                                     {/* Divider */}
                                     <div className="h-px bg-gray-200 mx-2"></div>
                                     {/* Logout */}
@@ -645,12 +658,12 @@ hover:text-[#0000FF]
                               />
                             </div>
                             <p>
-                              <a
-                                onClick={() => router.push("/login")}
+                              <Link
+                                href={"/login"}
                                 className="font-semibold text-blue-600"
                               >
                                 Sign In
-                              </a>{" "}
+                              </Link>{" "}
                               to your account
                             </p>
                           </div>
@@ -660,7 +673,7 @@ hover:text-[#0000FF]
                     )}
                     <div className="flex text-base text-[#262626]  flex-col gap-6 h-full font-semibold -mb-2.5">
                       <div className="flex flex-col -mb-6 -mx-6">
-                        <a onClick={() => router.push("/marketplace")}>
+                        <Link href={"/marketplace"}>
                           <button
                             onClick={() => setActive("Marketplace")}
                             className={`${linkClass("Marketplace")}   group`}
@@ -673,9 +686,9 @@ hover:text-[#0000FF]
                               Marketplace
                             </span>
                           </button>
-                        </a>
+                        </Link>
 
-                        <a onClick={() => router.push("/pricing")}>
+                        <Link href={"/pricing"}>
                           <button
                             onClick={() => setActive("Pricing")}
                             className={`${linkClass("Pricing")} group`}
@@ -688,9 +701,9 @@ hover:text-[#0000FF]
                               Pricing
                             </span>
                           </button>
-                        </a>
+                        </Link>
 
-                        <a href="">
+                        <Link href="/contact">
                           <button
                             onClick={() => setActive("Support")}
                             className={`${linkClass("Support")} border-b-0 group`}
@@ -703,7 +716,7 @@ hover:text-[#0000FF]
                               Contact
                             </span>
                           </button>
-                        </a>
+                        </Link>
                       </div>
                       {user?.username ? (
                         <>
@@ -721,8 +734,8 @@ hover:text-[#0000FF]
                                 />
                               )}
                             </div>
-                            <a
-                              onClick={() => router.push("/profile")}
+                            <Link
+                              href={"/profile"}
                               className="mr-6
                  flex items-center justify-center
       py-2 px-3 rounded-xl border 
@@ -735,7 +748,7 @@ hover:text-[#0000FF]
     "
                             >
                               Go to Profile
-                            </a>
+                            </Link>
                           </div>
                         </>
                       ) : (
@@ -749,8 +762,8 @@ hover:text-[#0000FF]
                                 className="w-full h-full object-cover"
                               />
                             </div>
-                            <a
-                              onClick={() => router.push("/signup")}
+                            <Link
+                              href={"/signup"}
                               className="mr-6
                  flex items-center justify-center
       py-2 px-3 rounded-xl border 
@@ -763,7 +776,7 @@ hover:text-[#0000FF]
     "
                             >
                               Sign Up
-                            </a>
+                            </Link>
                           </div>
                         </>
                       )}
@@ -875,151 +888,148 @@ hover:text-[#0000FF]
               </Reveal>
               <div className="grid overflow-hidden sm:grid-cols-2 xl:grid-cols-4 gap-10 px-[5%]  items-stretch">
                 <RevealLeft>
-                  <div
-                    onClick={() => router.push("/signup")}
-                    className="bg-linear-to-b h-full from-[#4F8CFF]/50 rounded-xl pb-0 p-7 shadow-md to-[#8A38F5]/50  transition-all duration-500"
-                  >
-                    <div className="flex gap-3 items-center">
-                      <div className=" bg-white rounded-[50%] p-3">
-                        <div className="border-[#6D62FA] rounded-[50%] border-3">
-                          <User2Icon
-                            size={25}
-                            style={{ stroke: "url(#grad1)" }}
-                          />
-                          <svg width="0" height="0">
-                            <defs>
-                              <linearGradient
-                                id="grad1"
-                                x1="0%"
-                                y1="0%"
-                                x2="0%"
-                                y2="100%"
-                              >
-                                <stop offset="0%" stopColor="#4F8CFF" />
-                                <stop offset="100%" stopColor="#8A38F5" />
-                              </linearGradient>
-                            </defs>
-                          </svg>{" "}
+                  <Link href={"/signup"}>
+                    <div className="bg-linear-to-b h-full from-[#4F8CFF]/50 rounded-xl pb-0 p-7 shadow-md to-[#8A38F5]/50  transition-all duration-500">
+                      <div className="flex gap-3 items-center">
+                        <div className=" bg-white rounded-[50%] p-3">
+                          <div className="border-[#6D62FA] rounded-[50%] border-3">
+                            <User2Icon
+                              size={25}
+                              style={{ stroke: "url(#grad1)" }}
+                            />
+                            <svg width="0" height="0">
+                              <defs>
+                                <linearGradient
+                                  id="grad1"
+                                  x1="0%"
+                                  y1="0%"
+                                  x2="0%"
+                                  y2="100%"
+                                >
+                                  <stop offset="0%" stopColor="#4F8CFF" />
+                                  <stop offset="100%" stopColor="#8A38F5" />
+                                </linearGradient>
+                              </defs>
+                            </svg>{" "}
+                          </div>
                         </div>
+                        <p className=" text-[22px] bg-linear-to-r to-[#0000FF] from-[#800080E0] bg-clip-text text-transparent">
+                          Sign Up
+                        </p>
                       </div>
-                      <p className=" text-[22px] bg-linear-to-r to-[#0000FF] from-[#800080E0] bg-clip-text text-transparent">
-                        Sign Up
+                      <p className="text-[13px] p-2 pb-5 sm:h-22">
+                        Register to access a protected marketplace built for
+                        secure, transparent gaming account trading.
                       </p>
+                      <div className="mt-auto xl:pt-4 px-5">
+                        <img
+                          src="/ex-sign.png"
+                          className="rounded-t-2xl "
+                          alt=""
+                        />
+                      </div>
                     </div>
-                    <p className="text-[13px] p-2 pb-5 sm:h-22">
-                      Register to access a protected marketplace built for
-                      secure, transparent gaming account trading.
-                    </p>
-                    <div className="mt-auto xl:pt-4 px-5">
-                      <img
-                        src="/ex-sign.png"
-                        className="rounded-t-2xl "
-                        alt=""
-                      />
-                    </div>
-                  </div>
+                  </Link>
                 </RevealLeft>
                 <RevealRight>
-                  <div
-                    onClick={() => router.push("/sell-game")}
-                    className="bg-linear-to-b h-full from-[#4F8CFF]/50 rounded-xl pb-0 p-7 shadow-md to-[#8A38F5]/50  transition-all duration-500"
-                  >
-                    <div className="flex gap-3 items-center">
-                      <div className=" bg-white rounded-[50%] p-3">
-                        <div className="">
-                          <Plus size={25} className="text-[#6D62FA] " />{" "}
+                  <Link href="/sell-game">
+                    <div className="bg-linear-to-b h-full from-[#4F8CFF]/50 rounded-xl pb-0 p-7 shadow-md to-[#8A38F5]/50  transition-all duration-500">
+                      <div className="flex gap-3 items-center">
+                        <div className=" bg-white rounded-[50%] p-3">
+                          <div className="">
+                            <Plus size={25} className="text-[#6D62FA] " />{" "}
+                          </div>
                         </div>
+                        <p className=" text-[22px] bg-linear-to-r to-[#0000FF] from-[#800080E0] bg-clip-text text-transparent">
+                          Add Account
+                        </p>
                       </div>
-                      <p className=" text-[22px] bg-linear-to-r to-[#0000FF] from-[#800080E0] bg-clip-text text-transparent">
-                        Add Account
+                      <p className="text-[13px] p-2 pb-5 sm:h-23.25 xl:h-[92.5px]">
+                        Add games to sell and see potential buyers. Safe Fast
+                        and Secure.
                       </p>
+                      <div className="mt-auto xl:pt-4 px-5">
+                        <img
+                          src="/game-sign.png"
+                          className="rounded-t-2xl "
+                          alt=""
+                        />
+                      </div>
                     </div>
-                    <p className="text-[13px] p-2 pb-5 sm:h-23.25 xl:h-[92.5px]">
-                      Add games to sell and see potential buyers. Safe Fast and
-                      Secure.
-                    </p>
-                    <div className="mt-auto xl:pt-4 px-5">
-                      <img
-                        src="/game-sign.png"
-                        className="rounded-t-2xl "
-                        alt=""
-                      />
-                    </div>
-                  </div>
+                  </Link>
                 </RevealRight>
                 <RevealLeft>
                   {" "}
-                  <div
-                    onClick={() => router.push("/marketplace")}
-                    className="bg-linear-to-b h-full from-[#4F8CFF]/50 rounded-xl pb-0 p-7 shadow-md to-[#8A38F5]/50  transition-all duration-500"
-                  >
-                    <div className="flex gap-3 items-center">
-                      <div className=" bg-white rounded-[50%] p-3">
-                        <div>
-                          <Tag size={25} style={{ stroke: "url(#grad1)" }} />
-                          <svg width="0" height="0">
-                            <defs>
-                              <linearGradient
-                                id="grad1"
-                                x1="0%"
-                                y1="0%"
-                                x2="0%"
-                                y2="100%"
-                              >
-                                <stop offset="0%" stopColor="#4F8CFF" />
-                                <stop offset="100%" stopColor="#8A38F5" />
-                              </linearGradient>
-                            </defs>
-                          </svg>{" "}
+                  <Link href={"/marketplace"}>
+                    <div className="bg-linear-to-b h-full from-[#4F8CFF]/50 rounded-xl pb-0 p-7 shadow-md to-[#8A38F5]/50  transition-all duration-500">
+                      <div className="flex gap-3 items-center">
+                        <div className=" bg-white rounded-[50%] p-3">
+                          <div>
+                            <Tag size={25} style={{ stroke: "url(#grad1)" }} />
+                            <svg width="0" height="0">
+                              <defs>
+                                <linearGradient
+                                  id="grad1"
+                                  x1="0%"
+                                  y1="0%"
+                                  x2="0%"
+                                  y2="100%"
+                                >
+                                  <stop offset="0%" stopColor="#4F8CFF" />
+                                  <stop offset="100%" stopColor="#8A38F5" />
+                                </linearGradient>
+                              </defs>
+                            </svg>{" "}
+                          </div>
                         </div>
+                        <p className=" text-[22px] bg-linear-to-r to-[#0000FF] from-[#800080E0] bg-clip-text text-transparent">
+                          Buy or Sell
+                        </p>
                       </div>
-                      <p className=" text-[22px] bg-linear-to-r to-[#0000FF] from-[#800080E0] bg-clip-text text-transparent">
-                        Buy or Sell
+                      <p className="text-[13px] p-2 pb-5 sm:h-23.25 xl:h-[92.5px]">
+                        List your gaming account in minutes, connect with
+                        serious buyers, and receive secure payouts with zero
+                        hassle.
                       </p>
+                      <div className="mt-auto xl:pt-4 px-5">
+                        <img
+                          src="/buy-sign.png"
+                          className="rounded-t-2xl "
+                          alt=""
+                        />
+                      </div>
                     </div>
-                    <p className="text-[13px] p-2 pb-5 sm:h-23.25 xl:h-[92.5px]">
-                      List your gaming account in minutes, connect with serious
-                      buyers, and receive secure payouts with zero hassle.
-                    </p>
-                    <div className="mt-auto xl:pt-4 px-5">
-                      <img
-                        src="/buy-sign.png"
-                        className="rounded-t-2xl "
-                        alt=""
-                      />
-                    </div>
-                  </div>
+                  </Link>
                 </RevealLeft>{" "}
                 <RevealRight>
-                  <div
-                    onClick={() => router.push(`/c/1?receiver_id=1`)}
-                    className="bg-linear-to-b h-full from-[#4F8CFF]/50 rounded-xl pb-0 p-7 shadow-md to-[#8A38F5]/50  transition-all duration-500"
-                  >
-                    <div className="flex gap-3 items-center">
-                      <div className=" bg-white rounded-[50%] p-3">
-                        <div>
-                          <SlidersHorizontal
-                            size={25}
-                            className="text-[#6D62FA]"
-                          />
+                  <Link href={`/c/1?receiver_id=1`}>
+                    <div className="bg-linear-to-b h-full from-[#4F8CFF]/50 rounded-xl pb-0 p-7 shadow-md to-[#8A38F5]/50  transition-all duration-500">
+                      <div className="flex gap-3 items-center">
+                        <div className=" bg-white rounded-[50%] p-3">
+                          <div>
+                            <SlidersHorizontal
+                              size={25}
+                              className="text-[#6D62FA]"
+                            />
+                          </div>
                         </div>
+                        <p className=" text-[22px] bg-linear-to-r to-[#0000FF] from-[#800080E0] bg-clip-text text-transparent">
+                          Control Trade
+                        </p>
                       </div>
-                      <p className=" text-[22px] bg-linear-to-r to-[#0000FF] from-[#800080E0] bg-clip-text text-transparent">
-                        Control Trade
+                      <p className="text-[13px] p-2 pb-5 sm:h-23.25 xl:h-[92.5px]">
+                        Track, manage, and monitor every transaction in real
+                        time with complete transparency and security..
                       </p>
+                      <div className="mt-auto xl:pt-4 px-5">
+                        <img
+                          src="/page-sign.png"
+                          className="rounded-t-2xl "
+                          alt=""
+                        />
+                      </div>
                     </div>
-                    <p className="text-[13px] p-2 pb-5 sm:h-23.25 xl:h-[92.5px]">
-                      Track, manage, and monitor every transaction in real time
-                      with complete transparency and security..
-                    </p>
-                    <div className="mt-auto xl:pt-4 px-5">
-                      <img
-                        src="/page-sign.png"
-                        className="rounded-t-2xl "
-                        alt=""
-                      />
-                    </div>
-                  </div>
+                  </Link>
                 </RevealRight>
               </div>
             </div>
@@ -1246,7 +1256,8 @@ hover:text-[#0000FF]
                 <Footer />
                 <div className="w-full h-[0.5px] bg-linear-to-r from-transparent via-gray-100/20 to-transparent"></div>
                 <div className="max-w-7xl mx-auto px-5 pt-12 pb-6 text-white/70 text-sm text-center">
-                  © {new Date().getFullYear()} Nepo Games. All rights reserved.
+                  © {new Date().getFullYear()} Nepo Games · All rights reserved
+                  · Built with care for the gaming community
                 </div>
                 <div className="grid grid-cols-2 pb-5">
                   <div className="max-w-7xl mx-auto pb-3 px-5 text-white/40 text-xs text-center">
@@ -1320,6 +1331,861 @@ hover:text-[#0000FF]
           </main>
         </div>
       </div>
-    </PageLoader>
+    </div>
+  );
+}
+function HomeSkeleton({ fading = false }) {
+  return (
+    <div className="page-fadein">
+      <div className="min-h-screen bg-white overflow-hidden">
+        {/* ─────────────────────────────────────────
+          NAVBAR
+          px-[5%] mt-5 | inner px-[2%] rounded-4xl
+          logo w-9 h-9 | links hidden md:flex gap-9
+          auth: border rounded-2xl h-9
+      ───────────────────────────────────────── */}
+        <div className="w-full px-[5%] mt-7">
+          <div className="px-[2%] border border-[#7A7AFE]/50 rounded-4xl bg-white/95">
+            <div className="flex md:grid grid-cols-3 justify-between py-2 md:py-3 items-center w-full">
+              {/* Logo */}
+              <div className="w-9 h-9 rounded-full bg-gray-200 shimmer" />
+
+              {/* Nav links */}
+              <div className="hidden md:flex justify-center gap-9">
+                <div className="h-[14px] w-[90px] rounded-full bg-gray-200 shimmer" />
+                <div
+                  className="h-[14px] w-[56px] rounded-full bg-gray-200 shimmer"
+                  style={{ animationDelay: "0.1s" }}
+                />
+                <div
+                  className="h-[14px] w-[68px] rounded-full bg-gray-200 shimmer"
+                  style={{ animationDelay: "0.2s" }}
+                />
+              </div>
+
+              {/* Auth buttons */}
+              <div className="hidden md:flex justify-end">
+                <div className="flex border border-blue-200 rounded-2xl overflow-hidden">
+                  <div
+                    className="w-[76px] h-9 bg-blue-50 shimmer"
+                    style={{ borderRadius: 0 }}
+                  />
+                  <div
+                    className="w-[76px] h-9 bg-blue-200 shimmer"
+                    style={{ borderRadius: 0, animationDelay: "0.15s" }}
+                  />
+                </div>
+              </div>
+
+              {/* Mobile hamburger */}
+              <div className="md:hidden w-4 h-[14px] rounded bg-gray-200 shimmer mr-3" />
+            </div>
+          </div>
+        </div>
+
+        {/* ─────────────────────────────────────────
+          HERO SECTION
+          from-[#FFFFFF] to-[#8080FF] rounded-b-4xl
+          pt-45 (180px) px-[2%]
+          nepo-mark.png: wide composite mockup
+          ~full width, ~370px tall, NO bottom padding
+          — image bleeds right into scroller
+      ───────────────────────────────────────── */}
+        <div
+          className="rounded-b-4xl flex flex-col items-center gap-4 text-center px-[2%]"
+          style={{
+            background: "linear-gradient(to bottom, #ffffff, #8080ff)",
+            paddingTop: 180,
+            paddingBottom: 0,
+          }}
+        >
+          {/* Badge */}
+          <div className="flex items-center gap-2 bg-white px-3 py-[5px] rounded-2xl">
+            <div className="w-5 h-5 rounded-full bg-gray-200 shimmer" />
+            <div
+              className="h-[13px] w-[158px] rounded-full bg-gray-200 shimmer"
+              style={{ animationDelay: "0.1s" }}
+            />
+          </div>
+
+          {/* Headline line 1 — text-5xl = 48px, single line "Trade your Gaming Accounts with" */}
+          <div
+            className="shimmer"
+            style={{
+              width: "min(700px, 92%)",
+              height: 52,
+              borderRadius: 10,
+              background:
+                "linear-gradient(90deg,#d1d5db 25%,#e9ebee 50%,#d1d5db 75%)",
+              backgroundSize: "800px 100%",
+              animationDelay: "0.05s",
+            }}
+          />
+
+          {/* Headline line 2 — "Nepogames" in white/light */}
+          <div
+            className="shimmer-light"
+            style={{
+              width: 280,
+              height: 52,
+              borderRadius: 10,
+              animationDelay: "0.1s",
+            }}
+          />
+
+          {/* Sub paragraph — 2 lines */}
+          <div
+            className="flex flex-col items-center gap-2 w-full"
+            style={{ maxWidth: 460 }}
+          >
+            <div
+              className="shimmer-light shimmer-r"
+              style={{ width: "100%", height: 14, animationDelay: "0.15s" }}
+            />
+            <div
+              className="shimmer-light shimmer-r"
+              style={{ width: "78%", height: 14, animationDelay: "0.2s" }}
+            />
+          </div>
+
+          {/* "Trade with confidence." italic line */}
+          <div
+            className="shimmer-light shimmer-r"
+            style={{ width: 196, height: 14, animationDelay: "0.25s" }}
+          />
+
+          {/* nepo-mark.png
+            From screenshot: a wide composite of phone + floating cards
+            Takes up ~full content width, ~370px tall
+            Sits flush at bottom — no mb/pb so it bleeds into scroller */}
+          <div
+            className="shimmer-light"
+            style={{
+              width: "min(660px, 100%)",
+              height: 370,
+              borderRadius: "16px 16px 0 0",
+              marginTop: 16,
+              animationDelay: "0.1s",
+            }}
+          />
+        </div>
+
+        {/* ─────────────────────────────────────────
+          LOGO SCROLLER
+          from-[#5DACEC] to-[#9750F6]
+          From screenshot: ~110px tall strip
+          logos are large ~80px tall, various widths
+      ───────────────────────────────────────── */}
+        <div
+          className="mt-5"
+          style={{
+            background: "linear-gradient(to right, #5dacec, #9750f6)",
+            height: 110,
+            display: "flex",
+            alignItems: "center",
+            gap: 32,
+            padding: "0 24px",
+            overflow: "hidden",
+          }}
+        >
+          {/* Widths from screenshot logos: Free Fire, Blood Strike, Delta Force, eFootball, Mobile Legends, CoD, Fortnite, Minecraft, PUBG */}
+          {[130, 120, 140, 110, 150, 130, 120, 140, 130].map((w, i) => (
+            <div
+              key={i}
+              className="shimmer-light"
+              style={{
+                width: w,
+                height: 80,
+                borderRadius: 8,
+                flexShrink: 0,
+                animationDelay: `${i * 0.07}s`,
+              }}
+            />
+          ))}
+        </div>
+
+        {/* ─────────────────────────────────────────
+          HOW OUR MARKETPLACE WORKS heading
+          text-[#0000FF] text-3xl lg:text-5xl
+          From screenshot: ~48px, centred, mt-5 mb-7 pt-5
+      ───────────────────────────────────────── */}
+        <div className="flex justify-center mt-5 mb-7 pt-5 px-3">
+          <div
+            className="shimmer"
+            style={{ width: "min(460px, 85%)", height: 48, borderRadius: 10 }}
+          />
+        </div>
+
+        {/* ─────────────────────────────────────────
+          4-CARD GRID
+          grid xl:grid-cols-4 sm:grid-cols-2 gap-10 px-[5%]
+          From screenshot each card:
+          — icon circle ~56px
+          — label text ~24px
+          — desc text 3 lines (13px)
+          — screenshot image tall ~160px
+          — total card height ~380px
+      ───────────────────────────────────────── */}
+        <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-10 px-[5%]">
+          {[
+            { lw: 76, d: [0, 0.05, 0.1] },
+            { lw: 108, d: [0.08, 0.13, 0.18] },
+            { lw: 88, d: [0.16, 0.21, 0.26] },
+            { lw: 100, d: [0.24, 0.29, 0.34] },
+          ].map(({ lw, d }, i) => (
+            <div
+              key={i}
+              style={{
+                background:
+                  "linear-gradient(to bottom, rgba(79,140,255,0.2), rgba(138,56,245,0.2))",
+                borderRadius: 16,
+                padding: "28px 28px 0",
+                display: "flex",
+                flexDirection: "column",
+                gap: 14,
+                minHeight: 380,
+              }}
+            >
+              {/* Icon + label */}
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <div
+                  className="shimmer"
+                  style={{
+                    width: 56,
+                    height: 56,
+                    borderRadius: "50%",
+                    flexShrink: 0,
+                    animationDelay: `${d[0]}s`,
+                  }}
+                />
+                <div
+                  className="shimmer"
+                  style={{
+                    width: lw,
+                    height: 24,
+                    borderRadius: 9999,
+                    animationDelay: `${d[0] + 0.05}s`,
+                  }}
+                />
+              </div>
+              {/* Description lines */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <div
+                  className="shimmer"
+                  style={{
+                    width: "100%",
+                    height: 13,
+                    borderRadius: 9999,
+                    animationDelay: `${d[1]}s`,
+                  }}
+                />
+                <div
+                  className="shimmer"
+                  style={{
+                    width: "88%",
+                    height: 13,
+                    borderRadius: 9999,
+                    animationDelay: `${d[1] + 0.05}s`,
+                  }}
+                />
+                <div
+                  className="shimmer"
+                  style={{
+                    width: "72%",
+                    height: 13,
+                    borderRadius: 9999,
+                    animationDelay: `${d[1] + 0.1}s`,
+                  }}
+                />
+              </div>
+              {/* Screenshot image placeholder */}
+              <div style={{ marginTop: "auto", padding: "0 16px" }}>
+                <div
+                  className="shimmer"
+                  style={{
+                    height: 160,
+                    borderRadius: "16px 16px 0 0",
+                    animationDelay: `${d[2]}s`,
+                  }}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* ─────────────────────────────────────────
+          TRADE SECURELY
+          from-[#8A38F5]/50 to-[#4F8CFF]/50 mt-15
+          grid md:grid-cols-2 max-w-6xl px-[5%] pb-10
+          Left: phone.png ~240×400
+          Right: heading text-4xl + paragraph
+      ───────────────────────────────────────── */}
+        <div
+          style={{
+            background:
+              "linear-gradient(to bottom, rgba(138,56,245,0.35), rgba(79,140,255,0.35))",
+            marginTop: 60,
+            padding: "20px 5% 40px",
+          }}
+        >
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              alignItems: "center",
+              maxWidth: 1152,
+              margin: "0 auto",
+              gap: 32,
+            }}
+          >
+            {/* Phone image */}
+            <div style={{ display: "flex", justifyContent: "center" }}>
+              <div
+                className="shimmer"
+                style={{ width: 240, height: 400, borderRadius: 20 }}
+              />
+            </div>
+            {/* Text */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              <div
+                className="shimmer"
+                style={{ width: "80%", height: 38, borderRadius: 8 }}
+              />
+              <div
+                className="shimmer"
+                style={{
+                  width: "58%",
+                  height: 38,
+                  borderRadius: 8,
+                  animationDelay: "0.1s",
+                }}
+              />
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 9,
+                  marginTop: 16,
+                }}
+              >
+                {[100, 97, 93, 96, 88, 72].map((w, i) => (
+                  <div
+                    key={i}
+                    className="shimmer"
+                    style={{
+                      width: `${w}%`,
+                      height: 13,
+                      borderRadius: 9999,
+                      animationDelay: `${i * 0.05}s`,
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ─────────────────────────────────────────
+          DATA / STATS HEADING + GROUP IMAGE
+          text-3xl/5xl mt-5 pt-5 mb-7 centred
+          group.png px-[10%] sm:px-[15%] lg:px-[20%]
+      ───────────────────────────────────────── */}
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            padding: "20px 12px",
+            gap: 20,
+          }}
+        >
+          <div
+            className="shimmer"
+            style={{ width: "min(500px, 90%)", height: 44, borderRadius: 10 }}
+          />
+          <div
+            className="shimmer"
+            style={{
+              width: "56%",
+              maxWidth: 520,
+              height: 168,
+              borderRadius: 16,
+            }}
+          />
+        </div>
+
+        {/* ─────────────────────────────────────────
+          REVIEWS SECTION
+          bg-white > gradient bg px-[5%] mt-15
+          grid md:grid-cols-2
+          Left: heading + body text + stat card (desktop)
+          Right: 3 review cards (py-10 sm:px-10 lg:px-10)
+      ───────────────────────────────────────── */}
+        <div style={{ background: "#fff" }}>
+          <div
+            style={{
+              background:
+                "linear-gradient(to bottom, rgba(138,56,245,0.3), rgba(79,140,255,0.3))",
+              padding: "0 5%",
+              marginTop: 60,
+            }}
+          >
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: 24,
+              }}
+            >
+              {/* LEFT */}
+              <div
+                style={{
+                  padding: "60px 0",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 20,
+                }}
+              >
+                <div
+                  className="shimmer"
+                  style={{ width: "90%", height: 30, borderRadius: 8 }}
+                />
+                <div
+                  className="shimmer"
+                  style={{
+                    width: "68%",
+                    height: 30,
+                    borderRadius: 8,
+                    animationDelay: "0.1s",
+                  }}
+                />
+                <div
+                  style={{ display: "flex", flexDirection: "column", gap: 9 }}
+                >
+                  {[100, 94, 80].map((w, i) => (
+                    <div
+                      key={i}
+                      className="shimmer"
+                      style={{
+                        width: `${w}%`,
+                        height: 13,
+                        borderRadius: 9999,
+                        animationDelay: `${i * 0.07}s`,
+                      }}
+                    />
+                  ))}
+                </div>
+                {/* Stat card desktop */}
+                <div
+                  className="hidden md:block"
+                  style={{ padding: "0 10%", marginTop: 8 }}
+                >
+                  <div
+                    style={{
+                      background:
+                        "linear-gradient(to bottom, rgba(79,140,255,0.35), rgba(138,56,245,0.35))",
+                      borderRadius: 16,
+                      padding: "12px 12px 0",
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "center",
+                        marginBottom: 8,
+                      }}
+                    >
+                      <div
+                        className="shimmer-light"
+                        style={{ width: 148, height: 22, borderRadius: 9999 }}
+                      />
+                    </div>
+                    <div style={{ padding: "0 24px" }}>
+                      <div
+                        className="shimmer-light"
+                        style={{ height: 120, borderRadius: "16px 16px 0 0" }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* RIGHT — 3 review cards */}
+              <div
+                style={{
+                  padding: "40px",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 16,
+                }}
+              >
+                {[
+                  { nw: 96, rw: 64, t2: "100%", t3: "72%" },
+                  { nw: 112, rw: 56, t2: "100%", t3: "58%" },
+                  { nw: 80, rw: 72, t2: "100%", t3: "80%" },
+                ].map(({ nw, rw, t2, t3 }, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      border: "0.5px solid #e5e7eb",
+                      borderRadius: 12,
+                      padding: 16,
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 10,
+                      animationDelay: `${i * 0.1}s`,
+                    }}
+                  >
+                    <div
+                      style={{ display: "flex", alignItems: "center", gap: 12 }}
+                    >
+                      <div
+                        className="shimmer"
+                        style={{
+                          width: 36,
+                          height: 36,
+                          borderRadius: "50%",
+                          flexShrink: 0,
+                          animationDelay: `${i * 0.1}s`,
+                        }}
+                      />
+                      <div
+                        style={{
+                          flex: 1,
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: 6,
+                        }}
+                      >
+                        <div
+                          className="shimmer"
+                          style={{
+                            width: nw,
+                            height: 12,
+                            borderRadius: 9999,
+                            animationDelay: `${i * 0.1 + 0.05}s`,
+                          }}
+                        />
+                        <div
+                          className="shimmer"
+                          style={{
+                            width: rw,
+                            height: 10,
+                            borderRadius: 9999,
+                            animationDelay: `${i * 0.1 + 0.1}s`,
+                          }}
+                        />
+                      </div>
+                      <div
+                        className="shimmer"
+                        style={{
+                          width: 52,
+                          height: 12,
+                          borderRadius: 9999,
+                          flexShrink: 0,
+                        }}
+                      />
+                    </div>
+                    <div
+                      className="shimmer"
+                      style={{ width: t2, height: 12, borderRadius: 9999 }}
+                    />
+                    <div
+                      className="shimmer"
+                      style={{
+                        width: t3,
+                        height: 12,
+                        borderRadius: 9999,
+                        animationDelay: "0.05s",
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
+
+              {/* Stat card mobile */}
+              <div
+                className="md:hidden"
+                style={{ padding: "0 10%", paddingBottom: 40 }}
+              >
+                <div
+                  style={{
+                    background:
+                      "linear-gradient(to bottom, rgba(79,140,255,0.35), rgba(138,56,245,0.35))",
+                    borderRadius: 16,
+                    padding: "12px 12px 0",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "center",
+                      marginBottom: 8,
+                    }}
+                  >
+                    <div
+                      className="shimmer-light"
+                      style={{ width: 148, height: 22, borderRadius: 9999 }}
+                    />
+                  </div>
+                  <div style={{ padding: "0 24px" }}>
+                    <div
+                      className="shimmer-light"
+                      style={{ height: 120, borderRadius: "16px 16px 0 0" }}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ─────────────────────────────────────────
+          FAQ
+          px-[5%] pt-13 pb-15
+          Heading text-3xl sm:text-4xl
+          8 accordion rows: gradient border p-[2px],
+          inner bg-white h-[58px]
+      ───────────────────────────────────────── */}
+        <div style={{ padding: "0 5%" }}>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              textAlign: "center",
+              paddingTop: 52,
+              gap: 10,
+              marginBottom: 28,
+            }}
+          >
+            <div
+              className="shimmer"
+              style={{ width: "min(300px, 90%)", height: 40, borderRadius: 10 }}
+            />
+            <div
+              className="shimmer"
+              style={{
+                width: "min(340px, 90%)",
+                height: 14,
+                borderRadius: 9999,
+                animationDelay: "0.1s",
+              }}
+            />
+          </div>
+
+          <div
+            style={{
+              paddingBottom: 60,
+              display: "flex",
+              flexDirection: "column",
+              gap: 14,
+              maxWidth: 576,
+              margin: "0 auto",
+            }}
+          >
+            {[65, 52, 43, 60, 73, 55, 47, 50].map((w, i) => (
+              <div
+                key={i}
+                style={{
+                  borderRadius: 12,
+                  background:
+                    "linear-gradient(to right, rgba(138,56,245,0.3), rgba(79,140,255,0.3))",
+                  padding: 2,
+                }}
+              >
+                <div
+                  style={{
+                    background: "#fff",
+                    borderRadius: 10,
+                    height: 58,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    padding: "0 20px",
+                    gap: 12,
+                  }}
+                >
+                  <div
+                    className="shimmer"
+                    style={{
+                      flex: 1,
+                      maxWidth: `${w}%`,
+                      height: 14,
+                      borderRadius: 9999,
+                      animationDelay: `${i * 0.08}s`,
+                    }}
+                  />
+                  <div
+                    className="shimmer"
+                    style={{
+                      width: 20,
+                      height: 20,
+                      borderRadius: "50%",
+                      flexShrink: 0,
+                    }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* ─────────────────────────────────────────
+          NEWSLETTER + FOOTER
+          from-[#4F8CFF] to-[#8A38F5]
+          Heading text-3xl sm:text-4xl md:text-5xl
+          Sub 2 lines, input rounded-full h~62px
+      ───────────────────────────────────────── */}
+        <section
+          style={{
+            background: "linear-gradient(to bottom, #4f8cff, #8a38f5)",
+            width: "100%",
+          }}
+        >
+          <div style={{ maxWidth: 1152, margin: "0 auto", padding: "0 20px" }}>
+            <div
+              style={{
+                padding: "96px 0",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: 16,
+              }}
+            >
+              <div
+                className="shimmer-light"
+                style={{
+                  width: "min(340px, 90%)",
+                  height: 46,
+                  borderRadius: 10,
+                }}
+              />
+              <div
+                className="shimmer-light"
+                style={{
+                  width: "min(390px, 90%)",
+                  height: 16,
+                  borderRadius: 9999,
+                  marginTop: 8,
+                  animationDelay: "0.1s",
+                }}
+              />
+              <div
+                className="shimmer-light"
+                style={{
+                  width: "min(290px, 90%)",
+                  height: 16,
+                  borderRadius: 9999,
+                  animationDelay: "0.15s",
+                }}
+              />
+              <div
+                className="shimmer-light"
+                style={{
+                  marginTop: 24,
+                  width: "100%",
+                  maxWidth: 672,
+                  height: 62,
+                  borderRadius: 9999,
+                  border: "1px solid rgba(255,255,255,0.25)",
+                  animationDelay: "0.1s",
+                }}
+              />
+            </div>
+          </div>
+
+          <div
+            style={{
+              width: "100%",
+              height: 0.5,
+              background: "rgba(255,255,255,0.15)",
+            }}
+          />
+
+          {/* Footer links */}
+          <div
+            style={{
+              maxWidth: 1152,
+              margin: "0 auto",
+              padding: "40px 20px",
+              display: "flex",
+              flexWrap: "wrap",
+              justifyContent: "center",
+              gap: 32,
+            }}
+          >
+            {[80, 64, 88, 56, 72, 60].map((w, i) => (
+              <div
+                key={i}
+                className="shimmer-light"
+                style={{
+                  width: w,
+                  height: 12,
+                  borderRadius: 9999,
+                  animationDelay: `${i * 0.08}s`,
+                }}
+              />
+            ))}
+          </div>
+
+          <div
+            style={{
+              width: "100%",
+              height: 0.5,
+              background: "rgba(255,255,255,0.1)",
+            }}
+          />
+
+          {/* Copyright */}
+          <div
+            style={{
+              maxWidth: 1152,
+              margin: "0 auto",
+              padding: "48px 20px 24px",
+              display: "flex",
+              justifyContent: "center",
+            }}
+          >
+            <div
+              className="shimmer-light"
+              style={{ width: 256, height: 12, borderRadius: 9999 }}
+            />
+          </div>
+
+          {/* Designed / Developed by */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              paddingBottom: 20,
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "center" }}>
+              <div
+                className="shimmer-light"
+                style={{
+                  width: 112,
+                  height: 12,
+                  borderRadius: 9999,
+                  animationDelay: "0.1s",
+                }}
+              />
+            </div>
+            <div style={{ display: "flex", justifyContent: "center" }}>
+              <div
+                className="shimmer-light"
+                style={{
+                  width: 128,
+                  height: 12,
+                  borderRadius: 9999,
+                  animationDelay: "0.2s",
+                }}
+              />
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
   );
 }

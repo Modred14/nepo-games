@@ -10,7 +10,7 @@ import {
   User,
   Shield,
   Bell,
-  Link,
+  Link as LinkIcon,
   Camera,
   LogOut,
   CreditCard,
@@ -18,6 +18,7 @@ import {
 import { signOut } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import Loader from "@/components/Loader";
+import Link from "next/link";
 
 export default function AccountSettingsPage() {
   const router = useRouter();
@@ -74,10 +75,6 @@ export default function AccountSettingsPage() {
     setActiveTab(tab);
     router.push(`?tab=${tab}`);
   };
-
-  if (loading || load) {
-    return <Loader />;
-  }
 
   return (
     <div className="min-h-screen bg-gray-100 p-4 sm:p-6">
@@ -144,7 +141,7 @@ export default function AccountSettingsPage() {
             disabled={globalLoading}
           />
           <TabButton
-            icon={<Link size={16} />}
+            icon={<LinkIcon size={16} />}
             label="Linked Account"
             active={activeTab === "linked"}
             onClick={() => changeTab("linked")}
@@ -264,7 +261,7 @@ function ProfileTab() {
   };
 
   if (loading || load) {
-    return <Loader />;
+    return <ProfileTabSkeleton />;
   }
   const handleUpload = async (e) => {
     setError("");
@@ -529,7 +526,48 @@ function ProfileTab() {
     </div>
   );
 }
+function ProfileTabSkeleton() {
+  return (
+    <div className="bg-white rounded-2xl shadow p-4 sm:p-6 border border-blue-400">
+      {/* Avatar + Buttons */}
+      <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
+        <div className="relative mx-auto sm:mx-0 w-25 h-25 sm:w-30 sm:h-30">
+          <div className="w-full h-full rounded-full bg-gray-200 animate-pulse" />
+          <div className="absolute bottom-0 right-0 mr-2 sm:mr-3 w-6 h-6 rounded-full bg-gray-300 animate-pulse border-2 border-white" />
+        </div>
 
+        <div className="w-full sm:w-fit flex flex-col gap-2 sm:items-start items-center">
+          <div className="flex flex-row gap-3 items-center">
+            <div className="h-9 w-28 rounded-md bg-gray-200 animate-pulse" />
+            <div className="h-9 w-20 rounded-md bg-gray-200 animate-pulse" />
+          </div>
+          <div className="h-3 w-44 rounded bg-gray-200 animate-pulse" />
+        </div>
+      </div>
+
+      <hr className="my-4 sm:my-6 border-blue-400" />
+
+      {/* Info Grid */}
+      <div className="sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 flex flex-wrap">
+        {[...Array(3)].map((_, i) => (
+          <div key={i} className="flex flex-col gap-2">
+            <div className="h-3 w-16 rounded bg-gray-200 animate-pulse" />
+            <div className="h-5 w-32 rounded bg-gray-200 animate-pulse" />
+          </div>
+        ))}
+      </div>
+
+      {/* Logout Bar */}
+      <div className="mt-5 w-full flex items-center rounded-sm border border-red-200 bg-red-50 p-5 justify-between gap-4 shadow-sm">
+        <div className="flex flex-col gap-2">
+          <div className="h-4 w-14 rounded bg-red-200 animate-pulse" />
+          <div className="h-3 w-56 rounded bg-red-200 animate-pulse" />
+        </div>
+        <div className="h-9 w-24 rounded-lg bg-red-300 animate-pulse shrink-0" />
+      </div>
+    </div>
+  );
+}
 function StatCard({ label, value }) {
   const formatMoney = (val) =>
     new Intl.NumberFormat("en-NG", {
@@ -940,7 +978,7 @@ function AccountTab() {
     return fullName.split(" ").slice(0, 3).join(" ");
   };
   if (loading) {
-    return <Loader />;
+    return <AccountTabSkeleton />;
   }
 
   return (
@@ -999,14 +1037,11 @@ function AccountTab() {
               </p>
 
               <div className="flex justify-center mt-4">
-                <button
-                  onClick={() => {
-                    router.push("/profile?tab=password");
-                  }}
-                  className="bg-red-600 text-white px-3 py-1 rounded-lg text-sm font-medium hover:bg-red-700 transition duration-200"
-                >
-                  Set PIN
-                </button>
+                <Link href="/profile?tab=password">
+                  <button className="bg-red-600 text-white px-3 py-1 rounded-lg text-sm font-medium hover:bg-red-700 transition duration-200">
+                    Set PIN
+                  </button>
+                </Link>
               </div>
             </div>
           )}
@@ -1335,7 +1370,70 @@ function AccountTab() {
     </div>
   );
 }
+function AccountTabSkeleton() {
+  return (
+    <div className="space-y-5">
+      {/* Balance Card */}
+      <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl p-5 shadow overflow-hidden">
+        <div className="h-3 w-28 rounded bg-white/20 animate-pulse mb-2" />
+        <div className="h-9 w-44 rounded bg-white/20 animate-pulse" />
+        <div className="flex gap-3 mt-4">
+          <div className="h-9 w-24 rounded-md bg-white/20 animate-pulse" />
+          <div className="h-9 w-24 rounded-md bg-white/20 animate-pulse" />
+        </div>
+      </div>
 
+      {/* Stat Cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        {[...Array(3)].map((_, i) => (
+          <div key={i} className="bg-white shadow rounded-xl p-3">
+            <div className="h-3 w-20 rounded bg-gray-200 animate-pulse" />
+            <div className="h-5 w-24 rounded bg-gray-200 animate-pulse mt-2" />
+          </div>
+        ))}
+      </div>
+
+      {/* Transaction History */}
+      <div className="bg-white rounded-2xl shadow p-4">
+        {/* Header */}
+        <div className="flex justify-between items-center mb-4">
+          <div className="h-4 w-36 rounded bg-gray-200 animate-pulse" />
+          <div className="h-3 w-16 rounded bg-gray-200 animate-pulse" />
+        </div>
+
+        {/* Transaction rows */}
+        <div className="space-y-3">
+          {[...Array(5)].map((_, i) => (
+            <div
+              key={i}
+              className="flex items-center gap-3 py-2 border-b border-gray-50 last:border-none"
+            >
+              <div className="w-9 h-9 rounded-full bg-gray-200 animate-pulse shrink-0" />
+              <div className="flex-1 space-y-2">
+                <div className="h-3 w-36 rounded bg-gray-200 animate-pulse" />
+                <div className="h-2.5 w-20 rounded bg-gray-200 animate-pulse" />
+              </div>
+              <div className="h-3.5 w-16 rounded bg-gray-200 animate-pulse" />
+            </div>
+          ))}
+        </div>
+
+        {/* Pagination */}
+        <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-100">
+          <div className="h-3 w-16 rounded bg-gray-200 animate-pulse" />
+          <div className="flex gap-1">
+            {[...Array(3)].map((_, i) => (
+              <div
+                key={i}
+                className="w-7 h-7 rounded-md bg-gray-200 animate-pulse"
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 function Info({ label, value, user, setUser }) {
   const [editing, setEditing] = useState(false);
   const [input, setInput] = useState(value);
@@ -1554,7 +1652,8 @@ function PasswordTab({ setGlobalLoading }) {
     if (user?.pin_set && !pinForm.currentPin) {
       return setPinError("Current PIN is required");
     }
-
+    setGlobalLoading(true);
+    setLoading(true);
     setPinLoading(true);
 
     try {
@@ -1583,6 +1682,8 @@ function PasswordTab({ setGlobalLoading }) {
       setPinError("Error updating PIN");
     } finally {
       setPinLoading(false);
+      setGlobalLoading(false);
+      setLoading(false);
     }
   };
 
@@ -1675,8 +1776,8 @@ function PasswordTab({ setGlobalLoading }) {
       setGlobalLoading(false); // ✅ ADDED
     }
   };
-  if (load) {
-    return <Loader />;
+  if (load || loading) {
+    return <PasswordTabSkeleton />;
   }
 
   return (
@@ -1851,6 +1952,74 @@ function PasswordTab({ setGlobalLoading }) {
     </div>
   );
 }
+function PasswordTabSkeleton() {
+  return (
+    <div className="bg-white rounded-2xl shadow p-4 sm:p-6">
+      {/* PIN Section */}
+      <div className="mb-7">
+        <div className="h-5 w-24 rounded bg-gray-200 animate-pulse mb-2" />
+        <div className="h-3 w-56 rounded bg-gray-200 animate-pulse mb-6" />
+
+        {/* PIN inputs grid */}
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-8 w-full">
+          {[...Array(3)].map((_, i) => (
+            <div key={i}>
+              <div className="h-3 w-20 rounded bg-gray-200 animate-pulse mb-2" />
+              {/* 4 PIN boxes */}
+              <div className="flex gap-2">
+                {[...Array(4)].map((_, j) => (
+                  <div
+                    key={j}
+                    className="w-10 h-11 rounded-lg bg-gray-200 animate-pulse"
+                  />
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-4 flex justify-end">
+          <div className="h-9 w-24 rounded-md bg-gray-200 animate-pulse" />
+        </div>
+      </div>
+
+      <hr className="border-gray-300" />
+
+      {/* Password Section */}
+      <div className="mt-7">
+        <div className="h-5 w-36 rounded bg-gray-200 animate-pulse mb-2" />
+        <div className="h-3 w-64 rounded bg-gray-200 animate-pulse mb-6" />
+
+        {/* Password fields grid */}
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="flex flex-col gap-2">
+              <div className="h-3 w-24 rounded bg-gray-200 animate-pulse" />
+              <div className="h-10 w-full rounded-md bg-gray-200 animate-pulse" />
+            </div>
+          ))}
+        </div>
+
+        {/* Check items */}
+        <div className="mt-3 space-y-2">
+          {[120, 100, 150, 130].map((w, i) => (
+            <div key={i} className="flex items-center gap-2">
+              <div className="w-3.5 h-3.5 rounded-full bg-gray-200 animate-pulse shrink-0" />
+              <div
+                className={`h-3 w-[${w}px] rounded bg-gray-200 animate-pulse`}
+                style={{ width: w }}
+              />
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-6 flex justify-center sm:justify-end">
+          <div className="h-9 w-full sm:w-40 rounded-md bg-gray-200 animate-pulse" />
+        </div>
+      </div>
+    </div>
+  );
+}
 function CheckItem({ valid, text }) {
   return (
     <p
@@ -1884,6 +2053,23 @@ function PasswordInput({ label, value, onChange, show, toggle }) {
 }
 
 function LInkedTab() {
+  const [imgLoaded, setImgLoaded] = useState(false);
+
+  if (!imgLoaded) {
+    return (
+      <>
+        <LinkedTabSkeleton />
+
+        <img
+          src="/security-shield.png"
+          alt=""
+          className="hidden"
+          onLoad={() => setImgLoaded(true)}
+          onError={() => setImgLoaded(true)} // don't get stuck if image fails
+        />
+      </>
+    );
+  }
   return (
     <div className="bg-white rounded-2xl shadow p-4 sm:p-6 space-y-6">
       {/* Header */}
@@ -1954,6 +2140,41 @@ function LInkedTab() {
     </div>
   );
 }
+function LinkedTabSkeleton() {
+  return (
+    <div className="bg-white rounded-2xl shadow p-4 sm:p-6 space-y-6">
+      {/* Header */}
+      <div className="space-y-3">
+        <div>
+          <div className="h-5 w-32 rounded bg-gray-200 animate-pulse mb-2" />
+          <div className="h-3 w-60 rounded bg-gray-200 animate-pulse" />
+        </div>
+
+        {/* Google card */}
+        <div className="flex items-center my-7 justify-between border border-blue-200 rounded-xl p-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-gray-200 animate-pulse" />
+            <div className="space-y-2">
+              <div className="h-3.5 w-28 rounded bg-gray-200 animate-pulse" />
+              <div className="h-3 w-36 rounded bg-gray-200 animate-pulse" />
+            </div>
+          </div>
+          <div className="h-7 w-22 rounded-lg bg-gray-200 animate-pulse" />
+        </div>
+      </div>
+
+      {/* Security status */}
+      <div className="flex items-center border-t pt-4">
+        <div className="h-3.5 w-40 rounded bg-gray-200 animate-pulse" />
+      </div>
+
+      {/* Shield placeholder */}
+      <div className="flex justify-center">
+        <div className="w-44 h-52 rounded-2xl bg-gray-200 animate-pulse" />
+      </div>
+    </div>
+  );
+}
 
 function DataTab() {
   const router = useRouter();
@@ -1969,19 +2190,19 @@ function DataTab() {
           By using{" "}
           <span className="text-blue-600 font-semibold">Nepogames</span> you
           agree to these terms and conditions. Please read our{" "}
-          <a
-            onClick={() => router.push(`/terms-of-service`)}
+          <Link
+            href={`/terms-of-service`}
             className="text-blue-600 font-semibold"
           >
             Terms of Service
-          </a>{" "}
+          </Link>{" "}
           and{" "}
-          <a
-            onClick={() => router.push(`/privacy-policy`)}
+          <Link
+            href={`/privacy-policy`}
             className="text-blue-600 font-semibold"
           >
             Privacy Policy
-          </a>{" "}
+          </Link>{" "}
           carefully before using our platform
         </p>
       </div>
@@ -2004,14 +2225,14 @@ function DataTab() {
               Last updated: April 2026
             </p>
           </div>
-          <a onClick={() => router.push(`/terms-of-service`)}>
+          <Link href={`/terms-of-service`}>
             <button
               className="w-full sm:w-auto px-5 py-2.5 rounded-lg bg-[#0000FF] text-white text-sm font-medium
         hover:opacity-90 transition active:scale-[0.98]"
             >
               Terms of service
             </button>
-          </a>
+          </Link>
         </div>
 
         {/* Privacy */}
@@ -2024,14 +2245,14 @@ function DataTab() {
               Last updated: April 2026
             </p>
           </div>
-          <a onClick={() => router.push(`/privacy-policy`)}>
+          <Link href={`/privacy-policy`}>
             <button
               className="w-full sm:w-auto px-5 py-2.5 rounded-lg bg-[#0000FF] text-white text-sm font-medium
         hover:opacity-90 transition active:scale-[0.98]"
             >
               Privacy Policy
             </button>
-          </a>
+          </Link>
         </div>
       </div>
     </div>

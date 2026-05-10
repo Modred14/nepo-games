@@ -272,7 +272,7 @@ export default function Login() {
 
               <div className="hidden border-l-2 border-[#6060FF] lg:flex lg:w-1/2 items-center justify-center bg-white">
                 <img
-                 src="/forgot-1.jpg"
+                  src="/forgot-1.jpg"
                   alt="forgot Illustration"
                   className="max-w-2xl w-full object-contain"
                 />

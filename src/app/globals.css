@@ -15,6 +15,58 @@ body {
     stroke-dashoffset: 0;
   }
 }
+/* ─── Skeleton shimmer animation ─── */
+@keyframes shimmer {
+  0%   { background-position: -800px 0; }
+  100% { background-position:  800px 0; }
+}
+
+/* On white/light backgrounds */
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    #e2e5e9 25%,
+    #f0f2f4 50%,
+    #e2e5e9 75%
+  );
+  background-size: 800px 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: 6px;
+}
+.shimmer-r { border-radius: 9999px !important; }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0);   }
+}
+
+.page-fadein {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+/* Fade-out for skeleton */
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+.skeleton-fadeout {
+  animation: fadeOut 0.3s ease-out forwards;
+  pointer-events: none;
+}
+/* On coloured/gradient backgrounds */
+.shimmer-light {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.15) 25%,
+    rgba(255, 255, 255, 0.35) 50%,
+    rgba(255, 255, 255, 0.15) 75%
+  );
+  background-size: 800px 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: 6px;
+}
+.shimmer-light-r { border-radius: 9999px !important; }
 
 .animate-draw {
   stroke: #00ff6a;

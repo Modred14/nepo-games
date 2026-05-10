@@ -438,19 +438,19 @@ export default function Conversation({ gameId, receiverId }) {
     }
   };
 
-useEffect(() => {
-  if (isMobile) {
-    const from = searchParams.get("from");
+  useEffect(() => {
+    if (isMobile) {
+      const from = searchParams.get("from");
 
-    if (from === "marketplace") {
-      setView("list");
-    } else if (currentChatId) {
+      if (from === "marketplace") {
+        setView("list");
+      } else if (currentChatId) {
+        setView("chat");
+      }
+    } else {
       setView("chat");
     }
-  } else {
-    setView("chat");
-  }
-}, [isMobile, currentChatId, searchParams]);
+  }, [isMobile, currentChatId, searchParams]);
 
   const markAsRead = async () => {
     try {
