@@ -3,6 +3,10 @@ import pool from "@/lib/db";
 const SYSTEM_USER_ID = 1;
 
 export async function GET() {
+    const authHeader = req.headers.get("authorization");
+  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
   const client = await pool.connect();
 
   try {
