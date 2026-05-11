@@ -152,7 +152,7 @@ export async function POST(req) {
     VALUES (
       (SELECT id FROM conversations WHERE listing_id = $1 LIMIT 1),
       1,
-      'Buyer has made payment. Please provide login details.',
+      'Buyer has made payment. Seller should kindly provide login details.',
       'payment_made',
       NOW()
     )`,
