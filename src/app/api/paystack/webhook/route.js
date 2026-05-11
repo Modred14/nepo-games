@@ -59,7 +59,7 @@ export async function POST(req) {
       }
 
       if (purpose === "marketplace") {
-        console.log("WEBHOOK EVENT HIT")
+        console.log("WEBHOOK EVENT HIT");
         const transactionId = metadata.transaction_id;
         const listingId = metadata.listing_id;
 
@@ -261,6 +261,120 @@ export async function POST(req) {
       );
 
       return NextResponse.json({ status: "withdrawal success updated" });
+    }
+    if (event?.event === "charge.failed") {
+      const metadata = data?.metadata || {};
+      const purpose = metadata?.purpose;
+      const userId = metadata?.userId; // ← add this
+      const amount = data.amount / 100;
+
+      if (purpose === "marketplace") {
+        const transactionId = metadata.transaction_id;
+        const listingId = metadata.listing_id;
+
+        if (!transactionId || !listingId) {
+          console.error("❌ Missing transaction metadata on failed charge");
+          return NextResponse.json(
+            { error: "Missing metadata" },
+            { status: 400 },
+          );
+        }
+
+        // Only rollback if still pending (not already paid)
+        const txRes = await pool.query(
+          `SELECT * FROM transactions WHERE id = $1`,
+          [transactionId],
+        );
+        const transaction = txRes.rows[0];
+
+        if (!transaction) {
+          console.error(
+            "❌ Transaction not found on failed charge:",
+            transactionId,
+          );
+          return NextResponse.json(
+            { error: "Transaction not found" },
+            { status: 404 },
+          );
+        }
+
+        // if (transaction.payment_status === "paid") {
+        //   console.log(
+        //     "⚠️ Charge failed but already paid, ignoring:",
+        //     transactionId,
+        //   );
+        //   return NextResponse.json({ status: "already processed" });
+        // }
+
+        // Restore listing back to active
+        await pool.query(
+          `UPDATE listings SET status = 'active' WHERE id = $1`,
+          [listingId],
+        );
+
+        // Mark transaction as failed
+        await pool.query(
+          `UPDATE transactions
+       SET 
+         payment_status = 'failed',
+         transaction_status = 'cancelled',
+         payment_provider_response = $1,
+         updated_at = NOW()
+       WHERE id = $2`,
+          [data, transactionId],
+        );
+
+        console.log(
+          "❌ Marketplace payment failed, listing restored:",
+          listingId,
+        );
+        return NextResponse.json({
+          status: "marketplace payment failed, listing restored",
+        });
+      }
+      if (purpose === "wallet") {
+        // Nothing to rollback — wallet is only credited on success
+        // Just log it
+        console.log(
+          "❌ Wallet funding failed for user:",
+          userId,
+          "amount:",
+          amount,
+        );
+        return NextResponse.json({
+          status: "wallet charge failed, nothing to rollback",
+        });
+      }
+      if (purpose === "subscription") {
+        // Check if they had a transaction created on init and mark it failed
+        const existing = await pool.query(
+          "SELECT id FROM users_transactions WHERE reference = $1",
+          [reference],
+        );
+
+        if (existing.rows.length > 0) {
+          await pool.query(
+            `UPDATE users_transactions SET status = 'failed' WHERE reference = $1`,
+            [reference],
+          );
+        }
+
+        // Make sure their plan wasn't accidentally changed (safety check)
+        await pool.query(
+          `UPDATE users 
+       SET subscription_status = CASE 
+         WHEN subscription_end > NOW() THEN 'active' 
+         ELSE 'inactive' 
+       END
+       WHERE id = $1`,
+          [userId],
+        );
+
+        console.log("❌ Subscription payment failed for user:", userId);
+        return NextResponse.json({ status: "subscription charge failed" });
+      }
+      console.log("❌ Charge failed for unknown purpose:", purpose);
+      return NextResponse.json({ status: "charge failed logged" });
     }
 
     // =========================
