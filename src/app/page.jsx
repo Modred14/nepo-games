@@ -12,6 +12,7 @@ import {
   Tag,
   Menu,
 } from "lucide-react";
+import Image from "next/image";
 import Reveal from "./reveal";
 import { useEffect, useRef, useState, useMemo, use } from "react";
 import Reviews from "./review";
@@ -404,10 +405,13 @@ export default function Home() {
          border`}
                 >
                   <div className="flex md:grid grid-cols-3 justify-between md:py-3 py-2 font-semibold items-center text-[#808080]  w-full">
-                    <img
+                    <Image
                       src="/logo.png"
                       alt="Nepo Games"
+                      height={36}
+                      width={36}
                       className="w-9 h-9 p-2 rounded-[50%] bg-blue-700 object-cover"
+                      priority
                     />
                     <div className="hidden md:flex font-medium justify-center gap-9">
                       <Link
@@ -529,11 +533,14 @@ hover:text-[#0000FF]
                               className="relative  w-fit"
                             >
                               <a>
-                                <img
+                                <Image
                                   src={user?.profile_image}
                                   onClick={() => setOpenRef(true)}
+                                  width={40}
+                                  height={40}
                                   alt="Nepo Games"
                                   className="border-blue-600/70 border w-10 h-10 rounded-full object-cover cursor-pointer"
+                                  priority
                                 />
                                 {user?.plan && user.plan !== "free" && (
                                   <Verified
@@ -591,10 +598,13 @@ hover:text-[#0000FF]
                               <X size={23} className=" text-blue-700" />
                             </div>
                           ) : (
-                            <img
+                            <Image
                               src="/menu-open.png"
                               alt="Open menu"
+                              height={16}
+                              width={16}
                               className="w-4 object-cover"
+                              priority
                             />
                           )}
                         </button>
@@ -613,7 +623,10 @@ hover:text-[#0000FF]
                       <div>
                         <div className="flex items-center gap-3 pt-3">
                           <div className="w-12 h-12 rounded-full bg-blue-200 border border-blue-600 overflow-hidden">
-                            <img
+                            <Image
+                              height={48}
+                              width={48}
+                              priority
                               src={user?.profile_image}
                               alt="Profile"
                               className="w-full h-full object-cover"
@@ -651,7 +664,10 @@ hover:text-[#0000FF]
                         <div>
                           <div className="flex items-center gap-3 py-3">
                             <div className="w-12 h-12 rounded-full bg-blue-200 border border-blue-600 overflow-hidden">
-                              <img
+                              <Image
+                                height={48}
+                                width={48}
+                                priority
                                 src="/profile.png"
                                 alt="Profile"
                                 className="w-full h-full object-cover"
@@ -722,7 +738,10 @@ hover:text-[#0000FF]
                         <>
                           <div className="flex items-center pt-3 border-t border-[#7A7AFE]/50 -mx-6 justify-between text-sm">
                             <div className="w-10 h-10 ml-6 rounded-full bg-blue-200 border border-blue-600 overflow-hidden">
-                              <img
+                              <Image
+                                height={40}
+                                width={40}
+                                priority
                                 src={user?.profile_image}
                                 alt="Profile"
                                 className="w-full h-full object-cover"
@@ -756,7 +775,10 @@ hover:text-[#0000FF]
                           {" "}
                           <div className="flex items-center pt-3 border-t border-[#7A7AFE]/50 -mx-6 justify-between text-sm">
                             <div className="w-10 h-10 ml-6 rounded-full bg-blue-200 border border-blue-600 overflow-hidden">
-                              <img
+                              <Image
+                                height={40}
+                                width={40}
+                                priority
                                 src="/profile.png"
                                 alt="Profile"
                                 className="w-full h-full object-cover"
@@ -801,7 +823,10 @@ hover:text-[#0000FF]
                 <div className="pt-45 px-[2%]">
                   <div className="justify-center flex">
                     <div className="bg-white flex justify-center items-center gap-2 p-1 px-3 rounded-2xl">
-                      <img
+                      <Image
+                        height={20}
+                        width={20}
+                        priority
                         src="/logo.png"
                         alt="Nepo Games"
                         className="w-5 h-5 p-1 rounded-[50%] bg-blue-700 object-cover"
@@ -855,7 +880,14 @@ hover:text-[#0000FF]
                     </div>
                   </div>
                   <div className="justify-center flex">
-                    <img src="/nepo-mark.png" alt="" />
+                    <Image
+                      src="/nepo-mark.png"
+                      alt=""
+                      width={660}
+                      height={370}
+                      className="rounded-t-2xl"
+                      priority
+                    />
                   </div>
                 </div>
               </Reveal>{" "}
@@ -868,11 +900,14 @@ hover:text-[#0000FF]
                 >
                   {items.map((game, i) => (
                     <div key={`${game.name}-${i}`} className="logoWrap">
-                      <img
+                      <Image
                         src={game.logo}
                         alt={game.name}
+                        width={150}
+                        height={130}
                         className="logoImg"
                         draggable="false"
+                        priority
                       />
                     </div>
                   ))}
@@ -922,10 +957,12 @@ hover:text-[#0000FF]
                         secure, transparent gaming account trading.
                       </p>
                       <div className="mt-auto xl:pt-4 px-5">
-                        <img
+                        <Image
                           src="/ex-sign.png"
-                          className="rounded-t-2xl "
                           alt=""
+                          width={300}
+                          height={160}
+                          className="rounded-t-2xl"
                         />
                       </div>
                     </div>
@@ -949,10 +986,12 @@ hover:text-[#0000FF]
                         and Secure.
                       </p>
                       <div className="mt-auto xl:pt-4 px-5">
-                        <img
+                        <Image
                           src="/game-sign.png"
-                          className="rounded-t-2xl "
                           alt=""
+                          width={300}
+                          height={160}
+                          className="rounded-t-2xl"
                         />
                       </div>
                     </div>
@@ -992,10 +1031,12 @@ hover:text-[#0000FF]
                         hassle.
                       </p>
                       <div className="mt-auto xl:pt-4 px-5">
-                        <img
+                        <Image
                           src="/buy-sign.png"
-                          className="rounded-t-2xl "
                           alt=""
+                          width={300}
+                          height={160}
+                          className="rounded-t-2xl"
                         />
                       </div>
                     </div>
@@ -1022,10 +1063,12 @@ hover:text-[#0000FF]
                         time with complete transparency and security..
                       </p>
                       <div className="mt-auto xl:pt-4 px-5">
-                        <img
+                        <Image
                           src="/page-sign.png"
-                          className="rounded-t-2xl "
                           alt=""
+                          width={300}
+                          height={160}
+                          className="rounded-t-2xl"
                         />
                       </div>
                     </div>
@@ -1037,7 +1080,7 @@ hover:text-[#0000FF]
               <div className="grid md:grid-cols-2 items-center max-w-6xl pb-10 px-[5%]  ">
                 <Reveal>
                   <div className="w-full flex justify-center">
-                    <img src="/phone.png" alt="" />
+                    <Image src="/phone.png" alt="" width={240} height={400} />
                   </div>
                 </Reveal>
                 <Reveal>
@@ -1068,10 +1111,13 @@ hover:text-[#0000FF]
             </Reveal>
             <Reveal>
               <div>
-                <img
+                <Image
                   src="/group.png"
-                  className="px-[10%] sm:px-[15%] lg:px-[20%]"
                   alt=""
+                  width={0}
+                  height={0}
+                  sizes="100vw"
+                  className="w-full h-auto px-[10%] sm:px-[15%] lg:px-[20%]"
                 />
               </div>
             </Reveal>
@@ -1102,11 +1148,14 @@ hover:text-[#0000FF]
                             Active Users{" "}
                           </div>
 
-                          <div className="px-6 ">
-                            <img
+                          <div className="px-6">
+                            <Image
                               src="/user-list.png"
-                              className="rounded-t-2xl"
                               alt=""
+                              width={0}
+                              height={0}
+                              sizes="100vw"
+                              className="w-full h-auto rounded-t-2xl"
                             />
                           </div>
                         </div>
@@ -1124,11 +1173,14 @@ hover:text-[#0000FF]
                           </span>
                           Active Users{" "}
                         </div>
-                        <div className="px-6 ">
-                          <img
+                        <div className="px-6">
+                          <Image
                             src="/user-list.png"
-                            className="rounded-t-2xl"
                             alt=""
+                            width={0}
+                            height={0}
+                            sizes="100vw"
+                            className="w-full h-auto rounded-t-2xl"
                           />
                         </div>
                       </div>
