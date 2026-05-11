@@ -151,7 +151,7 @@ export async function POST(req) {
     (conversation_id, sender_id, message, type, created_at)
     VALUES (
       (SELECT id FROM conversations WHERE listing_id = $1 LIMIT 1),
-      0,
+      1,
       'Buyer has made payment. Please provide login details.',
       'payment_made',
       NOW()
@@ -307,11 +307,10 @@ export async function POST(req) {
         // }
 
         // Restore listing back to active
-        await pool.query(
-          `UPDATE listings SET status = 'active' WHERE id = $1`,
-          [listingId],
-        );
-
+           await pool.query(
+  `UPDATE listings SET status = 'active', processing_by = NULL WHERE id = $1`,
+  [listingId]
+);
         // Mark transaction as failed
         await pool.query(
           `UPDATE transactions
