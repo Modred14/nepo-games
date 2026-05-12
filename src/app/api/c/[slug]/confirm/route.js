@@ -75,25 +75,20 @@ export async function POST(req, { params }) {
     }
 
     // 5. Already confirmed? (IMPORTANT — add this column if you don’t have it)
-    if (login.confirmed === true) {
+    if (login.confirmed === true || login.released_to_seller === true) {
       await client.query("ROLLBACK");
-      return Response.json(
-        { error: "Already confirmed" },
-        { status: 409 },
-      );
+      return Response.json({ error: "Already confirmed" }, { status: 409 });
     }
 
-    // 6. Mark delivery confirmed
     await client.query(
-      `
-      UPDATE login_deliveries
-      SET confirmed = TRUE,
-          updated_at = NOW()
-      WHERE id = $1
-      `,
+      `UPDATE login_deliveries
+   SET confirmed = TRUE,
+       released_to_seller = TRUE,
+       released_at = NOW(),
+       updated_at = NOW()
+   WHERE id = $1`,
       [login.id],
     );
-
     // 7. Release escrow
     await client.query(
       `

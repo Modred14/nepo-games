@@ -292,7 +292,11 @@ export default function Seller() {
 
                     <div className="text-sm  items-center sm:items-start flex-col flex">
                       <p>Any question?</p>
-                      <p className="text-[#0000ff]">Contact customer support</p>
+                      <Link href={"/contact"}>
+                        <p className="text-[#0000ff]">
+                          Contact customer support
+                        </p>
+                      </Link>
                     </div>
                   </div>
                 </div>

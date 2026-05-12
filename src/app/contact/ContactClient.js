@@ -20,6 +20,8 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import Reveal from "../reveal";
+import ChatWidget from "@/components/ChatWidget";
+import { motion } from "framer-motion";
 
 // ── tiny utility: stagger-reveal on scroll ──────────────────────────────────
 function useFadeIn() {
@@ -78,7 +80,7 @@ function Counter({ target, suffix = "", duration = 1800 }) {
 }
 
 // ── CHANNEL CARD ─────────────────────────────────────────────────────────────
-function ChannelCard({ icon: Icon, title, desc, badge, href, delay }) {
+function ChannelCard({ icon: Icon, title, desc, badge, href, delay, onClick }) {
   const ref = useFadeIn();
   return (
     <a
@@ -90,6 +92,7 @@ function ChannelCard({ icon: Icon, title, desc, badge, href, delay }) {
         transition: `opacity 0.55s ease ${delay}ms, transform 0.55s ease ${delay}ms`,
         textDecoration: "none",
       }}
+      onClick={onClick}
       className="channel-card"
     >
       <div className="channel-icon-wrap">
@@ -127,6 +130,7 @@ export default function ContactPage() {
   const [user, setUser] = useState(null);
   const [open, setOpen] = useState(false);
   const [load, setLoad] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
   const [refOpen, setOpenRef] = useState(false);
 
   const ref = useRef(null);
@@ -333,7 +337,7 @@ export default function ContactPage() {
         .orb-b { width:200px; height:200px; background:#8A38F5; bottom:20px; right:-40px; }
 
         /* ── CHANNELS ── */
-        .channels { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:16px; padding:0 5%; margin-top:-36px; position:relative; z-index:10; }
+        .channels { display: gap:16px; padding:0 5%; margin-top:-36px; position:relative; z-index:10; }
         .channel-card {
           display:flex; align-items:center; gap:14px;
           background:white;
@@ -894,6 +898,7 @@ hover:text-[#0000FF]
       )} */}
 
       {/* HERO */}
+      <ChatWidget isOpen={chatOpen} onClose={() => setChatOpen(false)} />
       <section className="hero">
         <div className="hero-orbs">
           <div className="orb orb-a" />
@@ -925,7 +930,7 @@ hover:text-[#0000FF]
       </section>
 
       {/* CHANNEL CARDS */}
-      <div className="channels">
+      <div className="channels grid md:grid-cols-2 gap-4">
         <ChannelCard
           icon={MessageCircle}
           title="Live Chat"
@@ -933,6 +938,10 @@ hover:text-[#0000FF]
           badge="Online"
           href="#"
           delay={0}
+          onClick={(e) => {
+            e.preventDefault();
+            setChatOpen(true);
+          }}
         />
         <ChannelCard
           icon={Mail}
@@ -1146,25 +1155,49 @@ hover:text-[#0000FF]
           </div> */}
         </aside>
       </div>
-
+      {!chatOpen &&
+      <motion.button
+        initial={{ scale: 0.8, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
+        transition={{ type: "spring", stiffness: 300, damping: 20 }}
+        className="
+    fixed bottom-5 right-5
+    z-[9999]
+    w-14 h-14
+    rounded-full
+    bg-blue-600 hover:bg-blue-700
+    text-white shadow-md
+    flex items-center justify-center
+    border-2 border-white
+  "
+        onClick={(e) => {
+          e.preventDefault();
+          setChatOpen(true);
+        }}
+      >
+        <MessageCircle size={24} />
+      </motion.button>}
       {/* FAQ */}
       <section className="faq-section">
         <p className="faq-heading">Frequetly Asked Questions</p>
         <p className="faq-sub">Quick answers to things we hear most often.</p>
-       <div className="flex justify-center">
-        <div className="faq-grid w-[90%]">
-          {faqs.map((faq, i) => (
-            <div className="faq-item" key={i}>
-              <button
-                className={`faq-q ${openFaq === i ? "open" : ""}`}
-                onClick={() => setOpenFaq(openFaq === i ? null : i)}
-              >
-                {faq.q}
-                <ChevronDown size={16} />
-              </button>
-              {openFaq === i && <p className="faq-a">{faq.a}</p>}
-            </div>
-          ))}</div>
+        <div className="flex justify-center">
+          <div className="faq-grid w-[90%]">
+            {faqs.map((faq, i) => (
+              <div className="faq-item" key={i}>
+                <button
+                  className={`faq-q ${openFaq === i ? "open" : ""}`}
+                  onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                >
+                  {faq.q}
+                  <ChevronDown size={16} />
+                </button>
+                {openFaq === i && <p className="faq-a">{faq.a}</p>}
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 

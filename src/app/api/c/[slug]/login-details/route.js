@@ -35,7 +35,7 @@ export async function POST(req, { params }) {
         { status: 400 },
       );
     }
-    await client.query(
+    await pool.query(
       `
       INSERT INTO messages
         (conversation_id, sender_id, message, type, created_at)

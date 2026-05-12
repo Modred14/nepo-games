@@ -10,6 +10,7 @@ import SuccessModal from "../../components/SuccessModal";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
+import Image from "next/image";
 
 export default function LoginClient() {
   const [showPassword, setShowPassword] = useState(false);
@@ -138,9 +139,12 @@ export default function LoginClient() {
   return (
     <div className="lg:h-screen flex  flex-col lg:flex-row  bg-white">
       <div className="w-full lg:hidden lg:w-1/2 flex justify-center items-center bg-white">
-        <img
+        <Image
           src="/login.jpg"
           alt="Login Illustration"
+          width={0}
+          height={0}
+          sizes="100vw"
           className="w-64 md:w-80 lg:max-w-2xl object-contain mt-10 lg:mt-0"
         />
       </div>
@@ -354,7 +358,8 @@ export default function LoginClient() {
           {/* CREATE ACCOUNT */}
           <div className="text-center text-sm   pb-20 ">
             <span className="text-gray-600">Don’t have an account yet? </span>
-         <Link href="/signup"
+            <Link
+              href="/signup"
               className=" relative inline-block
 
     after:content-['']
@@ -372,8 +377,7 @@ export default function LoginClient() {
     after:duration-500
     after:ease-in-out
     font-bold
-  
-     hover:after:origin-left
+    hover:after:origin-left
     hover:after:scale-x-100 text-blue-600 font-medium"
             >
               Create an account
@@ -383,9 +387,12 @@ export default function LoginClient() {
       </div>
 
       <div className="hidden lg:flex lg:w-1/2 items-center justify-center bg-white">
-        <img
+        <Image
           src="/login.jpg"
           alt="Login Illustration"
+          width={0}
+          height={0}
+          sizes="100vw"
           className="max-w-2xl w-full object-contain"
         />
       </div>

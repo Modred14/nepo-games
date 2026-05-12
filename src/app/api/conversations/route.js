@@ -28,6 +28,7 @@ SELECT
 
   l.price AS price,
   l.status AS status,
+  l.processing_by AS processing_by,
 
   COALESCE(
   l.title || ' (' || COALESCE(l.platform, '') || ')',
@@ -88,6 +89,7 @@ GROUP BY
   l.platform,
   l.price,
   l.status,
+  l.processing_by,
   m.message,
   m.created_at,
   cr.last_read_at

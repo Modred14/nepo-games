@@ -1,18 +1,38 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Clock, ShieldAlert } from "lucide-react";
 
 export default function LoginDropBox({ conversationId, listingId }) {
   const [details, setDetails] = useState("");
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [checking, setChecking] = useState(true);
 
+  useEffect(() => {
+    const checkExisting = async () => {
+      try {
+        const res = await fetch(
+          `/api/c/${listingId}/checkdetails?conversationId=${conversationId}&listingId=${listingId}`,
+        );
+        const data = await res.json();
+
+        if (data.exists) {
+          setSubmitted(true);
+        }
+      } catch (err) {
+        console.error("Check failed:", err.message);
+      } finally {
+        setChecking(false);
+      }
+    };
+
+    checkExisting();
+  }, [conversationId, listingId]);
   const handleSubmit = async () => {
     if (!details.trim()) return;
 
     setLoading(true);
-    console.log(conversationId);
 
     try {
       const res = await fetch(
@@ -43,6 +63,8 @@ export default function LoginDropBox({ conversationId, listingId }) {
     }
   };
 
+  if (submitted) return null;
+    if (checking) return null;
 
 
   return (

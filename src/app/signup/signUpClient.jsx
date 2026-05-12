@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 import PageLoader from "@/components/PageLoader";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
+import Image from "next/image";
 
 export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
@@ -179,10 +180,13 @@ export default function Login() {
       <Reveal>
         <div className="lg:h-screen flex  flex-col lg:flex-row bg-white">
           <div className="w-full lg:hidden lg:w-1/2 flex justify-center items-center bg-white">
-            <img
+            <Image
               src="/signup.jpg"
               alt="Login Illustration"
-              className="w-64 md:w-80 lg:max-w-2xl object-contain mt-10 lg:mt-0"
+              width={0}
+              height={0}
+              sizes="100vw"
+              className="w-64 md:w-80 lg:max-w-2xl h-auto object-contain mt-10 lg:mt-0"
             />
           </div>
 
@@ -565,10 +569,13 @@ export default function Login() {
           </div>
 
           <div className="hidden lg:flex lg:w-1/2 h-screen items-center justify-center bg-white">
-            <img
+            <Image
               src="/signup.jpg"
               alt="Sign Up Illustration"
-              className="max-w-2xl w-full object-contain"
+              width={0}
+              height={0}
+              sizes="100vw"
+              className="max-w-2xl w-full h-auto object-contain"
             />
           </div>
         </div>

@@ -86,9 +86,18 @@ LIMIT 1
       await client.query("ROLLBACK");
       return Response.json({ error: "Not allowed" }, { status: 403 });
     }
+
     if (login.disputed === true) {
       await client.query("ROLLBACK");
       return Response.json({ error: "Already disputed" }, { status: 409 });
+    }
+    
+    if (login.escrow_status === "released") {
+      await client.query("ROLLBACK");
+      return Response.json(
+        { error: "Cannot dispute a released transaction" },
+        { status: 409 },
+      );
     }
 
     await client.query(

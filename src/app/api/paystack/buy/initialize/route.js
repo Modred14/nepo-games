@@ -25,19 +25,45 @@ export async function POST(req) {
       return Response.json({ error: "Listing not available" }, { status: 400 });
     }
 
+    // Check for existing active transaction OR stale processing state
     const existing = await pool.query(
       `SELECT * FROM transactions
-       WHERE listing_id = $1
-       AND buyer_id = $2
-       AND payment_status IN ('pending','paid')`,
+   WHERE listing_id = $1
+   AND buyer_id = $2
+   AND payment_status IN ('pending', 'paid')`,
       [listingId, user.id],
     );
 
     if (existing.rows.length > 0) {
-      return Response.json(
-        { error: "Transaction already exists" },
-        { status: 400 },
+      const stale = existing.rows.find(
+        (tx) => tx.transaction_status === "initiated",
       );
+
+      if (stale) {
+        // User abandoned a previous Paystack attempt — clean it up and allow retry
+        await pool.query(
+          `UPDATE transactions 
+       SET transaction_status = 'cancelled', payment_status = 'failed'
+       WHERE id = $1`,
+          [stale.id],
+        );
+        await pool.query(
+          `UPDATE listings SET status = 'active', processing_by = NULL WHERE id = $1`,
+          [listingId],
+        );
+        listing.status = "active";
+      } else {
+        // Genuinely active transaction (pending/paid, not stale)
+        return Response.json(
+          { error: "Transaction already exists" },
+          { status: 400 },
+        );
+      }
+    }
+
+    // Also guard against another user's processing state
+    if (listing.status === "processing" && listing.processing_by !== user.id) {
+      return Response.json({ error: "Listing not available" }, { status: 400 });
     }
 
     const amount = Number(listing.price) * 1.05;
@@ -66,6 +92,12 @@ export async function POST(req) {
           { status: 400 },
         );
       }
+      await pool.query(
+        `UPDATE listings
+           SET status = 'processing'
+           WHERE id = $1`,
+        [listingId],
+      );
 
       const txRes = await pool.query(
         `INSERT INTO transactions 
@@ -104,6 +136,18 @@ export async function POST(req) {
       `,
         [listing.user_id, amount, reference],
       );
+         await pool.query(
+          `INSERT INTO messages 
+    (conversation_id, sender_id, message, type, created_at)
+    VALUES (
+      (SELECT id FROM conversations WHERE listing_id = $1 LIMIT 1),
+      1,
+      'Buyer has made payment. Seller should kindly provide login details.',
+      'payment_made',
+      NOW()
+    )`,
+          [listingId],
+        );
 
       return Response.json({ success: true });
     }
@@ -117,7 +161,12 @@ export async function POST(req) {
       );
 
       const transaction = txRes.rows[0];
-
+      await pool.query(
+        `UPDATE listings
+   SET status = 'processing', processing_by = $2
+   WHERE id = $1`,
+        [listingId, user.id],
+      );
       // 4. Call Paystack
       const paystackRes = await fetch(
         "https://api.paystack.co/transaction/initialize",
@@ -131,7 +180,7 @@ export async function POST(req) {
             email: user.email,
             amount: amount * 100, // kobo
             reference: `tx_${transaction.id}_${Date.now()}`,
-            callback_url: `${process.env.NEXT_PUBLIC_BASE_URL}/c/${listing.id}?receiver_id=${receiverId}&payment=success`,
+            callback_url: `${process.env.NEXT_PUBLIC_BASE_URL}/c/${listing.id}?receiver_id=${receiverId}&transaction_id=${transaction.id}&listing_id=${listing.id}&payment=success`,
             metadata: {
               userId: user.id,
               purpose: "marketplace",
@@ -146,6 +195,13 @@ export async function POST(req) {
       const paystackData = await paystackRes.json();
 
       if (!paystackData.status) {
+        await pool.query(
+          `UPDATE listings SET status = 'active', processing_by = NULL WHERE id = $1`,
+          [listingId],
+        );
+        await pool.query(`DELETE FROM transactions WHERE id = $1`, [
+          transaction.id,
+        ]);
         return Response.json({ error: "Payment init failed" }, { status: 500 });
       }
 
@@ -159,6 +215,7 @@ export async function POST(req) {
 
       return Response.json({
         authorization_url: paystackData.data.authorization_url,
+        transactionId: transaction.id,
       });
     }
   } catch (err) {

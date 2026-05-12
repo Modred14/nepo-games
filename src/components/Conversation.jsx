@@ -9,6 +9,7 @@ import Loader from "./Loader";
 import { Verified } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import LoginDropBox from "./LoginDropBox";
+import Image from "next/image";
 
 export default function Conversation({ gameId, receiverId }) {
   const [textMessage, setTextMessage] = useState("");
@@ -49,9 +50,22 @@ export default function Conversation({ gameId, receiverId }) {
 
   useEffect(() => {
     const payment = searchParams.get("payment");
+    const pending = localStorage.getItem("pendingTransaction");
+    if (!pending) return;
 
+    const { transactionId, listingId } = JSON.parse(pending);
     if (payment === "success") {
+      localStorage.removeItem("pendingTransaction");
       setSuccessModal(true);
+    } else {
+      if (pending) {
+        fetch("/api/transactions/cancel", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ transactionId, listingId }),
+        });
+        localStorage.removeItem("pendingTransaction");
+      }
     }
   }, [searchParams]);
 
@@ -827,6 +841,13 @@ export default function Conversation({ gameId, receiverId }) {
 
                         if (paymentMethod === "paystack") {
                           if (data.authorization_url) {
+                            localStorage.setItem(
+                              "pendingTransaction",
+                              JSON.stringify({
+                                transactionId: data.transactionId,
+                                listingId: selectedListing.listing_id || gameId,
+                              }),
+                            );
                             window.location.href = data.authorization_url;
                           }
                         } else {
@@ -955,20 +976,24 @@ export default function Conversation({ gameId, receiverId }) {
                       </p>
                     </div>
                   </div>
-                  {!isAdmin && !isSeller && activeChat?.status == "active" && (
-                    <div className="h-10  flex items-center">
-                      <button
-                        onClick={() => {
-                          setSelectedListing(activeChat);
-                          setBuyModal(true);
-                        }}
-                        className="inline-flex sm:h-8 h-7 p-2 gap-1 sm:gap-2 min-w-0 rounded-md text-xs sm:text-sm items-center justify-center bg-blue-600 text-white hover:bg-blue-700 active:scale-95 transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        <CreditCard size={15} />{" "}
-                        <p className="inline-flex ">Pay</p>
-                      </button>
-                    </div>
-                  )}
+                  {!isAdmin &&
+                    !isSeller &&
+                    (activeChat?.status === "active" ||
+                      (activeChat?.status === "processing" &&
+                        activeChat?.processing_by === user.id)) && (
+                      <div className="h-10  flex items-center">
+                        <button
+                          onClick={() => {
+                            setSelectedListing(activeChat);
+                            setBuyModal(true);
+                          }}
+                          className="inline-flex sm:h-8 h-7 p-2 gap-1 sm:gap-2 min-w-0 rounded-md text-xs sm:text-sm items-center justify-center bg-blue-600 text-white hover:bg-blue-700 active:scale-95 transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <CreditCard size={15} />{" "}
+                          <p className="inline-flex ">Pay</p>
+                        </button>
+                      </div>
+                    )}
 
                   {cancel && showDetails && activeChat?.status != "active" && (
                     <div className="h-10  flex items-center">
@@ -990,39 +1015,42 @@ export default function Conversation({ gameId, receiverId }) {
                 ref={containerRef}
                 className="flex-1 overflow-y-auto px-6 pb-4  thin-scroll"
               >
-                {allMessages.length == 0 && !loading && !isAdmin && (
-                  <div className="h-full flex items-center justify-center ">
-                    <div className="bg-white/40 backdrop-blur-sm shadow-2xs px-4 py-5 rounded-xl border border-white/20">
-                      <div className="flex flex-col items-center text-center space-y-3">
-                        <div className="bg-gradient-to-br from-indigo-500 to-purple-600 p-4 rounded-full shadow-sm">
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="h-8 w-8 text-white"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.77 9.77 0 01-4-.8L3 20l1.8-3.6A7.963 7.963 0 013 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                            />
-                          </svg>
-                        </div>
+                {allMessages.length == 0 &&
+                  !loading &&
+                  !isAdmin &&
+                  !activeChat?.status == "pending" && (
+                    <div className="h-full flex items-center justify-center ">
+                      <div className="bg-white/40 backdrop-blur-sm shadow-2xs px-4 py-5 rounded-xl border border-white/20">
+                        <div className="flex flex-col items-center text-center space-y-3">
+                          <div className="bg-gradient-to-br from-indigo-500 to-purple-600 p-4 rounded-full shadow-sm">
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              className="h-8 w-8 text-white"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.77 9.77 0 01-4-.8L3 20l1.8-3.6A7.963 7.963 0 013 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                              />
+                            </svg>
+                          </div>
 
-                        <div>
-                          <h2 className="text-lg font-semibold text-gray-900">
-                            No Messages Yet
-                          </h2>
-                          <p className="text-gray-500 text-sm mt-1">
-                            Start a conversation and trade instantly.
-                          </p>
+                          <div>
+                            <h2 className="text-lg font-semibold text-gray-900">
+                              No Messages Yet
+                            </h2>
+                            <p className="text-gray-500 text-sm mt-1">
+                              Start a conversation and trade instantly.
+                            </p>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                )}
+                  )}
                 {isAdmin && (
                   <div className="mb-4">
                     <div className="bg-yellow-50 border border-yellow-300 rounded-xl p-4 text-sm text-gray-800 space-y-2">
@@ -1309,7 +1337,10 @@ export default function Conversation({ gameId, receiverId }) {
           shadow-xs cursor-text"
                 >
                   <div className="w-9 h-9 rounded-full overflow-hidden border border-gray-200 shrink-0">
-                    <img
+                    <Image
+                      width={36}
+                      height={36}
+                      alt=""
                       src="/conversation.png"
                       className="w-full h-full object-cover"
                     />
