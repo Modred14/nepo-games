@@ -244,10 +244,7 @@ export async function POST(req) {
       }
       if (purpose === "tournament") {
         console.log(
-          "🏆 TOURNAMENT WEBHOOK HIT - userId:",
-          userId,
-          "tournament_id:",
-          metadata.tournament_id,
+          "🏆 TOURNAMENT WEBHOOK HIT"
         );
 
         const tournament_id = metadata.tournament_id;
