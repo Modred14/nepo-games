@@ -243,6 +243,13 @@ export async function POST(req) {
         return NextResponse.json({ status: "subscription activated" });
       }
       if (purpose === "tournament") {
+        console.log(
+          "🏆 TOURNAMENT WEBHOOK HIT - userId:",
+          userId,
+          "tournament_id:",
+          metadata.tournament_id,
+        );
+
         const tournament_id = metadata.tournament_id;
         const player_name = metadata.player_name;
         const player_email = metadata.player_email;
@@ -321,6 +328,7 @@ export async function POST(req) {
           });
         } catch (err) {
           await client.query("ROLLBACK");
+            console.error("❌ TOURNAMENT DB ERROR:", err.message, err.stack);
           throw err;
         } finally {
           client.release();
