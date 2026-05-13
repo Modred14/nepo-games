@@ -248,8 +248,7 @@ export async function POST(req) {
         const tournament_id = metadata.tournament_id;
         const player_name = metadata.player_name;
         const player_email = metadata.player_email;
-   
-     
+
         if (!tournament_id || !player_name || !player_email) {
           console.error("❌ Missing tournament metadata");
           return NextResponse.json(
@@ -304,7 +303,12 @@ export async function POST(req) {
             `UPDATE tournaments SET slots_left = slots_left - 1 WHERE id = $1`,
             [tournament_id],
           );
-
+          await client.query(
+            `INSERT INTO users_transactions 
+       (user_id, type, amount, status, description, reference)
+       VALUES ($1, 'credit', $2, 'success', 'Tournament registration', $3)`,
+            [userId, amount, reference],
+          );
           // Log transaction
           await client.query(
             `INSERT INTO users_transactions 
