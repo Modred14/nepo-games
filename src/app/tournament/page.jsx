@@ -228,6 +228,8 @@ function TournamentModal({ tournament: t, user, onClose }) {
   const handleJoin = async () => {
     setJoinError("");
     if (!user) {
+      const currentPath = window.location.pathname + window.location.search;
+      sessionStorage.setItem("tournament_return_url", currentPath);
       window.location.href = "/login";
       return;
     }
@@ -709,6 +711,8 @@ export default function TournamentPage() {
         // 🔥 ONLY redirect if truly unauthorized
         if (res.status === 401) {
           setUser(null);
+          const currentPath = window.location.pathname + window.location.search;
+          sessionStorage.setItem("tournament_return_url", currentPath);
           router.push("/login");
           return;
         }

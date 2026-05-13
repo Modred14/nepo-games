@@ -19,6 +19,8 @@ export default function Seller() {
         const res = await fetch("/api/user/me");
         if (res.status === 401) {
           setUser(null);
+          const currentPath = window.location.pathname + window.location.search;
+          sessionStorage.setItem("tournament_return_url", currentPath);
           router.push("/login");
           return;
         }

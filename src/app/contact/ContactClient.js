@@ -173,7 +173,7 @@ export default function ContactPage() {
     };
   }, [open, setOpen]);
 
- useEffect(() => {
+  useEffect(() => {
     const fetchUser = async () => {
       try {
         const res = await fetch("/api/user/me");
@@ -181,6 +181,8 @@ export default function ContactPage() {
         // 🔥 ONLY redirect if truly unauthorized
         if (res.status === 401) {
           setUser(null);
+          const currentPath = window.location.pathname + window.location.search;
+          sessionStorage.setItem("tournament_return_url", currentPath);
           router.push("/login");
           return;
         }
@@ -198,7 +200,7 @@ export default function ContactPage() {
         // 🌐 Network error lands here
         console.error("Network error:", err);
         setUser(null);
-      } 
+      }
     };
 
     fetchUser();
@@ -1155,14 +1157,14 @@ hover:text-[#0000FF]
           </div> */}
         </aside>
       </div>
-      {!chatOpen &&
-      <motion.button
-        initial={{ scale: 0.8, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.9 }}
-        transition={{ type: "spring", stiffness: 300, damping: 20 }}
-        className="
+      {!chatOpen && (
+        <motion.button
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          transition={{ type: "spring", stiffness: 300, damping: 20 }}
+          className="
     fixed bottom-5 right-5
     z-[9999]
     w-14 h-14
@@ -1172,13 +1174,14 @@ hover:text-[#0000FF]
     flex items-center justify-center
     border-2 border-white
   "
-        onClick={(e) => {
-          e.preventDefault();
-          setChatOpen(true);
-        }}
-      >
-        <MessageCircle size={24} />
-      </motion.button>}
+          onClick={(e) => {
+            e.preventDefault();
+            setChatOpen(true);
+          }}
+        >
+          <MessageCircle size={24} />
+        </motion.button>
+      )}
       {/* FAQ */}
       <section className="faq-section">
         <p className="faq-heading">Frequetly Asked Questions</p>

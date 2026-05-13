@@ -125,7 +125,19 @@ export default function LoginClient() {
         setSuccessOpen(true);
 
         setTimeout(() => {
-          router.push("/marketplace");
+          const returnUrl = sessionStorage.getItem("tournament_return_url");
+          sessionStorage.removeItem("tournament_return_url");
+
+          const isFromVerify =
+            returnUrl &&
+            (returnUrl.startsWith("/verify") || returnUrl.includes("/verify"));
+          const safeFallback = "/marketplace";
+
+          if (!returnUrl || isFromVerify) {
+            router.push(safeFallback);
+          } else {
+            router.push(returnUrl);
+          }
         }, 1500);
       }
     } catch (err) {

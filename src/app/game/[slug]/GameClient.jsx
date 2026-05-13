@@ -128,6 +128,8 @@ export default function GameClient({ game, images, similarGames }) {
         // 🔥 ONLY redirect if truly unauthorized
         if (res.status === 401) {
           setUser(null);
+          const currentPath = window.location.pathname + window.location.search;
+          sessionStorage.setItem("tournament_return_url", currentPath);
           router.push("/login");
           return;
         }

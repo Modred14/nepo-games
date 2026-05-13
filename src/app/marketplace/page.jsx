@@ -58,6 +58,8 @@ export default function Marketplace() {
         // 🔥 ONLY redirect if truly unauthorized
         if (res.status === 401) {
           setUser(null);
+          const currentPath = window.location.pathname + window.location.search;
+          sessionStorage.setItem("tournament_return_url", currentPath);
           router.push("/login");
           return;
         }
@@ -357,7 +359,7 @@ export default function Marketplace() {
                           </div>
                         ) : null}
                         {isSeller && (
-                           <div className="w-full">
+                          <div className="w-full">
                             {" "}
                             <div className="h-px bg-gray-200 mx-2"></div>
                             <Link
