@@ -22,6 +22,7 @@ export default function Conversation({ gameId, receiverId }) {
   const [conversation, setConversation] = useState(null);
   const [view, setView] = useState("list");
   const [user, setUser] = useState([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isMobile, setIsMobile] = useState(
     typeof window !== "undefined" ? window.innerWidth < 640 : false,
@@ -45,6 +46,10 @@ export default function Conversation({ gameId, receiverId }) {
   const [disputeError, setDisputeError] = useState("");
   const [disputeLoad, setDisputeLoad] = useState(false);
   const [confirmLoad, setConfirmLoad] = useState(false);
+  const [ratingModal, setRatingModal] = useState(false);
+  const [rating, setRating] = useState(0);
+  const [hovered, setHovered] = useState(0);
+  const [ratingSubmitted, setRatingSubmitted] = useState(false);
 
   const searchParams = useSearchParams();
 
@@ -924,6 +929,162 @@ export default function Conversation({ gameId, receiverId }) {
               </div>
             </div>
           )}
+          {ratingModal && (
+            <div className="fixed inset-0 bg-black/55 flex items-center justify-center z-50 p-4">
+              <div className="bg-white w-full max-w-[400px] rounded-2xl border border-gray-100 overflow-hidden shadow-lg">
+                {!ratingSubmitted ? (
+                  <>
+                    {/* Header */}
+                    <div className="px-7 pt-7 pb-0 text-center">
+                      <div className="w-14 h-14 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center mx-auto mb-4">
+                        <svg
+                          className="w-6 h-6 text-gray-400"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                          />
+                        </svg>
+                      </div>
+                      <p className="text-xs text-gray-400 uppercase tracking-widest font-medium mb-1">
+                        Rate your experience
+                      </p>
+                      <p className="text-[15px] font-medium text-gray-900">
+                        How was your experience with{" "}
+                        <span className="text-blue-600">
+                          @{activeChat?.username}
+                        </span>
+                        ?
+                      </p>
+                    </div>
+
+                    {/* Stars */}
+                    <div className="px-7 flex justify-center gap-1.5">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <button
+                          key={star}
+                          onClick={() => setRating(star)}
+                          onMouseEnter={() => setHovered(star)}
+                          onMouseLeave={() => setHovered(0)}
+                          disabled={isSubmitting}
+                          className="bg-transparent border-none cursor-pointer p-0.5 leading-none"
+                        >
+                          <span
+                            className="text-[38px] block transition-all duration-100"
+                            style={{
+                              color:
+                                star <= (hovered || rating)
+                                  ? "#FBBF24"
+                                  : "#E5E7EB",
+                              transform:
+                                star <= (hovered || rating)
+                                  ? "scale(1.08)"
+                                  : "scale(1)",
+                              filter:
+                                star <= (hovered || rating)
+                                  ? "drop-shadow(0 0 3px rgba(251,191,36,0.35))"
+                                  : "none",
+                              opacity: isSubmitting ? 0.5 : 1,
+                            }}
+                          >
+                            ★
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Label */}
+                    <div className="h-7 flex items-center justify-center ">
+                      <span
+                        className={`text-sm text-gray-500 font-medium transition-opacity duration-150 ${hovered || rating ? "opacity-100" : "opacity-0"}`}
+                      >
+                        {
+                          ["", "Poor", "Fair", "Good", "Great", "Excellent"][
+                            hovered || rating
+                          ]
+                        }
+                      </span>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="px-7 pb-7 mt-2 flex gap-2.5">
+                      <button
+                        onClick={() => setRatingModal(false)}
+                        className="flex-1 bg-gray-100 text-gray-500 border border-gray-200 rounded-lg py-2 text-sm hover:bg-gray-200 transition-colors"
+                      >
+                        Skip
+                      </button>
+                      <button
+                        disabled={rating === 0 || isSubmitting}
+                        onClick={async () => {
+                          setIsSubmitting(true);
+                          try {
+                            await fetch(`/api/c/${gameId}/rate`, {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({
+                                rating,
+                                conversationId: chatId,
+                              }),
+                            });
+                          } catch (err) {
+                            console.error(err);
+                          }
+                          setIsSubmitting(false);
+                          setRatingSubmitted(true);
+                        }}
+                        className="flex-[1.6] bg-blue-600 text-white rounded-lg py-2 text-sm font-medium disabled:opacity-40 disabled:cursor-not-allowed hover:bg-blue-700 transition-colors"
+                      >
+                        {isSubmitting ? (
+                          <>
+                            <span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                            Submitting...
+                          </>
+                        ) : (
+                          "Submit rating"
+                        )}
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <div className="px-7 py-10 text-center">
+                    <div className="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
+                      <svg
+                        className="w-7 h-7 text-green-700"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M5 13l4 4L19 7"
+                        />
+                      </svg>
+                    </div>
+                    <p className="text-[17px] font-medium text-gray-900 mb-1.5">
+                      Rating submitted
+                    </p>
+                    <p className="text-sm text-gray-400 mb-7 leading-relaxed">
+                      Your feedback helps keep the community trustworthy.
+                    </p>
+                    <button
+                      onClick={() => setRatingModal(false)}
+                      className="w-full bg-blue-600 text-white rounded-lg py-3 text-sm font-medium hover:bg-blue-700 transition-colors"
+                    >
+                      Done
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
           <div className="relative z-10 h-screen flex flex-col w-full overflow-hidden">
             {/* background */}
             <div
@@ -1223,6 +1384,7 @@ export default function Conversation({ gameId, receiverId }) {
                                       setLoginDetails(false);
                                       setLoginModal(false);
                                       setCancel(true);
+                                      setRatingModal(true);
                                     } catch (err) {
                                       setDisputeError(err.message);
                                     } finally {
