@@ -7,6 +7,7 @@ export async function POST(req) {
     if (!user) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
+    console.log(user)
 
     const { tournament_id } = await req.json();
 
