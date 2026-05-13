@@ -172,7 +172,8 @@ export default function ContactPage() {
       window.removeEventListener("keydown", onKeyDown);
     };
   }, [open, setOpen]);
-  useEffect(() => {
+
+ useEffect(() => {
     const fetchUser = async () => {
       try {
         const res = await fetch("/api/user/me");
@@ -180,6 +181,7 @@ export default function ContactPage() {
         // 🔥 ONLY redirect if truly unauthorized
         if (res.status === 401) {
           setUser(null);
+          router.push("/login");
           return;
         }
 
@@ -196,9 +198,7 @@ export default function ContactPage() {
         // 🌐 Network error lands here
         console.error("Network error:", err);
         setUser(null);
-      } finally {
-        setLoad(false);
-      }
+      } 
     };
 
     fetchUser();

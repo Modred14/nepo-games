@@ -10,6 +10,7 @@ import {
   Plus,
   SlidersHorizontal,
   Tag,
+  Trophy,
   Menu,
 } from "lucide-react";
 import Image from "next/image";
@@ -563,15 +564,23 @@ hover:text-[#0000FF]
                                       <span className="text-xs">👤</span>
                                       Profile
                                     </Link>{" "}
-                                    <div className="h-px bg-gray-200 mx-2"></div>
+                                    {/* <div className="h-px bg-gray-200 mx-2"></div>
                                     <Link
                                       href={"/marketplace"}
                                       className="flex items-center gap-3 px-4 py-3 text-xs text-gray-700 hover:bg-gray-100/80 transition"
                                     >
                                       <span className="text-xs">🛒</span>
                                       Marketplace
-                                    </Link>
+                                    </Link> */}
                                     {/* Divider */}
+                                    <div className="h-px bg-gray-200 mx-2"></div>
+                                    <Link
+                                      href={"/tournament"}
+                                      className="flex items-center gap-3 px-4 py-3 text-xs text-gray-700 hover:bg-gray-100/80 transition"
+                                    >
+                                      <span className="text-xs">🏆</span>
+                                      Tournaments
+                                    </Link>
                                     <div className="h-px bg-gray-200 mx-2"></div>
                                     {/* Logout */}
                                     <button
@@ -718,7 +727,20 @@ hover:text-[#0000FF]
                             </span>
                           </button>
                         </Link>
-
+                        <Link href={"/tournament"}>
+                          <button
+                            onClick={() => setActive("Tournament")}
+                            className={`${linkClass("Tournament")} group`}
+                          >
+                            <Trophy
+                              size={20}
+                              className="text-black group-hover:text-blue-600 transition-colors duration-200"
+                            />
+                            <span className="group-hover:text-blue-600">
+                              Tournaments
+                            </span>
+                          </button>
+                        </Link>
                         <Link href="/contact">
                           <button
                             onClick={() => setActive("Support")}

@@ -242,6 +242,90 @@ export async function POST(req) {
 
         return NextResponse.json({ status: "subscription activated" });
       }
+      if (purpose === "tournament") {
+        const tournament_id = metadata.tournament_id;
+        const player_name = metadata.player_name;
+        const player_email = metadata.player_email;
+
+        if (!tournament_id || !player_name || !player_email) {
+          console.error("❌ Missing tournament metadata");
+          return NextResponse.json(
+            { error: "Missing metadata" },
+            { status: 400 },
+          );
+        }
+
+        // Prevent duplicate (webhook can fire twice)
+        const existing = await pool.query(
+          `SELECT id FROM tournament_contestants 
+     WHERE tournament_id = $1 AND user_id = $2`,
+          [tournament_id, userId],
+        );
+        if (existing.rows.length > 0) {
+          console.log(
+            "⚠️ Tournament already registered:",
+            userId,
+            tournament_id,
+          );
+          return NextResponse.json({ status: "already processed" });
+        }
+
+        const client = await pool.connect();
+        try {
+          await client.query("BEGIN");
+
+          // Check slot still available
+          const { rows } = await client.query(
+            `SELECT slots_left FROM tournaments WHERE id = $1 FOR UPDATE`,
+            [tournament_id],
+          );
+          if (!rows[0] || rows[0].slots_left <= 0) {
+            await client.query("ROLLBACK");
+            console.error("❌ No slots left for tournament:", tournament_id);
+            return NextResponse.json(
+              { error: "No slots available" },
+              { status: 400 },
+            );
+          }
+
+          // Save contestant
+          await client.query(
+            `INSERT INTO tournament_contestants 
+       (tournament_id, user_id, player_name, email, payment_ref, payment_status)
+       VALUES ($1, $2, $3, $4, $5, 'confirmed')`,
+            [tournament_id, userId, player_name, player_email, reference],
+          );
+
+          // Deduct slot
+          await client.query(
+            `UPDATE tournaments SET slots_left = slots_left - 1 WHERE id = $1`,
+            [tournament_id],
+          );
+
+          // Log transaction
+          await client.query(
+            `INSERT INTO users_transactions 
+       (user_id, type, amount, status, description, reference)
+       VALUES ($1, 'debit', $2, 'success', 'Tournament registration', $3)`,
+            [userId, amount, reference],
+          );
+
+          await client.query("COMMIT");
+          console.log(
+            "✅ Tournament registration confirmed:",
+            userId,
+            tournament_id,
+          );
+          return NextResponse.json({
+            status: "tournament registration confirmed",
+          });
+        } catch (err) {
+          await client.query("ROLLBACK");
+          throw err;
+        } finally {
+          client.release();
+        }
+      }
     }
     if (event.event === "transfer.success") {
       const existing = await pool.query(
@@ -307,10 +391,10 @@ export async function POST(req) {
         // }
 
         // Restore listing back to active
-           await pool.query(
-  `UPDATE listings SET status = 'active', processing_by = NULL WHERE id = $1`,
-  [listingId]
-);
+        await pool.query(
+          `UPDATE listings SET status = 'active', processing_by = NULL WHERE id = $1`,
+          [listingId],
+        );
         // Mark transaction as failed
         await pool.query(
           `UPDATE transactions
@@ -372,6 +456,18 @@ export async function POST(req) {
         console.log("❌ Subscription payment failed for user:", userId);
         return NextResponse.json({ status: "subscription charge failed" });
       }
+      if (purpose === "tournament") {
+        console.log(
+          "❌ Tournament payment failed for user:",
+          userId,
+          "tournament:",
+          metadata.tournament_id,
+        );
+        return NextResponse.json({
+          status: "tournament charge failed, nothing to rollback",
+        });
+      }
+
       console.log("❌ Charge failed for unknown purpose:", purpose);
       return NextResponse.json({ status: "charge failed logged" });
     }

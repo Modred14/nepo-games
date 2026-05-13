@@ -116,6 +116,16 @@ input[type="number"]::-webkit-inner-spin-button {
   background-color: #2563eb90;
   border-radius: 10px;
 }
+html:has(.tournament),
+html:has(.tournament) body {
+  scrollbar-color: #2563eb90 black;
+}
+
+html:has(.tournament)::-webkit-scrollbar-track,
+html:has(.tournament) body::-webkit-scrollbar-track {
+  background: black;
+}
+
 .thin-scroll {
   scrollbar-width: thin; /* Firefox */
   scrollbar-color: #2563eb10 transparent; /* blue-600 subtle */
