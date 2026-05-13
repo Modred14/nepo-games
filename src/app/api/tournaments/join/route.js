@@ -7,7 +7,16 @@ export async function POST(req) {
     if (!user) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
-    console.log(user)
+
+    const userRes = await pool.query(
+      `SELECT id, email, username FROM users WHERE email = $1`,
+      [user.email],
+    );
+    const fullUser = userRes.rows[0];
+
+    if (!fullUser) {
+      return Response.json({ error: "User not found" }, { status: 404 });
+    }
 
     const { tournament_id } = await req.json();
 
@@ -70,8 +79,8 @@ export async function POST(req) {
             userId: user.id,
             purpose: "tournament",
             tournament_id,
-            player_name: user.username,
-            player_email: user.email,
+            player_name: fullUser.username,
+            player_email: fullUser.email,
           },
         }),
       },

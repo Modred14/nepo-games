@@ -248,8 +248,8 @@ export async function POST(req) {
         const tournament_id = metadata.tournament_id;
         const player_name = metadata.player_name;
         const player_email = metadata.player_email;
-        console.log("🏆 FULL METADATA RECEIVED:", JSON.stringify(metadata));
-        console.log("🏆 VALUES:", { tournament_id, player_name, player_email });
+   
+     
         if (!tournament_id || !player_name || !player_email) {
           console.error("❌ Missing tournament metadata");
           return NextResponse.json(
