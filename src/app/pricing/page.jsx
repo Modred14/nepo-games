@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 const features = [
-  "Lower selling fees on every transaction",
+  "Low selling fees on every transaction",
   "Priority placement in search results",
   "Featured listings on homepage",
   "Verified Seller badge for buyer trust",
