@@ -8,25 +8,19 @@ export async function GET() {
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.email) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // 1. Get user
     const userResult = await pool.query(
       "SELECT id, plan FROM users WHERE email = $1",
-      [session.user.email]
+      [session.user.email],
     );
 
     const user = userResult.rows[0];
 
     if (!user) {
-      return NextResponse.json(
-        { error: "User not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
     const userId = user.id;
@@ -43,7 +37,7 @@ export async function GET() {
       AND l.deleted_at IS NULL
       ORDER BY l.created_at DESC
       `,
-      [userId]
+      [userId],
     );
 
     const listings = listingsResult.rows;
@@ -64,6 +58,15 @@ export async function GET() {
       created_at: item.created_at,
       verified: item.plan !== "free",
     }));
+    const ratingResult = await pool.query(
+      `SELECT ROUND(AVG(rating)::numeric, 1) as average_rating, COUNT(*) as total_ratings
+   FROM ratings 
+   WHERE seller_id = $1`,
+      [userId],
+    );
+
+    const averageRating = parseFloat(ratingResult.rows[0]?.average_rating) || 0;
+    const totalRatings = parseInt(ratingResult.rows[0]?.total_ratings) || 0;
 
     return NextResponse.json(
       {
@@ -71,15 +74,17 @@ export async function GET() {
         games,
         total: games.length,
         plan: user.plan,
+        averageRating,
+        totalRatings,
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (err) {
     console.error("GET /api/user/listings error:", err);
 
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

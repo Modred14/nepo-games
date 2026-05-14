@@ -3,11 +3,26 @@ import { Star, ShoppingCart, FileText, User, Plus } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
+function SkeletonCard() {
+  return (
+    <div className="rounded-xl h-full border border-gray-200 bg-white shadow-sm px-1.5 sm:px-3 py-2 flex flex-col gap-3 animate-pulse">
+      <div className="flex items-center gap-2">
+        <div className="p-1.5 sm:p-2 rounded-lg bg-gray-200 w-7 h-7 sm:w-9 sm:h-9" />
+        <div className="flex flex-col gap-1.5">
+          <div className="h-3 w-20 bg-gray-200 rounded" />
+          <div className="h-2.5 w-16 bg-gray-100 rounded" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function DashboardStats() {
   const [listedAccounts, setListedAccounts] = useState(0);
   const [pendingOrders, setPendingOrders] = useState(0);
   const [totalSales, setTotalSales] = useState(0.0);
   const [rating, setRating] = useState(0.0);
+  const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
@@ -19,6 +34,7 @@ export default function DashboardStats() {
         }
         const data = await res.json();
         setListedAccounts(data.total || 0);
+        setRating(data.averageRating || 0);
         if (data.games) {
           const pending = data.games.filter(
             (g) => g.status === "pending",
@@ -32,6 +48,8 @@ export default function DashboardStats() {
         }
       } catch (err) {
         console.error("Seller fetch error:", err);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -49,6 +67,9 @@ export default function DashboardStats() {
     }
     return num.toString();
   };
+  const displayRating = Math.min(parseFloat(rating.toFixed(1)), 5);
+  const starCount = Math.min(Math.round(displayRating), 5);
+
   const stats = [
     {
       title: "Listed Account",
@@ -73,86 +94,93 @@ export default function DashboardStats() {
     },
     {
       title: "Rating",
-      value: rating.toFixed(1),
+      value: displayRating.toFixed(1),
       desc: "Based on customer reviews",
       other1: "Customer reviews",
       icon: Star,
-      stars: Math.round(rating),
+      stars: starCount,
     },
   ];
 
   return (
     <div className="w-full sm:-mb-4 pt-3 sm:pt-4 space-y-4">
       <div className="grid grid-cols-2 jt:flex flex-wrap justify-center gap-1.5 xs:gap-2 sm:gap-3 lg:gap-4">
-        {stats.map((item, i) => (
-          <motion.div
-            key={i}
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.08 }}
-          >
-            <div className="group rounded-xl h-full border justify-center border-gray-200 bg-white shadow-sm hover:shadow-md transition-all duration-300 px-1.5 sm:px-3 py-2 flex flex-col gap-3">
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 sm:p-2 sm:rounded-lg sm:block jt:hidden rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-sm group-hover:scale-105 transition">
-                  <item.icon size={14} className="sm:w-4 sm:h-4" />
-                </div>
-                <div>
-                  <p className="text-xs  flex justify-between sm:items-center font-semibold text-gray-800">
-                    <span>{item.title}</span>
-                    {item.stars >= 0 && (
-                      <span className="text-xs pt-0.5 font-bold text-gray-700">
-                        {item.value}
-                      </span>
-                    )}
-                  </p>
-                  {item.stars >= 0 ? (
-                    <div>
-                      <div className="flex items-center gap-1 mt-0.5">
-                        {[...Array(5)].map((_, index) => {
-                          const stars = Number(item.stars) || 0;
-
-                          return (
-                            <Star
-                              key={index}
-                              size={12}
-                              className={
-                                index < stars
-                                  ? "fill-yellow-400 text-yellow-400"
-                                  : "text-gray-300"
-                              }
-                            />
-                          );
-                        })}
-                      </div>
-                    </div>
-                  ) : (
-                    <>
-                      <p className="text-[10px] hidden lg:block text-gray-500">
-                        <div>
-                          <span className="font-bold">
-                            {" "}
-                            {formatNumber(item.value)}
-                          </span>{" "}
-                          {item.desc}
-                        </div>
-                      </p>
-                      <p className="text-[10px] lg:hidden text-gray-500">
-                        <div className="flex items-center h-full gap-1">
-                          {" "}
-                          <span className="font-bold">
-                            {" "}
-                            {formatNumber(item.value)}
-                          </span>{" "}
-                          {item.other1}
-                        </div>
-                      </p>
-                    </>
-                  )}
-                </div>
+        {isLoading
+          ? // Render 4 skeleton cards + 1 for the "Sell Account" button
+            [...Array(5)].map((_, i) => (
+              <div key={i}>
+                <SkeletonCard />
               </div>
-            </div>
-          </motion.div>
-        ))}
+            ))
+          : stats.map((item, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.08 }}
+              >
+                <div className="group rounded-xl h-full border justify-center border-gray-200 bg-white shadow-sm hover:shadow-md transition-all duration-300 px-1.5 sm:px-3 py-2 flex flex-col gap-3">
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 sm:p-2 sm:rounded-lg sm:block jt:hidden rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-sm group-hover:scale-105 transition">
+                      <item.icon size={14} className="sm:w-4 sm:h-4" />
+                    </div>
+                    <div>
+                      <p className="text-xs  flex justify-between sm:items-center font-semibold text-gray-800">
+                        <span>{item.title}</span>
+                         {item.stars !== undefined && (
+                          <span className="text-xs pt-0.5 font-bold text-gray-700">
+                            {item.value}
+                          </span>
+                        )}
+                      </p>
+                     {item.stars !== undefined ? (
+                        <div>
+                          <div className="flex items-center gap-1 mt-0.5">
+                            {[...Array(5)].map((_, index) => {
+                              const stars = Number(item.stars) || 0;
+
+                              return (
+                                <Star
+                                  key={index}
+                                  size={12}
+                                  className={
+                                    index < stars
+                                      ? "fill-yellow-400 text-yellow-400"
+                                      : "text-gray-300"
+                                  }
+                                />
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <p className="text-[10px] hidden lg:block text-gray-500">
+                            <div>
+                              <span className="font-bold">
+                                {" "}
+                                {formatNumber(item.value)}
+                              </span>{" "}
+                              {item.desc}
+                            </div>
+                          </p>
+                          <p className="text-[10px] lg:hidden text-gray-500">
+                            <div className="flex items-center h-full gap-1">
+                              {" "}
+                              <span className="font-bold">
+                                {" "}
+                                {formatNumber(item.value)}
+                              </span>{" "}
+                              {item.other1}
+                            </div>
+                          </p>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
 
         <motion.div
           onClick={() => {

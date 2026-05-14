@@ -15,10 +15,19 @@ async function getGame(slug) {
       users.email,
       users.profile_image,
       users.plan,
-    users.phone_verified
+      users.phone_verified,  
+      COALESCE(r.average_rating, 0) AS average_rating,
+      COALESCE(r.rating_count, 0)   AS rating_count
     FROM listings
-    
     JOIN users ON listings.user_id = users.id
+    LEFT JOIN (
+      SELECT 
+        seller_id,
+        ROUND(AVG(rating)::numeric, 1) AS average_rating,
+        COUNT(*)                        AS rating_count
+      FROM ratings
+      GROUP BY seller_id
+    ) r ON r.seller_id = users.id
     WHERE listings.slug = $1
     AND listings.status = 'active'
     `,

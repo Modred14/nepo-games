@@ -396,10 +396,27 @@ export default function GameClient({ game, images, similarGames }) {
               <div className="px-4 pb-4 border-b">
                 <div className="flex items-center gap-1 mb-1">
                   {[...Array(5)].map((_, i) => (
-                    <Star key={i} size={15} className="text-gray-300" />
+                    <Star
+                      key={i}
+                      size={15}
+                      className={
+                        i < Math.round(game.average_rating)
+                          ? "fill-yellow-400 text-yellow-400"
+                          : "text-gray-300"
+                      }
+                    />
                   ))}
+                  {game.rating_count > 0 && (
+                    <span className="text-xs font-semibold text-gray-700 ml-1">
+                      {parseFloat(game.average_rating).toFixed(1)}
+                    </span>
+                  )}
                 </div>
-                <p className="text-xs text-gray-500">No ratings yet</p>
+                <p className="text-xs text-gray-500">
+                  {game.rating_count > 0
+                    ? `${game.rating_count} rating${game.rating_count === "1" ? "" : "s"}`
+                    : "No ratings yet"}
+                </p>
               </div>
 
               {/* Performance */}
@@ -411,14 +428,36 @@ export default function GameClient({ game, images, similarGames }) {
                 <div className="flex justify-between items-center">
                   <div className="space-y-2 text-sm">
                     <p>
+                      <span className="text-[#0000FF]">Ratings:</span>{" "}
+                      <span
+                        className={`font-medium ${
+                          game.rating_count === 0
+                            ? "text-gray-400"
+                            : game.average_rating >= 4
+                              ? "text-green-600"
+                              : game.average_rating >= 3
+                                ? "text-yellow-600"
+                                : game.average_rating >= 2
+                                  ? "text-orange-500"
+                                  : "text-red-500"
+                        }`}
+                      >
+                        {game.rating_count === 0
+                          ? "No ratings"
+                          : game.average_rating >= 4
+                            ? "Excellent"
+                            : game.average_rating >= 3
+                              ? "Good"
+                              : game.average_rating >= 2
+                                ? "Average"
+                                : "Poor"}
+                      </span>
+                    </p>{" "}
+                    <p>
                       <span className="text-[#0000FF]">Quality:</span>{" "}
                       <span className="font-medium text-green-600">
                         Excellent
                       </span>
-                    </p>
-                    <p>
-                      <span className="text-[#0000FF]">Ratings:</span>{" "}
-                      <span className="font-medium text-yellow-600">Good</span>
                     </p>
                     <p>
                       <span className="text-[#0000FF]">Response:</span>{" "}

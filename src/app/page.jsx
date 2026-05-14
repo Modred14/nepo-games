@@ -901,13 +901,13 @@ hover:text-[#0000FF]
                       </p>
                     </div>
                   </div>
-                  <div className="justify-center flex">
+                  <div className="justify-center pt-4  -mx-[2%] rounded-b-2xl flex">
                     <Image
-                      src="/nepo-mark.png"
+                      src="/home-gen-pic.png"
                       alt=""
-                      width={660}
-                      height={370}
-                      className="rounded-t-2xl"
+                      width={1152}
+                      height={200}
+                      className="object-cover  rounded-b-2xl w-6xl h-50 sm:h-70 lg:h-96.75"
                       priority
                     />
                   </div>
@@ -1009,7 +1009,7 @@ hover:text-[#0000FF]
                       </p>
                       <div className="mt-auto xl:pt-4 px-5">
                         <Image
-                          src="/game-sign.png"
+                          src="/game-gen.png"
                           alt=""
                           width={300}
                           height={160}
@@ -1065,7 +1065,7 @@ hover:text-[#0000FF]
                   </Link>
                 </RevealLeft>{" "}
                 <RevealRight>
-                  <Link href={`/c/1?receiver_id=1`}>
+                  <Link href={`/profile`}>
                     <div className="bg-linear-to-b h-full from-[#4F8CFF]/50 rounded-xl pb-0 p-7 shadow-md to-[#8A38F5]/50  transition-all duration-500">
                       <div className="flex gap-3 items-center">
                         <div className=" bg-white rounded-[50%] p-3">
@@ -1086,7 +1086,7 @@ hover:text-[#0000FF]
                       </p>
                       <div className="mt-auto xl:pt-4 px-5">
                         <Image
-                          src="/page-sign.png"
+                          src="/page-gen.png"
                           alt=""
                           width={300}
                           height={160}
@@ -1099,10 +1099,10 @@ hover:text-[#0000FF]
               </div>
             </div>
             <div className="from-[#8A38F5]/50 to-[#4F8CFF]/50 bg-linear-to-b w-full mt-15 flex justify-center">
-              <div className="grid md:grid-cols-2 items-center max-w-6xl pb-10 px-[5%]  ">
+              <div className="grid gap-5 md:grid-cols-2 py-15 items-center max-w-6xl  px-[5%]  ">
                 <Reveal>
-                  <div className="w-full flex justify-center">
-                    <Image src="/phone.png" alt="" width={240} height={400} />
+                  <div className="w-full flex  justify-center">
+                    <Image src="/phone-gen-pic.png" alt="" width={240} height={400} />
                   </div>
                 </Reveal>
                 <Reveal>
