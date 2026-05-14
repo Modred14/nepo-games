@@ -262,7 +262,7 @@ export default function Marketplace() {
       <Reveal className=" h-screen flex flex-col">
         <div className="flex flex-col flex-1 pb-20">
           <div className="flex border-b border-[#0000FF]/40 justify-between py-3 sm:py-4 px-7 items-center">
-            <p className="text-base sm:text-lg font-bold">
+            <p className="text-base sm:text-lg font-bold truncate min-w-0">
               Hello, {user?.username}
             </p>
             <div className="flex items-center gap-1 sm:gap-5">

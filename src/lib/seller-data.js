@@ -5,12 +5,12 @@ import { useRouter } from "next/navigation";
 
 function SkeletonCard() {
   return (
-    <div className="rounded-xl h-full border border-gray-200 bg-white shadow-sm px-1.5 sm:px-3 py-2 flex flex-col gap-3 animate-pulse">
+    <div className="rounded-xl border border-gray-100 bg-white shadow-sm px-3 py-2 flex flex-col gap-3 animate-pulse h-full">
       <div className="flex items-center gap-2">
-        <div className="p-1.5 sm:p-2 rounded-lg bg-gray-200 w-7 h-7 sm:w-9 sm:h-9" />
-        <div className="flex flex-col gap-1.5">
-          <div className="h-3 w-20 bg-gray-200 rounded" />
-          <div className="h-2.5 w-16 bg-gray-100 rounded" />
+        <div className="p-2 rounded-lg bg-gray-100 w-8 h-8" />
+        <div className="flex flex-col gap-1.5 flex-1">
+          <div className="h-2.5 bg-gray-100 rounded w-3/4" />
+          <div className="h-2 bg-gray-100 rounded w-1/2" />
         </div>
       </div>
     </div>
@@ -104,75 +104,111 @@ export default function DashboardStats() {
 
   return (
     <div className="w-full sm:-mb-4 pt-3 sm:pt-4 space-y-4">
-      <div className="grid grid-cols-2 jt:flex flex-wrap justify-center gap-1.5 xs:gap-2 sm:gap-3 lg:gap-4">
+      <div
+        className="
+          grid grid-cols-2
+          jt:flex flex-wrap justify-center
+          gap-1.5 xs:gap-2 sm:gap-3 lg:gap-4
+        "
+      >
+        {/* ── loading skeletons ── */}
         {isLoading
-          ? // Render 4 skeleton cards + 1 for the "Sell Account" button
-            [...Array(5)].map((_, i) => (
+          ? [...Array(5)].map((_, i) => (
               <div key={i}>
                 <SkeletonCard />
               </div>
             ))
-          : stats.map((item, i) => (
+          : /* ── stat cards ── */
+            stats.map((item, i) => (
               <motion.div
                 key={i}
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.08 }}
+                transition={{ delay: i * 0.08, ease: "easeOut" }}
+                className="h-full"
               >
-                <div className="group rounded-xl h-full border justify-center border-gray-200 bg-white shadow-sm hover:shadow-md transition-all duration-300 px-1.5 sm:px-3 py-2 flex flex-col gap-3">
+                <div
+                  className="
+                    group relative h-full overflow-hidden
+                    rounded-xl border border-gray-100
+                    bg-white
+                    shadow-sm hover:shadow-md
+                    transition-all duration-300
+                    px-1.5 sm:px-3 py-2
+                    flex flex-col gap-3
+                  "
+                >
+                  {/* subtle top-accent line */}
+                  <span
+                    className="
+                      absolute inset-x-0 top-0 h-[2px]
+                      bg-gradient-to-r from-blue-400 via-indigo-500 to-violet-400
+                      opacity-0 group-hover:opacity-100
+                      transition-opacity duration-300
+                    "
+                  />
+ 
                   <div className="flex items-center gap-2">
-                    <div className="p-1.5 sm:p-2 sm:rounded-lg sm:block jt:hidden rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-sm group-hover:scale-105 transition">
+                    {/* icon pill */}
+                    <div
+                      className="
+                        flex-shrink-0
+                        p-1.5 sm:p-2
+                        rounded-lg
+                        sm:block jt:hidden
+                        bg-gradient-to-br from-blue-500 to-indigo-600
+                        text-white shadow-sm
+                        group-hover:scale-105 group-hover:shadow-indigo-200
+                        transition-transform duration-200
+                      "
+                    >
                       <item.icon size={14} className="sm:w-4 sm:h-4" />
                     </div>
-                    <div>
-                      <p className="text-xs  flex justify-between sm:items-center font-semibold text-gray-800">
-                        <span>{item.title}</span>
-                         {item.stars !== undefined && (
-                          <span className="text-xs pt-0.5 font-bold text-gray-700">
+ 
+                    <div className="min-w-0 flex-1">
+                      {/* title row */}
+                      <p className="text-xs flex justify-between sm:items-center font-semibold text-gray-800 leading-tight">
+                        <span className="truncate">{item.title}</span>
+                        {item.stars !== undefined && (
+                          <span className="text-xs pt-0.5 font-bold text-gray-700 ml-1 tabular-nums">
                             {item.value}
                           </span>
                         )}
                       </p>
-                     {item.stars !== undefined ? (
-                        <div>
-                          <div className="flex items-center gap-1 mt-0.5">
-                            {[...Array(5)].map((_, index) => {
-                              const stars = Number(item.stars) || 0;
-
-                              return (
-                                <Star
-                                  key={index}
-                                  size={12}
-                                  className={
-                                    index < stars
-                                      ? "fill-yellow-400 text-yellow-400"
-                                      : "text-gray-300"
-                                  }
-                                />
-                              );
-                            })}
-                          </div>
+ 
+                      {/* stars OR value+desc */}
+                      {item.stars !== undefined ? (
+                        <div className="flex items-center gap-0.5 mt-1">
+                          {[...Array(5)].map((_, idx) => {
+                            const stars = Number(item.stars) || 0;
+                            return (
+                              <Star
+                                key={idx}
+                                size={11}
+                                className={
+                                  idx < stars
+                                    ? "fill-amber-400 text-amber-400"
+                                    : "fill-gray-100 text-gray-200"
+                                }
+                              />
+                            );
+                          })}
                         </div>
                       ) : (
                         <>
-                          <p className="text-[10px] hidden lg:block text-gray-500">
-                            <div>
-                              <span className="font-bold">
-                                {" "}
-                                {formatNumber(item.value)}
-                              </span>{" "}
-                              {item.desc}
-                            </div>
+                          {/* desktop */}
+                          <p className="text-[10px] hidden lg:flex items-baseline gap-1 text-gray-500 mt-0.5">
+                            <span className="font-bold text-gray-700 tabular-nums">
+                              {formatNumber(item.value)}
+                            </span>
+                            <span>{item.desc}</span>
                           </p>
-                          <p className="text-[10px] lg:hidden text-gray-500">
-                            <div className="flex items-center h-full gap-1">
-                              {" "}
-                              <span className="font-bold">
-                                {" "}
-                                {formatNumber(item.value)}
-                              </span>{" "}
-                              {item.other1}
-                            </div>
+                          {/* mobile */}
+                          <p className="text-[10px] lg:hidden flex items-center gap-1 text-gray-500 mt-0.5">
+                            <span className="font-bold text-gray-700 tabular-nums">
+                              {formatNumber(item.value)}
+                            </span>
+                            <span>{item.other1}</span>
                           </p>
                         </>
                       )}
@@ -181,32 +217,64 @@ export default function DashboardStats() {
                 </div>
               </motion.div>
             ))}
-
+ 
+        {/* ── sell account CTA ── */}
         <motion.div
-          onClick={() => {
-            router.push("/sell-game");
-          }}
+          onClick={() => router?.push("/sell-game")}
           initial={{ opacity: 0, y: 12 }}
-          className="cursor-pointer"
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: stats.length * 0.08 }}
+          transition={{ delay: stats.length * 0.08, ease: "easeOut" }}
+          className="cursor-pointer col-span-2 h-full"
         >
-          <div className="group bg-blue-100 rounded-xl h-full border justify-center border-gray-200 shadow-sm hover:shadow-md transition-all duration-300  px-2 sm:px-3 py-2 flex flex-col gap-3">
+          <div
+            className="
+              group relative h-full overflow-hidden
+              rounded-xl border border-blue-200/70
+              bg-gradient-to-br from-blue-50 to-indigo-50
+              shadow-sm hover:shadow-md hover:border-blue-300
+              transition-all duration-300
+              px-2 sm:px-3 py-2
+              flex flex-col gap-3
+            "
+          >
+            {/* decorative glow blob */}
+            <span
+              className="
+                pointer-events-none absolute -right-4 -top-4 h-16 w-16
+                rounded-full bg-indigo-200/40 blur-xl
+                group-hover:bg-indigo-300/50
+                transition-colors duration-300
+              "
+            />
+ 
             <div className="flex items-center gap-2">
-              <div className="p-1.5 sm:p-2 rounded-md sm:rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-sm transition group-hover:scale-105">
+              <div
+                className="
+                  flex-shrink-0
+                  p-1.5 sm:p-2
+                  rounded-md sm:rounded-lg
+                  bg-gradient-to-br from-blue-500 to-indigo-600
+                  text-white shadow-sm
+                  group-hover:scale-105 group-hover:shadow-indigo-300
+                  transition-transform duration-200
+                "
+              >
                 <Plus size={14} className="sm:w-4 sm:h-4" />
               </div>
-              <div>
-                <p className="text-xs font-semibold text-gray-800">
+ 
+              <div className="min-w-0">
+                <p className="text-xs font-semibold text-gray-800 leading-tight">
                   Sell Account
                 </p>
-
-                <p className="text-[10px] hidden lg:block text-gray-600">
-                  {" "}
-                  <span className="font-semibold">Click here </span>to list your
-                  account for sale
+ 
+                {/* desktop */}
+                <p className="text-[10px] hidden lg:block text-gray-500 mt-0.5">
+                  <span className="font-semibold text-blue-600">Click here</span>{" "}
+                  to list your account for sale
                 </p>
-                <p className="text-[10px] font-semibold lg:hidden text-gray-600">
+ 
+                {/* mobile */}
+                <p className="text-[10px] lg:hidden font-semibold text-blue-600 mt-0.5">
                   Start earning
                 </p>
               </div>
