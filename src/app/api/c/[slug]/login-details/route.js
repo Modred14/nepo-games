@@ -23,10 +23,15 @@ export async function POST(req, { params }) {
 
     const listing = listingRes.rows[0];
 
-    if (!listing || listing.user_id !== user.id) {
+    if (!listing || Number(listing.user_id) !== Number(user.id)) {
       return Response.json({ error: "Not allowed" }, { status: 403 });
     }
-
+    const txRes = await pool.query(
+      `SELECT * FROM transactions 
+   WHERE listing_id = $1 AND buyer_id != $2 AND escrow_status = 'held'
+   ORDER BY created_at DESC LIMIT 1`,
+      [listingId, user.id],
+    );
     const transaction = txRes.rows[0];
 
     if (!transaction) {

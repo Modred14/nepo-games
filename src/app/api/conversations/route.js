@@ -1,10 +1,13 @@
 import pool from "../../../lib/db";
-
+import { getCached, setCached, invalidateCache } from "@/lib/cache";
 import { requireUser } from "../../../lib/auth";
 
 export async function GET(req) {
   try {
     const user = await requireUser();
+    const cacheKey = `conversations:${user_id}`;
+    const cached = await getCached(cacheKey);
+    if (cached) return Response.json(cached);
 
     if (!user) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
@@ -98,6 +101,8 @@ ORDER BY m.created_at DESC NULLS LAST;
 `,
       [user_id],
     );
+
+    await setCached(cacheKey, conversations.rows, 15); // 15 second TTL
     return Response.json(conversations.rows);
   } catch (err) {
     console.error(err);

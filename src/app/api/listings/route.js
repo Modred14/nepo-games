@@ -1,6 +1,7 @@
 import pool from "../../../lib/db";
 import { uploadImage } from "../../../lib/uploadImage";
 import crypto from "crypto";
+import { requireUser } from "@/lib/auth";
 
 export async function POST(req) {
   try {
@@ -9,7 +10,9 @@ export async function POST(req) {
     const formData = await req.formData();
     console.log("[STEP 2] FormData parsed");
 
-    const user_id = formData.get("user_id");
+    const user = await requireUser();
+    if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
+    const user_id = user.id;
     const title = formData.get("title");
     const description = formData.get("description");
     const price = formData.get("price");

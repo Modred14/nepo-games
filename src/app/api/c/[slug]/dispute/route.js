@@ -13,7 +13,7 @@ export async function POST(req, { params }) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const gameId = params.gameId;
+    const gameId = params.slug;
     const { searchParams } = new URL(req.url);
     const conversationId = searchParams.get("conversationId");
 
@@ -53,28 +53,7 @@ LIMIT 1
 
     const now = new Date();
 
-    // 2. Get expiry INSIDE transaction (fixes inconsistency)
-    const check = await client.query(
-      `
-      SELECT expires_at
-      FROM login_deliveries
-      WHERE conversation_id = $1
-      ORDER BY created_at DESC
-      LIMIT 1
-      FOR UPDATE
-      `,
-      [conversationId],
-    );
-
-    const record = check.rows[0];
-
-    if (!record) {
-      await client.query("ROLLBACK");
-      return Response.json({ error: "No delivery found" }, { status: 404 });
-    }
-
-    // 🚨 EXPIRED CHECK (unchanged logic, now safe)
-    if (record.expires_at && new Date(record.expires_at) < now) {
+    if (login.expires_at && new Date(login.expires_at) < now) {
       await client.query("ROLLBACK");
       return Response.json(
         { error: "Delivery expired. Contact support." },
@@ -91,7 +70,7 @@ LIMIT 1
       await client.query("ROLLBACK");
       return Response.json({ error: "Already disputed" }, { status: 409 });
     }
-    
+
     if (login.escrow_status === "released") {
       await client.query("ROLLBACK");
       return Response.json(
