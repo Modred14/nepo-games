@@ -2,6 +2,10 @@ import pool from "../../../../lib/db";
 
 export async function POST(req) {
   try {
+       const user = await requireUser();
+    if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
+    if (user.role !== "admin") return Response.json({ error: "Forbidden" }, { status: 403 });
+
     const { title, message } = await req.json();
 
     if (!message) {

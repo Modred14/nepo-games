@@ -274,7 +274,7 @@ ${verifyLink}`,
     },
 
     // 🔥 ATTACH USER TO TOKEN
-    async jwt({ token, user }) {
+    async jwt({ token,  user, trigger, session }) {
       // On login
       if (user) {
         token.user = {
