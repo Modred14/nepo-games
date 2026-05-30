@@ -13,6 +13,30 @@ const normalizeImage = (img) => {
   return defaultAvatar;
 };
 
+async function fetchFullUserProfile(email) {
+  const result = await pool.query(
+    `SELECT 
+      id,
+      email,
+      first_name,
+      surname,
+      username,
+      profile_image,
+      phone_verified,
+      plan,
+      subscription_status,
+      subscription_start,
+      subscription_end,
+      payment_provider,
+      pin_set,
+      provider
+     FROM users
+     WHERE email = $1`,
+    [email],
+  );
+  return result.rows[0] || null;
+}
+
 export const authOptions = {
   providers: [
     // ✅ GOOGLE LOGIN
@@ -144,6 +168,17 @@ ${verifyLink}`,
           return {
             id: user.id,
             email: user.email,
+            first_name: user.first_name,
+            surname: user.surname,
+            username: user.username,
+            profile_image: normalizeImage(user.profile_image),
+            phone_verified: user.phone_verified,
+            plan: user.plan,
+            subscription_status: user.subscription_status,
+            subscription_start: user.subscription_start,
+            subscription_end: user.subscription_end,
+            payment_provider: user.payment_provider,
+            pin_set: user.pin_set,
           };
         } catch (err) {
           console.error("Credentials Auth Error:", err);
@@ -217,9 +252,19 @@ ${verifyLink}`,
           }
         }
 
-        // attach user id for JWT
         user.id = dbUser.id;
         user.email = dbUser.email;
+        user.first_name = dbUser.first_name;
+        user.surname = dbUser.surname;
+        user.username = dbUser.username;
+        user.profile_image = normalizeImage(dbUser.profile_image);
+        user.phone_verified = dbUser.phone_verified;
+        user.plan = dbUser.plan;
+        user.subscription_status = dbUser.subscription_status;
+        user.subscription_start = dbUser.subscription_start;
+        user.subscription_end = dbUser.subscription_end;
+        user.payment_provider = dbUser.payment_provider;
+        user.pin_set = dbUser.pin_set;
 
         return true;
       } catch (err) {
@@ -232,14 +277,40 @@ ${verifyLink}`,
     async jwt({ token, user }) {
       // On login
       if (user) {
-        token.user = user;
+        token.user = {
+          id: user.id,
+          email: user.email,
+          first_name: user.first_name,
+          surname: user.surname,
+          username: user.username,
+          profile_image: user.profile_image,
+          phone_verified: user.phone_verified,
+          plan: user.plan,
+          subscription_status: user.subscription_status,
+          subscription_start: user.subscription_start,
+          subscription_end: user.subscription_end,
+          payment_provider: user.payment_provider,
+          pin_set: user.pin_set,
+        };
       }
+      if (trigger === "update" && session?.user) {
+        token.user = { ...token.user, ...session.user };
+      }
+
       return token;
     },
 
     // 🔥 EXPOSE USER TO FRONTEND + APIs
     async session({ session, token }) {
-      session.user = token.user;
+      if (token.user) {
+        session.user = {
+          ...token.user,
+          is_verified:
+            (token.user.subscription_status || "").toLowerCase() === "active" &&
+            token.user.subscription_end &&
+            new Date(token.user.subscription_end).getTime() > Date.now(),
+        };
+      }
       return session;
     },
   },
