@@ -3,6 +3,7 @@ import GameClient from "./GameClient";
 import { getSimilarGames } from "./getSimilarGames";
 import GameNotFound from "./notfound";
 
+
 async function getGame(slug) {
   const result = await pool.query(
     `
