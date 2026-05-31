@@ -1,12 +1,16 @@
 import { NextResponse } from "next/server";
 import { uploadImage } from "../../../../lib/uploadImage";
 import pool from "../../../../lib/db";
+import { requireUser } from "@/lib/auth";
 
 export async function POST(req) {
   try {
+      const user = await requireUser();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+const userId = user.id
     const formData = await req.formData();
     const file = formData.get("file");
-    const userId = formData.get("userId");
+
 
     if (!file) {
       return NextResponse.json({ error: "No file uploaded" }, { status: 400 });

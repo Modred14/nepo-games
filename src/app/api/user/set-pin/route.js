@@ -11,7 +11,6 @@ export async function POST(req) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-   
     if (!/^\d{4}$/.test(newPin)) {
       return Response.json(
         { error: "New PIN must be exactly 4 digits" },
@@ -36,8 +35,6 @@ export async function POST(req) {
     if (!dbUser) {
       return Response.json({ error: "User not found" }, { status: 404 });
     }
-    const isMatch = await bcrypt.compare(currentPin, dbUser.pin_hash);
-
     if (
       dbUser.pin_locked_until &&
       new Date(dbUser.pin_locked_until) > new Date()
@@ -47,6 +44,8 @@ export async function POST(req) {
         { status: 429 },
       );
     }
+    const isMatch = await bcrypt.compare(currentPin, dbUser.pin_hash);
+
     if (!isMatch) {
       const attempts = (dbUser.pin_attempts || 0) + 1;
 

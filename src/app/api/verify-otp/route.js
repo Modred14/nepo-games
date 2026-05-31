@@ -1,7 +1,6 @@
 import { getOTP, deleteOTP } from "@/lib/otpStore";
 import pool from "@/lib/db";
-import { getServerSession } from "next-auth";
-import { authOptions } from "../auth/[...nextauth]/route";
+import { requireUser } from "@/lib/auth";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -9,13 +8,8 @@ export default async function handler(req, res) {
   }
 
   try {
-    const session = await getServerSession(req, res, authOptions);
-
-    if (!session || !session.user) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
-
-    const userId = session.user.id;
+  const user = await requireUser(); // ✅ reads from JWT
+    if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
     const { phone, otp } = req.body;
 

@@ -165,7 +165,7 @@ FOR UPDATE
       );
     }
 
-    await pool.query(
+    await client.query(
       `
   INSERT INTO user_banks 
   (user_id, account_number, account_name, bank_code, bank_name, created_at)
