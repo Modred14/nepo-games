@@ -361,9 +361,9 @@ export default function Home() {
   //    return <HomeSkeleton fading={fading} />;
   // }
 
-  if (load) {
-    return <Loader />;
-  }
+  // if (load) {
+  //   return <Loader />;
+  // }
 
   return (
     <div>
