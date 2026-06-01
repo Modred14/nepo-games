@@ -1,36 +1,37 @@
-import { createServer } from "http";
-import { Server } from "socket.io";
+const { createServer } = require("http");
+const { parse } = require("url");
+const next = require("next");
+const { Server } = require("socket.io");
 
-const httpServer = createServer();
+const dev = process.env.NODE_ENV !== "production";
+const app = next({ dev });
+const handle = app.getRequestHandler();
 
-const io = new Server(httpServer, {
-  cors: {
-    origin: "*",
-  },
-});
-
-io.on("connection", (socket) => {
-  console.log("User connected:", socket.id);
-
-  // ✅ join chat room
-  socket.on("join_chat", (chatId) => {
-    socket.join(chatId);
-    console.log("Joined room:", chatId);
+app.prepare().then(() => {
+  const httpServer = createServer((req, res) => {
+    const parsedUrl = parse(req.url, true);
+    handle(req, res, parsedUrl);
   });
 
-  // ✅ receive + broadcast message
-  socket.on("send_message", (message) => {
-    console.log("Message received:", message);
-
-    // 🔥 send to ONLY that chat room
-    io.to(message.chatId).emit("receive_message", message);
+  const io = new Server(httpServer, {
+    path: "/api/socket",
+    cors: { origin: "*" },
+    addTrailingSlash: false,
   });
 
-  socket.on("disconnect", () => {
-    console.log("User disconnected:", socket.id);
-  });
-});
+  global._io = io;
 
-httpServer.listen(3001, () => {
-  console.log("Socket server running on port 3001");
+  io.on("connection", (socket) => {
+    socket.on("join", (conversationId) => {
+      socket.join(`room:${conversationId}`);
+    });
+    socket.on("leave", (conversationId) => {
+      socket.leave(`room:${conversationId}`);
+    });
+  });
+
+  const port = process.env.PORT || 3000;
+  httpServer.listen(port, () => {
+    console.log(`> Ready on http://localhost:${port}`);
+  });
 });

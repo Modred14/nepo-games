@@ -2,17 +2,18 @@
   "name": "nepo-games",
   "version": "0.1.0",
   "private": true,
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint"
-  },
+"scripts": {
+  "dev": "node server.js",
+  "build": "next build",
+  "start": "NODE_ENV=production node server.js",
+  "lint": "eslint"
+},
   "dependencies": {
     "bcrypt": "^6.0.0",
     "cloudinary": "^2.9.0",
     "crypto": "^1.0.1",
     "framer-motion": "^12.38.0",
+    "ioredis": "^5.11.0",
     "jsonwebtoken": "^9.0.3",
     "libphonenumber-js": "^1.12.41",
     "lucide-react": "^0.564.0",

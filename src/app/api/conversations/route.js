@@ -5,7 +5,7 @@ import { requireUser } from "../../../lib/auth";
 export async function GET(req) {
   try {
     const user = await requireUser();
-    const cacheKey = `conversations:${user_id}`;
+    const cacheKey = `conversations:${user.id}`;
     const cached = await getCached(cacheKey);
     if (cached) return Response.json(cached);
 

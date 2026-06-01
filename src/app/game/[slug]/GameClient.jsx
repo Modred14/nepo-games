@@ -442,7 +442,7 @@ export default function GameClient({ game, images, similarGames }) {
                                   : "text-red-500"
                         }`}
                       >
-                        {game.rating_count === 0
+                        {game.rating_count == 0
                           ? "No ratings"
                           : game.average_rating >= 4
                             ? "Excellent"

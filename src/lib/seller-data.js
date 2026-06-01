@@ -112,23 +112,18 @@ export default function DashboardStats() {
         "
       >
         {/* ── loading skeletons ── */}
-        {isLoading
-          ? [...Array(5)].map((_, i) => (
-              <div key={i}>
-                <SkeletonCard />
-              </div>
-            ))
-          : /* ── stat cards ── */
-            stats.map((item, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.08, ease: "easeOut" }}
-                className="h-full"
-              >
-                <div
-                  className="
+        {
+          /* ── stat cards ── */
+          stats.map((item, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.08, ease: "easeOut" }}
+              className="h-full"
+            >
+              <div
+                className="
                     group relative h-full overflow-hidden
                     rounded-xl border border-gray-100
                     bg-white
@@ -137,21 +132,21 @@ export default function DashboardStats() {
                     px-1.5 sm:px-3 py-2
                     flex flex-col gap-3
                   "
-                >
-                  {/* subtle top-accent line */}
-                  <span
-                    className="
+              >
+                {/* subtle top-accent line */}
+                <span
+                  className="
                       absolute inset-x-0 top-0 h-[2px]
                       bg-gradient-to-r from-blue-400 via-indigo-500 to-violet-400
                       opacity-0 group-hover:opacity-100
                       transition-opacity duration-300
                     "
-                  />
- 
-                  <div className="flex items-center gap-2">
-                    {/* icon pill */}
-                    <div
-                      className="
+                />
+
+                <div className="flex items-center gap-2">
+                  {/* icon pill */}
+                  <div
+                    className="
                         flex-shrink-0
                         p-1.5 sm:p-2
                         rounded-lg
@@ -161,63 +156,86 @@ export default function DashboardStats() {
                         group-hover:scale-105 group-hover:shadow-indigo-200
                         transition-transform duration-200
                       "
-                    >
-                      <item.icon size={14} className="sm:w-4 sm:h-4" />
-                    </div>
- 
-                    <div className="min-w-0 flex-1">
-                      {/* title row */}
-                      <p className="text-xs flex justify-between sm:items-center font-semibold text-gray-800 leading-tight">
-                        <span className="truncate">{item.title}</span>
-                        {item.stars !== undefined && (
+                  >
+                    <item.icon size={14} className="sm:w-4 sm:h-4" />
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    {/* title row */}
+                    <p className="text-xs flex justify-between sm:items-center font-semibold text-gray-800 leading-tight">
+                      <span className="truncate">{item.title}</span>
+                      {item.stars !== undefined &&
+                        (isLoading ? (
+                          <div></div>
+                        ) : (
                           <span className="text-xs pt-0.5 font-bold text-gray-700 ml-1 tabular-nums">
                             {item.value}
                           </span>
-                        )}
-                      </p>
- 
-                      {/* stars OR value+desc */}
-                      {item.stars !== undefined ? (
-                        <div className="flex items-center gap-0.5 mt-1">
-                          {[...Array(5)].map((_, idx) => {
-                            const stars = Number(item.stars) || 0;
-                            return (
+                        ))}
+                    </p>
+
+                    {/* stars OR value+desc */}
+                    {item.stars !== undefined ? (
+                      <div className="flex items-center gap-0.5 mt-1">
+                        {isLoading
+                          ? [...Array(5)].map((_, idx) => (
                               <Star
                                 key={idx}
                                 size={11}
-                                className={
-                                  idx < stars
-                                    ? "fill-amber-400 text-amber-400"
-                                    : "fill-gray-100 text-gray-200"
-                                }
+                                className="fill-gray-100 animate-pulse text-gray-200"
                               />
-                            );
-                          })}
-                        </div>
-                      ) : (
-                        <>
-                          {/* desktop */}
-                          <p className="text-[10px] hidden lg:flex items-baseline gap-1 text-gray-500 mt-0.5">
+                            ))
+                          : [...Array(5)].map((_, idx) => {
+                              const stars = Number(item.stars) || 0;
+
+                              return (
+                                <Star
+                                  key={idx}
+                                  size={11}
+                                  className={
+                                    idx < stars
+                                      ? "fill-amber-400 text-amber-400"
+                                      : "fill-gray-100 text-gray-200"
+                                  }
+                                />
+                              );
+                            })}
+                      </div>
+                    ) : (
+                      <>
+                        {/* desktop */}
+                        <p className="text-[10px] hidden lg:flex items-baseline gap-1 text-gray-500 mt-0.5">
+                          {isLoading ? (
+                            
+                              <span className="h-2 w-4 rounded bg-gray-200 animate-pulse inline-block" />
+                         
+                          ) : (
                             <span className="font-bold text-gray-700 tabular-nums">
                               {formatNumber(item.value)}
                             </span>
-                            <span>{item.desc}</span>
-                          </p>
-                          {/* mobile */}
-                          <p className="text-[10px] lg:hidden flex items-center gap-1 text-gray-500 mt-0.5">
+                          )}
+                          <span>{item.desc}</span>
+                        </p>
+                        {/* mobile */}
+                        <p className="text-[10px] lg:hidden flex items-center gap-1 text-gray-500 mt-0.5">
+                          {isLoading ? (
+                            <span className="h-2 w-4 rounded bg-gray-200 animate-pulse inline-block" />
+                          ) : (
                             <span className="font-bold text-gray-700 tabular-nums">
                               {formatNumber(item.value)}
                             </span>
-                            <span>{item.other1}</span>
-                          </p>
-                        </>
-                      )}
-                    </div>
+                          )}
+                          <span>{item.other1}</span>
+                        </p>
+                      </>
+                    )}
                   </div>
                 </div>
-              </motion.div>
-            ))}
- 
+              </div>
+            </motion.div>
+          ))
+        }
+
         {/* ── sell account CTA ── */}
         <motion.div
           onClick={() => router?.push("/sell-game")}
@@ -246,7 +264,7 @@ export default function DashboardStats() {
                 transition-colors duration-300
               "
             />
- 
+
             <div className="flex items-center gap-2">
               <div
                 className="
@@ -261,18 +279,20 @@ export default function DashboardStats() {
               >
                 <Plus size={14} className="sm:w-4 sm:h-4" />
               </div>
- 
+
               <div className="min-w-0">
                 <p className="text-xs font-semibold text-gray-800 leading-tight">
                   Sell Account
                 </p>
- 
+
                 {/* desktop */}
                 <p className="text-[10px] hidden lg:block text-gray-500 mt-0.5">
-                  <span className="font-semibold text-blue-600">Click here</span>{" "}
+                  <span className="font-semibold text-blue-600">
+                    Click here
+                  </span>{" "}
                   to list your account for sale
                 </p>
- 
+
                 {/* mobile */}
                 <p className="text-[10px] lg:hidden font-semibold text-blue-600 mt-0.5">
                   Start earning

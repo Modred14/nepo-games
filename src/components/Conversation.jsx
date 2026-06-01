@@ -439,7 +439,20 @@ export default function Conversation({ gameId, receiverId }) {
     interval = setInterval(updateTimer, 1000);
     return () => clearInterval(interval);
   }, [loginData, showDetails]);
+ const allMessages = useMemo(() => {
+    const source = String(receiverId) === "1" ? adminMessages : chatMessages;
+    const merged = [...(source || []), ...messages].sort(
+      (a, b) => new Date(a.created_at) - new Date(b.created_at),
+    );
+    const seen = new Set();
+    return merged.filter((m) => {
+      if (seen.has(m.id)) return false;
+      seen.add(m.id);
+      return true;
+    });
+  }, [adminMessages, chatMessages, receiverId, messages]);
 
+  const lastIndex = allMessages.length - 1;
   // ─── Scroll to bottom ────────────────────────────────────────────────────
   useEffect(() => {
     if (!bottomRef.current) return;
@@ -471,20 +484,7 @@ export default function Conversation({ gameId, receiverId }) {
   }, []);
 
   // ─── allMessages — ID-based dedup ────────────────────────────────────────
-  const allMessages = useMemo(() => {
-    const source = String(receiverId) === "1" ? adminMessages : chatMessages;
-    const merged = [...(source || []), ...messages].sort(
-      (a, b) => new Date(a.created_at) - new Date(b.created_at),
-    );
-    const seen = new Set();
-    return merged.filter((m) => {
-      if (seen.has(m.id)) return false;
-      seen.add(m.id);
-      return true;
-    });
-  }, [adminMessages, chatMessages, receiverId, messages]);
-
-  const lastIndex = allMessages.length - 1;
+ 
 
   // ─── Send message ─────────────────────────────────────────────────────────
   const handleSend = async () => {
