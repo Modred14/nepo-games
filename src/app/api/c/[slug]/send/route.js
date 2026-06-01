@@ -1,17 +1,11 @@
 import pool from "../../../../../lib/db";
 import { requireUser } from "../../../../../lib/auth";
-import { getCached, invalidateCache } from "../../../../../lib/cache";
+import { getCached, setCached, invalidateCache } from "../../../../../lib/cache";
+import { getIO } from "../../../../../lib/socket";
 
-/**
- * POST /api/chat/send
- *
- * BEFORE: Every send did a conversation lookup + insert = 2 DB queries
- * AFTER:  Conversation read from cache (put there by GET) = 1 DB query (just the insert)
- *         Then cache is busted so GET fetches fresh messages
- */
 export async function POST(req) {
   try {
-    const user = await requireUser(); // ✅ Zero DB — reads from JWT
+    const user = await requireUser();
     if (!user) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -24,9 +18,7 @@ export async function POST(req) {
       return Response.json({ error: "Missing fields" }, { status: 400 });
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
     // 1. GET CONVERSATION — from cache first, DB only if cache miss
-    // ─────────────────────────────────────────────────────────────────────────
     const convoKey = `convo:${gameId}:${Math.min(user_id, receiverId)}:${Math.max(user_id, receiverId)}`;
     let conversation = await getCached(convoKey);
 
@@ -51,14 +43,10 @@ export async function POST(req) {
       }
 
       conversation = convo.rows[0];
-      // Re-cache it for future sends
-      const { setCached } = await import("../../../../../lib/cache");
       await setCached(convoKey, conversation, 60 * 60);
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // 2. INSERT MESSAGE — always hits DB (required for persistence)
-    // ─────────────────────────────────────────────────────────────────────────
+    // 2. INSERT MESSAGE
     const message = await pool.query(
       `INSERT INTO messages (conversation_id, sender_id, message)
        VALUES ($1, $2, $3)
@@ -66,13 +54,23 @@ export async function POST(req) {
       [conversation.id, user_id, text],
     );
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // 3. BUST the message cache so the next GET fetches fresh messages
-    // ─────────────────────────────────────────────────────────────────────────
+    const newMessage = message.rows[0];
+
+    // 3. BUST cache
     await invalidateCache(`messages:${conversation.id}`);
 
+    // 4. EMIT via socket — receivers get message instantly, no polling needed
+    try {
+      const io = getIO();
+      if (io) {
+        io.to(`room:${conversation.id}`).emit("new_message", newMessage);
+      }
+    } catch (err) {
+      console.error("Socket emit failed (non-critical):", err);
+    }
+
     return Response.json(
-      { success: true, message: message.rows[0], conversation },
+      { success: true, message: newMessage, conversation },
       { status: 201 },
     );
   } catch (err) {
