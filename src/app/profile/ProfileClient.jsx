@@ -18,6 +18,7 @@ import {
   LogOut,
   CreditCard,
 } from "lucide-react";
+import { useSession } from "next-auth/react";
 import { signOut } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import Loader from "@/components/Loader";
@@ -174,10 +175,16 @@ export default function AccountSettingsPage() {
             globalLoading ? "pointer-events-none opacity-80" : ""
           }`}
         >
-          {activeTab === "profile" && <ProfileTab />}
-          {activeTab === "account" && <AccountTab />}
+          {activeTab === "profile" && (
+            <ProfileTab user={user} load={load} setUser={setUser} />
+          )}
+          {activeTab === "account" && <AccountTab user={user} />}
           {activeTab === "password" && (
-            <PasswordTab setGlobalLoading={setGlobalLoading} />
+            <PasswordTab
+              user={user}
+              load={load}
+              setGlobalLoading={setGlobalLoading}
+            />
           )}
           {activeTab === "linked" && <LInkedTab />}
           {activeTab === "data" && <DataTab />}
@@ -219,6 +226,7 @@ function InfoRow({ icon: Icon, label, updateUser, user, value, editable }) {
   const [draft, setDraft] = useState("");
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState("");
+  const { update } = useSession();
 
   const handleOpen = () => {
     setDraft(value === "Loading..." ? "" : value);
@@ -254,6 +262,7 @@ function InfoRow({ icon: Icon, label, updateUser, user, value, editable }) {
         first_name: first,
         surname: rest.join(" "),
       }));
+      await update({ user: { first_name: first, surname: rest.join(" ") } });
       setEditing(false);
     } catch {
       setErr("Network error. Please try again.");
@@ -335,53 +344,19 @@ function InfoRow({ icon: Icon, label, updateUser, user, value, editable }) {
   );
 }
 
-function ProfileTab() {
+function ProfileTab({ user, load, setUser }) { 
   const [list, setList] = useState([]);
   const [error, setError] = useState("");
   const [correct, setCorrect] = useState("");
-  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(false);
   const [imgLoading, setImgLoading] = useState(true);
   const [selectedFile, setSelectedFile] = useState(null);
   const [open, setOpen] = useState(false);
-  const [load, setLoad] = useState(true);
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const res = await fetch("/api/user/me");
 
-        // 🔥 ONLY redirect if truly unauthorized
-        if (res.status === 401) {
-          setUser(null);
-          const currentPath = window.location.pathname + window.location.search;
-          sessionStorage.setItem("tournament_return_url", currentPath);
-          router.push("/login");
-          return;
-        }
-
-        // ❌ Other errors (500, 404, etc)
-        if (!res.ok) {
-          console.error("Server error:", res.status);
-          setUser(null);
-          return; // stay on page
-        }
-
-        const data = await res.json();
-        setUser(data);
-      } catch (err) {
-        // 🌐 Network error lands here
-        console.error("Network error:", err);
-        setUser(null);
-      } finally {
-        setLoad(false);
-      }
-    };
-
-    fetchUser();
-  }, []);
+  const { update } = useSession();
 
   const handleLogout = async () => {
-    localStorage.removeItem("nepo-user");
+    
 
     await signOut({
       callbackUrl: "/login",
@@ -429,7 +404,8 @@ function ProfileTab() {
       };
 
       setUser(updatedUser);
-      localStorage.setItem("nepo-user", JSON.stringify(updatedUser));
+      await update({ user: { profile_image: data.imageUrl } });
+   
       setCorrect("Profile picture updated successfully.");
       setError("");
     } catch (err) {
@@ -470,7 +446,8 @@ function ProfileTab() {
       };
 
       setUser(updatedUser);
-      localStorage.setItem("nepo-user", JSON.stringify(updatedUser));
+      await update({ user: { profile_image: data.imageUrl } });
+ 
       setCorrect("Profile picture updated successfully.");
       setError("");
     } catch (err) {
@@ -878,7 +855,7 @@ function PinGetInput({ value = "", onChange }) {
   );
 }
 
-function AccountTab() {
+function AccountTab({ user }) { 
   const [balance, setBalance] = useState(0.0);
   const [showPinConfirm, setShowPinConfirm] = useState(false);
   const [withdrawPin, setWithdrawPin] = useState("");
@@ -887,7 +864,7 @@ function AccountTab() {
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
-  const [user, setUser] = useState(null);
+
   const [userPlan, setUserPlan] = useState("free");
   const [amount, setAmount] = useState("");
   const [savedBanks, setSavedBanks] = useState([]);
@@ -905,39 +882,6 @@ function AccountTab() {
   const ITEMS_PER_PAGE = 5;
   const start = (page - 1) * ITEMS_PER_PAGE;
   const end = start + ITEMS_PER_PAGE;
-
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const res = await fetch("/api/user/me");
-
-        // 🔥 ONLY redirect if truly unauthorized
-        if (res.status === 401) {
-          setUser(null);
-          const currentPath = window.location.pathname + window.location.search;
-          sessionStorage.setItem("tournament_return_url", currentPath);
-          router.push("/login");
-          return;
-        }
-
-        // ❌ Other errors (500, 404, etc)
-        if (!res.ok) {
-          console.error("Server error:", res.status);
-          setUser(null);
-          return; // stay on page
-        }
-
-        const data = await res.json();
-        setUser(data);
-      } catch (err) {
-        // 🌐 Network error lands here
-        console.error("Network error:", err);
-        setUser(null);
-      }
-    };
-
-    fetchUser();
-  }, []);
 
   const currentTransactions = transactions.slice(start, end);
   useEffect(() => {
@@ -1621,6 +1565,7 @@ function Info({ label, value, user, setUser }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const { update } = useSession();
 
   const handleSave = async () => {
     if (!input.trim()) return;
@@ -1660,7 +1605,7 @@ function Info({ label, value, user, setUser }) {
       };
 
       setUser(updatedUser);
-      localStorage.setItem("nepo-user", JSON.stringify(updatedUser));
+      await update({ user: { first_name, surname} });
 
       setSuccess("Name updated successfully");
       setError("");
@@ -1784,7 +1729,7 @@ function PinInput({ value = "", onChange }) {
   );
 }
 
-function PasswordTab({ setGlobalLoading }) {
+function PasswordTab({ user, load, setGlobalLoading }) {
   const [form, setForm] = useState({ current: "", newPass: "", confirm: "" });
   const [show, setShow] = useState({
     current: false,
@@ -1802,9 +1747,7 @@ function PasswordTab({ setGlobalLoading }) {
   const [pinLoading, setPinLoading] = useState(false);
   const cleanNewPin = String(pinForm.newPin).trim();
   const [correct, setCorrect] = useState("");
-  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [load, setLoad] = useState(true);
 
   const [error, setError] = useState("");
   const checks = {
@@ -1813,7 +1756,7 @@ function PasswordTab({ setGlobalLoading }) {
     special: /[^A-Za-z0-9]/.test(form.newPass),
     uppercase: /[A-Z]/.test(form.newPass),
   };
-
+  const { update } = useSession();
   const handleChangePin = async () => {
     if (pinLoading) return;
 
@@ -1855,7 +1798,8 @@ function PasswordTab({ setGlobalLoading }) {
         setPinError(data.error);
         return;
       }
-
+      // After successful PIN update:
+      await update({ user: { pin_set: true } });
       setPinSuccess("PIN updated successfully");
       setPinForm({ currentPin: "", newPin: "", confirmPin: "" });
     } catch (err) {
@@ -1867,41 +1811,6 @@ function PasswordTab({ setGlobalLoading }) {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const res = await fetch("/api/user/me");
-
-        // 🔥 ONLY redirect if truly unauthorized
-        if (res.status === 401) {
-          setUser(null);
-          const currentPath = window.location.pathname + window.location.search;
-          sessionStorage.setItem("tournament_return_url", currentPath);
-          router.push("/login");
-          return;
-        }
-
-        // ❌ Other errors (500, 404, etc)
-        if (!res.ok) {
-          console.error("Server error:", res.status);
-          setUser(null);
-          return; // stay on page
-        }
-
-        const data = await res.json();
-        setUser(data);
-      } catch (err) {
-        // 🌐 Network error lands here
-        console.error("Network error:", err);
-        setUser(null);
-      } finally {
-        setLoad(false);
-      }
-    };
-
-    fetchUser();
-  }, []);
 
   const handleChangePassword = async () => {
     if (loading) return; // prevent spam clicks

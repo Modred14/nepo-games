@@ -20,7 +20,7 @@ async function fetchFullUserProfile(email) {
       email,
       first_name,
       surname,
-      username,
+      username,password_hash,
       profile_image,
       phone_verified,
       plan,
@@ -29,7 +29,11 @@ async function fetchFullUserProfile(email) {
       subscription_end,
       payment_provider,
       pin_set,
-      provider
+      provider,
+      role,
+      email_verified,       
+      verification_token,    
+      verification_expires
      FROM users
      WHERE email = $1`,
     [email],
@@ -59,16 +63,11 @@ export const authOptions = {
 
           if (!email || !password) return null;
 
-          const result = await pool.query(
-            `SELECT * FROM users WHERE email = $1`,
-            [email],
-          );
+          const user = await fetchFullUserProfile(email);
 
-          if (result.rows.length === 0) {
+          if (!user) {
             throw new Error("INVALID_CREDENTIALS");
           }
-
-          const user = result.rows[0];
 
           const isValid = await bcrypt.compare(password, user.password_hash);
 
@@ -179,6 +178,7 @@ ${verifyLink}`,
             subscription_end: user.subscription_end,
             payment_provider: user.payment_provider,
             pin_set: user.pin_set,
+            role: user.role,
           };
         } catch (err) {
           console.error("Credentials Auth Error:", err);
@@ -265,6 +265,7 @@ ${verifyLink}`,
         user.subscription_end = dbUser.subscription_end;
         user.payment_provider = dbUser.payment_provider;
         user.pin_set = dbUser.pin_set;
+        user.role = dbUser.role;
 
         return true;
       } catch (err) {
@@ -274,7 +275,7 @@ ${verifyLink}`,
     },
 
     // 🔥 ATTACH USER TO TOKEN
-    async jwt({ token,  user, trigger, session }) {
+    async jwt({ token, user, trigger, session }) {
       // On login
       if (user) {
         token.user = {
@@ -291,6 +292,7 @@ ${verifyLink}`,
           subscription_end: user.subscription_end,
           payment_provider: user.payment_provider,
           pin_set: user.pin_set,
+          role: user.role,
         };
       }
       if (trigger === "update" && session?.user) {

@@ -21,6 +21,17 @@ export async function POST(req) {
     if (!chatSession) {
       return NextResponse.json({ error: "Session not found" }, { status: 404 });
     }
+    // After fetching chatSession, add:
+    const countRes = await pool.query(
+      `SELECT COUNT(*) FROM chat_messages WHERE session_id = $1 AND role = 'user'`,
+      [sessionId],
+    );
+    if (parseInt(countRes.rows[0].count) > 50) {
+      return NextResponse.json(
+        { error: "Message limit reached for this session" },
+        { status: 429 },
+      );
+    }
 
     // Save user message
     await pool.query(
