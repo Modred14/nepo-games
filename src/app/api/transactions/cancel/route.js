@@ -9,20 +9,7 @@ export async function POST(req) {
     }
 
     const { transactionId, listingId } = await req.json();
-
-   await pool.query(
-      `UPDATE listings SET status = 'active', processing_by = NULL WHERE id = $1`,
-      [listingId],
-    );
-
-    await pool.query(
-      `UPDATE transactions 
-   SET transaction_status = 'failed', payment_status = 'failed'
-   WHERE id = $1`,
-      [transactionId],
-    );
-   // Verify the transaction belongs to this user and is still pending
-    const txRes = await pool.query(
+const txRes = await pool.query(
       `SELECT * FROM transactions 
        WHERE id = $1 AND buyer_id = $2 
        AND payment_status = 'pending' 
@@ -36,6 +23,19 @@ export async function POST(req) {
         { status: 404 },
       );
     }
+   await pool.query(
+      `UPDATE listings SET status = 'active', processing_by = NULL WHERE id = $1`,
+      [listingId],
+    );
+
+    await pool.query(
+      `UPDATE transactions 
+   SET transaction_status = 'failed', payment_status = 'failed'
+   WHERE id = $1`,
+      [transactionId],
+    );
+   // Verify the transaction belongs to this user and is still pending
+    
 
     // Reset listing back to active
   

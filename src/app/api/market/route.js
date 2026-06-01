@@ -1,8 +1,15 @@
 import pool from "../../../lib/db";
+import { getCached, setCached } from "../../../lib/cache";
 
 export async function GET(req) {
   try {
-    console.log("[STEP 1] Fetching listings");
+    const cacheKey = "market:listings";
+    const cached = await getCached(cacheKey);
+    if (cached)
+      return Response.json({
+        message: "Listings fetched successfully",
+        games: cached,
+      });
 
     const result = await pool.query(`
   SELECT 
@@ -17,8 +24,6 @@ export async function GET(req) {
 `);
 
     const listings = result.rows;
-
-    console.log("[STEP 2] Raw listings fetched:", listings.length);
 
     // Transform into frontend-friendly format
     const games = listings.map((item) => ({
@@ -40,15 +45,8 @@ export async function GET(req) {
       verified: item.plan !== "free",
     }));
 
-    console.log("[STEP 3] Transformed games ready");
-
-    return Response.json(
-      {
-        message: "Listings fetched successfully",
-        games,
-      },
-      { status: 200 },
-    );
+    await setCached(cacheKey, games, 30); // 30 second TTL
+    return Response.json({ message: "Listings fetched successfully", games });
   } catch (err) {
     console.error("[GET LISTINGS ERROR]", {
       message: err.message,

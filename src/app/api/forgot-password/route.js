@@ -20,12 +20,9 @@ export async function POST(req) {
 
     const user = result.rows[0];
 
-    if (!user) {
-      return NextResponse.json(
-        { error: "Email not associated with any account" },
-        { status: 404 },
-      );
-    }
+if (!user) {
+  return NextResponse.json({ success: true, message: "If that email exists, a reset link was sent." });
+}
 
     // generate token
     const token = crypto.randomBytes(32).toString("hex");

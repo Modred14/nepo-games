@@ -3,6 +3,8 @@ import { requireUser } from "@/lib/auth";
 import bcrypt from "bcrypt";
 
 export async function POST(req) {
+  const client = await pool.connect();
+
   try {
     const { gameId, pin } = await req.json();
 
@@ -11,82 +13,88 @@ export async function POST(req) {
     }
 
     const user = await requireUser();
-
     if (!user) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const userId = user.id;
 
+    // ✅ Fetch pin_hash from DB — intentional, can't store this in JWT
     const userRes = await pool.query(
       `SELECT pin_hash, email FROM users WHERE id = $1`,
-      [userId],
+      [userId]
     );
 
     const dbUser = userRes.rows[0];
-
     if (!dbUser) {
       return Response.json({ error: "User not found" }, { status: 404 });
     }
+
     const isValid = await bcrypt.compare(pin, dbUser.pin_hash);
     if (!isValid) {
       return Response.json({ error: "Incorrect pin" }, { status: 403 });
     }
+
+    // ✅ Fetch listing to verify ownership
     const listingRes = await pool.query(
       `SELECT * FROM listings WHERE id = $1`,
-      [gameId],
+      [gameId]
     );
 
     const listing = listingRes.rows[0];
-
     if (!listing) {
       return Response.json({ error: "Listing not found" }, { status: 404 });
     }
 
-  
-    if (listing.user_id !== userId) {
+    // ✅ Fixed: Number() on both sides to prevent type mismatch
+    if (Number(listing.user_id) !== Number(userId)) {
       return Response.json({ error: "Not your listing" }, { status: 403 });
     }
-
 
     if (listing.status === "pending") {
       return Response.json(
         { error: "Cannot delete a pending listing" },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
-    await pool.query(
-      `
-      DELETE FROM messages
-      WHERE conversation_id IN (
-        SELECT id FROM conversations WHERE listing_id = $1
-      )
-      `,
-      [gameId],
+    // ✅ All deletes inside a transaction — if one fails, all roll back
+    await client.query("BEGIN");
+
+    await client.query(
+      `DELETE FROM messages
+       WHERE conversation_id IN (
+         SELECT id FROM conversations WHERE listing_id = $1
+       )`,
+      [gameId]
     );
 
-    await pool.query(
-      `
-      DELETE FROM conversation_reads
-      WHERE conversation_id IN (
-        SELECT id FROM conversations WHERE listing_id = $1
-      )
-      `,
-      [gameId],
+    await client.query(
+      `DELETE FROM conversation_reads
+       WHERE conversation_id IN (
+         SELECT id FROM conversations WHERE listing_id = $1
+       )`,
+      [gameId]
     );
 
+    await client.query(
+      `DELETE FROM conversations WHERE listing_id = $1`,
+      [gameId]
+    );
 
-    await pool.query(`DELETE FROM conversations WHERE listing_id = $1`, [
-      gameId,
-    ]);
+    await client.query(
+      `DELETE FROM listings WHERE id = $1`,
+      [gameId]
+    );
 
-   
-    await pool.query(`DELETE FROM listings WHERE id = $1`, [gameId]);
+    await client.query("COMMIT");
 
     return Response.json({ success: true });
   } catch (err) {
+    await client.query("ROLLBACK");
     console.error("DELETE LISTING ERROR:", err);
     return Response.json({ error: "Server error" }, { status: 500 });
+  } finally {
+    client.release();
   }
 }

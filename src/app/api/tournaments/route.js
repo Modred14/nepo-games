@@ -1,6 +1,9 @@
 import pool from "@/lib/db";
+import { getCached, setCached } from "@/lib/cache";
 export async function GET() {
   try {
+    const cached = await getCached("tournaments:all");
+    if (cached) return Response.json(cached);
     const tournaments = await pool.query(
       `SELECT * FROM tournaments ORDER BY status = 'live' DESC, id ASC`,
     );
@@ -35,7 +38,7 @@ export async function GET() {
         .map((r) => r.rule),
       contestants: contestants.rows.filter((c) => c.tournament_id === t.id),
     }));
-
+    await setCached("tournaments:all", data, 60);
     return Response.json(data);
   } catch (err) {
     console.error(err);

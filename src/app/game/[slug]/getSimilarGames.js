@@ -30,7 +30,8 @@ export async function getSimilarGames(currentGame) {
       JOIN users ON listings.user_id = users.id
       WHERE listings.id != $1
         AND listings.status = 'active'
-      AND users.is_verified = true
+   AND users.subscription_status = 'active'
+AND users.subscription_end > NOW()
       ORDER BY RANDOM()
       LIMIT 2
       `,

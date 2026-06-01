@@ -1,15 +1,14 @@
 import { NextResponse } from "next/server";
+import { requireUser } from "@/lib/auth";
 import pool from "../../../../lib/db";
 
 export async function POST(req) {
   try {
     const { userId, first_name, surname } = await req.json();
 
-    const result = await pool.query("SELECT * FROM users WHERE id = $1", [
-      userId,
-    ]);
-
-    const user = result.rows;
+    const user = await requireUser();
+    if (!user)
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     if (!first_name) {
       return NextResponse.json(
@@ -23,7 +22,7 @@ export async function POST(req) {
 
     await pool.query(
       "UPDATE users SET first_name = $1, surname = $2 WHERE id = $3",
-      [first_name, surname, userId],
+      [first_name, surname, user.id],
     );
 
     return NextResponse.json({ success: true });

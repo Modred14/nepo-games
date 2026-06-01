@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../../auth/[...nextauth]/route";
 import pool from "@/lib/db";
+import { requireUser } from "@/lib/auth";
 
 export async function GET() {
   try {
@@ -12,16 +13,9 @@ export async function GET() {
     }
 
     // 1. Get user
-    const userResult = await pool.query(
-      "SELECT id, plan FROM users WHERE email = $1",
-      [session.user.email],
-    );
+ const user = await requireUser();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const user = userResult.rows[0];
-
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
 
     const userId = user.id;
 

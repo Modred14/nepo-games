@@ -11,7 +11,7 @@ export async function GET(req) {
 
   try {
     const result = await pool.query(
-      `SELECT id, is_verified, verification_expires
+      `SELECT id, email_verified, verification_expires
        FROM users
        WHERE verification_token = $1`,
       [token],
@@ -48,8 +48,10 @@ export async function GET(req) {
     // Update user to verified
     await pool.query(
       `UPDATE users
-       SET email_verified = true
-       WHERE id = $1`,
+   SET email_verified = true,
+       verification_token = NULL,
+       verification_expires = NULL
+   WHERE id = $1`,
       [user.id],
     );
     console.log("verified");

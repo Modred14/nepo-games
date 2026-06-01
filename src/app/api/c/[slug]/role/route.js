@@ -1,52 +1,50 @@
 import pool from "@/lib/db";
-import { getServerSession } from "next-auth";
-import { authOptions } from "../../../auth/[...nextauth]/route";
-import { getUserByEmail } from "@/lib/userService";
+import { requireUser } from "@/lib/auth";
+import { getCached, setCached } from "@/lib/cache";
 
+/**
+ * GET /api/listings/[slug]/role
+ *
+ * BEFORE: getServerSession() + getUserByEmail() + listing query = 2 DB hits
+ * AFTER:  requireUser() from JWT (0 DB) + cached listing owner (near-0 DB)
+ */
 export async function GET(req, { params }) {
   try {
-       const { slug: listing_id } = await params
+    const { slug: listing_id } = await params;
 
-    const session = await getServerSession(authOptions);
+    const currentUser = await requireUser(); // ✅ Zero DB — reads from JWT
 
-    if (!session?.user?.email) {
+    if (!currentUser) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const currentUser = await getUserByEmail(session.user.email);
-
-    if (!currentUser) {
-      return Response.json({ error: "User not found" }, { status: 404 });
-    }
-
-    // -------------------------
-    // 2. GET LISTING OWNER (SELLER)
-    // -------------------------
-    const listingRes = await pool.query(
-      `SELECT user_id FROM listings WHERE id = $1 LIMIT 1`,
-      [listing_id]
-    );
-
-    if (listingRes.rows.length === 0) {
-      return Response.json({ error: "Listing not found" }, { status: 404 });
-    }
-
-    const seller_id = Number(listingRes.rows[0].user_id);
     const current_user_id = Number(currentUser.id);
 
-    // -------------------------
-    // 3. ROLE LOGIC
-    // -------------------------
+    // ─────────────────────────────────────────────────────────────────────────
+    // Cache the listing's seller_id — it never changes after posting
+    // ─────────────────────────────────────────────────────────────────────────
+    const listingKey = `listing:${listing_id}:seller`;
+    let seller_id = await getCached(listingKey);
+
+    if (!seller_id) {
+      const listingRes = await pool.query(
+        `SELECT user_id FROM listings WHERE id = $1 LIMIT 1`,
+        [listing_id],
+      );
+
+      if (listingRes.rows.length === 0) {
+        return Response.json({ error: "Listing not found" }, { status: 404 });
+      }
+
+      seller_id = Number(listingRes.rows[0].user_id);
+      // Cache for 1 hour — listing ownership never changes
+      await setCached(listingKey, seller_id, 60 * 60);
+    }
+
     const isSeller = current_user_id === seller_id;
-
     const role = isSeller ? "seller" : "buyer";
-
-    // optional: define opposite role
     const otherRole = isSeller ? "buyer" : "seller";
 
-    // -------------------------
-    // 4. RESPONSE
-    // -------------------------
     return Response.json({
       listing_id,
       seller_id,
@@ -58,13 +56,9 @@ export async function GET(req, { params }) {
     });
   } catch (err) {
     console.error("ROLE API ERROR:", err);
-
     return Response.json(
-      {
-        error: "Server error",
-        details: err.message,
-      },
-      { status: 500 }
+      { error: "Server error", details: err.message },
+      { status: 500 },
     );
   }
 }

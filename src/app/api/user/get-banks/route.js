@@ -1,32 +1,16 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "../../auth/[...nextauth]/route";
 import pool from "@/lib/db";
+import { requireUser } from "@/lib/auth";
 
 export async function GET() {
-  const session = await getServerSession(authOptions);
+  const user = await requireUser();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  if (!session?.user?.email) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const userRes = await pool.query(
-    "SELECT id FROM users WHERE email = $1",
-    [session.user.email]
-  );
-
-  const userId = userRes.rows[0]?.id;
-
+  // REMOVE the pool.query to get userId — use user.id directly
   const banksRes = await pool.query(
-    `
-    SELECT account_number, account_name, bank_code, bank_name
-    FROM user_banks
-    WHERE user_id = $1
-    ORDER BY created_at DESC
-    LIMIT 3
-    `,
-    [userId]
+    `SELECT account_number, account_name, bank_code, bank_name
+     FROM user_banks WHERE user_id = $1 ORDER BY created_at DESC LIMIT 3`,
+    [user.id]
   );
-
   return NextResponse.json({ banks: banksRes.rows });
 }
