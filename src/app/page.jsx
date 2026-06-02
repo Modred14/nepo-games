@@ -25,6 +25,7 @@ import { useRouter } from "next/navigation";
 import { Verified } from "lucide-react";
 import Link from "next/link";
 import Loader from "@/components/Loader";
+import HashScrollHandler from "./hash";
 
 export default function Home() {
   const [open, setOpen] = useState(false);
@@ -136,6 +137,12 @@ export default function Home() {
       logo: "/bloodstrike.png",
     },
   ];
+  // In Home.jsx — wrap in typeof window check
+useEffect(() => {
+  if (typeof window !== "undefined" && window.history.scrollRestoration) {
+    window.history.scrollRestoration = "manual";
+  }
+}, []);
 
   const faqs = [
     {
@@ -367,6 +374,7 @@ export default function Home() {
 
   return (
     <div>
+      <HashScrollHandler />
       {logOpen && (
         <div className="fixed inset-0 z-150 flex items-center justify-center bg-black/50">
           <div className="w-[90%] max-w-sm rounded-xl bg-white p-5 shadow-lg">
@@ -406,14 +414,17 @@ export default function Home() {
          border`}
                 >
                   <div className="flex md:grid grid-cols-3 justify-between md:py-3 py-2 font-semibold items-center text-[#808080]  w-full">
-                    <Image
-                      src="/logo.png"
-                      alt="Nepo Games"
-                      height={36}
-                      width={36}
-                      className="w-9 h-9 p-2 rounded-[50%] bg-blue-700 object-cover"
-                      priority
-                    />
+                    <Link href={"/#"}>
+                      {" "}
+                      <Image
+                        src="/logo.png"
+                        alt="Nepo Games"
+                        height={36}
+                        width={36}
+                        className="w-9 h-9 p-2 rounded-[50%] bg-blue-700 object-cover"
+                        priority
+                      />
+                    </Link>
                     <div className="hidden md:flex font-medium justify-center gap-9">
                       <Link
                         href={"/marketplace"}
@@ -845,14 +856,17 @@ hover:text-[#0000FF]
                 <div className="pt-45 px-[2%]">
                   <div className="justify-center flex">
                     <div className="bg-white flex justify-center items-center gap-2 p-1 px-3 rounded-2xl">
-                      <Image
-                        height={20}
-                        width={20}
-                        priority
-                        src="/logo.png"
-                        alt="Nepo Games"
-                        className="w-5 h-5 p-1 rounded-[50%] bg-blue-700 object-cover"
-                      />
+                      <Link href={"/#"}>
+                        {" "}
+                        <Image
+                          height={20}
+                          width={20}
+                          priority
+                          src="/logo.png"
+                          alt="Nepo Games"
+                          className="w-5 h-5 p-1 rounded-[50%] bg-blue-700 object-cover"
+                        />
+                      </Link>
                       <p className="text-[#0000FF]">Best Gaming Marketplace</p>
                     </div>{" "}
                   </div>
@@ -1102,7 +1116,12 @@ hover:text-[#0000FF]
               <div className="grid gap-5 md:grid-cols-2 py-15 items-center max-w-6xl  px-[5%]  ">
                 <Reveal>
                   <div className="w-full flex  justify-center">
-                    <Image src="/phone-gen-pic.png" alt="" width={240} height={400} />
+                    <Image
+                      src="/phone-gen-pic.png"
+                      alt=""
+                      width={240}
+                      height={400}
+                    />
                   </div>
                 </Reveal>
                 <Reveal>
@@ -1227,41 +1246,43 @@ hover:text-[#0000FF]
                   </p>
                 </div>
               </Reveal>
-              <Reveal>
-                <div className="pt-10 pb-15">
-                  <div className="space-y-4 max-w-xl mx-auto">
-                    {faqs.map((faq, index) => (
-                      <div
-                        key={index}
-                        className="rounded-xl bg-linear-to-r from-[#8A38F5] to-[#4F8CFF] p-[2px]"
-                      >
-                        <div className="bg-white rounded-xl">
-                          <button
-                            onClick={() => toggleFAQ(index)}
-                            className="w-full flex justify-between items-center p-5 text-left"
-                          >
-                            <span className="font-medium text-lg">
-                              {faq.question}
-                            </span>
+              <section id="faq" className="scroll-mt-50">
+                <Reveal>
+                  <div className="pt-10 pb-15">
+                    <div className="space-y-4 max-w-xl mx-auto">
+                      {faqs.map((faq, index) => (
+                        <div
+                          key={index}
+                          className="rounded-xl bg-linear-to-r from-[#8A38F5] to-[#4F8CFF] p-[2px]"
+                        >
+                          <div className="bg-white rounded-xl">
+                            <button
+                              onClick={() => toggleFAQ(index)}
+                              className="w-full flex justify-between items-center p-5 text-left"
+                            >
+                              <span className="font-medium text-lg">
+                                {faq.question}
+                              </span>
 
-                            <ChevronDown
-                              className={`transition-transform duration-300 ${
-                                activeIndex === index ? "rotate-180" : ""
-                              }`}
-                            />
-                          </button>
+                              <ChevronDown
+                                className={`transition-transform duration-300 ${
+                                  activeIndex === index ? "rotate-180" : ""
+                                }`}
+                              />
+                            </button>
 
-                          {activeIndex === index && (
-                            <div className="px-5 pb-5 text-gray-600">
-                              {faq.reply}
-                            </div>
-                          )}
+                            {activeIndex === index && (
+                              <div className="px-5 pb-5 text-gray-600">
+                                {faq.reply}
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </div>
-              </Reveal>
+                </Reveal>
+              </section>
             </div>
             <section className="w-full bg-linear-to-b from-[#4F8CFF] to-[#8A38F5]">
               <Reveal>
