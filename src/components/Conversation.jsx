@@ -213,8 +213,9 @@ export default function Conversation({ gameId, receiverId }) {
     loadOnce();
 
     // Connect socket
-    const socket = io({ path: "/api/socket" });
-    socketRef.current = socket;
+    const socket = io(process.env.NEXT_PUBLIC_SOCKET_URL, {
+      transports: ["websocket", "polling"],
+    });
 
     // Join room once we have chatId — re-join if it changes
     if (chatId) {
@@ -439,7 +440,7 @@ export default function Conversation({ gameId, receiverId }) {
     interval = setInterval(updateTimer, 1000);
     return () => clearInterval(interval);
   }, [loginData, showDetails]);
- const allMessages = useMemo(() => {
+  const allMessages = useMemo(() => {
     const source = String(receiverId) === "1" ? adminMessages : chatMessages;
     const merged = [...(source || []), ...messages].sort(
       (a, b) => new Date(a.created_at) - new Date(b.created_at),
@@ -484,7 +485,6 @@ export default function Conversation({ gameId, receiverId }) {
   }, []);
 
   // ─── allMessages — ID-based dedup ────────────────────────────────────────
- 
 
   // ─── Send message ─────────────────────────────────────────────────────────
   const handleSend = async () => {
