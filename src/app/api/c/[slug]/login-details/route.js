@@ -1,6 +1,6 @@
 import pool from "@/lib/db";
 import { requireUser } from "@/lib/auth";
-import { getIO } from "@/lib/socket";
+import { emitToRoom } from "@/lib/socket";
 
 const SYSTEM_USER_ID = 1;
 
@@ -88,23 +88,17 @@ export async function POST(req, { params }) {
       ],
     );
 
-    // 6. EMIT both messages to the room instantly
-    try {
-      const io = getIO();
-      if (io) {
-        // Emit system notification first, then seller message
-        io.to(`room:${conversationId}`).emit("new_message", notifMsg.rows[0]);
-        io.to(`room:${conversationId}`).emit("new_message", sellerMsg.rows[0]);
-
-        // Also emit a special event so the buyer's UI shows the login details panel
-        io.to(`room:${conversationId}`).emit("login_details_ready", {
-          conversationId,
-          listingId,
-        });
-      }
-    } catch (err) {
-      console.error("Socket emit failed (non-critical):", err);
-    }
+    // 6. Emit to Render socket server
+    await emitToRoom(`room:${conversationId}`, "new_message", notifMsg.rows[0]);
+    await emitToRoom(
+      `room:${conversationId}`,
+      "new_message",
+      sellerMsg.rows[0],
+    );
+    await emitToRoom(`room:${conversationId}`, "login_details_ready", {
+      conversationId,
+      listingId,
+    });
 
     return Response.json({ success: true, login });
   } catch (err) {

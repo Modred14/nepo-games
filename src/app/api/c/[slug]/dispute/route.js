@@ -1,6 +1,6 @@
 import pool from "@/lib/db";
 import { requireUser } from "@/lib/auth";
-import { getIO } from "@/lib/socket";
+import { emitToRoom } from "@/lib/socket";
 
 const SYSTEM_USER_ID = 1;
 
@@ -123,15 +123,12 @@ export async function POST(req, { params }) {
 
     await client.query("COMMIT");
 
-    // 6. EMIT system message to both users in the room
-    try {
-      const io = getIO();
-      if (io) {
-        io.to(`room:${conversationId}`).emit("new_message", systemMsg.rows[0]);
-      }
-    } catch (err) {
-      console.error("Socket emit failed (non-critical):", err);
-    }
+    // 6. Emit to Render socket server
+    await emitToRoom(
+      `room:${conversationId}`,
+      "new_message",
+      systemMsg.rows[0],
+    );
 
     return Response.json({ success: true });
   } catch (err) {

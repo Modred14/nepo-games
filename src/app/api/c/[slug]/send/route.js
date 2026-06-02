@@ -1,7 +1,11 @@
 import pool from "../../../../../lib/db";
 import { requireUser } from "../../../../../lib/auth";
-import { getCached, setCached, invalidateCache } from "../../../../../lib/cache";
-import { getIO } from "../../../../../lib/socket";
+import {
+  getCached,
+  setCached,
+  invalidateCache,
+} from "../../../../../lib/cache";
+import { emitToRoom } from "../../../../../lib/socket";
 
 export async function POST(req) {
   try {
@@ -59,15 +63,8 @@ export async function POST(req) {
     // 3. BUST cache
     await invalidateCache(`messages:${conversation.id}`);
 
-    // 4. EMIT via socket — receivers get message instantly, no polling needed
-    try {
-      const io = getIO();
-      if (io) {
-        io.to(`room:${conversation.id}`).emit("new_message", newMessage);
-      }
-    } catch (err) {
-      console.error("Socket emit failed (non-critical):", err);
-    }
+    // 4. Emit to Render socket server
+    await emitToRoom(`room:${conversation.id}`, "new_message", newMessage);
 
     return Response.json(
       { success: true, message: newMessage, conversation },
