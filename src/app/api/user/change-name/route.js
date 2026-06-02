@@ -16,9 +16,7 @@ export async function POST(req) {
         { status: 400 },
       );
     }
-    if (!user.length) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
+
 
     await pool.query(
       "UPDATE users SET first_name = $1, surname = $2 WHERE id = $3",

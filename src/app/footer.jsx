@@ -48,19 +48,18 @@ export default function Footer() {
             <FooterCol
               title="Company"
               links={[
-                { label: "About", href: "#" },
-                { label: "Career", href: "#" },
-                { label: "Blog", href: "#" },
-                { label: "Contact", href: "#" },
+                { label: "About", href: "/about" },
+                { label: "FAQ", href: "#faq" },
+                { label: "Contact", href: "/contact" },
               ]}
             />
 
             <FooterCol
               title="Product"
               links={[
-                { label: "Features", href: "#" },
-                { label: "Pricing", href: "#" },
-                { label: "Support", href: "#" },
+                { label: "Marketplace", href: "/marketplace" },
+                { label: "Pricing", href: "/pricing" },
+                { label: "Tournaments", href: "/tournament" },
               ]}
             />
 
