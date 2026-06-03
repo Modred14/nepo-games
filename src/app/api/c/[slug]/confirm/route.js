@@ -134,7 +134,9 @@ export async function POST(req, { params }) {
       "new_message",
       systemMsg.rows[0],
     );
-
+   await emitToRoom(`user:${login.buyer_id}`, "sidebar_update", {});
+    await emitToRoom(`user:${login.seller_id}`, "sidebar_update", {});
+ 
     return Response.json({ success: true });
   } catch (err) {
     await client.query("ROLLBACK");

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useMemo } from "react";
+import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import { ChevronLeft, CreditCard, Send, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { usePathname } from "next/navigation";
@@ -69,6 +69,13 @@ export default function Conversation({ gameId, receiverId }) {
   const hasPrefetchedRef = useRef(false);
   const socketRef = useRef(null);
 
+  const chatIdRef = useRef(null);
+  const userRef = useRef(null);
+  const gameIdRef = useRef(gameId);
+  const receiverIdRef = useRef(receiverId);
+  const isSellerRef = useRef(false);
+  const conversationsRef = useRef([]);
+
   // ─── Derived state ───────────────────────────────────────────────────────
   const isSeller = roleData?.role === "seller";
   const isAdmin = String(receiverId) === "1";
@@ -76,6 +83,26 @@ export default function Conversation({ gameId, receiverId }) {
   const userId = user?.id;
   const isSuccess = payError === "Payment successful";
   const isSystemChat = String(gameId) === "1" && String(receiverId) === "1";
+
+  // Keep refs in sync
+  useEffect(() => {
+    chatIdRef.current = chatId;
+  }, [chatId]);
+  useEffect(() => {
+    userRef.current = user;
+  }, [user]);
+  useEffect(() => {
+    gameIdRef.current = gameId;
+  }, [gameId]);
+  useEffect(() => {
+    receiverIdRef.current = receiverId;
+  }, [receiverId]);
+  useEffect(() => {
+    isSellerRef.current = isSeller;
+  }, [isSeller]);
+  useEffect(() => {
+    conversationsRef.current = conversations;
+  }, [conversations]);
 
   const NEPO_CHAT = {
     id: "1",
@@ -95,6 +122,46 @@ export default function Conversation({ gameId, receiverId }) {
     : conversations.find(
         (chat) => String(chat.listing_id) === String(currentChatId),
       );
+
+  // ─── Update sidebar instantly from a message — no network request ────────
+  const updateSidebarFromMessage = useCallback((message) => {
+    const convId = message.conversation_id;
+    if (!convId) return;
+
+    setConversations((prev) => {
+      // Find which conversation this message belongs to by matching conversation_id
+      const idx = prev.findIndex((c) => String(c.id) === String(convId));
+      if (idx === -1) {
+        // Conversation not in list yet — do a full refresh as fallback
+        fetchAndSet();
+        return prev;
+      }
+
+      const updated = [...prev];
+      const chat = { ...updated[idx] };
+
+      chat.lastmessage = message.message;
+      chat.lastmessagetime = message.created_at;
+
+      // Increment unread only if this is NOT the currently open conversation
+      const isCurrentChat =
+        String(chat.listing_id) === String(gameIdRef.current);
+      const isFromSelf =
+        String(message.sender_id) === String(userRef.current?.id);
+      if (!isCurrentChat && !isFromSelf) {
+        chat.unreadcount = (chat.unreadcount || 0) + 1;
+      }
+
+      updated[idx] = chat;
+
+      // Move to top (after NEPO_CHAT which is always first)
+      const nepoChat = updated[0];
+      const rest = updated.slice(1);
+      rest.splice(idx - 1, 1); // remove from current position
+      rest.unshift(chat); // add to top
+      return [nepoChat, ...rest];
+    });
+  }, []);
 
   // ─── Payment redirect handler ────────────────────────────────────────────
   useEffect(() => {
@@ -174,8 +241,159 @@ export default function Conversation({ gameId, receiverId }) {
     loadRole();
   }, [gameId]);
 
-  // ─── Load messages ONCE + connect socket ────────────────────────────────
-  // Replaces all polling — messages arrive via socket push instead
+  // ─── markAsRead ──────────────────────────────────────────────────────────
+  const markAsRead = useCallback(async () => {
+    const gid = gameIdRef.current;
+    if (!gid) return;
+    try {
+      await fetch(`/api/c/${gid}/mark-read`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ gameId: gid }),
+      });
+      // Also clear unread count locally immediately
+      setConversations((prev) =>
+        prev.map((c) =>
+          String(c.listing_id) === String(gid) ? { ...c, unreadcount: 0 } : c,
+        ),
+      );
+    } catch (err) {
+      console.error("Failed to mark as read", err);
+    }
+  }, []);
+
+  // ─── fetchAndSet — full refresh (used on mount + fallback) ───────────────
+  const fetchAndSet = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/conversations`);
+      const data = await res.json();
+      const grouped = groupConversations(data, userRef.current?.id);
+      const allConvos = [NEPO_CHAT, ...grouped];
+      setConversations(allConvos);
+      setChatList(gameIdRef.current || 1);
+
+      if (!hasPrefetchedRef.current) {
+        hasPrefetchedRef.current = true;
+        preloadAllMessages(grouped);
+      }
+    } catch (err) {
+      console.error("Failed to load conversations", err);
+    } finally {
+      setLoadingChats(false);
+    }
+  }, []);
+
+  // ─── fetchLoginDetails ────────────────────────────────────────────────────
+  const fetchLoginDetails = useCallback(async () => {
+    const cid = chatIdRef.current;
+    if (!cid) return;
+    try {
+      const res = await fetch(`/api/login-delivery?conversationId=${cid}`);
+      const data = await res.json();
+      if (!res.ok)
+        throw new Error(data?.error || "Failed to fetch login details");
+      setLoginData(data.data || []);
+      if (data.data && data.data.length > 0) {
+        setLoginDetails(true);
+      }
+    } catch (err) {
+      console.error("Fetch login details error:", err.message);
+    } finally {
+      setLoad(false);
+    }
+  }, []);
+
+  // ─── SOCKET SETUP — runs once on mount ───────────────────────────────────
+  useEffect(() => {
+    const socket = io(process.env.NEXT_PUBLIC_SOCKET_URL, {
+      transports: ["websocket", "polling"],
+      reconnectionAttempts: 5,
+      reconnectionDelay: 2000,
+    });
+
+    socketRef.current = socket;
+
+    socket.on("connect", () => {
+      console.log("Socket connected:", socket.id);
+      if (chatIdRef.current) {
+        socket.emit("join", chatIdRef.current);
+      }
+      if (userRef.current?.id) {
+        socket.emit("join", `user:${userRef.current.id}`);
+      }
+    });
+
+    socket.on("connect_error", (err) => {
+      console.error("Socket connection error:", err.message);
+    });
+
+    socket.on("new_message", (message) => {
+      // Update chat messages if this is the open conversation
+      if (String(receiverIdRef.current) === "1") {
+        setAdminMessages((prev) => {
+          if (prev.some((m) => m.id === message.id)) return prev;
+          return [...prev, message];
+        });
+      } else {
+        setChatMessages((prev) => {
+          if (prev.some((m) => m.id === message.id)) return prev;
+          return [...prev, message];
+        });
+        setMessages([]);
+      }
+
+      // ✅ Update sidebar instantly — no network request
+      updateSidebarFromMessage(message);
+      markAsRead();
+    });
+
+    socket.on("login_details_ready", () => {
+      if (!isSellerRef.current) {
+        fetchLoginDetails();
+      }
+    });
+
+    // ✅ sidebar_update now does a full refresh ONLY as fallback
+    // (e.g. for system messages from confirm/dispute where we need fresh status)
+    socket.on("sidebar_update", () => {
+      fetchAndSet();
+    });
+
+    socket.on("disconnect", (reason) => {
+      console.log("Socket disconnected:", reason);
+    });
+
+    return () => {
+      if (chatIdRef.current) {
+        socket.emit("leave", chatIdRef.current);
+      }
+      socket.disconnect();
+      socketRef.current = null;
+    };
+  }, []);
+
+  // ─── Join personal room once user loads ──────────────────────────────────
+  useEffect(() => {
+    if (!user?.id || !socketRef.current) return;
+    socketRef.current.emit("join", `user:${user.id}`);
+    console.log("Joined personal room:", `user:${user.id}`);
+  }, [user?.id]);
+
+  // ─── Join / leave conversation rooms when chatId changes ─────────────────
+  const prevChatIdRef = useRef(null);
+  useEffect(() => {
+    const socket = socketRef.current;
+    if (!socket || !chatId) return;
+
+    if (prevChatIdRef.current && prevChatIdRef.current !== chatId) {
+      socket.emit("leave", prevChatIdRef.current);
+    }
+
+    socket.emit("join", chatId);
+    prevChatIdRef.current = chatId;
+  }, [chatId]);
+
+  // ─── Load messages when gameId / receiverId changes ───────────────────────
   useEffect(() => {
     if (!gameId) return;
 
@@ -183,13 +401,16 @@ export default function Conversation({ gameId, receiverId }) {
 
     const loadOnce = async () => {
       setLoading(true);
+      setChatMessages([]);
+      setAdminMessages([]);
+      setConversation(null);
+      setMessages([]);
+
       try {
         if (String(receiverId) === "1") {
           const res = await fetch(`/api/system-messages`);
           const data = await res.json();
           setAdminMessages(Array.isArray(data) ? data : []);
-          setChatMessages([]);
-          setConversation(null);
           return;
         }
 
@@ -201,8 +422,6 @@ export default function Conversation({ gameId, receiverId }) {
         setChatMessages(msgs);
         messagesCacheRef.current.set(String(gameId), msgs);
         setConversation(data.conversation || null);
-        setAdminMessages([]);
-        setMessages([]); // clear optimistic on fresh load
       } catch (err) {
         console.error("Load messages failed:", err);
       } finally {
@@ -211,56 +430,9 @@ export default function Conversation({ gameId, receiverId }) {
     };
 
     loadOnce();
-
-    // Connect socket
-    const socket = io(process.env.NEXT_PUBLIC_SOCKET_URL, {
-      transports: ["websocket", "polling"],
-    });
-
-    // Join room once we have chatId — re-join if it changes
-    if (chatId) {
-      socket.emit("join", chatId);
-    }
-
-    socket.on("new_message", (message) => {
-      if (String(receiverId) === "1") {
-        setAdminMessages((prev) => {
-          if (prev.some((m) => m.id === message.id)) return prev;
-          return [...prev, message];
-        });
-      } else {
-        setChatMessages((prev) => {
-          if (prev.some((m) => m.id === message.id)) return prev;
-          return [...prev, message];
-        });
-        setMessages([]); // clear optimistic duplicates
-      }
-      markAsRead();
-      // Refresh conversation sidebar to update last message preview
-      fetchAndSet();
-    });
-
-    // Seller submitted login details — show buyer the panel automatically
-    socket.on("login_details_ready", () => {
-      if (!isSeller) {
-        fetchLoginDetails();
-      }
-    });
-
-    return () => {
-      if (chatId) socket.emit("leave", chatId);
-      socket.disconnect();
-      socketRef.current = null;
-    };
   }, [gameId, receiverId]);
 
-  // Join the socket room once chatId is available
-  useEffect(() => {
-    if (!chatId || !socketRef.current) return;
-    socketRef.current.emit("join", chatId);
-  }, [chatId]);
-
-  // ─── Conversations list (load once + refresh on new message via socket) ──
+  // ─── Conversations list ───────────────────────────────────────────────────
   const groupConversations = (conversations, userId) => {
     const map = new Map();
 
@@ -293,32 +465,11 @@ export default function Conversation({ gameId, receiverId }) {
     return Array.from(map.values());
   };
 
-  const fetchAndSet = async () => {
-    try {
-      const res = await fetch(`/api/conversations`);
-      const data = await res.json();
-      const grouped = groupConversations(data, user?.id); // ✅ pass userId
-      const allConvos = [NEPO_CHAT, ...grouped];
-      setConversations(allConvos);
-      setChatList(gameId || 1);
-
-      if (!hasPrefetchedRef.current) {
-        hasPrefetchedRef.current = true;
-        preloadAllMessages(grouped);
-      }
-    } catch (err) {
-      console.error("Failed to load conversations", err);
-    } finally {
-      setLoadingChats(false);
-    }
-  };
-
   useEffect(() => {
-    fetchAndSet(); // load once on mount
-    // socket's new_message handler calls fetchAndSet() to refresh sidebar
-  }, []);
+    fetchAndSet();
+  }, [fetchAndSet]);
 
-  // ─── Preload messages in batches of 3 (not all at once) ─────────────────
+  // ─── Preload messages in batches of 3 ────────────────────────────────────
   const preloadAllMessages = async (convos) => {
     const filtered = convos.filter((c) => String(c.listing_id) !== "1");
 
@@ -343,24 +494,7 @@ export default function Conversation({ gameId, receiverId }) {
     }
   };
 
-  // ─── Login details (fetch once when chatId ready, then via socket event) ─
-  const fetchLoginDetails = async () => {
-    try {
-      const res = await fetch(`/api/login-delivery?conversationId=${chatId}`);
-      const data = await res.json();
-      if (!res.ok)
-        throw new Error(data?.error || "Failed to fetch login details");
-      setLoginData(data.data || []);
-      if (data.data && data.data.length > 0) {
-        setLoginDetails(true);
-      }
-    } catch (err) {
-      console.error("Fetch login details error:", err.message);
-    } finally {
-      setLoad(false);
-    }
-  };
-
+  // ─── Login details ────────────────────────────────────────────────────────
   useEffect(() => {
     if (String(receiverId) === "1") {
       setLoad(false);
@@ -368,26 +502,14 @@ export default function Conversation({ gameId, receiverId }) {
     }
     if (!chatId) return;
     if (loginDetails || cancel) return;
-    fetchLoginDetails(); // fetch once — socket handles updates after
+    fetchLoginDetails();
   }, [chatId, receiverId]);
 
-  // ─── Mark as read — only when unread count changes ──────────────────────
-  const markAsRead = async () => {
-    try {
-      await fetch(`/api/c/${gameId}/mark-read`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ gameId }),
-      });
-    } catch (err) {
-      console.error("Failed to mark as read", err);
-    }
-  };
-
+  // ─── Mark as read on active chat change ──────────────────────────────────
   useEffect(() => {
     if (!activeChat) return;
     markAsRead();
-  }, [activeChat?.listing_id, activeChat?.unreadcount]); // ✅ only on unread change
+  }, [activeChat?.listing_id, activeChat?.unreadcount, markAsRead]);
 
   // ─── Login details show / timer ──────────────────────────────────────────
   const handleShowDetails = async () => {
@@ -440,6 +562,7 @@ export default function Conversation({ gameId, receiverId }) {
     interval = setInterval(updateTimer, 1000);
     return () => clearInterval(interval);
   }, [loginData, showDetails]);
+
   const allMessages = useMemo(() => {
     const source = String(receiverId) === "1" ? adminMessages : chatMessages;
     const merged = [...(source || []), ...messages].sort(
@@ -454,6 +577,7 @@ export default function Conversation({ gameId, receiverId }) {
   }, [adminMessages, chatMessages, receiverId, messages]);
 
   const lastIndex = allMessages.length - 1;
+
   // ─── Scroll to bottom ────────────────────────────────────────────────────
   useEffect(() => {
     if (!bottomRef.current) return;
@@ -484,8 +608,6 @@ export default function Conversation({ gameId, receiverId }) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  // ─── allMessages — ID-based dedup ────────────────────────────────────────
-
   // ─── Send message ─────────────────────────────────────────────────────────
   const handleSend = async () => {
     const el = inputRef.current;
@@ -499,9 +621,12 @@ export default function Conversation({ gameId, receiverId }) {
       gameId,
       message: textMessage,
       sender_id: userId,
+      conversation_id: chatId,
     };
 
     setMessages((prev) => [...prev, newMessage]);
+    // ✅ Update sidebar instantly for the sender too
+    updateSidebarFromMessage(newMessage);
     setTextMessage("");
 
     requestAnimationFrame(() => {
@@ -567,7 +692,7 @@ export default function Conversation({ gameId, receiverId }) {
   };
 
   function maskEmail(email) {
-    const isMobileWidth = window.innerWidth < 400;
+    const isMobileWidth = isMobile;
     if (isMobileWidth) {
       const [localPart, domain] = email.split(".");
       if (!localPart || localPart.length < 3) return email;
@@ -588,7 +713,6 @@ export default function Conversation({ gameId, receiverId }) {
       {(!isMobile || view === "list") && (
         <div className="sm:grid w-full h-full sm:w-70 lg:w-90">
           <div className="border border-blue-500/30 shadow-md bg-white w-full sm:w-70 lg:w-90 overflow-hidden flex flex-col h-full">
-            {/* HEADER */}
             <div className="relative px-4 py-3 flex items-center border-b border-gray-500/15 bg-blue-50/60 backdrop-blur-sm">
               <button
                 onClick={() => router.push("/marketplace")}
@@ -634,7 +758,6 @@ export default function Conversation({ gameId, receiverId }) {
                           ${isActive && !isMobile ? "bg-blue-100/60 border-l-4 border-blue-600" : "hover:bg-blue-50/50"}
                         `}
                       >
-                        {/* AVATAR */}
                         <div className="relative flex-shrink-0">
                           <img
                             src={chat.profile_image || "/profile.png"}
@@ -678,7 +801,6 @@ export default function Conversation({ gameId, receiverId }) {
 
       {(view === "chat" || !isMobile) && (
         <div className="relative z-10 overflow-hidden flex flex-col w-full">
-          {/* ── Buy modal ── */}
           {buyModal && selectedListing && (
             <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
               <div className="bg-white w-[90%] max-w-md p-5 rounded-xl space-y-3 shadow-xl">
@@ -801,7 +923,6 @@ export default function Conversation({ gameId, receiverId }) {
             </div>
           )}
 
-          {/* ── Success modal ── */}
           {successModal && (
             <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
               <div className="bg-white w-[90%] max-w-md p-6 rounded-xl shadow-xl text-center space-y-4">
@@ -842,7 +963,6 @@ export default function Conversation({ gameId, receiverId }) {
             </div>
           )}
 
-          {/* ── Rating modal ── */}
           {ratingModal && (
             <div className="fixed inset-0 bg-black/55 flex items-center justify-center z-50 p-4">
               <div className="bg-white w-full max-w-[400px] rounded-2xl border border-gray-100 overflow-hidden shadow-lg">
@@ -875,7 +995,6 @@ export default function Conversation({ gameId, receiverId }) {
                         ?
                       </p>
                     </div>
-
                     <div className="px-7 flex justify-center gap-1.5">
                       {[1, 2, 3, 4, 5].map((star) => (
                         <button
@@ -909,7 +1028,6 @@ export default function Conversation({ gameId, receiverId }) {
                         </button>
                       ))}
                     </div>
-
                     <div className="h-7 flex items-center justify-center">
                       <span
                         className={`text-sm text-gray-500 font-medium transition-opacity duration-150 ${hovered || rating ? "opacity-100" : "opacity-0"}`}
@@ -921,7 +1039,6 @@ export default function Conversation({ gameId, receiverId }) {
                         }
                       </span>
                     </div>
-
                     <div className="px-7 pb-7 mt-2 flex gap-2.5">
                       <button
                         onClick={() => setRatingModal(false)}
@@ -997,16 +1114,13 @@ export default function Conversation({ gameId, receiverId }) {
           )}
 
           <div className="relative z-10 h-screen flex flex-col w-full overflow-hidden">
-            {/* Background */}
             <div
               className="absolute inset-0 bg-cover bg-center"
               style={{ backgroundImage: "url('/conversation.png')" }}
             />
             <div className="absolute inset-0 bg-white/80" />
 
-            {/* CONTENT WRAPPER */}
             <div className="relative z-10 flex flex-col h-full">
-              {/* HEADER */}
               <div className="p-4 shrink-0">
                 <div className="w-full p-2 px-5 rounded-3xl flex justify-between bg-white/80 backdrop-blur-xl border border-blue-700/50">
                   <div className="flex gap-2 items-center">
@@ -1081,7 +1195,6 @@ export default function Conversation({ gameId, receiverId }) {
                 </div>
               </div>
 
-              {/* MESSAGES */}
               <div
                 ref={containerRef}
                 className="flex-1 overflow-y-auto px-6 pb-4 thin-scroll"
@@ -1372,11 +1485,9 @@ export default function Conversation({ gameId, receiverId }) {
                     ))}
                   </div>
                 )}
-
                 <div ref={bottomRef} />
               </div>
 
-              {/* INPUT */}
               <div className="p-4 shrink-0">
                 <div
                   onClick={() => inputRef.current?.focus()}

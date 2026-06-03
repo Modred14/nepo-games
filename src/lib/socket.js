@@ -1,34 +1,36 @@
-/**
- * lib/socket.js
- *
- * BEFORE: getIO() read from global._io — only worked when Socket.io
- *         was on the same server as Next.js (now deleted).
- *
- * AFTER:  emitToRoom() sends an HTTP POST to the standalone Socket.io
- *         server running on Render. Next.js API routes just call this
- *         function — no Socket.io dependency on the Next.js side at all.
- */
-
 export async function emitToRoom(room, event, data) {
+  const socketServerUrl = process.env.SOCKET_SERVER_URL;
+
+  console.log("[emitToRoom] called:", { room, event, socketServerUrl });
+
+  if (!socketServerUrl) {
+    console.error("[emitToRoom] ERROR: SOCKET_SERVER_URL is not set!");
+    return;
+  }
+
+  const secret = process.env.SOCKET_SECRET;
+  if (!secret) {
+    console.error("[emitToRoom] ERROR: SOCKET_SECRET is not set!");
+    return;
+  }
+
   try {
-    const socketServerUrl = process.env.SOCKET_SERVER_URL;
-
-    if (!socketServerUrl) {
-      console.warn("SOCKET_SERVER_URL not set — skipping socket emit");
-      return;
-    }
-
-    await fetch(`${socketServerUrl}/emit`, {
+    const res = await fetch(`${socketServerUrl}/emit`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-secret": process.env.SOCKET_SECRET,
+        "x-secret": secret,
       },
       body: JSON.stringify({ room, event, data }),
     });
+
+    const text = await res.text();
+    if (!res.ok) {
+      console.error("[emitToRoom] Emit failed:", res.status, text);
+    } else {
+      console.log("[emitToRoom] Emit success:", res.status, room, event);
+    }
   } catch (err) {
-    // Non-critical — message is already saved in DB
-    // Socket failure should never break the API response
-    console.error("Socket emit failed (non-critical):", err.message);
+    console.error("[emitToRoom] Fetch threw an error:", err.message);
   }
 }

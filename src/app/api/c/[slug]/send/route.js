@@ -65,7 +65,8 @@ export async function POST(req) {
 
     // 4. Emit to Render socket server
     await emitToRoom(`room:${conversation.id}`, "new_message", newMessage);
-
+    await emitToRoom(`user:${user_id}`, "sidebar_update", {});
+    await emitToRoom(`user:${receiverId}`, "sidebar_update", {});
     return Response.json(
       { success: true, message: newMessage, conversation },
       { status: 201 },
