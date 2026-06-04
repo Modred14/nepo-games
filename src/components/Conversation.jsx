@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import { ChevronLeft, CreditCard, Send, X } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { usePathname } from "next/navigation";
 import { useParams } from "next/navigation";
@@ -15,6 +16,7 @@ import { io } from "socket.io-client";
 export default function Conversation({ gameId, receiverId }) {
   const [textMessage, setTextMessage] = useState("");
   const [load, setLoad] = useState(true);
+  const [localStatus, setLocalStatus] = useState(null);
   const [messages, setMessages] = useState([]);
   const [chatMessages, setChatMessages] = useState([]);
   const [adminMessages, setAdminMessages] = useState([]);
@@ -284,8 +286,8 @@ export default function Conversation({ gameId, receiverId }) {
   }, []);
 
   // ─── fetchLoginDetails ────────────────────────────────────────────────────
-  const fetchLoginDetails = useCallback(async () => {
-    const cid = chatIdRef.current;
+  const fetchLoginDetails = useCallback(async (fallbackId) => {
+    const cid = chatIdRef.current || fallbackId;
     if (!cid) return;
     try {
       const res = await fetch(`/api/login-delivery?conversationId=${cid}`);
@@ -347,15 +349,55 @@ export default function Conversation({ gameId, receiverId }) {
       markAsRead();
     });
 
-    socket.on("login_details_ready", () => {
+    socket.on("transaction_confirmed", () => {
+      if (isSellerRef.current) {
+        setLoginDetails(true); // ✅ hides LoginDropBox since condition is !loginDetails
+      }
+    });
+
+    socket.on("login_details_ready", async () => {
       if (!isSellerRef.current) {
-        fetchLoginDetails();
+        setLocalStatus("pending");
+
+        // ✅ If chatId is already known, use it directly
+        if (chatIdRef.current) {
+          fetchLoginDetails();
+          return;
+        }
+
+        // ✅ chatId is null — fetch conversation to get it first
+        try {
+          const res = await fetch(
+            `/api/c/${gameIdRef.current}/messages?receiver_id=${receiverIdRef.current}`,
+          );
+          const data = await res.json();
+          if (data.conversation?.id) {
+            chatIdRef.current = data.conversation.id; // sync ref immediately
+            setConversation(data.conversation); // sync state too
+            fetchLoginDetails(data.conversation.id); // pass as fallback
+          }
+        } catch (err) {
+          console.error(
+            "Failed to resolve conversation for login details:",
+            err,
+          );
+        }
       }
     });
 
     // ✅ sidebar_update now does a full refresh ONLY as fallback
     // (e.g. for system messages from confirm/dispute where we need fresh status)
-    socket.on("sidebar_update", () => {
+    socket.on("sidebar_update", (payload) => {
+      if (payload?.listingId && payload?.status) {
+        // ✅ Update just the status of the affected conversation instantly
+        setConversations((prev) =>
+          prev.map((c) =>
+            String(c.listing_id) === String(payload.listingId)
+              ? { ...c, status: payload.status }
+              : c,
+          ),
+        );
+      }
       fetchAndSet();
     });
 
@@ -405,6 +447,8 @@ export default function Conversation({ gameId, receiverId }) {
       setAdminMessages([]);
       setConversation(null);
       setMessages([]);
+      setLocalStatus(null);
+      setLoginDetails(false);
 
       try {
         if (String(receiverId) === "1") {
@@ -456,6 +500,9 @@ export default function Conversation({ gameId, receiverId }) {
         existing.username = convo.username;
         existing.profile_image = convo.profile_image;
         existing.receiver_id = convo.receiver_id;
+      }
+      if (convo.status) {
+        existing.status = convo.status;
       }
 
       map.set(key, existing);
@@ -706,6 +753,8 @@ export default function Conversation({ gameId, receiverId }) {
     return `${start}***${end}@${domain}`;
   }
 
+  const chatStatus = localStatus || activeChat?.status;
+
   // ─── RENDER ───────────────────────────────────────────────────────────────
   return (
     <div className="h-dvh w-full overflow-hidden flex bg-cover bg-center">
@@ -713,12 +762,11 @@ export default function Conversation({ gameId, receiverId }) {
         <div className="sm:grid w-full h-full sm:w-70 lg:w-90">
           <div className="border border-blue-500/30 shadow-md bg-white w-full sm:w-70 lg:w-90 overflow-hidden flex flex-col h-full">
             <div className="relative px-4 py-3 flex items-center border-b border-gray-500/15 bg-blue-50/60 backdrop-blur-sm">
-              <button
-                onClick={() => router.push("/marketplace")}
-                className="absolute left-2 font-bold rounded-full active:scale-90 transition-transform duration-150"
-              >
-                <ChevronLeft size={24} className="text-blue-700" />
-              </button>
+              <Link href="/marketplace">
+                <button className="absolute left-2 font-bold rounded-full active:scale-90 transition-transform duration-150">
+                  <ChevronLeft size={24} className="text-blue-700" />
+                </button>
+              </Link>
               <p className="w-full text-center font-semibold text-blue-700 uppercase">
                 Chats
               </p>
@@ -1161,8 +1209,8 @@ export default function Conversation({ gameId, receiverId }) {
 
                   {!isAdmin &&
                     !isSeller &&
-                    (activeChat?.status === "active" ||
-                      (activeChat?.status === "processing" &&
+                    (chatStatus === "active" ||
+                      (chatStatus === "processing" &&
                         activeChat?.processing_by === user?.id)) && (
                       <div className="h-10 flex items-center">
                         <button
@@ -1178,7 +1226,7 @@ export default function Conversation({ gameId, receiverId }) {
                       </div>
                     )}
 
-                  {cancel && showDetails && activeChat?.status !== "active" && (
+                  {cancel && showDetails && chatStatus !== "active" && (
                     <div className="h-10 flex items-center">
                       <button
                         onClick={() => {
@@ -1201,7 +1249,7 @@ export default function Conversation({ gameId, receiverId }) {
                 {allMessages.length === 0 &&
                   !loading &&
                   !isAdmin &&
-                  !activeChat?.status === "pending" && (
+                  chatStatus !== "pending" && (
                     <div className="h-full flex items-center justify-center">
                       <div className="bg-white/40 backdrop-blur-sm shadow-2xs px-4 py-5 rounded-xl border border-white/20">
                         <div className="flex flex-col items-center text-center space-y-3">
@@ -1298,7 +1346,7 @@ export default function Conversation({ gameId, receiverId }) {
                     <div className="flex justify-center w-full">
                       <div className="fixed px-6">
                         {isSeller &&
-                          activeChat?.status === "pending" &&
+                          chatStatus === "pending" &&
                           !loginDetails && (
                             <LoginDropBox
                               conversationId={chatId}
@@ -1311,7 +1359,7 @@ export default function Conversation({ gameId, receiverId }) {
                     {loginDetails &&
                       !cancel &&
                       !isSeller &&
-                      activeChat?.status === "pending" && (
+                      chatStatus === "pending" && (
                         <div className="flex justify-center w-full">
                           <div className="fixed bg-white p-5 mx-6 rounded-xl shadow-xl space-y-4">
                             <div className="flex justify-between">
