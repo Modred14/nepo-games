@@ -131,17 +131,20 @@ export default function Conversation({ gameId, receiverId }) {
     if (!convId) return;
 
     setConversations((prev) => {
-      // Find which conversation this message belongs to by matching conversation_id
-      const idx = prev.findIndex((c) => String(c.id) === String(convId));
+      // ✅ Match by conversation id — try both c.id and c.conversation_id
+      const idx = prev.findIndex(
+        (c) =>
+          String(c.id) === String(convId) ||
+          String(c.conversation_id) === String(convId),
+      );
+
       if (idx === -1) {
         // Conversation not in list yet — do a full refresh as fallback
         fetchAndSet();
         return prev;
       }
 
-      const updated = [...prev];
-      const chat = { ...updated[idx] };
-
+      const chat = { ...prev[idx] };
       chat.lastmessage = message.message;
       chat.lastmessagetime = message.created_at;
 
@@ -154,14 +157,10 @@ export default function Conversation({ gameId, receiverId }) {
         chat.unreadcount = (chat.unreadcount || 0) + 1;
       }
 
-      updated[idx] = chat;
-
-      // Move to top (after NEPO_CHAT which is always first)
-      const nepoChat = updated[0];
-      const rest = updated.slice(1);
-      rest.splice(idx - 1, 1); // remove from current position
-      rest.unshift(chat); // add to top
-      return [nepoChat, ...rest];
+      // ✅ Build new array without the moved item, then prepend after NEPO_CHAT
+      const nepoChat = prev[0];
+      const rest = prev.slice(1).filter((_, i) => i !== idx - 1); // ✅ correct index in rest
+      return [nepoChat, chat, ...rest];
     });
   }, []);
 
