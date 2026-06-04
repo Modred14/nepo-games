@@ -428,7 +428,6 @@ export default function Conversation({ gameId, receiverId }) {
         setLoading(false);
       }
     };
-
     loadOnce();
   }, [gameId, receiverId]);
 
