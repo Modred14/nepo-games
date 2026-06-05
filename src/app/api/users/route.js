@@ -65,71 +65,129 @@ export async function POST(req) {
     );
     const verifyLink = `${process.env.NEXT_PUBLIC_BASE_URL}/verify?token=${token}`;
 
-    await resend.emails.send({
-      from: "Nepogames <nepo-games@resend.dev>",
-      to: email,
-      subject: "Verify your email",
-      html: `
-  <div style="margin:0;padding:0;background-color:#f4f6f8;font-family:Arial,Helvetica,sans-serif;">
-    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f4f6f8;padding: 0 0 20px 0;">
+await resend.emails.send({
+              from: "Nepogames <nepo-games@resend.dev>",
+              to: email,
+              subject: "Verify your email address",
+              html: `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <title>Verify your email</title>
+    </head>
+    <body style="margin:0;padding:0;background:#F5F5F4;font-family:'DM Sans',Helvetica,Arial,sans-serif;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 16px;">
+        <tr>
+          <td align="center">
+            <table width="520" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #E7E5E4;">
 
-            <!-- HERO IMAGE -->
-            <tr>
-              <td>
-                <img src="https://res.cloudinary.com/dagot597u/image/upload/v1776988411/welcome_mfzptd.png"
-                     alt="Gaming Banner"
-                     width="100%"
-                     style="display:block;border:none;">
-              </td>
-            </tr>
+              <!-- Header -->
+              <tr>
+                <td style="background:#0A0A0A;padding:24px 40px;">
+                  <span style="font-family:Georgia,serif;font-size:20px;color:#ffffff;font-weight:400;letter-spacing:-0.3px;">
+                    Nepo Games
+                  </span>
+                </td>
+              </tr>
 
-            <!-- CONTENT -->
-            <tr>
-              <td style="padding:30px;">
-                <h2 style="margin-top:0;color:#111827;">Verify your email</h2>
-                <p style="color:#4b5563;font-size:16px;">
-                  Welcome to <strong>Nepogames</strong>! You’re one step away from buying and selling games securely.
-                </p>
-                <p style="color:#4b5563;font-size:16px;">
-                  Click the button below to verify your email address. This link expires in <strong>1 hour</strong>.
-                </p>
+              <!-- Banner -->
+              <tr>
+                <td>
+                  <img src="https://res.cloudinary.com/dagot597u/image/upload/v1776988411/welcome_mfzptd.png"
+                       alt="Welcome to Nepo Games" width="520"
+                       style="display:block;border:none;width:100%;max-height:200px;object-fit:cover;" />
+                </td>
+              </tr>
 
-                <!-- BUTTON -->
-                <div style="text-align:center;margin:30px 0;">
-                  <a href="${verifyLink}"
-                     style="background:#2563eb;color:#ffffff;box-shadow: 0 4px 12px rgba(0,0,0,0.15);padding:14px 28px;text-decoration:none;border-radius:6px;font-weight:bold;display:inline-block;">
-                     Verify Email
-                  </a>
-                </div>
+              <!-- Body -->
+              <tr>
+                <td style="padding:36px 40px;">
 
-                <!-- FALLBACK LINK -->
-                <p style="color:#6b7280;font-size:14px;">
-                  If the button doesn't work, copy and paste this link into your browser:
-                </p>
-                <p style="word-break:break-all;color:#2563eb;font-size:13px;">
-                  ${verifyLink}
-                </p>
-              </td>
-            </tr>
+                  <!-- Icon -->
+                  <table cellpadding="0" cellspacing="0" style="margin-bottom:20px;">
+                    <tr>
+                      <td style="width:52px;height:52px;background:#DBEAFE;border-radius:12px;text-align:center;vertical-align:middle;">
+                        <img src="https://img.icons8.com/ios/50/1D4ED8/secured-letter.png" width="26" height="26" alt="" />
+                      </td>
+                    </tr>
+                  </table>
 
-            <!-- FOOTER -->
-            <tr>
-              <td style="background:#f9fafb;padding:20px;text-align:center;font-size:12px;color:#9ca3af;">
-                <p style="margin:0;">© ${new Date().getFullYear()} Nepo Games. All rights reserved.</p>
-                <p style="margin:5px 0 0;">If you didn’t create an account, you can ignore this email.</p>
-              </td>
-            </tr>
+                  <h1 style="margin:0 0 8px;font-size:24px;font-weight:500;color:#0A0A0A;font-family:Georgia,serif;">
+                    Verify your email address
+                  </h1>
+                  <p style="margin:0 0 28px;font-size:15px;color:#57534E;line-height:1.6;">
+                    Welcome to <strong>Nepo Games</strong>! You're one step away from buying and selling games securely.
+                    Click the button below to confirm your email address.
+                  </p>
 
-          </table>
-        </td>
-      </tr>
-    </table>
-  </div>
+                  <!-- CTA -->
+                  <table cellpadding="0" cellspacing="0" style="width:100%;margin-bottom:28px;">
+                    <tr>
+                      <td align="center">
+                        <a href="${verifyLink}"
+                           style="display:inline-block;background:#1D4ED8;color:#ffffff;font-size:15px;font-weight:500;
+                                  text-decoration:none;padding:13px 32px;border-radius:8px;">
+                          Verify email address
+                        </a>
+                      </td>
+                    </tr>
+                  </table>
+
+                  <!-- Divider -->
+                  <hr style="border:none;border-top:1px solid #E7E5E4;margin:0 0 28px;" />
+
+                  <!-- Fallback URL -->
+                  <p style="margin:0 0 6px;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:#78716C;">
+                    Or copy this link
+                  </p>
+                  <p style="margin:0 0 24px;font-size:12px;color:#1D4ED8;word-break:break-all;
+                            background:#FAFAF9;padding:10px 12px;border-radius:6px;border:1px solid #E7E5E4;
+                            font-family:monospace;">
+                    ${verifyLink}
+                  </p>
+
+                  <!-- Expiry notice -->
+                  <table cellpadding="0" cellspacing="0" style="background:#FFF7ED;border:1px solid #FED7AA;border-radius:8px;width:100%;">
+                    <tr>
+                      <td style="padding:12px 14px;font-size:13px;color:#9A3412;line-height:1.5;">
+                        ⏱ This link expires in <strong>1 hour</strong>. If you didn't create an account,
+                        you can safely ignore this email.
+                      </td>
+                    </tr>
+                  </table>
+
+                </td>
+              </tr>
+
+              <!-- Footer -->
+              <tr>
+                <td style="background:#FAFAF9;border-top:1px solid #E7E5E4;padding:20px 40px;">
+                  <p style="margin:0 0 4px;font-size:12px;color:#78716C;line-height:1.6;">
+                    This email was sent to <strong>${email}</strong>.
+                    Questions? Contact <a href="mailto:support@nepogames.com" style="color:#78716C;">support@nepogames.com</a>.
+                  </p>
+                  <p style="margin:8px 0 0;font-size:12px;color:#A8A29E;">
+                    © ${new Date().getFullYear()} Nepo Games. All rights reserved.
+                  </p>
+                </td>
+              </tr>
+
+            </table>
+          </td>
+        </tr>
+      </table>
+    </body>
+    </html>
   `,
-      text: `Welcome to Nepo Games!
-Verify your email by clicking the link below (expires in 1 hour):
-${verifyLink}`,
-    });
+              text: `Welcome to Nepo Games!
+
+Verify your email by visiting the link below (expires in 1 hour):
+${verifyLink}
+
+If you didn't create an account, ignore this email.`,
+            });
 
     return Response.json(result.rows[0], { status: 201 });
   } catch (err) {

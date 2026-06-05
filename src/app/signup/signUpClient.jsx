@@ -181,7 +181,7 @@ export default function Login() {
         <div className="lg:h-screen flex  flex-col lg:flex-row bg-white">
           <div className="w-full lg:hidden lg:w-1/2 flex justify-center items-center bg-white">
             <Image
-              src="/signup.jpg"
+              src="/signup.png"
               alt="Login Illustration"
               width={0}
               height={0}
@@ -570,7 +570,7 @@ export default function Login() {
 
           <div className="hidden lg:flex lg:w-1/2 h-screen items-center justify-center bg-white">
             <Image
-              src="/signup.jpg"
+              src="/signup.png"
               alt="Sign Up Illustration"
               width={0}
               height={0}

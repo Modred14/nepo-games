@@ -152,7 +152,7 @@ export default function LoginClient() {
     <div className="lg:h-screen flex  flex-col lg:flex-row  bg-white">
       <div className="w-full lg:hidden lg:w-1/2 flex justify-center items-center bg-white">
         <Image
-          src="/login.jpg"
+          src="/login.png"
           alt="Login Illustration"
           width={0}
           height={0}
@@ -400,7 +400,7 @@ export default function LoginClient() {
 
       <div className="hidden lg:flex lg:w-1/2 items-center justify-center bg-white">
         <Image
-          src="/login.jpg"
+          src="/login.png"
           alt="Login Illustration"
           width={0}
           height={0}

@@ -206,7 +206,7 @@ export default function Login() {
               {/* IMAGE SECTION */}
               <div className="w-full lg:hidden lg:w-1/2 flex justify-center items-center bg-white">
                 <img
-                  src="/forgot-1.jpg"
+                  src="/email-me.png"
                   alt="forgot Illustration"
                   className="w-64 md:w-80 lg:max-w-2xl object-contain mt-10 lg:mt-0"
                 />
@@ -272,7 +272,7 @@ export default function Login() {
 
               <div className="hidden border-l-2 border-[#6060FF] lg:flex lg:w-1/2 items-center justify-center bg-white">
                 <img
-                  src="/forgot-1.jpg"
+                  src="/email-me.png"
                   alt="forgot Illustration"
                   className="max-w-2xl w-full object-contain"
                 />
