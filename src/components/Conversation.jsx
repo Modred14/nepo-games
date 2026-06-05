@@ -762,7 +762,7 @@ export default function Conversation({ gameId, receiverId }) {
           <div className="border border-blue-500/30 shadow-md bg-white w-full sm:w-70 lg:w-90 overflow-hidden flex flex-col h-full">
             <div className="relative px-4 py-3 flex items-center border-b border-gray-500/15 bg-blue-50/60 backdrop-blur-sm">
               <Link href="/marketplace">
-                <button className="absolute left-2 font-bold rounded-full active:scale-90 transition-transform duration-150">
+                <button className="absolute left-2 top-3 font-bold rounded-full active:scale-90 transition-transform duration-150">
                   <ChevronLeft size={24} className="text-blue-700" />
                 </button>
               </Link>
