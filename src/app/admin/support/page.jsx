@@ -187,13 +187,51 @@ export default function SupportDashboard() {
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [sending, setSending] = useState(false);
   const [takingOver, setTakingOver] = useState(false);
-  const [filter, setFilter] = useState("all"); // all | bot | human
+  const [filter, setFilter] = useState("all");
+  const [switching, setSwitching] = useState(false);
+  const [ending, setEnding] = useState(false); // all | bot | human
   const initRef = useRef(false);
   const bottomRef = useRef(null);
   const textareaRef = useRef(null);
 
   const activeSession = sessions.find((s) => s.id === activeId);
+  const handleSwitchToBot = async () => {
+    setSwitching(true);
+    try {
+      await fetch("/api/chat/switch-to-bot", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId: activeId }),
+      });
+      setSessions((prev) =>
+        prev.map((s) => (s.id === activeId ? { ...s, mode: "bot" } : s)),
+      );
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setSwitching(false);
+    }
+  };
 
+  const handleEndConversation = async () => {
+    if (!confirm("End this conversation? The user will see a closing message."))
+      return;
+    setEnding(true);
+    try {
+      await fetch("/api/chat/end-session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId: activeId }),
+      });
+      setSessions((prev) => prev.filter((s) => s.id !== activeId));
+      setActiveId(null);
+      setMessages([]);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setEnding(false);
+    }
+  };
   // ── fetch sessions ────────────────────────────────────────────────────────
   const fetchSessions = useCallback(async (silent = false) => {
     if (!silent) setLoadingSessions(true);
@@ -411,10 +449,11 @@ export default function SupportDashboard() {
         }
         .dash-messages::-webkit-scrollbar { width:4px; }
         .dash-messages::-webkit-scrollbar-thumb { background:rgba(0,0,255,.1); border-radius:4px; }
-        .dash-input-row {
-          background:#fff; border-top:1px solid rgba(122,122,254,.12);
-          padding:12px 16px; display:flex; gap:10px; align-items:flex-end; flex-shrink:0;
-        }
+       .dash-input-row {
+  background:#fff; border-top:1px solid rgba(122,122,254,.12);
+  padding:12px 16px; display:flex; gap:10px; align-items:flex-end; flex-shrink:0;
+  position: relative;   /* 👈 add this */
+}
         .dash-textarea {
           flex:1; border:1px solid rgba(122,122,254,.22);
           border-radius:14px; padding:10px 14px;
@@ -592,8 +631,50 @@ export default function SupportDashboard() {
                   </div>
 
                   {activeSession?.mode === "human" ? (
-                    <div className="dash-human-badge">
-                      <Headphones size={12} /> Human mode active
+                    <div
+                      style={{ display: "flex", gap: 8, alignItems: "center" }}
+                    >
+                      <div className="dash-human-badge">
+                        <Headphones size={12} /> Human mode active
+                      </div>
+                      {/* Hand back to AI */}
+                      <button
+                        className="dash-takeover-btn"
+                        style={{
+                          background: "linear-gradient(135deg,#8A38F5,#6d28d9)",
+                        }}
+                        onClick={handleSwitchToBot}
+                        disabled={switching}
+                      >
+                        {switching ? (
+                          <Loader2
+                            size={13}
+                            style={{ animation: "spinIt 1s linear infinite" }}
+                          />
+                        ) : (
+                          <Bot size={13} />
+                        )}
+                        Back to AI
+                      </button>
+                      {/* End conversation */}
+                      <button
+                        className="dash-takeover-btn"
+                        style={{
+                          background: "linear-gradient(135deg,#ef4444,#dc2626)",
+                        }}
+                        onClick={handleEndConversation}
+                        disabled={ending}
+                      >
+                        {ending ? (
+                          <Loader2
+                            size={13}
+                            style={{ animation: "spinIt 1s linear infinite" }}
+                          />
+                        ) : (
+                          <CheckCircle size={13} />
+                        )}
+                        End Chat
+                      </button>
                     </div>
                   ) : (
                     <button
