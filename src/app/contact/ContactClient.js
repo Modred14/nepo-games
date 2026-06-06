@@ -266,7 +266,7 @@ export default function ContactPage() {
           --grad: linear-gradient(135deg, #4F8CFF, #8A38F5);
         }
 
-        body { font-family: 'Sora', sans-serif; background: #fafafa; color: var(--ink); }
+        body {  font-family: "Poppins", Arial, Helvetica, sans-serif; background: #fafafa; color: var(--ink); }
 
         /* ── NAV ── */
         .nav {
@@ -322,8 +322,9 @@ export default function ContactPage() {
         .hero-badge-dot { width:7px; height:7px; border-radius:50%; background:var(--blue); animation:pulse 2s infinite; }
         @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(1.4)} }
         .hero h1 {
-          font-family:'DM Serif Display', serif;
+           font-family: "Poppins", Arial, Helvetica, sans-serif;
           font-size: clamp(2.4rem, 6vw, 4rem);
+          font-weight: 500;
           line-height: 1.12;
           color: var(--navy);
           max-width: 640px;
@@ -385,14 +386,14 @@ export default function ContactPage() {
           border-radius:24px; padding:40px;
           box-shadow:0 4px 24px rgba(0,0,255,.05);
         }
-        .form-title { font-family:'DM Serif Display', serif; font-size:1.75rem; color:var(--navy); margin-bottom:6px; }
+        .form-title {  font-family: "Poppins", Arial, Helvetica, sans-serif; font-size:1.75rem; color:var(--navy); margin-bottom:6px; }
         .form-sub { font-size:13px; color:var(--muted); margin-bottom:32px; }
         .form-row { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
         @media(max-width:600px){ .form-row { grid-template-columns:1fr; } }
         .field { display:flex; flex-direction:column; gap:7px; margin-bottom:20px; }
         .field label { font-size:12px; font-weight:600; color:var(--ink); letter-spacing:.03em; text-transform:uppercase; }
         .field input, .field textarea, .field select {
-          font-family:'Sora',sans-serif;
+           font-family: "Poppins", Arial, Helvetica, sans-serif;
           font-size:14px; color:var(--ink);
           background:#fafafa;
           border:1px solid rgba(122,122,254,.22);
@@ -418,7 +419,7 @@ export default function ContactPage() {
         .submit-btn {
           width:100%; padding:15px; border:none; cursor:pointer;
           border-radius:14px;
-          font-family:'Sora',sans-serif; font-size:15px; font-weight:600;
+           font-family: "Poppins", Arial, Helvetica, sans-serif; font-size:15px; font-weight:600;
           background:var(--grad);
           color:#fff;
           display:flex; align-items:center; justify-content:center; gap:10px;
@@ -460,11 +461,11 @@ export default function ContactPage() {
 
         .stat-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
         .stat-item { background:linear-gradient(135deg,rgba(79,140,255,.07),rgba(138,56,245,.07)); border-radius:14px; padding:16px 14px; text-align:center; }
-        .stat-num { font-family:'DM Serif Display',serif; font-size:1.6rem; color:var(--navy); }
+        .stat-num {  font-family: "Poppins", Arial, Helvetica, sans-serif; font-size:1.6rem; color:var(--navy); }
         .stat-lbl { font-size:11px; color:var(--muted); margin-top:2px; }
 
         .tip-card { background:var(--grad); border-radius:20px; padding:24px; color:white; }
-        .tip-card-title { font-family:'DM Serif Display',serif; font-size:1.15rem; margin-bottom:10px; }
+        .tip-card-title { f font-family: "Poppins", Arial, Helvetica, sans-serif; font-size:1.15rem; margin-bottom:10px; }
         .tip-card-text { font-size:13px; opacity:.88; line-height:1.6; }
         .tip-items { margin-top:14px; display:flex; flex-direction:column; gap:9px; }
         .tip-item { display:flex; align-items:flex-start; gap:9px; font-size:12px; opacity:.9; }
@@ -472,7 +473,7 @@ export default function ContactPage() {
 
         /* ── FAQ ── */
         .faq-section { padding:0 5% 80px; max-width:1200px; margin:0 auto; }
-        .faq-heading { font-family:'DM Serif Display',serif; font-size:2rem; color:var(--navy); margin-bottom:6px; }
+        .faq-heading {  font-family: "Poppins", Arial, Helvetica, sans-serif;   font-weight: 500; font-size:2rem; color:var(--navy); margin-bottom:6px; }
         .faq-sub { font-size:14px; color:var(--muted); margin-bottom:32px; }
         .faq-grid { display:grid; gap:16px; }
         @media(max-width:720px){ .faq-grid { grid-template-columns:1fr; } }
