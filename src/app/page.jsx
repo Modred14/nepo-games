@@ -26,6 +26,62 @@ import { Verified } from "lucide-react";
 import Link from "next/link";
 import Loader from "@/components/Loader";
 import HashScrollHandler from "./hash";
+function StatCard({ value }) {
+  const cardRef = useRef(null);
+  const startedRef = useRef(false);
+
+  const [displayValue, setDisplayValue] = useState(0);
+
+  // parse "100k+" -> { number:100, suffix:"k", plus:"+" }
+  const parsed = useMemo(() => {
+    const num = parseInt(value);
+    const suffix = value.toLowerCase().includes("k") ? "k" : "";
+    const plus = value.includes("+") ? "+" : "";
+
+    return { number: num, suffix, plus };
+  }, [value]);
+
+  useEffect(() => {
+    const el = cardRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting || startedRef.current) return;
+
+        startedRef.current = true;
+
+        const duration = 2000;
+        const start = performance.now();
+
+        const tick = (now) => {
+          const t = Math.min(1, (now - start) / duration);
+          const eased = 1 - Math.pow(1 - t, 3);
+
+          const current = Math.round(eased * parsed.number);
+          setDisplayValue(current);
+
+          if (t < 1) requestAnimationFrame(tick);
+          else setDisplayValue(parsed.number);
+        };
+
+        requestAnimationFrame(tick);
+      },
+      { threshold: 0.35 },
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [parsed.number]);
+
+  return (
+    <div ref={cardRef}>
+      {displayValue}
+      {parsed.suffix}
+      {parsed.plus}
+    </div>
+  );
+}
 
 export default function Home() {
   const [open, setOpen] = useState(false);
@@ -38,6 +94,22 @@ export default function Home() {
   const [refOpen, setOpenRef] = useState(false);
   const [logOpen, setLogOpen] = useState(false);
   const [load, setLoad] = useState(true);
+  const [email, setEmail] = useState("");
+  const [subscribed, setSubscribed] = useState(false);
+
+  const handleSubscribe = async () => {
+    if (!email || !email.includes("@")) return;
+    setSubscribed(true);
+    const res = await fetch("/api/subscribe", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+
+    if (!res.ok) return;
+
+    setEmail("");
+  };
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -138,11 +210,11 @@ export default function Home() {
     },
   ];
   // In Home.jsx — wrap in typeof window check
-useEffect(() => {
-  if (typeof window !== "undefined" && window.history.scrollRestoration) {
-    window.history.scrollRestoration = "manual";
-  }
-}, []);
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.history.scrollRestoration) {
+      window.history.scrollRestoration = "manual";
+    }
+  }, []);
 
   const faqs = [
     {
@@ -244,91 +316,34 @@ useEffect(() => {
     };
   }, [items]);
 
-  function parsePrettyNumber(input) {
-    const raw = String(input).trim();
+  // function parsePrettyNumber(input) {
+  //   const raw = String(input).trim();
 
-    const hasPlus = raw.endsWith("+");
-    const noPlus = hasPlus ? raw.slice(0, -1) : raw;
+  //   const hasPlus = raw.endsWith("+");
+  //   const noPlus = hasPlus ? raw.slice(0, -1) : raw;
 
-    // Match: number + optional suffix (k/m/b) e.g. 100k, 1M, 2K
-    const match = noPlus.match(/^(\d+(\.\d+)?)([kKmMbB])?$/);
+  //   // Match: number + optional suffix (k/m/b) e.g. 100k, 1M, 2K
+  //   const match = noPlus.match(/^(\d+(\.\d+)?)([kKmMbB])?$/);
 
-    // Fallback: if it doesn't match, just treat as 0 and keep original string
-    if (!match) {
-      return { target: 0, suffix: "", plus: hasPlus, raw };
-    }
+  //   // Fallback: if it doesn't match, just treat as 0 and keep original string
+  //   if (!match) {
+  //     return { target: 0, suffix: "", plus: hasPlus, raw };
+  //   }
 
-    const num = Number(match[1]);
-    const suffix = (match[3] || "").toUpperCase();
+  //   const num = Number(match[1]);
+  //   const suffix = (match[3] || "").toUpperCase();
 
-    const mult =
-      suffix === "K"
-        ? 1_000
-        : suffix === "M"
-          ? 1_000_000
-          : suffix === "B"
-            ? 1_000_000_000
-            : 1;
+  //   const mult =
+  //     suffix === "K"
+  //       ? 1_000
+  //       : suffix === "M"
+  //         ? 1_000_000
+  //         : suffix === "B"
+  //           ? 1_000_000_000
+  //           : 1;
 
-    return { target: Math.round(num * mult), suffix, plus: hasPlus, raw };
-  }
-
-  function StatCard({ value }) {
-    const cardRef = useRef(null);
-    const startedRef = useRef(false);
-
-    const [displayValue, setDisplayValue] = useState(0);
-
-    // parse "100k+" -> { number:100, suffix:"k", plus:"+" }
-    const parsed = useMemo(() => {
-      const num = parseInt(value);
-      const suffix = value.toLowerCase().includes("k") ? "k" : "";
-      const plus = value.includes("+") ? "+" : "";
-
-      return { number: num, suffix, plus };
-    }, [value]);
-
-    useEffect(() => {
-      const el = cardRef.current;
-      if (!el) return;
-
-      const observer = new IntersectionObserver(
-        ([entry]) => {
-          if (!entry.isIntersecting || startedRef.current) return;
-
-          startedRef.current = true;
-
-          const duration = 2000;
-          const start = performance.now();
-
-          const tick = (now) => {
-            const t = Math.min(1, (now - start) / duration);
-            const eased = 1 - Math.pow(1 - t, 3);
-
-            const current = Math.round(eased * parsed.number);
-            setDisplayValue(current);
-
-            if (t < 1) requestAnimationFrame(tick);
-            else setDisplayValue(parsed.number);
-          };
-
-          requestAnimationFrame(tick);
-        },
-        { threshold: 0.35 },
-      );
-
-      observer.observe(el);
-      return () => observer.disconnect();
-    }, [parsed.number]);
-
-    return (
-      <div ref={cardRef}>
-        {displayValue}
-        {parsed.suffix}
-        {parsed.plus}
-      </div>
-    );
-  }
+  //   return { target: Math.round(num * mult), suffix, plus: hasPlus, raw };
+  // }
 
   const toggleFAQ = (index) => {
     setActiveIndex(activeIndex === index ? null : index);
@@ -1303,47 +1318,40 @@ hover:text-[#0000FF]
                     </p>
 
                     <div className="mt-10 w-full max-w-2xl relative">
-                      <input
-                        type="email"
-                        placeholder="Enter your email"
-                        className="
-              w-full
-              rounded-full
-              bg-transparent
-              border
-              border-white/50
-              py-5
-              pl-6
-              pr-40
-              outline-none
-              text-white
-              placeholder-white/60
-            "
-                      />
-
-                      <button
-                        className="
-              absolute
-              right-2
-              top-1/2
-              -translate-y-1/2
-              px-5
-              py-3
-              text-sm
-              sm:text-base
-              rounded-full
-              bg-gradient-to-r
-              from-[#3B82F6]
-              to-[#000099]
-              border
-              border-white/60
-              font-semibold
-              hover:scale-105
-              transition
-            "
-                      >
-                        Subscribe
-                      </button>
+                      {subscribed ? (
+                        <p className="text-blue-700 mx-auto bg-gray-50 border max-w-xl border-blue-800/50 -mt-3 p-3 rounded-3xl text-center text-lg font-medium">
+                          ✅ You're subscribed! We'll be in touch.
+                        </p>
+                      ) : (
+                        <>
+                          <input
+                            type="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            onKeyDown={(e) =>
+                              e.key === "Enter" && handleSubscribe()
+                            }
+                            placeholder="Enter your email"
+                            className="
+          w-full rounded-full bg-transparent border
+          border-white/50 py-5 pl-6 pr-40 outline-none
+          text-white placeholder-white/60
+        "
+                          />
+                          <button
+                            onClick={handleSubscribe}
+                            className="
+          absolute right-2 top-1/2 -translate-y-1/2
+          px-5 py-3 text-sm sm:text-base rounded-full
+          bg-gradient-to-r from-[#3B82F6] to-[#000099]
+          border border-white/60 font-semibold
+          hover:scale-105 transition
+        "
+                          >
+                            Subscribe
+                          </button>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>

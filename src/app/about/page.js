@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useEffect, useRef } from "react";
 import Footer from "../footer";
 import Reveal from "../reveal";
+import LaunchCountdown from "@/components/LaunchCountdown";
+import WaitlistOrMarketplace from "@/components/WaitlistOrMarketplace";
 
 export default function AboutPage() {
   const heroRef = useRef(null);
@@ -27,26 +29,23 @@ export default function AboutPage() {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body { background: #f7f5f2; }
 
         .about-root {
-          font-family: 'DM Sans', sans-serif;
+          font-family: "Poppins", Arial, Helvetica, sans-serif;
           color: #1a1814;
           background: #f7f5f2;
           min-height: 100vh;
           overflow-x: hidden;
         }
 
-        /* ── NAV ── */
         .about-nav {
           position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
+          top: 0; left: 0; right: 0;
           z-index: 100;
           display: flex;
           align-items: center;
@@ -58,7 +57,7 @@ export default function AboutPage() {
         }
 
         .nav-logo {
-          font-family: 'Syne', sans-serif;
+          font-family: "Poppins", Arial, Helvetica, sans-serif;
           font-weight: 800;
           font-size: 1.35rem;
           color: #1a1814;
@@ -101,7 +100,6 @@ export default function AboutPage() {
           transform: translateY(-1px);
         }
 
-        /* ── HERO ── */
         .hero {
           padding: 8rem 2.5rem 5rem;
           max-width: 1100px;
@@ -127,15 +125,14 @@ export default function AboutPage() {
         .hero-eyebrow::before {
           content: '';
           display: inline-block;
-          width: 24px;
-          height: 2px;
+          width: 24px; height: 2px;
           background: #1b4dff;
           border-radius: 2px;
         }
 
         .hero-title {
-          font-family: 'Syne', sans-serif;
-          font-size: clamp(2.8rem, 5vw, 4.2rem);
+          font-family: "Poppins", Arial, Helvetica, sans-serif;
+          font-size: clamp(2.8rem, 5vw, 4rem);
           font-weight: 800;
           line-height: 1.06;
           letter-spacing: -2px;
@@ -178,8 +175,7 @@ export default function AboutPage() {
         }
 
         .hc-icon {
-          width: 48px;
-          height: 48px;
+          width: 48px; height: 48px;
           border-radius: 12px;
           background: #e8edff;
           display: flex;
@@ -190,7 +186,7 @@ export default function AboutPage() {
         }
 
         .hc-title {
-          font-family: 'Syne', sans-serif;
+          font-family: "Poppins", Arial, Helvetica, sans-serif;
           font-weight: 700;
           font-size: 0.9375rem;
           color: #1a1814;
@@ -204,14 +200,13 @@ export default function AboutPage() {
         }
 
         .hero-card-stat {
-          bottom: 0;
-          right: 0;
+          bottom: 0; right: 0;
           width: 60%;
           text-align: center;
         }
 
         .stat-number {
-          font-family: 'Syne', sans-serif;
+          font-family: "Poppins", Arial, Helvetica, sans-serif;
           font-size: 2.5rem;
           font-weight: 800;
           color: #1b4dff;
@@ -227,8 +222,7 @@ export default function AboutPage() {
         }
 
         .hero-card-badge {
-          bottom: 80px;
-          left: -20px;
+          bottom: 80px; left: -20px;
           width: 200px;
           display: flex;
           align-items: center;
@@ -237,16 +231,15 @@ export default function AboutPage() {
         }
 
         .badge-dot {
-          width: 10px;
-          height: 10px;
+          width: 10px; height: 10px;
           border-radius: 50%;
           background: #22c55e;
           flex-shrink: 0;
           box-shadow: 0 0 0 4px rgba(34,197,94,0.15);
-          animation: pulse 2s infinite;
+          animation: greenPulse 2s infinite;
         }
 
-        @keyframes pulse {
+        @keyframes greenPulse {
           0%, 100% { box-shadow: 0 0 0 4px rgba(34,197,94,0.15); }
           50% { box-shadow: 0 0 0 8px rgba(34,197,94,0.08); }
         }
@@ -257,14 +250,12 @@ export default function AboutPage() {
           color: #1a1814;
         }
 
-        /* ── DIVIDER ── */
         .divider {
           height: 1px;
           background: linear-gradient(90deg, transparent, rgba(26,24,20,0.12), transparent);
           margin: 0 2.5rem;
         }
 
-        /* ── SECTION WRAPPER ── */
         .section {
           padding: 5rem 2.5rem;
           max-width: 1100px;
@@ -286,14 +277,13 @@ export default function AboutPage() {
         .section-eyebrow::before {
           content: '';
           display: inline-block;
-          width: 24px;
-          height: 2px;
+          width: 24px; height: 2px;
           background: #1b4dff;
           border-radius: 2px;
         }
 
         .section-title {
-          font-family: 'Syne', sans-serif;
+          font-family: "Poppins", Arial, Helvetica, sans-serif;
           font-size: clamp(1.8rem, 3.5vw, 2.75rem);
           font-weight: 800;
           letter-spacing: -1.5px;
@@ -310,7 +300,6 @@ export default function AboutPage() {
           max-width: 640px;
         }
 
-        /* ── PROBLEM SECTION ── */
         .problem-grid {
           display: grid;
           grid-template-columns: 1fr 1fr;
@@ -333,7 +322,7 @@ export default function AboutPage() {
         }
 
         .pstat-number {
-          font-family: 'Syne', sans-serif;
+          font-family: "Poppins", Arial, Helvetica, sans-serif;
           font-size: 2rem;
           font-weight: 800;
           color: #e63946;
@@ -358,7 +347,6 @@ export default function AboutPage() {
         .pstat-large .pstat-number { color: #fff; font-size: 2.5rem; }
         .pstat-large .pstat-label { color: rgba(255,255,255,0.5); }
 
-        /* ── SOLUTION SECTION ── */
         .solution-bg {
           background: #1a1814;
           color: #f7f5f2;
@@ -397,8 +385,7 @@ export default function AboutPage() {
         }
 
         .feature-icon {
-          width: 44px;
-          height: 44px;
+          width: 44px; height: 44px;
           background: rgba(107,135,255,0.15);
           border-radius: 10px;
           display: flex;
@@ -409,7 +396,7 @@ export default function AboutPage() {
         }
 
         .feature-title {
-          font-family: 'Syne', sans-serif;
+          font-family: "Poppins", Arial, Helvetica, sans-serif;
           font-weight: 700;
           font-size: 1rem;
           color: #f7f5f2;
@@ -424,7 +411,6 @@ export default function AboutPage() {
           font-weight: 300;
         }
 
-        /* ── HOW IT WORKS ── */
         .steps-list {
           display: flex;
           flex-direction: column;
@@ -444,23 +430,20 @@ export default function AboutPage() {
         .step-item:not(:last-child)::before {
           content: '';
           position: absolute;
-          left: 27px;
-          top: 56px;
-          bottom: 0;
+          left: 27px; top: 56px; bottom: 0;
           width: 1px;
           background: rgba(26,24,20,0.1);
         }
 
         .step-number {
-          width: 56px;
-          height: 56px;
+          width: 56px; height: 56px;
           border-radius: 50%;
           background: #fff;
           border: 1px solid rgba(26,24,20,0.1);
           display: flex;
           align-items: center;
           justify-content: center;
-          font-family: 'Syne', sans-serif;
+          font-family: "Poppins", Arial, Helvetica, sans-serif;
           font-weight: 800;
           font-size: 1rem;
           color: #1b4dff;
@@ -470,7 +453,7 @@ export default function AboutPage() {
         .step-content { padding-top: 0.85rem; }
 
         .step-title {
-          font-family: 'Syne', sans-serif;
+          font-family: "Poppins", Arial, Helvetica, sans-serif;
           font-weight: 700;
           font-size: 1.0625rem;
           color: #1a1814;
@@ -485,7 +468,6 @@ export default function AboutPage() {
           font-weight: 300;
         }
 
-        /* ── FOUNDERS ── */
         .founders-grid {
           display: grid;
           grid-template-columns: 1fr 1fr;
@@ -508,30 +490,22 @@ export default function AboutPage() {
         }
 
         .founder-avatar {
-          width: 64px;
-          height: 64px;
+          width: 64px; height: 64px;
           border-radius: 50%;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-family: 'Syne', sans-serif;
+          font-family: "Poppins", Arial, Helvetica, sans-serif;
           font-weight: 800;
           font-size: 1.25rem;
           margin-bottom: 1.25rem;
         }
 
-        .avatar-blue {
-          background: #e8edff;
-          color: #1b4dff;
-        }
-
-        .avatar-dark {
-          background: #1a1814;
-          color: #f7f5f2;
-        }
+        .avatar-blue { background: #e8edff; color: #1b4dff; }
+        .avatar-dark { background: #1a1814; color: #f7f5f2; }
 
         .founder-name {
-          font-family: 'Syne', sans-serif;
+          font-family: "Poppins", Arial, Helvetica, sans-serif;
           font-weight: 700;
           font-size: 1.0625rem;
           color: #1a1814;
@@ -555,7 +529,6 @@ export default function AboutPage() {
           font-weight: 300;
         }
 
-        /* ── MISSION ── */
         .mission-banner {
           background: #1b4dff;
           border-radius: 24px;
@@ -569,10 +542,8 @@ export default function AboutPage() {
         .mission-banner::before {
           content: '';
           position: absolute;
-          top: -60%;
-          left: -20%;
-          width: 60%;
-          height: 200%;
+          top: -60%; left: -20%;
+          width: 60%; height: 200%;
           background: rgba(255,255,255,0.04);
           border-radius: 50%;
           transform: rotate(-15deg);
@@ -581,16 +552,14 @@ export default function AboutPage() {
         .mission-banner::after {
           content: '';
           position: absolute;
-          bottom: -40%;
-          right: -10%;
-          width: 40%;
-          height: 150%;
+          bottom: -40%; right: -10%;
+          width: 40%; height: 150%;
           background: rgba(255,255,255,0.03);
           border-radius: 50%;
         }
 
         .mission-quote {
-          font-family: 'Syne', sans-serif;
+          font-family: "Poppins", Arial, Helvetica, sans-serif;
           font-size: clamp(1.4rem, 3vw, 2rem);
           font-weight: 700;
           color: #fff;
@@ -610,7 +579,6 @@ export default function AboutPage() {
           z-index: 1;
         }
 
-        /* ── WHY TRUST ── */
         .trust-grid {
           display: grid;
           grid-template-columns: repeat(2, 1fr);
@@ -637,7 +605,7 @@ export default function AboutPage() {
         }
 
         .trust-title {
-          font-family: 'Syne', sans-serif;
+          font-family: "Poppins", Arial, Helvetica, sans-serif;
           font-weight: 700;
           font-size: 0.9375rem;
           color: #1a1814;
@@ -652,7 +620,6 @@ export default function AboutPage() {
           font-weight: 300;
         }
 
-        /* ── CTA ── */
         .cta-section {
           padding: 5rem 2.5rem;
           max-width: 1100px;
@@ -661,7 +628,7 @@ export default function AboutPage() {
         }
 
         .cta-title {
-          font-family: 'Syne', sans-serif;
+          font-family: "Poppins", Arial, Helvetica, sans-serif;
           font-size: clamp(2rem, 4vw, 3rem);
           font-weight: 800;
           letter-spacing: -1.5px;
@@ -727,7 +694,6 @@ export default function AboutPage() {
           transform: translateY(-1px);
         }
 
-        /* ── FOOTER ── */
         .about-footer {
           border-top: 1px solid rgba(26,24,20,0.08);
           padding: 2rem 2.5rem;
@@ -739,7 +705,7 @@ export default function AboutPage() {
         }
 
         .footer-logo {
-          font-family: 'Syne', sans-serif;
+          font-family: "Poppins", Arial, Helvetica, sans-serif;
           font-weight: 800;
           font-size: 1rem;
           color: #1a1814;
@@ -752,6 +718,122 @@ export default function AboutPage() {
           font-size: 0.8125rem;
           color: #aaa;
           font-weight: 300;
+        }
+
+        /* ── COUNTDOWN ── */
+        .cd-wrap {
+          font-family: 'Poppins', Arial, Helvetica, sans-serif;
+          padding: clamp(2.5rem, 8vw, 5rem) clamp(0.75rem, 4vw, 2.5rem);
+          text-align: center;
+          max-width: 860px;
+          margin: 0 auto;
+          width: 100%;
+        }
+
+        .cd-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 7px;
+          background: #eff4ff;
+          color: #1b4dff;
+          font-size: clamp(0.55rem, 2vw, 0.7rem);
+          font-weight: 700;
+          letter-spacing: 0.13em;
+          text-transform: uppercase;
+          padding: clamp(4px, 1.5vw, 6px) clamp(10px, 3vw, 16px);
+          border-radius: 999px;
+          margin-bottom: clamp(1rem, 3vw, 1.75rem);
+          border: 1px solid #c7d7fe;
+          white-space: nowrap;
+        }
+
+        .cd-badge-dot {
+          width: 6px; height: 6px;
+          min-width: 6px;
+          background: #1b4dff;
+          border-radius: 50%;
+          animation: cdPulse 1.8s ease-in-out infinite;
+        }
+
+        @keyframes cdPulse {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.4; transform: scale(0.7); }
+        }
+
+        .cd-heading {
+          font-size: clamp(1.5rem, 7vw, 3.25rem);
+          font-weight: 900;
+          color: #1a1814;
+          letter-spacing: clamp(-1px, -0.04em, -2px);
+          line-height: 1.05;
+          margin: 0 0 clamp(0.5rem, 2vw, 1rem);
+          word-break: break-word;
+        }
+
+        .cd-heading span { color: #1b4dff; }
+
+        .cd-sub {
+          font-size: clamp(0.78rem, 2.5vw, 0.9375rem);
+          color: #777;
+          font-weight: 300;
+          line-height: 1.6;
+          margin: 0 0 clamp(1.5rem, 5vw, 3rem);
+          padding: 0 clamp(0px, 2vw, 1rem);
+        }
+
+        .cd-sub strong {
+          color: #1a1814;
+          font-weight: 700;
+        }
+
+        .cd-grid {
+          display: inline-flex;
+          align-items: center;
+          gap: clamp(4px, 2vw, 12px);
+          background: #f4f7ff;
+          border: 1px solid #c7d7fe;
+          border-radius: clamp(14px, 4vw, 24px);
+          padding: clamp(10px, 3vw, 20px) clamp(10px, 4vw, 24px);
+          max-width: 100%;
+        }
+
+        .cd-sep {
+          display: flex;
+          align-items: center;
+          padding-bottom: clamp(16px, 4vw, 22px);
+          font-size: clamp(1rem, 4vw, 1.75rem);
+          font-weight: 900;
+          color: #c7d7fe;
+          line-height: 1;
+          user-select: none;
+          flex-shrink: 0;
+        }
+
+        .cd-tile {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          min-width: 0;
+          flex: 1;
+        }
+
+        .cd-num {
+          font-size: clamp(1.4rem, 7vw, 3rem);
+          font-weight: 900;
+          color: #1b4dff;
+          letter-spacing: clamp(-1px, -0.05em, -3px);
+          line-height: 1;
+          font-variant-numeric: tabular-nums;
+        }
+
+        .cd-lbl {
+          font-size: clamp(0.45rem, 1.5vw, 0.625rem);
+          font-weight: 700;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+          color: #8ba4f9;
+          margin-top: clamp(4px, 1.5vw, 8px);
+          white-space: nowrap;
         }
 
         /* ── REVEAL ANIMATIONS ── */
@@ -789,19 +871,43 @@ export default function AboutPage() {
           .about-footer { flex-direction: column; gap: 0.75rem; text-align: center; padding: 1.5rem 1.25rem; }
           .divider { margin: 0 1.25rem; }
         }
+
+        @media (max-width: 400px) {
+          .hero-visual { display: none; }
+          .problem-stat-grid { grid-template-columns: 1fr; }
+          .mission-banner { border-radius: 16px; padding: 2rem 1.25rem; }
+          .step-item { grid-template-columns: 44px 1fr; gap: 1rem; }
+          .step-number { width: 44px; height: 44px; font-size: 0.875rem; }
+          .step-item:not(:last-child)::before { left: 21px; top: 44px; }
+        }
+
+        @media (max-width: 300px) {
+          .about-nav { padding: 0.75rem; }
+          .nav-logo { font-size: 1rem; }
+          .nav-cta { padding: 0.4rem 0.75rem; font-size: 0.75rem; }
+          .hero { padding: 6rem 0.75rem 2rem; }
+          .section { padding: 2rem 0.75rem; }
+          .solution-bg { padding: 2rem 0.75rem; }
+          .cta-section { padding: 2rem 0.75rem; }
+          .about-footer { padding: 1.25rem 0.75rem; }
+          .divider { margin: 0 0.75rem; }
+          .mission-banner { border-radius: 12px; padding: 1.5rem 0.75rem; }
+          .founders-grid { grid-template-columns: 1fr; }
+          .trust-grid { grid-template-columns: 1fr; }
+          .features-grid { grid-template-columns: 1fr; }
+          .problem-stat-grid { grid-template-columns: 1fr; }
+          .founder-card { padding: 1.25rem; }
+          .btn-primary, .btn-secondary { padding: 0.75rem 1.25rem; font-size: 0.8125rem; }
+        }
       `}</style>
 
       <div className="about-root">
-        {/* NAV */}
-
         {/* HERO */}
         <section className="hero">
           <div>
             <p className="hero-eyebrow">Our story</p>
             <h1 className="hero-title">
-              Buying games
-              <br />
-              should feel <em>safe.</em>
+              Buying games should feel <em>safe.</em>
             </h1>
             <p className="hero-body">
               Nepo Games was born from frustration. We watched too many people
@@ -818,18 +924,19 @@ export default function AboutPage() {
                 <p className="hc-sub">Your money moves only when login works</p>
               </div>
             </div>
-
             <div className="hero-card hero-card-badge">
               <div className="badge-dot" />
               <p className="badge-text">Escrow active — funds held safely</p>
             </div>
-
             <div className="hero-card hero-card-stat">
               <p className="stat-number">100%</p>
               <p className="stat-label">Secure trades via escrow system</p>
             </div>
           </div>
         </section>
+
+        {/* COUNTDOWN */}
+        <LaunchCountdown />
 
         <div className="divider" />
 
@@ -1035,7 +1142,6 @@ export default function AboutPage() {
                   textDecoration: "none",
                   borderBottom: "1px solid rgba(27,77,255,0.25)",
                   paddingBottom: "1px",
-                  transition: "borderColor 0.2s",
                 }}
               >
                 modred.dev ↗
@@ -1067,7 +1173,6 @@ export default function AboutPage() {
                   textDecoration: "none",
                   borderBottom: "1px solid rgba(27,77,255,0.25)",
                   paddingBottom: "1px",
-                  transition: "borderColor 0.2s",
                 }}
               >
                 faiq.com ↗
@@ -1154,11 +1259,7 @@ export default function AboutPage() {
             Join thousands of gamers who buy and sell game accounts without the
             stress, the scams, or the sleepless nights.
           </p>
-          <div className="cta-buttons reveal reveal-delay-2">
-            <Link href="/marketplace" className="btn-primary">
-              Browse listings →
-            </Link>
-          </div>
+          <WaitlistOrMarketplace />
         </section>
       </div>
     </>
