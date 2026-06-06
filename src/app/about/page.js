@@ -873,7 +873,7 @@ export default function AboutPage() {
         }
 
         @media (max-width: 400px) {
-          .hero-visual { display: none; }
+         
           .problem-stat-grid { grid-template-columns: 1fr; }
           .mission-banner { border-radius: 16px; padding: 2rem 1.25rem; }
           .step-item { grid-template-columns: 44px 1fr; gap: 1rem; }
