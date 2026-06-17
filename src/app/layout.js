@@ -9,9 +9,46 @@ const poppins = Poppins({
 });
 
 export const metadata = {
-  title: "Nepo Games | Secure Game Marketplace",
+  metadataBase: new URL("https://nepogames.com"),
+
+  title: {
+    default: "Nepo Games | Buy & Sell Game Accounts Securely",
+    template: "%s | Nepo Games",
+  },
+
   description:
-    "Nepo Games is a secure marketplace for buying and selling games with built-in escrow payments, ensuring safe, scam-free transactions for both buyers and sellers.",
+    "Buy and sell game accounts safely on Nepo Games with secure transactions, direct buyer-seller chat, and scam protection.",
+
+  keywords: [
+    "buy game accounts",
+    "sell game accounts",
+    "secure game marketplace",
+    "gaming marketplace",
+    "game trading",
+    "buy gaming accounts",
+    "safe game transactions",
+  ],
+
+  openGraph: {
+    title: "Nepo Games | Buy & Sell Game Accounts Securely",
+    description:
+      "Secure marketplace for buying and selling game accounts.",
+    url: "https://nepogames.com",
+    siteName: "Nepo Games",
+    type: "website",
+  },
+
+  twitter: {
+    card: "summary_large_image",
+    title: "Nepo Games",
+    description:
+      "Secure marketplace for buying and selling game accounts.",
+  },
+
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 export const viewport = {
   width: "device-width",
