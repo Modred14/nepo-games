@@ -97,7 +97,7 @@ export const authOptions = {
             const verifyLink = `${process.env.NEXT_PUBLIC_BASE_URL}/verify?token=${token}`;
 
             await resend.emails.send({
-              from: "Nepogames <nepo-games@resend.dev>",
+              from: "Nepo Games <no-reply@support.nepogames.com>",
               to: email,
               subject: "Verify your email address",
               html: `

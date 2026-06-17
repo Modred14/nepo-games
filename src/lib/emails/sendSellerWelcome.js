@@ -13,10 +13,10 @@ const features = [
 
 export async function sendSellerWelcomeEmail(duration, email, plan) {
   return await resend.emails.send({
-  from: "Nepogames <nepo-games@resend.dev>",
-  to: email,
-  subject: "🎉 Welcome to Nepo Games Seller Program",
-  html: `
+    from: "Nepo Games <no-reply@support.nepogames.com>",
+    to: email,
+    subject: "🎉 Welcome to Nepo Games Seller Program",
+    html: `
     <!DOCTYPE html>
     <html lang="en">
     <head>
@@ -83,12 +83,16 @@ export async function sendSellerWelcomeEmail(duration, email, plan) {
                   <!-- Features -->
                   <p style="margin:0 0 14px;font-size:14px;font-weight:500;color:#0A0A0A;">What you can do now:</p>
                   <table cellpadding="0" cellspacing="0" style="width:100%;margin-bottom:28px;">
-                    ${features.map((item) => `
+                    ${features
+                      .map(
+                        (item) => `
                     <tr>
                       <td style="padding:9px 0;border-bottom:1px solid #F5F5F4;font-size:14px;color:#374151;">
                         <span style="color:#1D4ED8;margin-right:10px;font-weight:700;">✓</span>${item}
                       </td>
-                    </tr>`).join("")}
+                    </tr>`,
+                      )
+                      .join("")}
                   </table>
 
                   <!-- CTA -->
@@ -136,5 +140,5 @@ export async function sendSellerWelcomeEmail(duration, email, plan) {
     </body>
     </html>
   `,
-});
+  });
 }

@@ -53,14 +53,20 @@ export async function POST(req, { params }) {
 
     if (!login) {
       await client.query("ROLLBACK");
-      return Response.json({ error: "No active delivery found" }, { status: 404 });
+      return Response.json(
+        { error: "No active delivery found" },
+        { status: 404 },
+      );
     }
 
     const now = new Date();
 
     if (login.expires_at && new Date(login.expires_at) < now) {
       await client.query("ROLLBACK");
-      return Response.json({ error: "Delivery expired. Contact support." }, { status: 403 });
+      return Response.json(
+        { error: "Delivery expired. Contact support." },
+        { status: 403 },
+      );
     }
 
     if (Number(login.buyer_id) !== Number(user.id)) {
@@ -75,7 +81,10 @@ export async function POST(req, { params }) {
 
     if (login.escrow_status === "released") {
       await client.query("ROLLBACK");
-      return Response.json({ error: "Cannot dispute a released transaction" }, { status: 409 });
+      return Response.json(
+        { error: "Cannot dispute a released transaction" },
+        { status: 409 },
+      );
     }
 
     // 2. Mark as disputed
@@ -123,13 +132,17 @@ export async function POST(req, { params }) {
     await client.query("COMMIT");
 
     // 6. Emit to socket server
-    await emitToRoom(`room:${conversationId}`, "new_message", systemMsg.rows[0]);
+    await emitToRoom(
+      `room:${conversationId}`,
+      "new_message",
+      systemMsg.rows[0],
+    );
     await emitToRoom(`user:${login.buyer_id}`, "sidebar_update", {});
     await emitToRoom(`user:${login.seller_id}`, "sidebar_update", {});
 
     // 7. Send admin dispute alert email
     await resend.emails.send({
-      from: "Nepogames <nepo-games@resend.dev>",
+      from: "Nepo Games <no-reply@support.nepogames.com>",
       to: "favourdomirin@gmail.com",
       subject: `⚠️ Dispute Raised — ${login.game_title} (Ref: ${login.payment_reference})`,
       html: `

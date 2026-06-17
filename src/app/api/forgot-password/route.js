@@ -40,7 +40,7 @@ if (!user) {
     const resetLink = `${process.env.NEXT_PUBLIC_BASE_URL}/reset/${token}`;
 
 await resend.emails.send({
-  from: "Support <support@resend.dev>",
+  from: "Nepo Games <no-reply@support.nepogames.com>",
   to: email,
   subject: "Reset your password",
   html: `

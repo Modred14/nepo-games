@@ -65,11 +65,11 @@ export async function POST(req) {
     );
     const verifyLink = `${process.env.NEXT_PUBLIC_BASE_URL}/verify?token=${token}`;
 
-await resend.emails.send({
-              from: "Nepogames <nepo-games@resend.dev>",
-              to: email,
-              subject: "Verify your email address",
-              html: `
+    await resend.emails.send({
+      from: "Nepo Games <no-reply@support.nepogames.com>",
+      to: email,
+      subject: "Verify your email address",
+      html: `
     <!DOCTYPE html>
     <html lang="en">
     <head>
@@ -181,13 +181,13 @@ await resend.emails.send({
     </body>
     </html>
   `,
-              text: `Welcome to Nepo Games!
+      text: `Welcome to Nepo Games!
 
 Verify your email by visiting the link below (expires in 1 hour):
 ${verifyLink}
 
 If you didn't create an account, ignore this email.`,
-            });
+    });
 
     return Response.json(result.rows[0], { status: 201 });
   } catch (err) {
