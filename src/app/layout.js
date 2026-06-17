@@ -31,18 +31,19 @@ export const metadata = {
 
   openGraph: {
     title: "Nepo Games | Buy & Sell Game Accounts Securely",
-    description:
-      "Secure marketplace for buying and selling game accounts.",
+    description: "Secure marketplace for buying and selling game accounts.",
     url: "https://nepogames.com",
     siteName: "Nepo Games",
     type: "website",
+  },
+  alternates: {
+    canonical: "https://nepogames.com",
   },
 
   twitter: {
     card: "summary_large_image",
     title: "Nepo Games",
-    description:
-      "Secure marketplace for buying and selling game accounts.",
+    description: "Secure marketplace for buying and selling game accounts.",
   },
 
   robots: {
@@ -60,12 +61,37 @@ export const viewport = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify([
+              {
+                "@context": "https://schema.org",
+                "@type": "WebSite",
+                name: "Nepo Games", // ✅ fixes site name in Google
+                url: "https://nepogames.com",
+              },
+              {
+                "@context": "https://schema.org",
+                "@type": "Organization",
+                name: "Nepo Games",
+                url: "https://nepogames.com",
+                logo: {
+                  "@type": "ImageObject",
+                  // ✅ Must be an absolute URL to your logo image
+                  url: "https://nepogames.com/nepo-logo.png",
+                  width: 512,
+                  height: 512,
+                },
+              },
+            ]),
+          }}
+        />
+      </head>
       <body className={`${poppins.variable} antialiased`}>
         {" "}
-        <Providers>
-          
-          {children}
-        </Providers>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );
