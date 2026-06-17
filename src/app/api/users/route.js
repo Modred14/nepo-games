@@ -84,13 +84,7 @@ export async function POST(req) {
             <table width="520" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #E7E5E4;">
 
               <!-- Header -->
-              <tr>
-                <td style="background:#0A0A0A;padding:24px 40px;">
-                  <span style="font-family:Georgia,serif;font-size:20px;color:#ffffff;font-weight:400;letter-spacing:-0.3px;">
-                    Nepo Games
-                  </span>
-                </td>
-              </tr>
+          
 
               <!-- Banner -->
               <tr>
