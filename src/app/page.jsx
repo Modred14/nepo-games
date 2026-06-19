@@ -361,7 +361,7 @@ export default function Home() {
                           /* ── CHANGED: Single "Get Started" pill button matching design ── */
                           <div className="flex items-center gap-3">
                             <Link
-                              href={"/signup"}
+                              href={"/login"}
                               className="px-5 py-2.5 rounded-full bg-[#0000FF] text-white text-sm font-semibold shadow-[0_4px_14px_rgba(0,0,255,0.3)] hover:bg-blue-700 hover:shadow-[0_6px_20px_rgba(0,0,255,0.4)] active:scale-95 transition-all duration-200"
                             >
                               Get Started

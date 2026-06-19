@@ -495,40 +495,39 @@ export default function Login() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full shadow-md hover:bg-blue-700 border border-blue-600 bg-[#0000FF]  text-white font-semibold py-3 rounded-xl transition-all duration-700 mb-6"
+                  className="relative h-12 overflow-hidden w-full bg-[#0000FF] hover:bg-[#0000e0] text-white font-medium text-[15px] tracking-wide py-[13px] rounded-[14px] transition-all duration-200 hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(0,0,255,0.28)] active:translate-y-0 active:shadow-none mb-6"
                 >
                   {loading && !googleLoad ? (
-                    <div className="flex w-full text-center justify-center gap-3">
-                      <span className="inline-block w-6 h-6 border-4 border-white border-t-transparent rounded-full animate-spin"></span>{" "}
-                    </div>
+                    <span className="inline-block w-[18px] h-[18px] border-[2.5px] border-white/30 border-t-white rounded-full animate-spin" />
                   ) : (
                     "Create Account"
                   )}
                 </button>
               </form>
               {/* GOOGLE */}
-              <div className="text-center text-sm text-gray-600 mb-3">
-                Continue with
+              <div className="mb-5 flex items-center">
+                <div className="h-px flex-1 bg-gradient-to-r from-transparent to-gray-300" />
+                <span className="px-4 text-xs font-medium text-gray-500">
+                  OR
+                </span>
+                <div className="h-px flex-1 bg-gradient-to-l from-transparent to-gray-300" />
               </div>
-
               <div className="flex justify-center mb-6">
                 <button
                   onClick={handleGoogleSignIn}
                   disabled={loading}
-                  className="flex items-center gap-3 border px-6 py-2 rounded-xl shadow-sm hover:bg-gray-100 duration-700 transition"
+                  className="flex items-center h-12 justify-center gap-[10px] w-full bg-white hover:bg-gray-50 border border-gray-200/60 hover:border-gray-300/60 text-[15px] font-medium py-3 rounded-[14px] transition-all duration-200 hover:-translate-y-px hover:shadow-[0_2px_10px_rgba(0,0,0,0.07)] active:translate-y-0 active:shadow-none mb-6"
                 >
                   {loading && googleLoad ? (
-                    <div className="flex w-full text-center justify-center gap-3">
-                      <span className="inline-block w-6 h-6 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></span>{" "}
-                    </div>
+                    <span className="inline-block w-[18px] h-[18px] border-[2.5px] border-blue-100 border-t-[#0000FF] rounded-full animate-spin" />
                   ) : (
                     <>
                       <img
                         src="https://www.svgrepo.com/show/475656/google-color.svg"
-                        alt="Google"
-                        className="w-5 h-5"
+                        alt=""
+                        className="w-[18px] h-[18px]"
                       />
-                      Google
+                      Continue with Google
                     </>
                   )}
                 </button>
