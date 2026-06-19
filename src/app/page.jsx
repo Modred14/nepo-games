@@ -1006,14 +1006,14 @@ export default function Home() {
                       ))}
                     </div>
                   </Reveal>
-                  <div className="justify-center my-10 -mx-[2%] rounded-b-2xl flex">
+                  <div className="justify-center  -mx-[6%] mt-5 rounded-b-2xl  flex">
                     {/* ── LOCKED: Hero image ── */}
                     <Image
                       src="/home-gen-pic.png"
                       alt=""
                       width={1152}
                       height={200}
-                      className="object-cover overflow-hidden rounded-b-2xl "
+                      className="object-cover overflow-hidden rounded-b-2xl w-6xl h-50 sm:h-70 lg:h-96.75"
                       priority
                     />
                   </div>
