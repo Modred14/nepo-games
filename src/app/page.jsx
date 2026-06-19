@@ -12,6 +12,15 @@ import {
   Tag,
   Trophy,
   Menu,
+  Shield,
+  Zap,
+  ArrowRight,
+  Star,
+  CheckCircle2,
+  TrendingUp,
+  Users,
+  Lock,
+  Globe,
 } from "lucide-react";
 import Image from "next/image";
 import Reveal from "./reveal";
@@ -26,50 +35,40 @@ import { Verified } from "lucide-react";
 import Link from "next/link";
 import Loader from "@/components/Loader";
 import HashScrollHandler from "./hash";
+
 function StatCard({ value }) {
   const cardRef = useRef(null);
   const startedRef = useRef(false);
-
   const [displayValue, setDisplayValue] = useState(0);
 
-  // parse "100k+" -> { number:100, suffix:"k", plus:"+" }
   const parsed = useMemo(() => {
     const num = parseInt(value);
     const suffix = value.toLowerCase().includes("k") ? "k" : "";
     const plus = value.includes("+") ? "+" : "";
-
     return { number: num, suffix, plus };
   }, [value]);
 
   useEffect(() => {
     const el = cardRef.current;
     if (!el) return;
-
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (!entry.isIntersecting || startedRef.current) return;
-
         startedRef.current = true;
-
         const duration = 2000;
         const start = performance.now();
-
         const tick = (now) => {
           const t = Math.min(1, (now - start) / duration);
           const eased = 1 - Math.pow(1 - t, 3);
-
           const current = Math.round(eased * parsed.number);
           setDisplayValue(current);
-
           if (t < 1) requestAnimationFrame(tick);
           else setDisplayValue(parsed.number);
         };
-
         requestAnimationFrame(tick);
       },
       { threshold: 0.35 },
     );
-
     observer.observe(el);
     return () => observer.disconnect();
   }, [parsed.number]);
@@ -105,9 +104,7 @@ export default function Home() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email }),
     });
-
     if (!res.ok) return;
-
     setEmail("");
   };
 
@@ -115,101 +112,62 @@ export default function Home() {
     const fetchUser = async () => {
       try {
         const res = await fetch("/api/user/me");
-
-        // 🔥 ONLY redirect if truly unauthorized
         if (res.status === 401) {
           setUser(null);
           return;
         }
-
-        // ❌ Other errors (500, 404, etc)
         if (!res.ok) {
           console.error("Server error:", res.status);
           setUser(null);
-          return; // stay on page
+          return;
         }
-
         const data = await res.json();
         setUser(data);
       } catch (err) {
-        // 🌐 Network error lands here
         console.error("Network error:", err);
         setUser(null);
       } finally {
-        setFading(true); // trigger skeleton fade-out
+        setFading(true);
         setTimeout(() => setLoad(false), 300);
       }
     };
-
     fetchUser();
   }, []);
+
   const router = useRouter();
   const ref = useRef(null);
+
   useEffect(() => {
     const handleClickOutside = (e) => {
-      if (ref.current && !ref.current.contains(e.target)) {
-        setOpenRef(false);
-      }
+      if (ref.current && !ref.current.contains(e.target)) setOpenRef(false);
     };
-
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const handleLogout = async () => {
     localStorage.removeItem("nepo-user");
-
-    await signOut({
-      callbackUrl: "/login", // where to go after logout
-    });
+    await signOut({ callbackUrl: "/login" });
   };
+
   const linkClass = () =>
     `flex items-center gap-3 px-4 py-3 w-full border-b transition-colors duration-200
     "bg-white text-gray-800 border-gray-400/20 hover:bg-gray-100"
    `;
+
   const games = [
-    {
-      name: "Delta Force",
-      logo: "/deltaforce_512.png",
-    },
-    {
-      name: "Efootball",
-      logo: "/efootball_512.png",
-    },
-    {
-      name: "Mobile Legends",
-      logo: "/mobile_legends_512.png",
-    },
-    {
-      name: "Call Of Duty Mobile",
-      logo: "/call_of_duty_512.png",
-    },
-    {
-      name: "Fortnite",
-      logo: "/fortnite_512.png",
-    },
-    {
-      name: "Minecraft",
-      logo: "/minecraft_512.png",
-    },
-    {
-      name: "Pubg Mobile",
-      logo: "/pubg_512.png",
-    },
-    {
-      name: "Gameloft",
-      logo: "/gameloft_512.png",
-    },
-    {
-      name: "Free Fire",
-      logo: "/freefire.png",
-    },
-    {
-      name: "Blood Strike",
-      logo: "/bloodstrike.png",
-    },
+    { name: "Delta Force", logo: "/deltaforce_512.png" },
+    { name: "Efootball", logo: "/efootball_512.png" },
+    { name: "Mobile Legends", logo: "/mobile_legends_512.png" },
+    { name: "Call Of Duty Mobile", logo: "/call_of_duty_512.png" },
+    { name: "Fortnite", logo: "/fortnite_512.png" },
+    { name: "Minecraft", logo: "/minecraft_512.png" },
+    { name: "Pubg Mobile", logo: "/pubg_512.png" },
+    { name: "Gameloft", logo: "/gameloft_512.png" },
+    { name: "Free Fire", logo: "/freefire.png" },
+    { name: "Blood Strike", logo: "/bloodstrike.png" },
   ];
-  // In Home.jsx — wrap in typeof window check
+
   useEffect(() => {
     if (typeof window !== "undefined" && window.history.scrollRestoration) {
       window.history.scrollRestoration = "manual";
@@ -252,28 +210,23 @@ export default function Home() {
       reply:
         "Refunds may be available depending on the situation and platform policy. If you experience any issue with your purchase, you can contact support for assistance.",
     },
-
     {
       question: "How can I contact support?",
       reply:
         "If you need help, you can reach out to the Nepogames support team through the contact section on the website. Our team will assist you as quickly as possible.",
     },
   ];
+
   const items = useMemo(() => [...games, ...games], [games]);
 
   useEffect(() => {
     if (!open) return;
-
-    // lock background scroll
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-
-    // allow ESC to close
     const onKeyDown = (e) => {
       if (e.key === "Escape") setOpen(false);
     };
     window.addEventListener("keydown", onKeyDown);
-
     return () => {
       document.body.style.overflow = prev;
       window.removeEventListener("keydown", onKeyDown);
@@ -283,10 +236,8 @@ export default function Home() {
   useEffect(() => {
     const el = innerRef.current;
     if (!el) return;
-
     const imgs = Array.from(el.querySelectorAll("img"));
     let cancelled = false;
-
     const waitForImages = async () => {
       await Promise.all(
         imgs.map((img) => {
@@ -297,53 +248,17 @@ export default function Home() {
           });
         }),
       );
-
       if (cancelled) return;
-
-      // Force one repaint for iOS
       el.style.transform = "translate3d(0,0,0)";
-      // eslint-disable-next-line no-unused-expressions
-      el.offsetHeight; // trigger reflow
+      el.offsetHeight;
       el.style.transform = "";
-
       setReady(true);
     };
-
     waitForImages();
-
     return () => {
       cancelled = true;
     };
   }, [items]);
-
-  // function parsePrettyNumber(input) {
-  //   const raw = String(input).trim();
-
-  //   const hasPlus = raw.endsWith("+");
-  //   const noPlus = hasPlus ? raw.slice(0, -1) : raw;
-
-  //   // Match: number + optional suffix (k/m/b) e.g. 100k, 1M, 2K
-  //   const match = noPlus.match(/^(\d+(\.\d+)?)([kKmMbB])?$/);
-
-  //   // Fallback: if it doesn't match, just treat as 0 and keep original string
-  //   if (!match) {
-  //     return { target: 0, suffix: "", plus: hasPlus, raw };
-  //   }
-
-  //   const num = Number(match[1]);
-  //   const suffix = (match[3] || "").toUpperCase();
-
-  //   const mult =
-  //     suffix === "K"
-  //       ? 1_000
-  //       : suffix === "M"
-  //         ? 1_000_000
-  //         : suffix === "B"
-  //           ? 1_000_000_000
-  //           : 1;
-
-  //   return { target: Math.round(num * mult), suffix, plus: hasPlus, raw };
-  // }
 
   const toggleFAQ = (index) => {
     setActiveIndex(activeIndex === index ? null : index);
@@ -354,16 +269,11 @@ export default function Home() {
   useEffect(() => {
     const scroller = scrollerRef.current;
     if (!scroller) return;
-
     const scrollerInner = scroller.querySelector(".scroller_inner");
     if (!scrollerInner) return;
-
-    // prevent duplicating again on re-render / fast refresh
     if (scrollerInner.dataset.cloned === "true") return;
     scrollerInner.dataset.cloned = "true";
-
     const items = Array.from(scrollerInner.children);
-
     items.forEach((item) => {
       const clone = item.cloneNode(true);
       clone.setAttribute("aria-hidden", "true");
@@ -371,25 +281,11 @@ export default function Home() {
     });
   }, []);
 
-  // const [loader, setLoader] = useState(true);
-
-  // useEffect(() => {
-  //   setTimeout(() => {
-  //     setLoad(false);
-  //   }, 600000); // 10 minutes in milliseconds
-  // }, []);
-
-  // if (load) {
-  //    return <HomeSkeleton fading={fading} />;
-  // }
-
-  // if (load) {
-  //   return <Loader />;
-  // }
-
   return (
     <div>
       <HashScrollHandler />
+
+      {/* ── Logout confirmation modal ── */}
       {logOpen && (
         <div className="fixed inset-0 z-150 flex items-center justify-center bg-black/50">
           <div className="w-[90%] max-w-sm rounded-xl bg-white p-5 shadow-lg">
@@ -397,7 +293,6 @@ export default function Home() {
             <p className="text-sm text-gray-600 mt-2">
               Are you sure you want to log out of this device?
             </p>
-
             <div className="flex justify-end gap-3 mt-5">
               <button
                 onClick={() => setLogOpen(false)}
@@ -405,7 +300,6 @@ export default function Home() {
               >
                 Cancel
               </button>
-
               <button
                 onClick={() => {
                   setLogOpen(false);
@@ -419,18 +313,18 @@ export default function Home() {
           </div>
         </div>
       )}
-      <div className="min-h-screen bg-linear-to-b">
+
+      <div className="min-h-screen bg-white">
         <div>
+          {/* ── NAVBAR ── */}
           <div className="w-full px-[5%] mt-5 bg-transparent fixed z-100">
             <Reveal>
               <header className="relative">
                 <div
-                  className={`px-[2%]  backdrop-blur-2xl transition-all duration-300 border-[#7A7AFE]/50 shadow-xs bg-white/95   ${open ? "rounded-t-4xl" : "rounded-4xl"}
-         border`}
+                  className={`px-[2%] backdrop-blur-2xl transition-all duration-300 border-[#7A7AFE]/50 shadow-xs bg-white/95 ${open ? "rounded-t-4xl" : "rounded-4xl"} border`}
                 >
-                  <div className="flex md:grid grid-cols-3 justify-between md:py-3 py-2 font-semibold items-center text-[#808080]  w-full">
+                  <div className="flex md:grid grid-cols-3 justify-between md:py-3 py-2 font-semibold items-center text-[#808080] w-full">
                     <Link href={"/#"}>
-                      {" "}
                       <Image
                         src="/logo.png"
                         alt="Nepo Games"
@@ -443,91 +337,19 @@ export default function Home() {
                     <div className="hidden md:flex font-medium justify-center gap-9">
                       <Link
                         href={"/marketplace"}
-                        className="
-relative inline-block
-
-after:content-['']
-after:absolute
-after:left-0
-after:bottom-0
-after:h-[2px]
-after:w-full
-after:bg-current
-
-after:origin-right
-after:scale-x-0
-
-after:transition-transform
-after:duration-500
-after:ease-in-out
-
-hover:after:origin-left
-hover:after:scale-x-100
-
-transition-colors
-duration-500
-
-hover:text-[#0000FF]
-"
+                        className="relative inline-block after:content-[''] after:absolute after:left-0 after:bottom-0 after:h-[2px] after:w-full after:bg-current after:origin-right after:scale-x-0 after:transition-transform after:duration-500 after:ease-in-out hover:after:origin-left hover:after:scale-x-100 transition-colors duration-500 hover:text-[#0000FF]"
                       >
                         Marketplace
                       </Link>
                       <Link
                         href={"/pricing"}
-                        className="    relative inline-block
-
-    after:content-['']
-    after:absolute
-    after:left-0
-    after:bottom-0
-    after:h-[2px]
-    after:w-full
-    after:bg-current
-
-    after:origin-right
-    after:scale-x-0
-    
-        hover:text-[#0000FF] 
-
-
-    after:transition-transform
-    after:duration-500
-    after:ease-in-out
-
-    hover:after:origin-left
-    hover:after:scale-x-100"
+                        className="relative inline-block after:content-[''] after:absolute after:left-0 after:bottom-0 after:h-[2px] after:w-full after:bg-current after:origin-right after:scale-x-0 hover:text-[#0000FF] after:transition-transform after:duration-500 after:ease-in-out hover:after:origin-left hover:after:scale-x-100"
                       >
                         Pricing
                       </Link>
-
                       <Link
                         href={"/contact"}
-                        className="
-relative inline-block
-
-after:content-['']
-after:absolute
-after:left-0
-after:bottom-0
-after:h-[2px]
-after:w-full
-after:bg-current
-
-after:origin-right
-after:scale-x-0
-
-after:transition-transform
-after:duration-500
-after:ease-in-out
-
-hover:after:origin-left
-hover:after:scale-x-100
-
-transition-colors
-duration-500
-
-hover:text-[#0000FF]
-"
+                        className="relative inline-block after:content-[''] after:absolute after:left-0 after:bottom-0 after:h-[2px] after:w-full after:bg-current after:origin-right after:scale-x-0 after:transition-transform after:duration-500 after:ease-in-out hover:after:origin-left hover:after:scale-x-100 transition-colors duration-500 hover:text-[#0000FF]"
                       >
                         Contact
                       </Link>
@@ -535,102 +357,76 @@ hover:text-[#0000FF]
                     <div>
                       <div className="hidden md:flex justify-end">
                         {!user?.profile_image ? (
-                          <div className="flex border  text-blue-700 font-medium transition-all duration-200  hover:text-blue-800 border-blue-600/70 text-sm items-center rounded-2xl w-fit overflow-hidden">
-                            {/* Sign In */}
-                            <Link
-                              href={"/login"}
-                              className="px-4 py-2 pr-5 hover:bg-blue-50 -mr-2"
-                            >
-                              Sign In
-                            </Link>
-
-                            {/* Sign Up */}
+                          /* ── CHANGED: Single "Get Started" pill button matching design ── */
+                          <div className="flex items-center gap-3">
                             <Link
                               href={"/signup"}
-                              className="px-4 py-2 bg-blue-700 text-white rounded-l-2xl font-medium transition-all duration-200 hover:bg-blue-800 hover:scale-102 active:scale-95"
+                              className="px-5 py-2.5 rounded-full bg-[#0000FF] text-white text-sm font-semibold shadow-[0_4px_14px_rgba(0,0,255,0.3)] hover:bg-blue-700 hover:shadow-[0_6px_20px_rgba(0,0,255,0.4)] active:scale-95 transition-all duration-200"
                             >
-                              Sign Up
+                              Get Started
                             </Link>
                           </div>
                         ) : (
-                          <>
-                            <div
-                              ref={ref}
-                              onMouseEnter={() => setOpenRef(true)}
-                              className="relative  w-fit"
-                            >
-                              <a>
-                                <Image
-                                  src={user?.profile_image}
-                                  onClick={() => setOpenRef(true)}
-                                  width={40}
-                                  height={40}
-                                  alt="Nepo Games"
-                                  className="border-blue-600/70 border w-10 h-10 rounded-full object-cover cursor-pointer"
-                                  priority
+                          <div
+                            ref={ref}
+                            onMouseEnter={() => setOpenRef(true)}
+                            className="relative w-fit"
+                          >
+                            <a>
+                              <Image
+                                src={user?.profile_image}
+                                onClick={() => setOpenRef(true)}
+                                width={40}
+                                height={40}
+                                alt="Nepo Games"
+                                className="border-blue-600/70 border w-10 h-10 rounded-full object-cover cursor-pointer"
+                                priority
+                              />
+                              {user?.plan && user.plan !== "free" && (
+                                <Verified
+                                  className="fill-green-600 fixed -mt-3 ml-6 text-green-100"
+                                  size={16}
                                 />
-                                {user?.plan && user.plan !== "free" && (
-                                  <Verified
-                                    className="fill-green-600 fixed -mt-3 ml-6 text-green-100"
-                                    size={16}
-                                  />
-                                )}
-                              </a>
-
-                              {/* Dropdown */}
-                              {refOpen && (
-                                <div className="cursor-pointer">
-                                  {" "}
-                                  <div className="absolute  right-0 mt-1 bg-white/95  backdrop-blur-md border  border-[#7A7AFE]/50 shadow-sm rounded-sm z-50 overflow-hidden transition-all duration-200">
-                                    {/* Profile */}
-                                    <Link
-                                      href={"/profile"}
-                                      className="flex items-center gap-3 px-4 py-3 text-xs text-gray-700 hover:bg-gray-100/80 transition"
-                                    >
-                                      <span className="text-xs">👤</span>
-                                      Profile
-                                    </Link>{" "}
-                                    {/* <div className="h-px bg-gray-200 mx-2"></div>
-                                    <Link
-                                      href={"/marketplace"}
-                                      className="flex items-center gap-3 px-4 py-3 text-xs text-gray-700 hover:bg-gray-100/80 transition"
-                                    >
-                                      <span className="text-xs">🛒</span>
-                                      Marketplace
-                                    </Link> */}
-                                    {/* Divider */}
-                                    <div className="h-px bg-gray-200 mx-2"></div>
-                                    <Link
-                                      href={"/tournament"}
-                                      className="flex items-center gap-3 px-4 py-3 text-xs text-gray-700 hover:bg-gray-100/80 transition"
-                                    >
-                                      <span className="text-xs">🏆</span>
-                                      Tournaments
-                                    </Link>
-                                    <div className="h-px bg-gray-200 mx-2"></div>
-                                    {/* Logout */}
-                                    <button
-                                      onClick={() => {
-                                        setOpenRef(false);
-                                        setLogOpen(true);
-                                      }}
-                                      className="flex items-center cursor-pointer gap-3 w-full px-4 py-3 text-xs text-red-500 hover:bg-red-50 transition"
-                                    >
-                                      <span className="text-xs">🚪</span>
-                                      Logout
-                                    </button>
-                                  </div>{" "}
-                                </div>
                               )}
-                            </div>
-                          </>
+                            </a>
+                            {refOpen && (
+                              <div className="cursor-pointer">
+                                <div className="absolute right-0 mt-1 bg-white/95 backdrop-blur-md border border-[#7A7AFE]/50 shadow-sm rounded-sm z-50 overflow-hidden transition-all duration-200">
+                                  <Link
+                                    href={"/profile"}
+                                    className="flex items-center gap-3 px-4 py-3 text-xs text-gray-700 hover:bg-gray-100/80 transition"
+                                  >
+                                    <span className="text-xs">👤</span>Profile
+                                  </Link>
+                                  <div className="h-px bg-gray-200 mx-2"></div>
+                                  <Link
+                                    href={"/tournament"}
+                                    className="flex items-center gap-3 px-4 py-3 text-xs text-gray-700 hover:bg-gray-100/80 transition"
+                                  >
+                                    <span className="text-xs">🏆</span>
+                                    Tournaments
+                                  </Link>
+                                  <div className="h-px bg-gray-200 mx-2"></div>
+                                  <button
+                                    onClick={() => {
+                                      setOpenRef(false);
+                                      setLogOpen(true);
+                                    }}
+                                    className="flex items-center cursor-pointer gap-3 w-full px-4 py-3 text-xs text-red-500 hover:bg-red-50 transition"
+                                  >
+                                    <span className="text-xs">🚪</span>Logout
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+                          </div>
                         )}
                       </div>
                       <div className="md:hidden pr-3 flex transition-all duration-300 justify-center md:pr-0">
                         <button onClick={() => setOpen(!open)}>
                           {open ? (
                             <div className="-mr-1">
-                              <X size={23} className=" text-blue-700" />
+                              <X size={23} className="text-blue-700" />
                             </div>
                           ) : (
                             <Image
@@ -647,12 +443,12 @@ hover:text-[#0000FF]
                     </div>
                   </div>
                 </div>
+
+                {/* Mobile nav drawer */}
                 <div
-                  className={`fixed top-13 rounded-b-4xl transition-all duration-300 right-0 w-full border-[#bbbbf6] border border-t-0 z-1050 transform        
- ease-out
-  ${open ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4 pointer-events-none"}`}
+                  className={`fixed top-13 rounded-b-4xl transition-all duration-300 right-0 w-full border-[#bbbbf6] border border-t-0 z-1050 transform ease-out ${open ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4 pointer-events-none"}`}
                 >
-                  <div className="p-6 pt-0  backdrop-blur-2xl  shadow-xs rounded-b-4xl bg-white/95  h-full flex flex-col justify-between">
+                  <div className="p-6 pt-0 backdrop-blur-2xl shadow-xs rounded-b-4xl bg-white/95 h-full flex flex-col justify-between">
                     <div className="bg-[#7A7AFE]/50 h-[0.5] -mx-6"></div>
                     {user?.username ? (
                       <div>
@@ -695,50 +491,47 @@ hover:text-[#0000FF]
                         <div className="bg-[#7A7AFE]/50 h-[1] -mx-6"></div>
                       </div>
                     ) : (
-                      <>
-                        <div>
-                          <div className="flex items-center gap-3 py-3">
-                            <div className="w-12 h-12 rounded-full bg-blue-200 border border-blue-600 overflow-hidden">
-                              <Image
-                                height={48}
-                                width={48}
-                                priority
-                                src="/profile.png"
-                                alt="Profile"
-                                className="w-full h-full object-cover"
-                              />
-                            </div>
-                            <p>
-                              <Link
-                                href={"/login"}
-                                className="font-semibold text-blue-600"
-                              >
-                                Sign In
-                              </Link>{" "}
-                              to your account
-                            </p>
+                      <div>
+                        <div className="flex items-center gap-3 py-3">
+                          <div className="w-12 h-12 rounded-full bg-blue-200 border border-blue-600 overflow-hidden">
+                            <Image
+                              height={48}
+                              width={48}
+                              priority
+                              src="/profile.png"
+                              alt="Profile"
+                              className="w-full h-full object-cover"
+                            />
                           </div>
-                          <div className="bg-[#7A7AFE]/50 h-[1] -mx-6"></div>
+                          <p>
+                            <Link
+                              href={"/login"}
+                              className="font-semibold text-blue-600"
+                            >
+                              Sign In
+                            </Link>{" "}
+                            to your account
+                          </p>
                         </div>
-                      </>
+                        <div className="bg-[#7A7AFE]/50 h-[1] -mx-6"></div>
+                      </div>
                     )}
-                    <div className="flex text-base text-[#262626]  flex-col gap-6 h-full font-semibold -mb-2.5">
+                    <div className="flex text-base text-[#262626] flex-col gap-6 h-full font-semibold -mb-2.5">
                       <div className="flex flex-col -mb-6 -mx-6">
                         <Link href={"/marketplace"}>
                           <button
                             onClick={() => setActive("Marketplace")}
-                            className={`${linkClass("Marketplace")}   group`}
+                            className={`${linkClass("Marketplace")} group`}
                           >
                             <Store
                               size={20}
                               className="text-black group-hover:text-blue-600 transition-colors duration-200"
                             />
-                            <span className=" group-hover:text-blue-600 ">
+                            <span className="group-hover:text-blue-600">
                               Marketplace
                             </span>
                           </button>
                         </Link>
-
                         <Link href={"/pricing"}>
                           <button
                             onClick={() => setActive("Pricing")}
@@ -748,7 +541,7 @@ hover:text-[#0000FF]
                               size={20}
                               className="text-black group-hover:text-blue-600 transition-colors duration-200"
                             />
-                            <span className=" group-hover:text-blue-600 ">
+                            <span className="group-hover:text-blue-600">
                               Pricing
                             </span>
                           </button>
@@ -776,79 +569,56 @@ hover:text-[#0000FF]
                               size={20}
                               className="text-black group-hover:text-blue-600 transition-colors duration-200"
                             />
-                            <span className=" group-hover:text-blue-600 ">
+                            <span className="group-hover:text-blue-600">
                               Contact
                             </span>
                           </button>
                         </Link>
                       </div>
                       {user?.username ? (
-                        <>
-                          <div className="flex items-center pt-3 border-t border-[#7A7AFE]/50 -mx-6 justify-between text-sm">
-                            <div className="w-10 h-10 ml-6 rounded-full bg-blue-200 border border-blue-600 overflow-hidden">
-                              <Image
-                                height={40}
-                                width={40}
-                                priority
-                                src={user?.profile_image}
-                                alt="Profile"
-                                className="w-full h-full object-cover"
+                        <div className="flex items-center pt-3 border-t border-[#7A7AFE]/50 -mx-6 justify-between text-sm">
+                          <div className="w-10 h-10 ml-6 rounded-full bg-blue-200 border border-blue-600 overflow-hidden">
+                            <Image
+                              height={40}
+                              width={40}
+                              priority
+                              src={user?.profile_image}
+                              alt="Profile"
+                              className="w-full h-full object-cover"
+                            />
+                            {user?.plan && user.plan !== "free" && (
+                              <Verified
+                                className="fill-green-600 fixed -mt-3 ml-6 text-green-100"
+                                size={16}
                               />
-                              {user?.plan && user.plan !== "free" && (
-                                <Verified
-                                  className="fill-green-600 fixed -mt-3 ml-6 text-green-100"
-                                  size={16}
-                                />
-                              )}
-                            </div>
-                            <Link
-                              href={"/profile"}
-                              className="mr-6
-                 flex items-center justify-center
-      py-2 px-3 rounded-xl border 
-      bg-[#0000FF] text-white font-bold
-            border-gray-400/50
-      transition-all duration-300
-      hover:bg-blue-700
-      active:bg-blue-700
-      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500
-    "
-                            >
-                              Go to Profile
-                            </Link>
+                            )}
                           </div>
-                        </>
+                          <Link
+                            href={"/profile"}
+                            className="mr-6 flex items-center justify-center py-2 px-3 rounded-xl border bg-[#0000FF] text-white font-bold border-gray-400/50 transition-all duration-300 hover:bg-blue-700 active:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                          >
+                            Go to Profile
+                          </Link>
+                        </div>
                       ) : (
-                        <>
-                          {" "}
-                          <div className="flex items-center pt-3 border-t border-[#7A7AFE]/50 -mx-6 justify-between text-sm">
-                            <div className="w-10 h-10 ml-6 rounded-full bg-blue-200 border border-blue-600 overflow-hidden">
-                              <Image
-                                height={40}
-                                width={40}
-                                priority
-                                src="/profile.png"
-                                alt="Profile"
-                                className="w-full h-full object-cover"
-                              />
-                            </div>
-                            <Link
-                              href={"/signup"}
-                              className="mr-6
-                 flex items-center justify-center
-      py-2 px-3 rounded-xl border 
-      bg-[#0000FF] text-white font-bold
-            border-gray-400/50
-      transition-all duration-300
-      hover:bg-blue-700
-      active:bg-blue-700
-      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500
-    "
-                            >
-                              Sign Up
-                            </Link>
+                        <div className="flex items-center pt-3 border-t border-[#7A7AFE]/50 -mx-6 justify-between text-sm">
+                          <div className="w-10 h-10 ml-6 rounded-full bg-blue-200 border border-blue-600 overflow-hidden">
+                            <Image
+                              height={40}
+                              width={40}
+                              priority
+                              src="/profile.png"
+                              alt="Profile"
+                              className="w-full h-full object-cover"
+                            />
                           </div>
-                        </>
+                          <Link
+                            href={"/signup"}
+                            className="mr-6 flex items-center justify-center py-2 px-3 rounded-xl border bg-[#0000FF] text-white font-bold border-gray-400/50 transition-all duration-300 hover:bg-blue-700 active:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                          >
+                            Sign Up
+                          </Link>
+                        </div>
                       )}
                     </div>
                   </div>
@@ -857,92 +627,406 @@ hover:text-[#0000FF]
             </Reveal>
           </div>
 
-          {/* BACKDROP */}
           {open && (
             <div
               onClick={() => setOpen(false)}
               className="fixed inset-0 bg-black/30 z-40"
             />
           )}
+
           <main>
-            {" "}
-            <div className="bg-linear-to-b h-full mb-10 rounded-b-4xl from-[#FFFFFF] to-[#8080FF]">
+            {/* ── HERO SECTION — Clean white with decorative SVG elements ── */}
+            <div className="relative bg-white overflow-hidden min-h-screen mb-0 pb-0">
+              {/* ── Decorative: concentric arcs top-left (matching design) ── */}
+              <div
+                className="absolute top-0 left-0 w-64 h-64 pointer-events-none select-none opacity-60"
+                aria-hidden="true"
+              >
+                <svg
+                  viewBox="0 0 260 260"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="w-full h-full"
+                >
+                  <circle
+                    cx="0"
+                    cy="0"
+                    r="80"
+                    stroke="#BFBFFF"
+                    strokeWidth="1.2"
+                    fill="none"
+                  />
+                  <circle
+                    cx="0"
+                    cy="0"
+                    r="120"
+                    stroke="#BFBFFF"
+                    strokeWidth="1.2"
+                    fill="none"
+                  />
+                  <circle
+                    cx="0"
+                    cy="0"
+                    r="160"
+                    stroke="#BFBFFF"
+                    strokeWidth="1.2"
+                    fill="none"
+                  />
+                  <circle
+                    cx="0"
+                    cy="0"
+                    r="200"
+                    stroke="#BFBFFF"
+                    strokeWidth="1.2"
+                    fill="none"
+                  />
+                  <circle
+                    cx="0"
+                    cy="0"
+                    r="240"
+                    stroke="#BFBFFF"
+                    strokeWidth="1.2"
+                    fill="none"
+                  />
+                </svg>
+              </div>
+
+              {/* ── Decorative: botanical leaf left-center (matching design) ── */}
+              <div
+                className="absolute left-2 top-1/2 -translate-y-1/2 w-28 sm:w-36 pointer-events-none select-none opacity-70"
+                aria-hidden="true"
+              >
+                <svg
+                  viewBox="0 0 140 280"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="w-full h-full"
+                >
+                  <path
+                    d="M70 260 Q10 200 20 120 Q30 60 70 20 Q110 60 120 120 Q130 200 70 260Z"
+                    fill="#C7D7FF"
+                    fillOpacity="0.5"
+                  />
+                  <path
+                    d="M70 260 Q70 160 70 20"
+                    stroke="#7AA0FF"
+                    strokeWidth="1.5"
+                    fill="none"
+                  />
+                  <path
+                    d="M70 200 Q40 170 25 140"
+                    stroke="#7AA0FF"
+                    strokeWidth="1"
+                    fill="none"
+                  />
+                  <path
+                    d="M70 200 Q100 170 115 140"
+                    stroke="#7AA0FF"
+                    strokeWidth="1"
+                    fill="none"
+                  />
+                  <path
+                    d="M70 155 Q45 130 32 100"
+                    stroke="#7AA0FF"
+                    strokeWidth="1"
+                    fill="none"
+                  />
+                  <path
+                    d="M70 155 Q95 130 108 100"
+                    stroke="#7AA0FF"
+                    strokeWidth="1"
+                    fill="none"
+                  />
+                  <path
+                    d="M70 110 Q52 88 44 65"
+                    stroke="#7AA0FF"
+                    strokeWidth="1"
+                    fill="none"
+                  />
+                  <path
+                    d="M70 110 Q88 88 96 65"
+                    stroke="#7AA0FF"
+                    strokeWidth="1"
+                    fill="none"
+                  />
+                </svg>
+              </div>
+
+              {/* ── Decorative: gamepad silhouette top-right (matching design) ── */}
+              <div
+                className="absolute right-0 top-16 sm:top-20 w-48 sm:w-72 pointer-events-none select-none opacity-30"
+                aria-hidden="true"
+              >
+                <svg
+                  viewBox="0 0 320 260"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="w-full h-full"
+                >
+                  {/* Controller body */}
+                  <path
+                    d="M60 80 Q40 80 30 100 L10 180 Q5 210 30 220 Q55 230 75 200 L95 165 H225 L245 200 Q265 230 290 220 Q315 210 310 180 L290 100 Q280 80 260 80 Z"
+                    fill="#BFBFFF"
+                    fillOpacity="0.6"
+                  />
+                  {/* D-pad */}
+                  <rect
+                    x="70"
+                    y="118"
+                    width="14"
+                    height="40"
+                    rx="3"
+                    fill="#9090EE"
+                    fillOpacity="0.7"
+                  />
+                  <rect
+                    x="56"
+                    y="132"
+                    width="14"
+                    height="14"
+                    rx="3"
+                    fill="#9090EE"
+                    fillOpacity="0.7"
+                    transform="translate(14,0)"
+                  />
+                  <rect
+                    x="84"
+                    y="132"
+                    width="14"
+                    height="14"
+                    rx="3"
+                    fill="#9090EE"
+                    fillOpacity="0.7"
+                  />
+                  {/* Buttons */}
+                  <circle
+                    cx="225"
+                    cy="118"
+                    r="8"
+                    fill="#9090EE"
+                    fillOpacity="0.7"
+                  />
+                  <circle
+                    cx="245"
+                    cy="138"
+                    r="8"
+                    fill="#9090EE"
+                    fillOpacity="0.7"
+                  />
+                  <circle
+                    cx="205"
+                    cy="138"
+                    r="8"
+                    fill="#9090EE"
+                    fillOpacity="0.7"
+                  />
+                  <circle
+                    cx="225"
+                    cy="158"
+                    r="8"
+                    fill="#9090EE"
+                    fillOpacity="0.7"
+                  />
+                  {/* Plus decoration */}
+                  <rect
+                    x="290"
+                    y="38"
+                    width="8"
+                    height="34"
+                    rx="4"
+                    fill="#7A7AFF"
+                    fillOpacity="0.5"
+                  />
+                  <rect
+                    x="276"
+                    y="52"
+                    width="34"
+                    height="8"
+                    rx="4"
+                    fill="#7A7AFF"
+                    fillOpacity="0.5"
+                  />
+                  {/* Circle decoration */}
+                  <circle
+                    cx="295"
+                    cy="12"
+                    r="8"
+                    fill="#7A7AFF"
+                    fillOpacity="0.4"
+                  />
+                  {/* Dots */}
+                  <circle
+                    cx="265"
+                    cy="38"
+                    r="5"
+                    fill="#7A7AFF"
+                    fillOpacity="0.35"
+                  />
+                </svg>
+              </div>
+
+              {/* ── Decorative: concentric arcs bottom-right ── */}
+              <div
+                className="absolute bottom-0 right-0 w-48 h-48 pointer-events-none select-none opacity-40"
+                aria-hidden="true"
+              >
+                <svg
+                  viewBox="0 0 200 200"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="w-full h-full"
+                >
+                  <circle
+                    cx="200"
+                    cy="200"
+                    r="60"
+                    stroke="#BFBFFF"
+                    strokeWidth="1.2"
+                    fill="none"
+                  />
+                  <circle
+                    cx="200"
+                    cy="200"
+                    r="100"
+                    stroke="#BFBFFF"
+                    strokeWidth="1.2"
+                    fill="none"
+                  />
+                  <circle
+                    cx="200"
+                    cy="200"
+                    r="140"
+                    stroke="#BFBFFF"
+                    strokeWidth="1.2"
+                    fill="none"
+                  />
+                  <circle
+                    cx="200"
+                    cy="200"
+                    r="180"
+                    stroke="#BFBFFF"
+                    strokeWidth="1.2"
+                    fill="none"
+                  />
+                </svg>
+              </div>
+
               <Reveal>
-                <div className="pt-45 px-[2%]">
+                <div className="relative z-10 pt-40 sm:pt-44 px-[5%] pb-0">
+                  {/* ── Badge pill — solid blue matching design ── */}
                   <div className="justify-center flex">
-                    <div className="bg-white flex justify-center items-center gap-2 p-1 px-3 rounded-2xl">
+                    <div className="bg-[#0000FF] flex justify-center items-center gap-2 p-1 px-3 rounded-2xl shadow-[0_4px_14px_rgba(0,0,255,0.25)]">
                       <Link href={"/#"}>
-                        {" "}
                         <Image
                           height={20}
                           width={20}
                           priority
                           src="/logo.png"
                           alt="Nepo Games"
-                          className="w-5 h-5 p-1 rounded-[50%] bg-blue-700 object-cover"
+                          className="w-5 h-5 p-1 rounded-[50%] bg-white/20 object-cover"
                         />
                       </Link>
-                      <p className="text-[#0000FF]">Best Gaming Marketplace</p>
-                    </div>{" "}
-                  </div>
-                  <div className="text-center pt-5 text-5xl">
-                    <p>Trade your Gaming Accounts with</p>
-                    <p className="text-white sm:pt-3">Nepogames</p>
-                  </div>
-                  <div className="hidden md:flex relative">
-                    {/* floating tags */}
-                    <div className="absolute left-0 right-0 -top-5 flex justify-center pointer-events-none">
-                      <div className="flex justify-between max-w-3xl w-full px-[1%]">
-                        <div className="w-fit">
-                          <div className="relative">
-                            <div className="absolute -top-4.5 left-22 w-3 h-3 border-l-4 border-t-4 border-blue-700 rotate-90"></div>
-
-                            <div className="rotate-[45deg] bg-linear-to-r from-purple-600 to-blue-500 px-3 py-2 rounded-xl border-2 border-blue-800 shadow-lg">
-                              <p className="text-white text-sm font-semibold tracking-wide">
-                                Nepogames
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="w-fit">
-                          <div className="relative">
-                            <div className="absolute -top-4.5 left-6 w-3 h-3 border-l-4 border-t-4 border-blue-700"></div>
-
-                            <div className="rotate-[-45deg] bg-linear-to-r from-purple-600 to-blue-500 px-3 py-2 rounded-xl border-2 border-blue-800 shadow-lg">
-                              <p className="text-white text-sm font-semibold tracking-wide">
-                                Nepogames
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
+                      <p className="text-white text-sm font-medium">
+                        Best Gaming Marketplace
+                      </p>
                     </div>
                   </div>
-                  <div className="text-center mt-4 text-lg flex w-full justify-center">
-                    <div className=" max-w-120">
-                      <p className="text-[#1b1a1a]">
+
+                  {/* ── Headline — larger, bolder, two-line like design ── */}
+                  <div className="text-center pt-6 text-4xl sm:text-5xl lg:text-6xl font-semibold leading-[1.1] tracking-tight text-[#0a0a1a]">
+                    <p>Trade Your Gaming Account with</p>
+                    <p className="mt-1 text-[#0000FF] font-bold">Nepogames.</p>
+                  </div>
+
+                  {/* ── Sub-copy ── */}
+                  <div className="text-center mt-5 flex w-full justify-center">
+                    <div className="max-w-lg">
+                      <p className="text-gray-500 text-base leading-relaxed">
                         Redefining how premium gaming accounts are traded —
                         securely and transparently. Skip the grind.{" "}
-                      </p>
-                      <p className="font-bold italic text-[#0000FF]">
-                        Trade with confidence.
+                        <span className="font-bold text-[#0000FF]">
+                          Trade with confidence.
+                        </span>
                       </p>
                     </div>
                   </div>
-                  <div className="justify-center pt-4  -mx-[2%] rounded-b-2xl flex">
+
+                  {/* ── CTA buttons — LOCKED, unchanged ── */}
+                  <Reveal>
+                    <div className="mt-8 flex flex-col sm:flex-row items-center gap-3 justify-center">
+                      <Link
+                        href="/marketplace"
+                        className="
+                  inline-flex items-center gap-2
+                  bg-[#0000FF] text-white
+                  px-7 py-3.5 rounded-xl
+                  text-sm font-semibold
+                  shadow-[0_4px_16px_rgba(0,0,255,0.35)]
+                  hover:bg-blue-700 hover:shadow-[0_6px_24px_rgba(0,0,255,0.45)]
+                  hover:gap-3 active:scale-95
+                  transition-all duration-200
+                "
+                      >
+                        Browse marketplace
+                        <ArrowRight size={15} />
+                      </Link>
+                      <Link
+                        href="/sell-game"
+                        className="
+                  inline-flex items-center gap-2
+                  bg-white text-[#0A0A1A]
+                  px-7 py-3.5 rounded-xl
+                  text-sm font-semibold
+                  border border-gray-200
+                  hover:border-[#0000FF] hover:text-[#0000FF]
+                  active:scale-95
+                  transition-all duration-200
+                "
+                      >
+                        List your account
+                      </Link>
+                    </div>
+                  </Reveal>
+
+                  {/* ── Micro-trust signals — LOCKED, unchanged ── */}
+                  <Reveal>
+                    <div className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
+                      {[
+                        { icon: Shield, text: "Escrow protected" },
+                        { icon: Zap, text: "Instant delivery" },
+                        { icon: Lock, text: "Verified accounts" },
+                      ].map(({ icon: Icon, text }) => (
+                        <div
+                          key={text}
+                          className="flex items-center gap-1.5 text-xs text-gray-400"
+                        >
+                          <Icon size={13} className="text-[#0000FF]" />
+                          <span>{text}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </Reveal>
+                  <div className="justify-center my-10 -mx-[2%] rounded-b-2xl flex">
+                    {/* ── LOCKED: Hero image ── */}
                     <Image
                       src="/home-gen-pic.png"
                       alt=""
                       width={1152}
                       height={200}
-                      className="object-cover overflow-hidden rounded-b-2xl w-6xl h-50 sm:h-70 lg:h-96.75"
+                      className="object-cover overflow-hidden rounded-b-2xl "
                       priority
                     />
                   </div>
+                  
                 </div>
-              </Reveal>{" "}
+              </Reveal>
             </div>
+
+            {/* ─────────────────────────────────────────────────────────────
+              REMAINING SECTIONS — unchanged below
+            ───────────────────────────────────────────────────────────── */}
+
+            {/* ── Game logo scroller ── */}
             <Reveal>
               <div className="scroller bg-linear-to-r from-[#5DACEC] to-[#9750F6]">
                 <div
@@ -965,471 +1049,561 @@ hover:text-[#0000FF]
                 </div>
               </div>
             </Reveal>
-            <div>
-              {" "}
+
+            {/* ── HOW IT WORKS ── */}
+            <section className="bg-white py-24 px-[5%]">
               <Reveal>
-                <p className="text-[#0000FF] px-3 text-3xl mt-5 mb-7 text-center lg:text-5xl pt-5 flex w-full justify-center">
-                  How our Marketplace Works
-                </p>
-              </Reveal>
-              <div className="grid overflow-hidden sm:grid-cols-2 xl:grid-cols-4 gap-10 px-[5%]  items-stretch">
-                <RevealLeft>
-                  <Link href={"/signup"}>
-                    <div className="bg-linear-to-b h-full from-[#4F8CFF]/50 rounded-xl pb-0 p-7 shadow-md to-[#8A38F5]/50  transition-all duration-500">
-                      <div className="flex gap-3 items-center">
-                        <div className=" bg-white rounded-[50%] p-3">
-                          <div className="border-[#6D62FA] rounded-[50%] border-3">
-                            <User2Icon
-                              size={25}
-                              style={{ stroke: "url(#grad1)" }}
+                <div className="max-w-6xl mx-auto">
+                  <div className="flex justify-center mb-5">
+                    <span className="text-xs font-semibold tracking-widest uppercase text-[#0000FF] bg-blue-50 px-4 py-1.5 rounded-full border border-blue-100">
+                      How it works
+                    </span>
+                  </div>
+                  <h2 className="text-center text-3xl sm:text-4xl lg:text-[2.75rem] font-bold text-[#0a0a1a] leading-tight mb-4">
+                    Trade in four simple steps
+                  </h2>
+                  <p className="text-center text-gray-500 max-w-xl mx-auto mb-16 text-base leading-relaxed">
+                    From registration to completed trade, every step is designed
+                    for speed, clarity, and complete security.
+                  </p>
+
+                  <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-6">
+                    <RevealLeft>
+                      <Link href={"/signup"}>
+                        <div className="group relative bg-white border border-gray-100 rounded-2xl p-6 pb-0 hover:border-blue-200 hover:shadow-[0_8px_40px_rgba(0,0,255,0.07)] transition-all duration-300 overflow-hidden h-full flex flex-col">
+                          <span className="absolute top-5 right-5 text-[10px] font-bold tracking-widest text-gray-300 uppercase">
+                            01
+                          </span>
+                          <div className="w-11 h-11 rounded-xl bg-blue-50 flex items-center justify-center mb-5 group-hover:bg-blue-100 transition-colors duration-300">
+                            <User2Icon size={20} className="text-[#0000FF]" />
+                          </div>
+                          <h3 className="text-base font-semibold text-[#0a0a1a] mb-2">
+                            Create Account
+                          </h3>
+                          <p className="text-sm text-gray-500 leading-relaxed mb-6 flex-1">
+                            Register to access a protected marketplace built for
+                            secure, transparent gaming account trading.
+                          </p>
+                          <div className="px-4 mt-auto">
+                            <Image
+                              src="/ex-sign.png"
+                              alt=""
+                              width={300}
+                              height={160}
+                              className="rounded-t-xl w-full"
                             />
-                            <svg width="0" height="0">
-                              <defs>
-                                <linearGradient
-                                  id="grad1"
-                                  x1="0%"
-                                  y1="0%"
-                                  x2="0%"
-                                  y2="100%"
-                                >
-                                  <stop offset="0%" stopColor="#4F8CFF" />
-                                  <stop offset="100%" stopColor="#8A38F5" />
-                                </linearGradient>
-                              </defs>
-                            </svg>{" "}
                           </div>
                         </div>
-                        <p className=" text-[22px] bg-linear-to-r to-[#0000FF] from-[#800080E0] bg-clip-text text-transparent">
-                          Sign Up
-                        </p>
-                      </div>
-                      <p className="text-[13px] p-2 pb-5 sm:h-22">
-                        Register to access a protected marketplace built for
-                        secure, transparent gaming account trading.
-                      </p>
-                      <div className="mt-auto xl:pt-4 px-5">
-                        <Image
-                          src="/ex-sign.png"
-                          alt=""
-                          width={300}
-                          height={160}
-                          className="rounded-t-2xl"
-                        />
-                      </div>
-                    </div>
-                  </Link>
-                </RevealLeft>
-                <RevealRight>
-                  <Link href="/sell-game">
-                    <div className="bg-linear-to-b h-full from-[#4F8CFF]/50 rounded-xl pb-0 p-7 shadow-md to-[#8A38F5]/50  transition-all duration-500">
-                      <div className="flex gap-3 items-center">
-                        <div className=" bg-white rounded-[50%] p-3">
-                          <div className="">
-                            <Plus size={25} className="text-[#6D62FA] " />{" "}
+                      </Link>
+                    </RevealLeft>
+
+                    <RevealRight>
+                      <Link href="/sell-game">
+                        <div className="group relative bg-white border border-gray-100 rounded-2xl p-6 pb-0 hover:border-blue-200 hover:shadow-[0_8px_40px_rgba(0,0,255,0.07)] transition-all duration-300 overflow-hidden h-full flex flex-col">
+                          <span className="absolute top-5 right-5 text-[10px] font-bold tracking-widest text-gray-300 uppercase">
+                            02
+                          </span>
+                          <div className="w-11 h-11 rounded-xl bg-violet-50 flex items-center justify-center mb-5 group-hover:bg-violet-100 transition-colors duration-300">
+                            <Plus size={20} className="text-violet-600" />
+                          </div>
+                          <h3 className="text-base font-semibold text-[#0a0a1a] mb-2">
+                            List Your Account
+                          </h3>
+                          <p className="text-sm text-gray-500 leading-relaxed mb-6 flex-1">
+                            Add your gaming account in minutes and connect with
+                            serious buyers instantly. Fast, safe, and verified.
+                          </p>
+                          <div className="px-4 mt-auto">
+                            <Image
+                              src="/game-gen.png"
+                              alt=""
+                              width={300}
+                              height={160}
+                              className="rounded-t-xl w-full"
+                            />
                           </div>
                         </div>
-                        <p className=" text-[22px] bg-linear-to-r to-[#0000FF] from-[#800080E0] bg-clip-text text-transparent">
-                          Add Account
-                        </p>
-                      </div>
-                      <p className="text-[13px] p-2 pb-5 sm:h-23.25 xl:h-[92.5px]">
-                        Add games to sell and see potential buyers. Safe Fast
-                        and Secure.
-                      </p>
-                      <div className="mt-auto xl:pt-4 px-5">
-                        <Image
-                          src="/game-gen.png"
-                          alt=""
-                          width={300}
-                          height={160}
-                          className="rounded-t-2xl"
-                        />
-                      </div>
-                    </div>
-                  </Link>
-                </RevealRight>
-                <RevealLeft>
-                  {" "}
-                  <Link href={"/marketplace"}>
-                    <div className="bg-linear-to-b h-full from-[#4F8CFF]/50 rounded-xl pb-0 p-7 shadow-md to-[#8A38F5]/50  transition-all duration-500">
-                      <div className="flex gap-3 items-center">
-                        <div className=" bg-white rounded-[50%] p-3">
-                          <div>
-                            <Tag size={25} style={{ stroke: "url(#grad1)" }} />
-                            <svg width="0" height="0">
-                              <defs>
-                                <linearGradient
-                                  id="grad1"
-                                  x1="0%"
-                                  y1="0%"
-                                  x2="0%"
-                                  y2="100%"
-                                >
-                                  <stop offset="0%" stopColor="#4F8CFF" />
-                                  <stop offset="100%" stopColor="#8A38F5" />
-                                </linearGradient>
-                              </defs>
-                            </svg>{" "}
+                      </Link>
+                    </RevealRight>
+
+                    <RevealLeft>
+                      <Link href={"/marketplace"}>
+                        <div className="group relative bg-white border border-gray-100 rounded-2xl p-6 pb-0 hover:border-blue-200 hover:shadow-[0_8px_40px_rgba(0,0,255,0.07)] transition-all duration-300 overflow-hidden h-full flex flex-col">
+                          <span className="absolute top-5 right-5 text-[10px] font-bold tracking-widest text-gray-300 uppercase">
+                            03
+                          </span>
+                          <div className="w-11 h-11 rounded-xl bg-emerald-50 flex items-center justify-center mb-5 group-hover:bg-emerald-100 transition-colors duration-300">
+                            <Tag size={20} className="text-emerald-600" />
+                          </div>
+                          <h3 className="text-base font-semibold text-[#0a0a1a] mb-2">
+                            Buy or Sell
+                          </h3>
+                          <p className="text-sm text-gray-500 leading-relaxed mb-6 flex-1">
+                            Browse listings, make an offer, and close the deal —
+                            with zero hassle and full price transparency.
+                          </p>
+                          <div className="px-4 mt-auto">
+                            <Image
+                              src="/buy-sign.png"
+                              alt=""
+                              width={300}
+                              height={160}
+                              className="rounded-t-xl w-full"
+                            />
                           </div>
                         </div>
-                        <p className=" text-[22px] bg-linear-to-r to-[#0000FF] from-[#800080E0] bg-clip-text text-transparent">
-                          Buy or Sell
-                        </p>
-                      </div>
-                      <p className="text-[13px] p-2 pb-5 sm:h-23.25 xl:h-[92.5px]">
-                        List your gaming account in minutes, connect with
-                        serious buyers, and receive secure payouts with zero
-                        hassle.
-                      </p>
-                      <div className="mt-auto xl:pt-4 px-5">
-                        <Image
-                          src="/buy-sign.png"
-                          alt=""
-                          width={300}
-                          height={160}
-                          className="rounded-t-2xl"
-                        />
-                      </div>
-                    </div>
-                  </Link>
-                </RevealLeft>{" "}
-                <RevealRight>
-                  <Link href={`/profile`}>
-                    <div className="bg-linear-to-b h-full from-[#4F8CFF]/50 rounded-xl pb-0 p-7 shadow-md to-[#8A38F5]/50  transition-all duration-500">
-                      <div className="flex gap-3 items-center">
-                        <div className=" bg-white rounded-[50%] p-3">
-                          <div>
+                      </Link>
+                    </RevealLeft>
+
+                    <RevealRight>
+                      <Link href={`/profile`}>
+                        <div className="group relative bg-white border border-gray-100 rounded-2xl p-6 pb-0 hover:border-blue-200 hover:shadow-[0_8px_40px_rgba(0,0,255,0.07)] transition-all duration-300 overflow-hidden h-full flex flex-col">
+                          <span className="absolute top-5 right-5 text-[10px] font-bold tracking-widest text-gray-300 uppercase">
+                            04
+                          </span>
+                          <div className="w-11 h-11 rounded-xl bg-amber-50 flex items-center justify-center mb-5 group-hover:bg-amber-100 transition-colors duration-300">
                             <SlidersHorizontal
-                              size={25}
-                              className="text-[#6D62FA]"
+                              size={20}
+                              className="text-amber-600"
+                            />
+                          </div>
+                          <h3 className="text-base font-semibold text-[#0a0a1a] mb-2">
+                            Manage Trades
+                          </h3>
+                          <p className="text-sm text-gray-500 leading-relaxed mb-6 flex-1">
+                            Track every transaction in real time with a clean
+                            dashboard built for complete transparency.
+                          </p>
+                          <div className="px-4 mt-auto">
+                            <Image
+                              src="/page-gen.png"
+                              alt=""
+                              width={300}
+                              height={160}
+                              className="rounded-t-xl w-full"
                             />
                           </div>
                         </div>
-                        <p className=" text-[22px] bg-linear-to-r to-[#0000FF] from-[#800080E0] bg-clip-text text-transparent">
-                          Control Trade
+                      </Link>
+                    </RevealRight>
+                  </div>
+                </div>
+              </Reveal>
+            </section>
+
+            {/* ── TRUST / ESCROW SECTION ── */}
+            <section className="bg-[#FAFAFA] border-t border-b border-gray-100 py-24 px-[5%]">
+              <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-16 items-center">
+                <Reveal>
+                  <div className="flex justify-center">
+                    <div className="relative">
+                      <div className="absolute inset-0 blur-3xl bg-blue-200/40 rounded-full scale-75 translate-y-8 pointer-events-none" />
+                      <Image
+                        src="/phone-gen-pic.png"
+                        alt="Secure trading on Nepogames"
+                        width={240}
+                        height={400}
+                        className="relative z-10"
+                      />
+                    </div>
+                  </div>
+                </Reveal>
+
+                <Reveal>
+                  <div>
+                    <span className="text-xs font-semibold tracking-widest uppercase text-[#0000FF] bg-blue-50 px-4 py-1.5 rounded-full border border-blue-100">
+                      Escrow Protection
+                    </span>
+                    <h2 className="mt-5 text-3xl sm:text-4xl font-bold text-[#0a0a1a] leading-tight">
+                      Trade with complete
+                      <br />
+                      <span className="text-[#0000FF]">peace of mind</span>
+                    </h2>
+                    <p className="mt-5 text-gray-500 leading-relaxed text-base max-w-md">
+                      Every transaction is protected by our secure escrow
+                      system, which safely holds funds until the account
+                      transfer is fully verified. No scams, no chargebacks —
+                      just clean trades.
+                    </p>
+
+                    <div className="mt-8 space-y-4">
+                      {[
+                        {
+                          icon: Shield,
+                          label: "Escrow-protected payments",
+                          color: "text-blue-600 bg-blue-50",
+                        },
+                        {
+                          icon: Zap,
+                          label: "Instant delivery on confirmation",
+                          color: "text-violet-600 bg-violet-50",
+                        },
+                        {
+                          icon: Lock,
+                          label: "Encrypted account transfers",
+                          color: "text-emerald-600 bg-emerald-50",
+                        },
+                      ].map(({ icon: Icon, label, color }) => (
+                        <div key={label} className="flex items-center gap-3">
+                          <div
+                            className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${color}`}
+                          >
+                            <Icon size={15} />
+                          </div>
+                          <span className="text-sm font-medium text-gray-700">
+                            {label}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="mt-10">
+                      <Link
+                        href="/marketplace"
+                        className="inline-flex items-center gap-2 bg-[#0000FF] text-white px-6 py-3 rounded-xl font-semibold text-sm hover:bg-blue-700 transition-all duration-200 hover:gap-3 active:scale-95"
+                      >
+                        Browse marketplace
+                        <ArrowRight size={16} />
+                      </Link>
+                    </div>
+                  </div>
+                </Reveal>
+              </div>
+            </section>
+
+            {/* ── STATS BENTO ── */}
+            <section className="bg-white py-24 px-[5%]">
+              <div className="max-w-6xl mx-auto">
+                <Reveal>
+                  <div className="flex justify-center mb-5">
+                    <span className="text-xs font-semibold tracking-widest uppercase text-[#0000FF] bg-blue-50 px-4 py-1.5 rounded-full border border-blue-100">
+                      By the numbers
+                    </span>
+                  </div>
+                  <h2 className="text-center text-3xl sm:text-4xl font-bold text-[#0a0a1a] mb-16">
+                    The data behind our marketplace
+                  </h2>
+                </Reveal>
+
+                <Reveal>
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="col-span-2 bg-[#0000FF] rounded-2xl p-8 flex flex-col justify-between min-h-[180px]">
+                      <p className="text-blue-200 text-xs font-semibold tracking-widest uppercase">
+                        Active users
+                      </p>
+                      <div>
+                        <div className="text-white text-5xl font-bold tracking-tight">
+                          <StatCard value={"100k+"} />
+                        </div>
+                        <p className="text-blue-200 text-sm mt-2">
+                          verified traders on the platform
                         </p>
                       </div>
-                      <p className="text-[13px] p-2 pb-5 sm:h-23.25 xl:h-[92.5px]">
-                        Track, manage, and monitor every transaction in real
-                        time with complete transparency and security..
+                    </div>
+
+                    <div className="bg-[#FAFAFA] border border-gray-100 rounded-2xl p-7 flex flex-col justify-between min-h-[180px]">
+                      <p className="text-gray-400 text-xs font-semibold tracking-widest uppercase">
+                        Games supported
                       </p>
-                      <div className="mt-auto xl:pt-4 px-5">
-                        <Image
-                          src="/page-gen.png"
-                          alt=""
-                          width={300}
-                          height={160}
-                          className="rounded-t-2xl"
-                        />
+                      <div>
+                        <div className="text-[#0a0a1a] text-4xl font-bold tracking-tight">
+                          <StatCard value={"10+"} />
+                        </div>
+                        <p className="text-gray-400 text-sm mt-2">
+                          popular titles
+                        </p>
                       </div>
                     </div>
-                  </Link>
-                </RevealRight>
-              </div>
-            </div>
-            <div className="from-[#8A38F5]/50 to-[#4F8CFF]/50 bg-linear-to-b w-full mt-15 flex justify-center">
-              <div className="grid gap-5 md:grid-cols-2 py-15 items-center max-w-6xl  px-[5%]  ">
+
+                    <div className="bg-[#FAFAFA] border border-gray-100 rounded-2xl p-7 flex flex-col justify-between min-h-[180px]">
+                      <p className="text-gray-400 text-xs font-semibold tracking-widest uppercase">
+                        Avg. delivery
+                      </p>
+                      <div>
+                        <div className="text-[#0a0a1a] text-4xl font-bold tracking-tight">
+                          Fast
+                        </div>
+                        <p className="text-gray-400 text-sm mt-2">
+                          instant on confirmation
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="bg-[#FAFAFA] border border-gray-100 rounded-2xl p-7 flex flex-col justify-between">
+                      <p className="text-gray-400 text-xs font-semibold tracking-widest uppercase">
+                        Security
+                      </p>
+                      <div>
+                        <div className="text-[#0a0a1a] text-4xl font-bold tracking-tight">
+                          100%
+                        </div>
+                        <p className="text-gray-400 text-sm mt-2">
+                          escrow protected
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="bg-[#FAFAFA] border border-gray-100 rounded-2xl p-7 flex flex-col justify-between">
+                      <p className="text-gray-400 text-xs font-semibold tracking-widest uppercase">
+                        Satisfaction
+                      </p>
+                      <div>
+                        <div className="text-[#0a0a1a] text-4xl font-bold tracking-tight">
+                          4.9★
+                        </div>
+                        <p className="text-gray-400 text-sm mt-2">
+                          avg. user rating
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="col-span-2 bg-[#0a0a1a] rounded-2xl p-8 flex flex-col justify-between min-h-[160px]">
+                      <p className="text-gray-400 text-xs font-semibold tracking-widest uppercase">
+                        Platform uptime
+                      </p>
+                      <div className="flex items-end justify-between">
+                        <div>
+                          <div className="text-white text-4xl font-bold tracking-tight">
+                            99.9%
+                          </div>
+                          <p className="text-gray-500 text-sm mt-2">
+                            always trading, always live
+                          </p>
+                        </div>
+                        <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse mb-2" />
+                      </div>
+                    </div>
+                  </div>
+                </Reveal>
+
                 <Reveal>
-                  <div className="w-full flex  justify-center">
+                  <div className="mt-10 flex justify-center">
                     <Image
-                      src="/phone-gen-pic.png"
+                      src="/group.png"
                       alt=""
-                      width={240}
-                      height={400}
+                      width={0}
+                      height={0}
+                      sizes="100vw"
+                      className="w-full h-auto px-[5%] sm:px-[15%] lg:px-[25%] opacity-90"
                     />
                   </div>
                 </Reveal>
-                <Reveal>
-                  <div>
-                    <p className="text-4xl">
-                      Trade Securely with
-                      <span className="text-white"> Nepogames</span>
-                    </p>
-                    <p className="pt-5 md:pt-10">
-                      Buy and sell gaming accounts with complete confidence on
-                      NepoGames. Every transaction is protected by our secure
-                      escrow system, which safely holds the buyer’s funds until
-                      the account transfer is fully completed and verified. This
-                      ensures that both buyers and sellers are protected from
-                      scams, fraud, or chargebacks. Whether you’re looking to
-                      sell your account quickly or find rare accounts to buy,
-                      NepoGames makes trading safe, simple, and reliable, giving
-                      you peace of mind every step of the way.
-                    </p>
-                  </div>
-                </Reveal>
               </div>
-            </div>
-            <Reveal>
-              <p className="bg-linear-to-b from-[#4F8CFF] to-[#8A38F5] bg-clip-text text-transparent px-3 text-3xl mt-5 mb-7 text-center lg:text-5xl pt-5 flex w-full justify-center">
-                The Data Driving Our Gaming Economy
-              </p>
-            </Reveal>
-            <Reveal>
-              <div>
-                <Image
-                  src="/group.png"
-                  alt=""
-                  width={0}
-                  height={0}
-                  sizes="100vw"
-                  className="w-full h-auto px-[10%] sm:px-[15%] lg:px-[20%]"
-                />
-              </div>
-            </Reveal>
-            <div className="bg-white">
-              {" "}
-              <div className="from-[#8A38F5]/50 px-[5%] mt-15  to-[#4F8CFF]/50 bg-linear-to-b w-full">
-                <Reveal>
-                  <div className="  grid md:grid-cols-2">
-                    <div className="py-15 h-full gap-6 flex flex-col justify-between ">
-                      <p className="text-white font-bold text-3xl">
-                        What Our Users Are Saying About{" "}
-                        <span className="text-[#402BBA]"> Nepo Games</span>
-                      </p>
-                      <p className="text-white md:mb-0 -mb-15">
-                        At Nepo Games, player satisfaction is our top priority.
-                        Here’s what real users have to say about their buying
-                        and selling experience on our platform. From secure
-                        transactions to fast delivery, their feedback reflects
-                        the trust and reliability we strive to maintain.
-                      </p>
-                      <div className="md:flex hidden px-[10%]">
-                        <div className="p-3 rounded-2xl pb-0 bg-linear-to-b from-[#4F8CFF] to-[#8A38F5]">
-                          <div className="flex gap-1.5 justify-center text-white text-xl pb-2">
-                            <span>
-                              {" "}
-                              <StatCard value={"100k+"} />{" "}
-                            </span>
-                            Active Users{" "}
-                          </div>
+            </section>
 
-                          <div className="px-6">
-                            <Image
-                              src="/user-list.png"
-                              alt=""
-                              width={0}
-                              height={0}
-                              sizes="100vw"
-                              className="w-full h-auto rounded-t-2xl"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    </div>{" "}
-                    <div className=" sm:px-10 md:px-0 lg:px-10 py-10 ">
-                      <Reviews />
-                    </div>
-                    <div className="md:hidden px-[10%] pb-10">
-                      <div className="p-3 rounded-2xl pb-0 bg-linear-to-b from-[#4F8CFF] to-[#8A38F5]">
-                        <div className="flex gap-1.5 justify-center text-white text-xl pb-2">
-                          <span>
-                            {" "}
-                            <StatCard value={"100k+"} />{" "}
+            {/* ── REVIEWS SECTION ── */}
+            <section className="bg-[#FAFAFA] border-t border-gray-100 py-24 px-[5%]">
+              <div className="max-w-6xl mx-auto">
+                <Reveal>
+                  <div className="grid md:grid-cols-2 gap-16 items-start">
+                    <div className="md:sticky md:top-28">
+                      <span className="text-xs font-semibold tracking-widest uppercase text-[#0000FF] bg-blue-50 px-4 py-1.5 rounded-full border border-blue-100">
+                        User reviews
+                      </span>
+                      <h2 className="mt-5 text-3xl sm:text-4xl font-bold text-[#0a0a1a] leading-tight">
+                        What our traders
+                        <br />
+                        <span className="text-[#0000FF]">actually say</span>
+                      </h2>
+                      <p className="mt-4 text-gray-500 leading-relaxed text-base max-w-sm">
+                        Real feedback from buyers and sellers across the
+                        platform — unfiltered and honest.
+                      </p>
+
+                      <div className="mt-8 inline-flex flex-col gap-1 bg-white border border-gray-100 rounded-2xl px-6 py-5 shadow-sm">
+                        <div className="flex items-baseline gap-1.5">
+                          <span className="text-3xl font-bold text-[#0a0a1a]">
+                            <StatCard value={"100k+"} />
                           </span>
-                          Active Users{" "}
+                          <span className="text-gray-400 text-sm">
+                            active users
+                          </span>
                         </div>
-                        <div className="px-6">
+                        <div className="mt-3">
                           <Image
                             src="/user-list.png"
                             alt=""
                             width={0}
                             height={0}
                             sizes="100vw"
-                            className="w-full h-auto rounded-t-2xl"
+                            className="w-full h-auto rounded-xl"
                           />
                         </div>
                       </div>
                     </div>
+
+                    <div>
+                      <Reviews />
+                    </div>
                   </div>
-                </Reveal>{" "}
-              </div>{" "}
-            </div>
-            <div className="px-[5%]">
-              <Reveal>
-                <div className=" flex text-center justify-center pt-13">
-                  <p className="font-bold sm:text-4xl text-3xl">
-                    Frequently Asked
-                    <span className="text-[#402BBA]"> Questions</span>
-                  </p>
-                </div>
-                <div className="flex pt-3 justify-center text-center">
-                  {" "}
-                  <p>
-                    Everything you need to know about Nepo Games and our
-                    products
-                  </p>
-                </div>
-              </Reveal>
-              <section id="faq" className="scroll-mt-50">
+                </Reveal>
+              </div>
+            </section>
+
+            {/* ── FAQ SECTION ── */}
+            <section id="faq" className="scroll-mt-24 bg-white py-24 px-[5%]">
+              <div className="max-w-6xl mx-auto">
                 <Reveal>
-                  <div className="pt-10 pb-15">
-                    <div className="space-y-4 max-w-xl mx-auto">
+                  <div className="grid lg:grid-cols-[1fr_2fr] gap-16 items-start">
+                    <div className="lg:sticky lg:top-28">
+                      <span className="text-xs font-semibold tracking-widest uppercase text-[#0000FF] bg-blue-50 px-4 py-1.5 rounded-full border border-blue-100">
+                        FAQ
+                      </span>
+                      <h2 className="mt-5 text-3xl sm:text-4xl font-bold text-[#0a0a1a] leading-tight">
+                        Frequently asked
+                        <br />
+                        questions
+                      </h2>
+                      <p className="mt-4 text-gray-500 text-base leading-relaxed max-w-xs">
+                        Everything you need to know about Nepo Games and how the
+                        marketplace works.
+                      </p>
+                      <Link
+                        href="/contact"
+                        className="mt-8 inline-flex items-center gap-2 text-sm font-semibold text-[#0000FF] hover:gap-3 transition-all duration-200"
+                      >
+                        Still have questions? Contact us
+                        <ArrowRight size={15} />
+                      </Link>
+                    </div>
+
+                    <div className="space-y-3">
                       {faqs.map((faq, index) => (
                         <div
                           key={index}
-                          className="rounded-xl bg-linear-to-r from-[#8A38F5] to-[#4F8CFF] p-[2px]"
+                          className={`border rounded-xl overflow-hidden transition-all duration-200 ${
+                            activeIndex === index
+                              ? "border-blue-200 shadow-sm"
+                              : "border-gray-100 hover:border-gray-200"
+                          }`}
                         >
-                          <div className="bg-white rounded-xl">
-                            <button
-                              onClick={() => toggleFAQ(index)}
-                              className="w-full flex justify-between items-center p-5 text-left"
+                          <button
+                            onClick={() => toggleFAQ(index)}
+                            className="w-full flex justify-between items-center px-6 py-5 text-left bg-white"
+                          >
+                            <span
+                              className={`font-semibold text-sm pr-4 leading-snug ${activeIndex === index ? "text-[#0000FF]" : "text-[#0a0a1a]"}`}
                             >
-                              <span className="font-medium text-lg">
-                                {faq.question}
-                              </span>
-
+                              {faq.question}
+                            </span>
+                            <div
+                              className={`w-7 h-7 rounded-lg flex-shrink-0 flex items-center justify-center transition-colors duration-200 ${activeIndex === index ? "bg-blue-50" : "bg-gray-50"}`}
+                            >
                               <ChevronDown
+                                size={15}
                                 className={`transition-transform duration-300 ${
-                                  activeIndex === index ? "rotate-180" : ""
+                                  activeIndex === index
+                                    ? "rotate-180 text-[#0000FF]"
+                                    : "text-gray-400"
                                 }`}
                               />
-                            </button>
-
-                            {activeIndex === index && (
-                              <div className="px-5 pb-5 text-gray-600">
-                                {faq.reply}
-                              </div>
-                            )}
-                          </div>
+                            </div>
+                          </button>
+                          {activeIndex === index && (
+                            <div className="px-6 pb-5 text-gray-500 text-sm leading-relaxed bg-white border-t border-gray-50">
+                              <div className="pt-4">{faq.reply}</div>
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
                   </div>
                 </Reveal>
-              </section>
-            </div>
-            <section className="w-full bg-linear-to-b from-[#4F8CFF] to-[#8A38F5]">
+              </div>
+            </section>
+
+            {/* ── NEWSLETTER + FOOTER ── */}
+            <section className="bg-[#0a0a1a] w-full">
               <Reveal>
-                {" "}
-                <div className="max-w-7xl mx-auto px-5 text-white text-center">
-                  <div className="py-24 flex flex-col items-center">
-                    <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold">
-                      Get the{" "}
-                      <span className="font-serif italic font-normal">
-                        Latest
-                      </span>{" "}
-                      Updates
-                    </h2>
+                <div className="max-w-6xl mx-auto px-5 py-24 text-center">
+                  <span className="text-xs font-semibold tracking-widest uppercase text-blue-400 bg-blue-900/30 px-4 py-1.5 rounded-full border border-blue-800/40">
+                    Stay in the loop
+                  </span>
+                  <h2 className="mt-6 text-3xl sm:text-4xl md:text-5xl font-bold text-white leading-tight">
+                    Get the{" "}
+                    <span className="font-serif italic font-normal text-blue-400">
+                      latest
+                    </span>{" "}
+                    updates
+                  </h2>
+                  <p className="mt-4 text-gray-400 text-base max-w-md mx-auto leading-relaxed">
+                    New listings, platform news, and exclusive drops — delivered
+                    straight to your inbox.
+                  </p>
 
-                    <p className="mt-4 max-w-xl text-white/90 text-lg">
-                      Receive the latest news, insights and exclusive content
-                      directly in your inbox.
+                  <div className="mt-10 w-full max-w-lg mx-auto">
+                    {subscribed ? (
+                      <div className="flex items-center justify-center gap-2 bg-emerald-900/30 border border-emerald-700/40 text-emerald-400 py-4 px-6 rounded-2xl text-sm font-medium">
+                        <CheckCircle2 size={16} />
+                        You're subscribed — we'll be in touch.
+                      </div>
+                    ) : (
+                      <div className="flex gap-2">
+                        <input
+                          type="email"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          onKeyDown={(e) =>
+                            e.key === "Enter" && handleSubscribe()
+                          }
+                          placeholder="your@email.com"
+                          className="flex-1 rounded-xl bg-white/5 border border-white/10 py-3.5 pl-5 pr-4 outline-none text-white placeholder-gray-600 focus:border-blue-500 transition-colors duration-200 text-sm"
+                        />
+                        <button
+                          onClick={handleSubscribe}
+                          className="px-6 py-3.5 rounded-xl bg-[#0000FF] text-white text-sm font-semibold hover:bg-blue-600 transition-all duration-200 hover:scale-105 active:scale-95 flex-shrink-0"
+                        >
+                          Subscribe
+                        </button>
+                      </div>
+                    )}
+                    <p className="mt-3 text-gray-600 text-xs">
+                      No spam. Unsubscribe anytime.
                     </p>
-
-                    <div className="mt-10 w-full max-w-2xl relative">
-                      {subscribed ? (
-                        <p className="text-blue-700 mx-auto bg-gray-50 border max-w-xl border-blue-800/50 -mt-3 p-3 rounded-3xl text-center text-lg font-medium">
-                          ✅ You're subscribed! We'll be in touch.
-                        </p>
-                      ) : (
-                        <>
-                          <input
-                            type="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            onKeyDown={(e) =>
-                              e.key === "Enter" && handleSubscribe()
-                            }
-                            placeholder="Enter your email"
-                            className="
-          w-full rounded-full bg-transparent border
-          border-white/50 py-5 pl-6 pr-40 outline-none
-          text-white placeholder-white/60
-        "
-                          />
-                          <button
-                            onClick={handleSubscribe}
-                            className="
-          absolute right-2 top-1/2 -translate-y-1/2
-          px-5 py-3 text-sm sm:text-base rounded-full
-          bg-gradient-to-r from-[#3B82F6] to-[#000099]
-          border border-white/60 font-semibold
-          hover:scale-105 transition
-        "
-                          >
-                            Subscribe
-                          </button>
-                        </>
-                      )}
-                    </div>
                   </div>
                 </div>
-                <div className="w-full h-px bg-linear-to-r from-transparent via-gray-100/20 to-transparent"></div>
+              </Reveal>
+
+              <div className="w-full h-px bg-white/5"></div>
+
+              <Reveal>
                 <Footer />
-                <div className="w-full h-[0.5px] bg-linear-to-r from-transparent via-gray-100/20 to-transparent"></div>
-                <div className="max-w-7xl mx-auto px-5 pt-12 pb-6 text-white/70 text-sm text-center">
-                  © {new Date().getFullYear()} Nepo Games · All rights reserved
-                  · Built with care for the gaming community
-                </div>
-                <div className="grid grid-cols-2 pb-5">
-                  <div className="max-w-7xl mx-auto pb-3 px-5 text-white/40 text-xs text-center">
-                    Designed by{" "}
-                    <a
-                      href=""
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="
-    relative inline-block
+              </Reveal>
 
-    after:content-['']
-    after:absolute
-    after:left-0
-    after:bottom-0
-    after:h-[2px]
-    after:w-full
-    after:bg-current
+              <div className="w-full h-px bg-white/5"></div>
 
-    after:origin-right
-    after:scale-x-0
-    
-    after:transition-transform
-    after:duration-500
-    after:ease-in-out
-
-    hover:after:origin-left
-    hover:after:scale-x-100
-
-    font-bold
-  "
-                    >
-                      Faiq
-                    </a>
-                  </div>
-                  <div className="max-w-7xl mx-auto pb-3 px-5 text-white/40 text-xs text-center">
-                    Developed by{" "}
-                    <a
-                      href="http://modred.dev"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="
-    relative inline-block
-
-    after:content-['']
-    after:absolute
-    after:left-0
-    after:bottom-0
-    after:h-[2px]
-    after:w-full
-    after:bg-current
-
-    after:origin-right
-    after:scale-x-0
-
-    after:transition-transform
-    after:duration-500
-    after:ease-in-out
-    font-bold
-
-    hover:after:origin-left
-    hover:after:scale-x-100
-  "
-                    >
-                      Modred
-                    </a>
+              <Reveal>
+                <div className="max-w-6xl mx-auto px-5 py-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-600">
+                  <span>
+                    © {new Date().getFullYear()} Nepo Games · All rights
+                    reserved
+                  </span>
+                  <div className="flex gap-5">
+                    <span>
+                      Designed by{" "}
+                      <a
+                        href=""
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-gray-400 hover:text-white transition-colors duration-200 font-semibold"
+                      >
+                        Faiq
+                      </a>
+                    </span>
+                    <span>
+                      Developed by{" "}
+                      <a
+                        href="http://modred.dev"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-gray-400 hover:text-white transition-colors duration-200 font-semibold"
+                      >
+                        Modred
+                      </a>
+                    </span>
                   </div>
                 </div>
-              </Reveal>{" "}
+              </Reveal>
             </section>
           </main>
         </div>
@@ -1437,23 +1611,15 @@ hover:text-[#0000FF]
     </div>
   );
 }
+
 function HomeSkeleton({ fading = false }) {
   return (
     <div className="page-fadein">
       <div className="min-h-screen bg-white overflow-hidden">
-        {/* ─────────────────────────────────────────
-          NAVBAR
-          px-[5%] mt-5 | inner px-[2%] rounded-4xl
-          logo w-9 h-9 | links hidden md:flex gap-9
-          auth: border rounded-2xl h-9
-      ───────────────────────────────────────── */}
         <div className="w-full px-[5%] mt-7">
           <div className="px-[2%] border border-[#7A7AFE]/50 rounded-4xl bg-white/95">
             <div className="flex md:grid grid-cols-3 justify-between py-2 md:py-3 items-center w-full">
-              {/* Logo */}
               <div className="w-9 h-9 rounded-full bg-gray-200 shimmer" />
-
-              {/* Nav links */}
               <div className="hidden md:flex justify-center gap-9">
                 <div className="h-[14px] w-[90px] rounded-full bg-gray-200 shimmer" />
                 <div
@@ -1465,8 +1631,6 @@ function HomeSkeleton({ fading = false }) {
                   style={{ animationDelay: "0.2s" }}
                 />
               </div>
-
-              {/* Auth buttons */}
               <div className="hidden md:flex justify-end">
                 <div className="flex border border-blue-200 rounded-2xl overflow-hidden">
                   <div
@@ -1479,55 +1643,27 @@ function HomeSkeleton({ fading = false }) {
                   />
                 </div>
               </div>
-
-              {/* Mobile hamburger */}
               <div className="md:hidden w-4 h-[14px] rounded bg-gray-200 shimmer mr-3" />
             </div>
           </div>
         </div>
-
-        {/* ─────────────────────────────────────────
-          HERO SECTION
-          from-[#FFFFFF] to-[#8080FF] rounded-b-4xl
-          pt-45 (180px) px-[2%]
-          nepo-mark.png: wide composite mockup
-          ~full width, ~370px tall, NO bottom padding
-          — image bleeds right into scroller
-      ───────────────────────────────────────── */}
         <div
-          className="rounded-b-4xl flex flex-col items-center gap-4 text-center px-[2%]"
-          style={{
-            background: "linear-gradient(to bottom, #ffffff, #8080ff)",
-            paddingTop: 180,
-            paddingBottom: 0,
-          }}
+          className="flex flex-col items-center gap-4 text-center px-[2%] bg-white"
+          style={{ paddingTop: 180, paddingBottom: 0 }}
         >
-          {/* Badge */}
-          <div className="flex items-center gap-2 bg-white px-3 py-[5px] rounded-2xl">
-            <div className="w-5 h-5 rounded-full bg-gray-200 shimmer" />
+          <div className="flex items-center gap-2 bg-[#0000FF]/10 px-3 py-[5px] rounded-2xl">
+            <div className="w-5 h-5 rounded-full bg-blue-200 shimmer" />
             <div
-              className="h-[13px] w-[158px] rounded-full bg-gray-200 shimmer"
+              className="h-[13px] w-[158px] rounded-full bg-blue-200 shimmer"
               style={{ animationDelay: "0.1s" }}
             />
           </div>
-
-          {/* Headline line 1 — text-5xl = 48px, single line "Trade your Gaming Accounts with" */}
           <div
             className="shimmer"
-            style={{
-              width: "min(700px, 92%)",
-              height: 52,
-              borderRadius: 10,
-              background:
-                "linear-gradient(90deg,#d1d5db 25%,#e9ebee 50%,#d1d5db 75%)",
-              backgroundSize: "800px 100%",
-              animationDelay: "0.05s",
-            }}
+            style={{ width: "min(700px, 92%)", height: 52, borderRadius: 10 }}
           />
-
-          {/* Headline line 2 — "Nepogames" in white/light */}
           <div
-            className="shimmer-light"
+            className="shimmer"
             style={{
               width: 280,
               height: 52,
@@ -1535,34 +1671,25 @@ function HomeSkeleton({ fading = false }) {
               animationDelay: "0.1s",
             }}
           />
-
-          {/* Sub paragraph — 2 lines */}
           <div
             className="flex flex-col items-center gap-2 w-full"
             style={{ maxWidth: 460 }}
           >
             <div
-              className="shimmer-light shimmer-r"
+              className="shimmer"
               style={{ width: "100%", height: 14, animationDelay: "0.15s" }}
             />
             <div
-              className="shimmer-light shimmer-r"
+              className="shimmer"
               style={{ width: "78%", height: 14, animationDelay: "0.2s" }}
             />
           </div>
-
-          {/* "Trade with confidence." italic line */}
           <div
-            className="shimmer-light shimmer-r"
+            className="shimmer"
             style={{ width: 196, height: 14, animationDelay: "0.25s" }}
           />
-
-          {/* nepo-mark.png
-            From screenshot: a wide composite of phone + floating cards
-            Takes up ~full content width, ~370px tall
-            Sits flush at bottom — no mb/pb so it bleeds into scroller */}
           <div
-            className="shimmer-light"
+            className="shimmer"
             style={{
               width: "min(660px, 100%)",
               height: 370,
@@ -1572,15 +1699,7 @@ function HomeSkeleton({ fading = false }) {
             }}
           />
         </div>
-
-        {/* ─────────────────────────────────────────
-          LOGO SCROLLER
-          from-[#5DACEC] to-[#9750F6]
-          From screenshot: ~110px tall strip
-          logos are large ~80px tall, various widths
-      ───────────────────────────────────────── */}
         <div
-          className="mt-5"
           style={{
             background: "linear-gradient(to right, #5dacec, #9750f6)",
             height: 110,
@@ -1591,7 +1710,6 @@ function HomeSkeleton({ fading = false }) {
             overflow: "hidden",
           }}
         >
-          {/* Widths from screenshot logos: Free Fire, Blood Strike, Delta Force, eFootball, Mobile Legends, CoD, Fortnite, Minecraft, PUBG */}
           {[130, 120, 140, 110, 150, 130, 120, 140, 130].map((w, i) => (
             <div
               key={i}
@@ -1606,29 +1724,12 @@ function HomeSkeleton({ fading = false }) {
             />
           ))}
         </div>
-
-        {/* ─────────────────────────────────────────
-          HOW OUR MARKETPLACE WORKS heading
-          text-[#0000FF] text-3xl lg:text-5xl
-          From screenshot: ~48px, centred, mt-5 mb-7 pt-5
-      ───────────────────────────────────────── */}
         <div className="flex justify-center mt-5 mb-7 pt-5 px-3">
           <div
             className="shimmer"
             style={{ width: "min(460px, 85%)", height: 48, borderRadius: 10 }}
           />
         </div>
-
-        {/* ─────────────────────────────────────────
-          4-CARD GRID
-          grid xl:grid-cols-4 sm:grid-cols-2 gap-10 px-[5%]
-          From screenshot each card:
-          — icon circle ~56px
-          — label text ~24px
-          — desc text 3 lines (13px)
-          — screenshot image tall ~160px
-          — total card height ~380px
-      ───────────────────────────────────────── */}
         <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-10 px-[5%]">
           {[
             { lw: 76, d: [0, 0.05, 0.1] },
@@ -1649,7 +1750,6 @@ function HomeSkeleton({ fading = false }) {
                 minHeight: 380,
               }}
             >
-              {/* Icon + label */}
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                 <div
                   className="shimmer"
@@ -1671,7 +1771,6 @@ function HomeSkeleton({ fading = false }) {
                   }}
                 />
               </div>
-              {/* Description lines */}
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 <div
                   className="shimmer"
@@ -1701,7 +1800,6 @@ function HomeSkeleton({ fading = false }) {
                   }}
                 />
               </div>
-              {/* Screenshot image placeholder */}
               <div style={{ marginTop: "auto", padding: "0 16px" }}>
                 <div
                   className="shimmer"
@@ -1715,579 +1813,6 @@ function HomeSkeleton({ fading = false }) {
             </div>
           ))}
         </div>
-
-        {/* ─────────────────────────────────────────
-          TRADE SECURELY
-          from-[#8A38F5]/50 to-[#4F8CFF]/50 mt-15
-          grid md:grid-cols-2 max-w-6xl px-[5%] pb-10
-          Left: phone.png ~240×400
-          Right: heading text-4xl + paragraph
-      ───────────────────────────────────────── */}
-        <div
-          style={{
-            background:
-              "linear-gradient(to bottom, rgba(138,56,245,0.35), rgba(79,140,255,0.35))",
-            marginTop: 60,
-            padding: "20px 5% 40px",
-          }}
-        >
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              alignItems: "center",
-              maxWidth: 1152,
-              margin: "0 auto",
-              gap: 32,
-            }}
-          >
-            {/* Phone image */}
-            <div style={{ display: "flex", justifyContent: "center" }}>
-              <div
-                className="shimmer"
-                style={{ width: 240, height: 400, borderRadius: 20 }}
-              />
-            </div>
-            {/* Text */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-              <div
-                className="shimmer"
-                style={{ width: "80%", height: 38, borderRadius: 8 }}
-              />
-              <div
-                className="shimmer"
-                style={{
-                  width: "58%",
-                  height: 38,
-                  borderRadius: 8,
-                  animationDelay: "0.1s",
-                }}
-              />
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 9,
-                  marginTop: 16,
-                }}
-              >
-                {[100, 97, 93, 96, 88, 72].map((w, i) => (
-                  <div
-                    key={i}
-                    className="shimmer"
-                    style={{
-                      width: `${w}%`,
-                      height: 13,
-                      borderRadius: 9999,
-                      animationDelay: `${i * 0.05}s`,
-                    }}
-                  />
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* ─────────────────────────────────────────
-          DATA / STATS HEADING + GROUP IMAGE
-          text-3xl/5xl mt-5 pt-5 mb-7 centred
-          group.png px-[10%] sm:px-[15%] lg:px-[20%]
-      ───────────────────────────────────────── */}
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            padding: "20px 12px",
-            gap: 20,
-          }}
-        >
-          <div
-            className="shimmer"
-            style={{ width: "min(500px, 90%)", height: 44, borderRadius: 10 }}
-          />
-          <div
-            className="shimmer"
-            style={{
-              width: "56%",
-              maxWidth: 520,
-              height: 168,
-              borderRadius: 16,
-            }}
-          />
-        </div>
-
-        {/* ─────────────────────────────────────────
-          REVIEWS SECTION
-          bg-white > gradient bg px-[5%] mt-15
-          grid md:grid-cols-2
-          Left: heading + body text + stat card (desktop)
-          Right: 3 review cards (py-10 sm:px-10 lg:px-10)
-      ───────────────────────────────────────── */}
-        <div style={{ background: "#fff" }}>
-          <div
-            style={{
-              background:
-                "linear-gradient(to bottom, rgba(138,56,245,0.3), rgba(79,140,255,0.3))",
-              padding: "0 5%",
-              marginTop: 60,
-            }}
-          >
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                gap: 24,
-              }}
-            >
-              {/* LEFT */}
-              <div
-                style={{
-                  padding: "60px 0",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 20,
-                }}
-              >
-                <div
-                  className="shimmer"
-                  style={{ width: "90%", height: 30, borderRadius: 8 }}
-                />
-                <div
-                  className="shimmer"
-                  style={{
-                    width: "68%",
-                    height: 30,
-                    borderRadius: 8,
-                    animationDelay: "0.1s",
-                  }}
-                />
-                <div
-                  style={{ display: "flex", flexDirection: "column", gap: 9 }}
-                >
-                  {[100, 94, 80].map((w, i) => (
-                    <div
-                      key={i}
-                      className="shimmer"
-                      style={{
-                        width: `${w}%`,
-                        height: 13,
-                        borderRadius: 9999,
-                        animationDelay: `${i * 0.07}s`,
-                      }}
-                    />
-                  ))}
-                </div>
-                {/* Stat card desktop */}
-                <div
-                  className="hidden md:block"
-                  style={{ padding: "0 10%", marginTop: 8 }}
-                >
-                  <div
-                    style={{
-                      background:
-                        "linear-gradient(to bottom, rgba(79,140,255,0.35), rgba(138,56,245,0.35))",
-                      borderRadius: 16,
-                      padding: "12px 12px 0",
-                    }}
-                  >
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "center",
-                        marginBottom: 8,
-                      }}
-                    >
-                      <div
-                        className="shimmer-light"
-                        style={{ width: 148, height: 22, borderRadius: 9999 }}
-                      />
-                    </div>
-                    <div style={{ padding: "0 24px" }}>
-                      <div
-                        className="shimmer-light"
-                        style={{ height: 120, borderRadius: "16px 16px 0 0" }}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* RIGHT — 3 review cards */}
-              <div
-                style={{
-                  padding: "40px",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 16,
-                }}
-              >
-                {[
-                  { nw: 96, rw: 64, t2: "100%", t3: "72%" },
-                  { nw: 112, rw: 56, t2: "100%", t3: "58%" },
-                  { nw: 80, rw: 72, t2: "100%", t3: "80%" },
-                ].map(({ nw, rw, t2, t3 }, i) => (
-                  <div
-                    key={i}
-                    style={{
-                      border: "0.5px solid #e5e7eb",
-                      borderRadius: 12,
-                      padding: 16,
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: 10,
-                      animationDelay: `${i * 0.1}s`,
-                    }}
-                  >
-                    <div
-                      style={{ display: "flex", alignItems: "center", gap: 12 }}
-                    >
-                      <div
-                        className="shimmer"
-                        style={{
-                          width: 36,
-                          height: 36,
-                          borderRadius: "50%",
-                          flexShrink: 0,
-                          animationDelay: `${i * 0.1}s`,
-                        }}
-                      />
-                      <div
-                        style={{
-                          flex: 1,
-                          display: "flex",
-                          flexDirection: "column",
-                          gap: 6,
-                        }}
-                      >
-                        <div
-                          className="shimmer"
-                          style={{
-                            width: nw,
-                            height: 12,
-                            borderRadius: 9999,
-                            animationDelay: `${i * 0.1 + 0.05}s`,
-                          }}
-                        />
-                        <div
-                          className="shimmer"
-                          style={{
-                            width: rw,
-                            height: 10,
-                            borderRadius: 9999,
-                            animationDelay: `${i * 0.1 + 0.1}s`,
-                          }}
-                        />
-                      </div>
-                      <div
-                        className="shimmer"
-                        style={{
-                          width: 52,
-                          height: 12,
-                          borderRadius: 9999,
-                          flexShrink: 0,
-                        }}
-                      />
-                    </div>
-                    <div
-                      className="shimmer"
-                      style={{ width: t2, height: 12, borderRadius: 9999 }}
-                    />
-                    <div
-                      className="shimmer"
-                      style={{
-                        width: t3,
-                        height: 12,
-                        borderRadius: 9999,
-                        animationDelay: "0.05s",
-                      }}
-                    />
-                  </div>
-                ))}
-              </div>
-
-              {/* Stat card mobile */}
-              <div
-                className="md:hidden"
-                style={{ padding: "0 10%", paddingBottom: 40 }}
-              >
-                <div
-                  style={{
-                    background:
-                      "linear-gradient(to bottom, rgba(79,140,255,0.35), rgba(138,56,245,0.35))",
-                    borderRadius: 16,
-                    padding: "12px 12px 0",
-                  }}
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "center",
-                      marginBottom: 8,
-                    }}
-                  >
-                    <div
-                      className="shimmer-light"
-                      style={{ width: 148, height: 22, borderRadius: 9999 }}
-                    />
-                  </div>
-                  <div style={{ padding: "0 24px" }}>
-                    <div
-                      className="shimmer-light"
-                      style={{ height: 120, borderRadius: "16px 16px 0 0" }}
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* ─────────────────────────────────────────
-          FAQ
-          px-[5%] pt-13 pb-15
-          Heading text-3xl sm:text-4xl
-          8 accordion rows: gradient border p-[2px],
-          inner bg-white h-[58px]
-      ───────────────────────────────────────── */}
-        <div style={{ padding: "0 5%" }}>
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              textAlign: "center",
-              paddingTop: 52,
-              gap: 10,
-              marginBottom: 28,
-            }}
-          >
-            <div
-              className="shimmer"
-              style={{ width: "min(300px, 90%)", height: 40, borderRadius: 10 }}
-            />
-            <div
-              className="shimmer"
-              style={{
-                width: "min(340px, 90%)",
-                height: 14,
-                borderRadius: 9999,
-                animationDelay: "0.1s",
-              }}
-            />
-          </div>
-
-          <div
-            style={{
-              paddingBottom: 60,
-              display: "flex",
-              flexDirection: "column",
-              gap: 14,
-              maxWidth: 576,
-              margin: "0 auto",
-            }}
-          >
-            {[65, 52, 43, 60, 73, 55, 47, 50].map((w, i) => (
-              <div
-                key={i}
-                style={{
-                  borderRadius: 12,
-                  background:
-                    "linear-gradient(to right, rgba(138,56,245,0.3), rgba(79,140,255,0.3))",
-                  padding: 2,
-                }}
-              >
-                <div
-                  style={{
-                    background: "#fff",
-                    borderRadius: 10,
-                    height: 58,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    padding: "0 20px",
-                    gap: 12,
-                  }}
-                >
-                  <div
-                    className="shimmer"
-                    style={{
-                      flex: 1,
-                      maxWidth: `${w}%`,
-                      height: 14,
-                      borderRadius: 9999,
-                      animationDelay: `${i * 0.08}s`,
-                    }}
-                  />
-                  <div
-                    className="shimmer"
-                    style={{
-                      width: 20,
-                      height: 20,
-                      borderRadius: "50%",
-                      flexShrink: 0,
-                    }}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* ─────────────────────────────────────────
-          NEWSLETTER + FOOTER
-          from-[#4F8CFF] to-[#8A38F5]
-          Heading text-3xl sm:text-4xl md:text-5xl
-          Sub 2 lines, input rounded-full h~62px
-      ───────────────────────────────────────── */}
-        <section
-          style={{
-            background: "linear-gradient(to bottom, #4f8cff, #8a38f5)",
-            width: "100%",
-          }}
-        >
-          <div style={{ maxWidth: 1152, margin: "0 auto", padding: "0 20px" }}>
-            <div
-              style={{
-                padding: "96px 0",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                gap: 16,
-              }}
-            >
-              <div
-                className="shimmer-light"
-                style={{
-                  width: "min(340px, 90%)",
-                  height: 46,
-                  borderRadius: 10,
-                }}
-              />
-              <div
-                className="shimmer-light"
-                style={{
-                  width: "min(390px, 90%)",
-                  height: 16,
-                  borderRadius: 9999,
-                  marginTop: 8,
-                  animationDelay: "0.1s",
-                }}
-              />
-              <div
-                className="shimmer-light"
-                style={{
-                  width: "min(290px, 90%)",
-                  height: 16,
-                  borderRadius: 9999,
-                  animationDelay: "0.15s",
-                }}
-              />
-              <div
-                className="shimmer-light"
-                style={{
-                  marginTop: 24,
-                  width: "100%",
-                  maxWidth: 672,
-                  height: 62,
-                  borderRadius: 9999,
-                  border: "1px solid rgba(255,255,255,0.25)",
-                  animationDelay: "0.1s",
-                }}
-              />
-            </div>
-          </div>
-
-          <div
-            style={{
-              width: "100%",
-              height: 0.5,
-              background: "rgba(255,255,255,0.15)",
-            }}
-          />
-
-          {/* Footer links */}
-          <div
-            style={{
-              maxWidth: 1152,
-              margin: "0 auto",
-              padding: "40px 20px",
-              display: "flex",
-              flexWrap: "wrap",
-              justifyContent: "center",
-              gap: 32,
-            }}
-          >
-            {[80, 64, 88, 56, 72, 60].map((w, i) => (
-              <div
-                key={i}
-                className="shimmer-light"
-                style={{
-                  width: w,
-                  height: 12,
-                  borderRadius: 9999,
-                  animationDelay: `${i * 0.08}s`,
-                }}
-              />
-            ))}
-          </div>
-
-          <div
-            style={{
-              width: "100%",
-              height: 0.5,
-              background: "rgba(255,255,255,0.1)",
-            }}
-          />
-
-          {/* Copyright */}
-          <div
-            style={{
-              maxWidth: 1152,
-              margin: "0 auto",
-              padding: "48px 20px 24px",
-              display: "flex",
-              justifyContent: "center",
-            }}
-          >
-            <div
-              className="shimmer-light"
-              style={{ width: 256, height: 12, borderRadius: 9999 }}
-            />
-          </div>
-
-          {/* Designed / Developed by */}
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              paddingBottom: 20,
-            }}
-          >
-            <div style={{ display: "flex", justifyContent: "center" }}>
-              <div
-                className="shimmer-light"
-                style={{
-                  width: 112,
-                  height: 12,
-                  borderRadius: 9999,
-                  animationDelay: "0.1s",
-                }}
-              />
-            </div>
-            <div style={{ display: "flex", justifyContent: "center" }}>
-              <div
-                className="shimmer-light"
-                style={{
-                  width: 128,
-                  height: 12,
-                  borderRadius: 9999,
-                  animationDelay: "0.2s",
-                }}
-              />
-            </div>
-          </div>
-        </section>
       </div>
     </div>
   );

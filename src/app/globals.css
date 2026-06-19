@@ -3,7 +3,7 @@
 @config "../../tailwind.config.js";
 
 body {
-  font-family: "Poppins", Arial, Helvetica, sans-serif;
+  font-family: var(--font-bricolage), Arial, Helvetica, sans-serif;
 }
 
 :root {

@@ -1,11 +1,10 @@
-import { Poppins } from "next/font/google";
+import { Bricolage_Grotesque } from "next/font/google";
 import "./globals.css";
 import Providers from "./Provider";
 
-const poppins = Poppins({
-  variable: "--font-poppins",
+const bricolage = Bricolage_Grotesque({
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
+  variable: "--font-bricolage",
 });
 
 export const metadata = {
@@ -89,7 +88,7 @@ export default function RootLayout({ children }) {
           }}
         />
       </head>
-      <body className={`${poppins.variable} antialiased`}>
+      <body className={`${bricolage.variable} antialiased`}>
         {" "}
         <Providers>{children}</Providers>
       </body>
