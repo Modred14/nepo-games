@@ -29,7 +29,7 @@ export default function Marquee() {
     {items.map((game, i) => (
       <div
         key={`${game.name}-${i}`}
-        className="group mx-10 flex shrink-0 items-center justify-center"
+        className="group mx-4 sm:mx-6 md:mx-8 lg:mx-10 flex shrink-0 items-center justify-center"
       >
         <Image
           src={game.logo}
