@@ -35,6 +35,7 @@ import { Verified } from "lucide-react";
 import Link from "next/link";
 import Loader from "@/components/Loader";
 import HashScrollHandler from "./hash";
+import Marquee from "./game";
 
 function StatCard({ value }) {
   const cardRef = useRef(null);
@@ -923,7 +924,7 @@ export default function Home() {
                           priority
                           src="/logo.png"
                           alt="Nepo Games"
-                          className="w-5 h-5 p-1 rounded-[50%] bg-white/20 object-cover"
+                          className="w-5 h-5 p-1 animate-pulse rounded-[50%] bg-white/20 object-cover"
                         />
                       </Link>
                       <p className="text-white text-sm font-medium">
@@ -1028,26 +1029,7 @@ export default function Home() {
 
             {/* ── Game logo scroller ── */}
             <Reveal>
-              <div className="scroller bg-linear-to-r from-[#5DACEC] to-[#9750F6]">
-                <div
-                  ref={innerRef}
-                  className={`scroller_inner ${ready ? "is-ready" : ""}`}
-                >
-                  {items.map((game, i) => (
-                    <div key={`${game.name}-${i}`} className="logoWrap">
-                      <Image
-                        src={game.logo}
-                        alt={game.name}
-                        width={150}
-                        height={130}
-                        className="logoImg"
-                        draggable="false"
-                        priority
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
+              <Marquee/>
             </Reveal>
 
             {/* ── HOW IT WORKS ── */}
