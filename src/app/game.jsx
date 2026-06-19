@@ -22,8 +22,8 @@ export default function Marquee() {
   return (
    <div className="relative w-full overflow-hidden bg-gradient-to-r from-[#2563EB] via-[#3B82F6] to-[#2563EB]">
   {/* Smooth fade edges */}
-  <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-32 bg-gradient-to-r from-[#2563EB] via-[#2563EB]/90 to-transparent" />
-  <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-32 bg-gradient-to-l from-[#2563EB] via-[#2563EB]/90 to-transparent" />
+  <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-8 sm:w-16 md:w-24 lg:w-32 bg-gradient-to-r from-[#2563EB] via-[#2563EB]/90 to-transparent" />
+  <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-8 sm:w-16 md:w-24 lg:w-32 bg-gradient-to-l from-[#2563EB] via-[#2563EB]/90 to-transparent" />
 
   <div className="flex w-max animate-marquee items-center">
     {items.map((game, i) => (
