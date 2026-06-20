@@ -38,6 +38,7 @@ export default function PageLoader({ children }) {
                 src="/logo.png"
                 alt="Nepogames"
                 width={64}
+                priority
                 height={64}
                 className="animate-pulse"
               />

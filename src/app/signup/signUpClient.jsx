@@ -188,6 +188,7 @@ export default function Login() {
             alt="Login Illustration"
             width={0}
             height={0}
+            priority
             sizes="100vw"
             className="w-64 md:w-80 lg:max-w-2xl h-auto object-contain mt-10 lg:mt-0"
           />
@@ -211,10 +212,13 @@ export default function Login() {
           {" "}
           <div className="w-full max-w-md">
             <div className="border  border-blue-500 rounded-xl p-4 flex items-center gap-4 mb-8">
-              <img
+              <Image
                 src="/logo.png"
                 alt="Nepo Games"
-                className="w-14 h-14 p-2 rounded-xl bg-blue-700 object-cover"
+                width={56}
+                height={56}
+                priority
+                className="p-2 rounded-xl bg-blue-700 object-cover"
               />
               <div>
                 <h2 className="font-semibold text-sm">
@@ -572,6 +576,7 @@ export default function Login() {
             alt="Sign Up Illustration"
             width={0}
             height={0}
+            priority
             sizes="100vw"
             className="max-w-2xl w-full h-auto object-contain"
           />
