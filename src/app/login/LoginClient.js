@@ -410,7 +410,7 @@ export default function LoginClient() {
     font-bold
     hover:after:origin-left
     hover:after:scale-x-100 text-blue-600 font-medium"
-                  prefetch={true}
+               
                 >
                   Create an account
                 </Link>

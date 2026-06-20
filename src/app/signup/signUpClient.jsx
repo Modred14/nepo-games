@@ -564,7 +564,6 @@ export default function Login() {
 
     hover:after:origin-left
     hover:after:scale-x-100 text-blue-600 font-medium"
-                  prefetch={true}
                 >
                   Sign in
                 </Link>
