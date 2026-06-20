@@ -181,408 +181,402 @@ export default function Login() {
 
   return (
     <div>
-      <Reveal>
-        <div className="lg:h-screen flex  flex-col lg:flex-row bg-white">
-          <div className="w-full lg:hidden lg:w-1/2 flex justify-center items-center bg-white">
-            <Image
-              src="/signup.png"
-              alt="Login Illustration"
-              width={0}
-              height={0}
-              sizes="100vw"
-              className="w-64 md:w-80 lg:max-w-2xl h-auto object-contain mt-10 lg:mt-0"
+      <div className="lg:h-screen flex  flex-col lg:flex-row bg-white">
+        <div className="w-full lg:hidden lg:w-1/2 flex justify-center items-center bg-white">
+          <Image
+            src="/signup.png"
+            alt="Login Illustration"
+            width={0}
+            height={0}
+            sizes="100vw"
+            className="w-64 md:w-80 lg:max-w-2xl h-auto object-contain mt-10 lg:mt-0"
+          />
+        </div>
+
+        <div className="w-full lg:hidden overflow-hidden">
+          <svg
+            viewBox="0 0 1440 120"
+            className="w-full h-12"
+            preserveAspectRatio="none"
+          >
+            <path
+              d="M0,60 C300,120 600,0 900,60 C1200,120 1440,40 1440,40"
+              stroke="#1D4ED8"
+              strokeWidth="3"
+              fill="transparent"
             />
-          </div>
-
-          <div className="w-full lg:hidden overflow-hidden">
-            <svg
-              viewBox="0 0 1440 120"
-              className="w-full h-12"
-              preserveAspectRatio="none"
-            >
-              <path
-                d="M0,60 C300,120 600,0 900,60 C1200,120 1440,40 1440,40"
-                stroke="#1D4ED8"
-                strokeWidth="3"
-                fill="transparent"
+          </svg>
+        </div>
+        <div className="w-full lg:w-1/2  h-full form-scroll lg:overflow-y-auto flex justify-center px-6 py-12 lg:py-25">
+          {" "}
+          <div className="w-full max-w-md">
+            <div className="border  border-blue-500 rounded-xl p-4 flex items-center gap-4 mb-8">
+              <img
+                src="/logo.png"
+                alt="Nepo Games"
+                className="w-14 h-14 p-2 rounded-xl bg-blue-700 object-cover"
               />
-            </svg>
-          </div>
-          <div className="w-full lg:w-1/2  h-full form-scroll lg:overflow-y-auto flex justify-center px-6 py-12 lg:py-25">
-            {" "}
-            <div className="w-full max-w-md">
-              <div className="border  border-blue-500 rounded-xl p-4 flex items-center gap-4 mb-8">
-                <img
-                  src="/logo.png"
-                  alt="Nepo Games"
-                  className="w-14 h-14 p-2 rounded-xl bg-blue-700 object-cover"
-                />
-                <div>
-                  <h2 className="font-semibold text-sm">
-                    <span className="text-blue-600 font-bold">NEPO</span> GAMES
-                  </h2>
-                  <p className="text-sm text-gray-600">
-                    Sign up to{" "}
-                    <span className="text-blue-600 font-bold">NEPO GAMES</span>{" "}
-                    and trade your games securely.
-                  </p>
-                </div>
-              </div>
-
-              {/* HEADER */}
-              <h1 className="text-3xl font-bold text-center mb-2">
-                Welcome 👋
-              </h1>
-
-              <p className="text-center text-blue-600 mb-8">
-                Create an account to continue
-              </p>
-
-              {/* EMAIL */}
-              <ErrorModal
-                isOpen={errorOpen}
-                message={message}
-                triggerId={errorTrigger}
-                onClose={() => setErrorOpen(false)}
-                autoClose
-              />
-              <SuccessModal
-                isOpen={successOpen}
-                message={message}
-                triggerId={errorTrigger}
-                onClose={() => setSuccessOpen(false)}
-                autoClose
-              />
-              <form className="mt-2" onSubmit={handleSignUp}>
-                <div className="relative mb-6">
-                  <User
-                    size={18}
-                    className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
-                  />
-
-                  <input
-                    type="text"
-                    id="name"
-                    disabled={loading}
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    placeholder=" "
-                    className="peer w-full border border-gray-300 rounded-md
-               pl-12 pr-4 py-4
-               focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-
-                  <label
-                    htmlFor="name"
-                    className="
-      absolute left-12 bg-white px-1
-      text-gray-400 transition-all duration-200 ease-in-out
-      top-1/2 -translate-y-1/2
-      peer-focus:-top-2.5 peer-focus:translate-y-0 peer-focus:text-sm peer-focus:text-blue-600
-      peer-not-placeholder-shown:-top-2.5 peer-not-placeholder-shown:translate-y-0 peer-not-placeholder-shown:text-sm
-    "
-                  >
-                    Full Name (Surname first)
-                  </label>
-                </div>
-                <div className="relative mb-6">
-                  <User
-                    size={18}
-                    className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
-                  />
-
-                  <input
-                    type="text"
-                    id="username"
-                    disabled={loading}
-                    value={userName}
-                    onChange={(e) => setUserName(e.target.value)}
-                    placeholder=" "
-                    className="peer w-full border border-gray-300 rounded-md
-               pl-12 pr-4 py-4
-               focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-
-                  <label
-                    htmlFor="username"
-                    className="
-      absolute left-12 bg-white px-1
-      text-gray-400 transition-all duration-200 ease-in-out
-      top-1/2 -translate-y-1/2
-      peer-focus:-top-2.5 peer-focus:translate-y-0 peer-focus:text-sm peer-focus:text-blue-600
-      peer-not-placeholder-shown:-top-2.5 peer-not-placeholder-shown:translate-y-0 peer-not-placeholder-shown:text-sm
-    "
-                  >
-                    User Name
-                  </label>
-                </div>
-                <div className="relative mb-6">
-                  <Mail
-                    size={18}
-                    className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
-                  />
-
-                  <input
-                    type="email"
-                    id="email"
-                    disabled={loading}
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder=" "
-                    className="peer w-full border border-gray-300 rounded-md
-               pl-12 pr-4 py-4
-               focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-
-                  <label
-                    htmlFor="email"
-                    className="
-      absolute left-12 bg-white px-1
-      text-gray-400 transition-all duration-200 ease-in-out
-      top-1/2 -translate-y-1/2
-      peer-focus:-top-2.5 peer-focus:translate-y-0 peer-focus:text-sm peer-focus:text-blue-600
-      peer-not-placeholder-shown:-top-2.5 peer-not-placeholder-shown:translate-y-0 peer-not-placeholder-shown:text-sm
-    "
-                  >
-                    Enter your Email
-                  </label>
-                </div>
-                {/* PASSWORD */}
-                <div className="relative mb-4">
-                  <Lock
-                    size={18}
-                    className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
-                  />
-
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    id="password"
-                    placeholder=" "
-                    disabled={loading}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="peer w-full border border-gray-300 rounded-md
-               pl-12 pr-12 py-4
-               focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-
-                  <label
-                    htmlFor="password"
-                    className="
-      absolute left-12 bg-white px-1
-      text-gray-400 transition-all duration-200 ease-in-out
-      top-1/2 -translate-y-1/2
-      peer-focus:-top-2.5 peer-focus:translate-y-0 peer-focus:text-sm peer-focus:text-blue-600
-      peer-not-placeholder-shown:-top-2.5 peer-not-placeholder-shown:translate-y-0 peer-not-placeholder-shown:text-sm
-    "
-                  >
-                    Enter your Password
-                  </label>
-
-                  <button
-                    type="button"
-                    disabled={loading}
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                  >
-                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </button>
-                </div>
-                <div className="relative mb-4">
-                  <Lock
-                    size={18}
-                    className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
-                  />
-
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    id="confirmpassword"
-                    disabled={loading}
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder=" "
-                    className="peer w-full border border-gray-300 rounded-md
-               pl-12 pr-12 py-4
-               focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-
-                  <label
-                    htmlFor="confirmpassword"
-                    className="
-      absolute left-12 bg-white px-1
-      text-gray-400 transition-all duration-200 ease-in-out
-      top-1/2 -translate-y-1/2
-      peer-focus:-top-2.5 peer-focus:translate-y-0 peer-focus:text-sm peer-focus:text-blue-600
-      peer-not-placeholder-shown:-top-2.5 peer-not-placeholder-shown:translate-y-0 peer-not-placeholder-shown:text-sm
-    "
-                  >
-                    Confirm your Password
-                  </label>
-
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                  >
-                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </button>
-                </div>
-
-                <div className="text-sm  items-center text-start mb-7 pt-3">
-                  <div className="flex items-center gap-3 justify-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      name="checkbox"
-                      className="items-start"
-                      id="checkbox"
-                      checked={checked}
-                      onChange={(e) => setChecked(e.target.checked)}
-                    />
-                    <div>
-                      <span className="text-gray-600"> I agree to the </span>
-                      <Link
-                        href={`/terms-of-service`}
-                        agreed
-                        className=" relative inline-block
-
-    after:content-['']
-    after:absolute
-    after:left-0
-    after:bottom-0
-    after:h-[2px]
-    after:w-full
-    after:bg-current
-
-    after:origin-right
-    after:scale-x-0
-
-    after:transition-transform
-    after:duration-500
-    after:ease-in-out
-    font-bold
-
-    hover:after:origin-left
-    hover:after:scale-x-100 text-blue-600 font-medium"
-                      >
-                        Terms of Service
-                      </Link>
-                      <span className="text-gray-600"> and </span>{" "}
-                      <Link
-                        href={`/privacy-policy`}
-                        className=" relative inline-block
-
-    after:content-['']
-    after:absolute
-    after:left-0
-    after:bottom-0
-    after:h-[2px]
-    after:w-full
-    after:bg-current
-
-    after:origin-right
-    after:scale-x-0
-
-    after:transition-transform
-    after:duration-500
-    after:ease-in-out
-    font-bold
-
-    hover:after:origin-left
-    hover:after:scale-x-100 text-blue-600 font-medium"
-                      >
-                        Privacy Policy
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-                {/* SIGN IN BUTTON */}
-                <button
-                  type="submit"
-                  disabled={loading || googleLoad}
-                  className="relative h-12 overflow-hidden w-full bg-[#0000FF] hover:bg-[#0000e0] text-white font-medium text-[15px] tracking-wide py-[13px] rounded-[14px] transition-all duration-200 hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(0,0,255,0.28)] active:translate-y-0 active:shadow-none mb-6  disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none disabled:hover:bg-[#0000FF]"
-                >
-                  {loading && !googleLoad ? (
-                    <span className="inline-block w-[18px] h-[18px] border-[2.5px] border-white/30 border-t-white rounded-full animate-spin" />
-                  ) : (
-                    "Create Account"
-                  )}
-                </button>
-              </form>
-              {/* GOOGLE */}
-              <div className="mb-5 flex items-center">
-                <div className="h-px flex-1 bg-gradient-to-r from-transparent to-gray-300" />
-                <span className="px-4 text-xs font-medium text-gray-500">
-                  OR
-                </span>
-                <div className="h-px flex-1 bg-gradient-to-l from-transparent to-gray-300" />
-              </div>
-              <div className="flex justify-center mb-6">
-                <button
-                  onClick={handleGoogleSignIn}
-                  disabled={loading || googleLoad}
-                  className="flex items-center h-12 justify-center gap-[10px] w-full bg-white hover:bg-gray-50 border border-gray-200/60 hover:border-gray-300/60 text-[15px] font-medium py-3 rounded-[14px] transition-all duration-200 hover:-translate-y-px hover:shadow-[0_2px_10px_rgba(0,0,0,0.07)] active:translate-y-0 active:shadow-none mb-6 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none disabled:hover:bg-white disabled:hover:border-gray-200/60"
-                >
-                  {loading && googleLoad ? (
-                    <span className="inline-block w-[18px] h-[18px] border-[2.5px] border-blue-100 border-t-[#0000FF] rounded-full animate-spin" />
-                  ) : (
-                    <>
-                      <img
-                        src="https://www.svgrepo.com/show/475656/google-color.svg"
-                        alt=""
-                        className="w-[18px] h-[18px]"
-                      />
-                      Continue with Google
-                    </>
-                  )}
-                </button>
-              </div>
-
-              {/* CREATE ACCOUNT */}
-              <div className="text-center text-sm">
-                <span className="text-gray-600  pb-20">
-                  Already have an account?{" "}
-                </span>
-                <Link
-                  href={`/login`}
-                  className="relative inline-block
-
-    after:content-['']
-    after:absolute
-    after:left-0
-    after:bottom-0
-    after:h-[2px]
-    after:w-full
-    after:bg-current
-
-    after:origin-right
-    after:scale-x-0
-
-    after:transition-transform
-    after:duration-500
-    after:ease-in-out
-    font-bold
-
-    hover:after:origin-left
-    hover:after:scale-x-100 text-blue-600 font-medium"
-                >
-                  Sign in
-                </Link>
+              <div>
+                <h2 className="font-semibold text-sm">
+                  <span className="text-blue-600 font-bold">NEPO</span> GAMES
+                </h2>
+                <p className="text-sm text-gray-600">
+                  Sign up to{" "}
+                  <span className="text-blue-600 font-bold">NEPO GAMES</span>{" "}
+                  and trade your games securely.
+                </p>
               </div>
             </div>
-          </div>
 
-          <div className="hidden lg:flex lg:w-1/2 h-screen items-center justify-center bg-white">
-            <Image
-              src="/signup.png"
-              alt="Sign Up Illustration"
-              width={0}
-              height={0}
-              sizes="100vw"
-              className="max-w-2xl w-full h-auto object-contain"
+            {/* HEADER */}
+            <h1 className="text-3xl font-bold text-center mb-2">Welcome 👋</h1>
+
+            <p className="text-center text-blue-600 mb-8">
+              Create an account to continue
+            </p>
+
+            {/* EMAIL */}
+            <ErrorModal
+              isOpen={errorOpen}
+              message={message}
+              triggerId={errorTrigger}
+              onClose={() => setErrorOpen(false)}
+              autoClose
             />
+            <SuccessModal
+              isOpen={successOpen}
+              message={message}
+              triggerId={errorTrigger}
+              onClose={() => setSuccessOpen(false)}
+              autoClose
+            />
+            <form className="mt-2" onSubmit={handleSignUp}>
+              <div className="relative mb-6">
+                <User
+                  size={18}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+                />
+
+                <input
+                  type="text"
+                  id="name"
+                  disabled={loading}
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  placeholder=" "
+                  className="peer w-full border border-gray-300 rounded-md
+               pl-12 pr-4 py-4
+               focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+
+                <label
+                  htmlFor="name"
+                  className="
+      absolute left-12 bg-white px-1
+      text-gray-400 transition-all duration-200 ease-in-out
+      top-1/2 -translate-y-1/2
+      peer-focus:-top-2.5 peer-focus:translate-y-0 peer-focus:text-sm peer-focus:text-blue-600
+      peer-not-placeholder-shown:-top-2.5 peer-not-placeholder-shown:translate-y-0 peer-not-placeholder-shown:text-sm
+    "
+                >
+                  Full Name (Surname first)
+                </label>
+              </div>
+              <div className="relative mb-6">
+                <User
+                  size={18}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+                />
+
+                <input
+                  type="text"
+                  id="username"
+                  disabled={loading}
+                  value={userName}
+                  onChange={(e) => setUserName(e.target.value)}
+                  placeholder=" "
+                  className="peer w-full border border-gray-300 rounded-md
+               pl-12 pr-4 py-4
+               focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+
+                <label
+                  htmlFor="username"
+                  className="
+      absolute left-12 bg-white px-1
+      text-gray-400 transition-all duration-200 ease-in-out
+      top-1/2 -translate-y-1/2
+      peer-focus:-top-2.5 peer-focus:translate-y-0 peer-focus:text-sm peer-focus:text-blue-600
+      peer-not-placeholder-shown:-top-2.5 peer-not-placeholder-shown:translate-y-0 peer-not-placeholder-shown:text-sm
+    "
+                >
+                  User Name
+                </label>
+              </div>
+              <div className="relative mb-6">
+                <Mail
+                  size={18}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+                />
+
+                <input
+                  type="email"
+                  id="email"
+                  disabled={loading}
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder=" "
+                  className="peer w-full border border-gray-300 rounded-md
+               pl-12 pr-4 py-4
+               focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+
+                <label
+                  htmlFor="email"
+                  className="
+      absolute left-12 bg-white px-1
+      text-gray-400 transition-all duration-200 ease-in-out
+      top-1/2 -translate-y-1/2
+      peer-focus:-top-2.5 peer-focus:translate-y-0 peer-focus:text-sm peer-focus:text-blue-600
+      peer-not-placeholder-shown:-top-2.5 peer-not-placeholder-shown:translate-y-0 peer-not-placeholder-shown:text-sm
+    "
+                >
+                  Enter your Email
+                </label>
+              </div>
+              {/* PASSWORD */}
+              <div className="relative mb-4">
+                <Lock
+                  size={18}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+                />
+
+                <input
+                  type={showPassword ? "text" : "password"}
+                  id="password"
+                  placeholder=" "
+                  disabled={loading}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="peer w-full border border-gray-300 rounded-md
+               pl-12 pr-12 py-4
+               focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+
+                <label
+                  htmlFor="password"
+                  className="
+      absolute left-12 bg-white px-1
+      text-gray-400 transition-all duration-200 ease-in-out
+      top-1/2 -translate-y-1/2
+      peer-focus:-top-2.5 peer-focus:translate-y-0 peer-focus:text-sm peer-focus:text-blue-600
+      peer-not-placeholder-shown:-top-2.5 peer-not-placeholder-shown:translate-y-0 peer-not-placeholder-shown:text-sm
+    "
+                >
+                  Enter your Password
+                </label>
+
+                <button
+                  type="button"
+                  disabled={loading}
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+              <div className="relative mb-4">
+                <Lock
+                  size={18}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+                />
+
+                <input
+                  type={showPassword ? "text" : "password"}
+                  id="confirmpassword"
+                  disabled={loading}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder=" "
+                  className="peer w-full border border-gray-300 rounded-md
+               pl-12 pr-12 py-4
+               focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+
+                <label
+                  htmlFor="confirmpassword"
+                  className="
+      absolute left-12 bg-white px-1
+      text-gray-400 transition-all duration-200 ease-in-out
+      top-1/2 -translate-y-1/2
+      peer-focus:-top-2.5 peer-focus:translate-y-0 peer-focus:text-sm peer-focus:text-blue-600
+      peer-not-placeholder-shown:-top-2.5 peer-not-placeholder-shown:translate-y-0 peer-not-placeholder-shown:text-sm
+    "
+                >
+                  Confirm your Password
+                </label>
+
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+
+              <div className="text-sm  items-center text-start mb-7 pt-3">
+                <div className="flex items-center gap-3 justify-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    name="checkbox"
+                    className="items-start"
+                    id="checkbox"
+                    checked={checked}
+                    onChange={(e) => setChecked(e.target.checked)}
+                  />
+                  <div>
+                    <span className="text-gray-600"> I agree to the </span>
+                    <Link
+                      href={`/terms-of-service`}
+                      agreed
+                      className=" relative inline-block
+
+    after:content-['']
+    after:absolute
+    after:left-0
+    after:bottom-0
+    after:h-[2px]
+    after:w-full
+    after:bg-current
+
+    after:origin-right
+    after:scale-x-0
+
+    after:transition-transform
+    after:duration-500
+    after:ease-in-out
+    font-bold
+
+    hover:after:origin-left
+    hover:after:scale-x-100 text-blue-600 font-medium"
+                    >
+                      Terms of Service
+                    </Link>
+                    <span className="text-gray-600"> and </span>{" "}
+                    <Link
+                      href={`/privacy-policy`}
+                      className=" relative inline-block
+
+    after:content-['']
+    after:absolute
+    after:left-0
+    after:bottom-0
+    after:h-[2px]
+    after:w-full
+    after:bg-current
+
+    after:origin-right
+    after:scale-x-0
+
+    after:transition-transform
+    after:duration-500
+    after:ease-in-out
+    font-bold
+
+    hover:after:origin-left
+    hover:after:scale-x-100 text-blue-600 font-medium"
+                    >
+                      Privacy Policy
+                    </Link>
+                  </div>
+                </div>
+              </div>
+              {/* SIGN IN BUTTON */}
+              <button
+                type="submit"
+                disabled={loading || googleLoad}
+                className="relative h-12 overflow-hidden w-full bg-[#0000FF] hover:bg-[#0000e0] text-white font-medium text-[15px] tracking-wide py-[13px] rounded-[14px] transition-all duration-200 hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(0,0,255,0.28)] active:translate-y-0 active:shadow-none mb-6  disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none disabled:hover:bg-[#0000FF]"
+              >
+                {loading && !googleLoad ? (
+                  <span className="inline-block w-[18px] h-[18px] border-[2.5px] border-white/30 border-t-white rounded-full animate-spin" />
+                ) : (
+                  "Create Account"
+                )}
+              </button>
+            </form>
+            {/* GOOGLE */}
+            <div className="mb-5 flex items-center">
+              <div className="h-px flex-1 bg-gradient-to-r from-transparent to-gray-300" />
+              <span className="px-4 text-xs font-medium text-gray-500">OR</span>
+              <div className="h-px flex-1 bg-gradient-to-l from-transparent to-gray-300" />
+            </div>
+            <div className="flex justify-center mb-6">
+              <button
+                onClick={handleGoogleSignIn}
+                disabled={loading || googleLoad}
+                className="flex items-center h-12 justify-center gap-[10px] w-full bg-white hover:bg-gray-50 border border-gray-200/60 hover:border-gray-300/60 text-[15px] font-medium py-3 rounded-[14px] transition-all duration-200 hover:-translate-y-px hover:shadow-[0_2px_10px_rgba(0,0,0,0.07)] active:translate-y-0 active:shadow-none mb-6 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none disabled:hover:bg-white disabled:hover:border-gray-200/60"
+              >
+                {loading && googleLoad ? (
+                  <span className="inline-block w-[18px] h-[18px] border-[2.5px] border-blue-100 border-t-[#0000FF] rounded-full animate-spin" />
+                ) : (
+                  <>
+                    <img
+                      src="https://www.svgrepo.com/show/475656/google-color.svg"
+                      alt=""
+                      className="w-[18px] h-[18px]"
+                    />
+                    Continue with Google
+                  </>
+                )}
+              </button>
+            </div>
+
+            {/* CREATE ACCOUNT */}
+            <div className="text-center text-sm">
+              <span className="text-gray-600  pb-20">
+                Already have an account?{" "}
+              </span>
+              <Link
+                href={`/login`}
+                className="relative inline-block
+
+    after:content-['']
+    after:absolute
+    after:left-0
+    after:bottom-0
+    after:h-[2px]
+    after:w-full
+    after:bg-current
+
+    after:origin-right
+    after:scale-x-0
+
+    after:transition-transform
+    after:duration-500
+    after:ease-in-out
+    font-bold
+
+    hover:after:origin-left
+    hover:after:scale-x-100 text-blue-600 font-medium"
+              >
+                Sign in
+              </Link>
+            </div>
           </div>
         </div>
-      </Reveal>
+
+        <div className="hidden lg:flex lg:w-1/2 h-screen items-center justify-center bg-white">
+          <Image
+            src="/signup.png"
+            alt="Sign Up Illustration"
+            width={0}
+            height={0}
+            sizes="100vw"
+            className="max-w-2xl w-full h-auto object-contain"
+          />
+        </div>
+      </div>
     </div>
   );
 }
