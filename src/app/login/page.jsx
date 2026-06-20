@@ -4,6 +4,7 @@ import PageLoader from "@/components/PageLoader";
 import LoginClient from "./LoginClient";
 import { SessionProvider, useSession } from "next-auth/react";
 import { useEffect } from "react";
+import { Suspense } from "react";
 import Loader from "@/components/Loader";
 
 function PageContent() {
@@ -40,9 +41,10 @@ function PageContent() {
 export default function LoginPage() {
   return (
     <SessionProvider>
+       <Suspense fallback={null}>
       <div className="page-fader-in">
         <PageContent />
-      </div>
+      </div></Suspense>
     </SessionProvider>
   );
 }
