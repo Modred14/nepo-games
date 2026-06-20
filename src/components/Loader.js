@@ -1,4 +1,5 @@
 "use client";
+import Image from "next/image";
 
 export default function Loader() {
   return (
@@ -7,14 +8,18 @@ export default function Loader() {
         <div className="flex flex-col items-center gap-4">
           <div className="bg-blue-700 p-3 rounded-2xl">
             {" "}
-            <img
+            <Image
               src="/logo.png"
               alt="Nepogames"
-              className="w-16 animate-pulse"
+              width={64}
+              height={64}
+              className="animate-pulse"
             />
           </div>
 
-          <p className="text-blue-700 font-semibold">Loading Nepogames<span className="loading-dots"></span></p>
+          <p className="text-blue-700 font-semibold">
+            Loading Nepogames<span className="loading-dots"></span>
+          </p>
 
           <div className="w-40 h-1 bg-gray-200 rounded overflow-hidden">
             <div className="h-full bg-blue-600 animate-loading w-1/2"></div>

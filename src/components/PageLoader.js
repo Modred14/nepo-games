@@ -34,10 +34,12 @@ export default function PageLoader({ children }) {
           <div className="flex flex-col items-center gap-4">
             <div className="bg-blue-700 p-3 rounded-2xl">
               {" "}
-              <img
+              <Image
                 src="/logo.png"
                 alt="Nepogames"
-                className="w-16 animate-pulse"
+                width={64}
+                height={64}
+                className="animate-pulse"
               />
             </div>
 
@@ -57,7 +59,7 @@ export default function PageLoader({ children }) {
           loaded ? "opacity-100 visible" : "opacity-0 invisible"
         }`}
       >
-       {children}
+        {children}
       </div>
     </>
   );
