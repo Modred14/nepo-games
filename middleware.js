@@ -60,7 +60,7 @@ export function middleware(request) {
     return NextResponse.next();
   }
 
-  const deadline = new Date("2025-07-01T00:00:00Z");
+  const deadline = new Date("2026-07-01T00:00:00Z");
   if (new Date() >= deadline) return NextResponse.next();
 
   const userAgent = request.headers.get("user-agent") || "";
