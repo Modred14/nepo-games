@@ -26,13 +26,13 @@ function PageContent() {
     }
   }, [status, session]);
 
-  // if (status === "loading") {
-  //   return (
-  //     <div className="min-h-screen flex items-center justify-center">
-  //       <Loader />
-  //     </div>
-  //   );
-  // }
+  if (status === "loading") {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader />
+      </div>
+    );
+  }
 
   return <LoginClient />;
 }
