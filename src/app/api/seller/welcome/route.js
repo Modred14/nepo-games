@@ -1,5 +1,5 @@
-import pool from "../../../lib/db";
-import { resend } from "../../../lib/resend";
+import pool from "../../../../lib/db";
+import { resend } from "../../../../lib/resend";
 
 export async function POST(req) {
   try {
@@ -11,7 +11,7 @@ export async function POST(req) {
 
     const result = await pool.query(
       "SELECT first_name, username FROM users WHERE email = $1",
-      [email]
+      [email],
     );
 
     if (result.rows.length === 0) {
@@ -65,7 +65,7 @@ export async function POST(req) {
                       </h1>
                       <p style="margin:0 0 28px;font-size:15px;color:#57534E;line-height:1.6;">
                         Your seller account (<strong>@${username}</strong>) is now active on <strong>Nepo Games</strong>.
-                        You can start listing your games and reaching buyers right away.
+                        You can start listing your game accounts and reaching buyers right away.
                       </p>
 
                       <!-- Steps -->
@@ -73,7 +73,7 @@ export async function POST(req) {
 
                         <tr>
                           <td style="padding:16px 20px;border-bottom:1px solid #E7E5E4;">
-                            <p style="margin:0 0 2px;font-size:13px;font-weight:600;color:#0A0A0A;">📦 List your first game</p>
+                            <p style="margin:0 0 2px;font-size:13px;font-weight:600;color:#0A0A0A;">📦 List your first account</p>
                             <p style="margin:0;font-size:13px;color:#78716C;line-height:1.5;">
                               Head to your dashboard and create a listing. Add clear photos, a fair price, and an honest description.
                             </p>
@@ -104,10 +104,10 @@ export async function POST(req) {
                       <table cellpadding="0" cellspacing="0" style="width:100%;margin-bottom:28px;">
                         <tr>
                           <td align="center">
-                            <a href="${process.env.NEXT_PUBLIC_BASE_URL}/dashboard/listings/new"
+                            <a href="${process.env.NEXT_PUBLIC_BASE_URL}/sell-game"
                                style="display:inline-block;background:#16A34A;color:#ffffff;font-size:15px;font-weight:500;
                                       text-decoration:none;padding:13px 32px;border-radius:8px;">
-                              List your first game
+                              List your first account
                             </a>
                           </td>
                         </tr>
@@ -120,7 +120,7 @@ export async function POST(req) {
                       <table cellpadding="0" cellspacing="0" style="background:#FAFAF9;border:1px solid #E7E5E4;border-radius:8px;width:100%;">
                         <tr>
                           <td style="padding:14px 16px;font-size:13px;color:#57534E;line-height:1.6;">
-                            🛟 Need help? Visit our <a href="${process.env.NEXT_PUBLIC_BASE_URL}/help" style="color:#1D4ED8;text-decoration:none;">Seller Help Centre</a> or
+                            🛟 Need help? Visit our <a href="${process.env.NEXT_PUBLIC_BASE_URL}/contact" style="color:#1D4ED8;text-decoration:none;">Seller Help Centre</a> or
                             email us at <a href="mailto:support@nepogames.com" style="color:#1D4ED8;text-decoration:none;">support@nepogames.com</a>.
                           </td>
                         </tr>
@@ -160,8 +160,10 @@ Your account (@${username}) is active. Here's how to get started:
 Need help? Email support@nepogames.com`,
     });
 
-    return Response.json({ message: "Seller welcome email sent." }, { status: 200 });
-
+    return Response.json(
+      { message: "Seller welcome email sent." },
+      { status: 200 },
+    );
   } catch (err) {
     console.error(err);
     return Response.json({ error: "Something went wrong." }, { status: 500 });

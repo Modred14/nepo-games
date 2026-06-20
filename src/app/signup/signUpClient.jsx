@@ -28,6 +28,10 @@ export default function Login() {
   const [googleLoad, setGoogleLoad] = useState(false);
 
   const router = useRouter();
+  useEffect(() => {
+    setLoading(false);
+    setGoogleLoad(false);
+  }, []);
 
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem("nepo-user"));
@@ -494,8 +498,8 @@ export default function Login() {
                 {/* SIGN IN BUTTON */}
                 <button
                   type="submit"
-                  disabled={loading}
-                  className="relative h-12 overflow-hidden w-full bg-[#0000FF] hover:bg-[#0000e0] text-white font-medium text-[15px] tracking-wide py-[13px] rounded-[14px] transition-all duration-200 hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(0,0,255,0.28)] active:translate-y-0 active:shadow-none mb-6"
+                  disabled={loading || googleLoad}
+                  className="relative h-12 overflow-hidden w-full bg-[#0000FF] hover:bg-[#0000e0] text-white font-medium text-[15px] tracking-wide py-[13px] rounded-[14px] transition-all duration-200 hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(0,0,255,0.28)] active:translate-y-0 active:shadow-none mb-6  disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none disabled:hover:bg-[#0000FF]"
                 >
                   {loading && !googleLoad ? (
                     <span className="inline-block w-[18px] h-[18px] border-[2.5px] border-white/30 border-t-white rounded-full animate-spin" />
@@ -515,8 +519,8 @@ export default function Login() {
               <div className="flex justify-center mb-6">
                 <button
                   onClick={handleGoogleSignIn}
-                  disabled={loading}
-                  className="flex items-center h-12 justify-center gap-[10px] w-full bg-white hover:bg-gray-50 border border-gray-200/60 hover:border-gray-300/60 text-[15px] font-medium py-3 rounded-[14px] transition-all duration-200 hover:-translate-y-px hover:shadow-[0_2px_10px_rgba(0,0,0,0.07)] active:translate-y-0 active:shadow-none mb-6"
+                  disabled={loading || googleLoad}
+                  className="flex items-center h-12 justify-center gap-[10px] w-full bg-white hover:bg-gray-50 border border-gray-200/60 hover:border-gray-300/60 text-[15px] font-medium py-3 rounded-[14px] transition-all duration-200 hover:-translate-y-px hover:shadow-[0_2px_10px_rgba(0,0,0,0.07)] active:translate-y-0 active:shadow-none mb-6 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none disabled:hover:bg-white disabled:hover:border-gray-200/60"
                 >
                   {loading && googleLoad ? (
                     <span className="inline-block w-[18px] h-[18px] border-[2.5px] border-blue-100 border-t-[#0000FF] rounded-full animate-spin" />

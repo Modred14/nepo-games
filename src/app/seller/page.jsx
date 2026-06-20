@@ -387,6 +387,7 @@ function BrandPanel({ step }) {
 // ─── Main component ──────────────────────────────────────────────────────────
 export default function Seller() {
   const router = useRouter();
+  const { update } = useSession();
   const [step, setStep] = useState(1);
   const [email, setEmail] = useState("");
   const [maskedEmail, setMaskedEmail] = useState("");
@@ -474,7 +475,6 @@ export default function Seller() {
   };
 
   const handleVerify = async () => {
-     const { update } = useSession();
     setError("");
     const code = otp.join("");
     if (code.length !== 6) {
@@ -496,7 +496,7 @@ export default function Seller() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
       });
-      await update({ phone_verified: true });
+      await update({ user: { phone_verified: true } });
       setStep(4);
     } catch (err) {
       setError(err.message || "Invalid code");
@@ -610,14 +610,13 @@ export default function Seller() {
 
             {/* Main card */}
             <div
+              className="grid grid-cols-1 sm:grid-cols-2"
               style={{
                 background: "#fff",
                 borderRadius: 24,
                 border: "1px solid #eaebff",
                 boxShadow: "0 8px 60px rgba(0,0,255,0.06)",
                 overflow: "hidden",
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
               }}
             >
               {/* Left: steps */}
@@ -735,9 +734,10 @@ export default function Seller() {
 
               {/* Right: illustration / stats */}
               <div
+                className="hidden sm:flex"
                 style={{
                   background: "linear-gradient(145deg, #0000FF, #2929ff)",
-                  display: "flex",
+
                   flexDirection: "column",
                   alignItems: "center",
                   justifyContent: "center",
@@ -941,6 +941,7 @@ export default function Seller() {
 
         {/* Right form panel */}
         <div
+        className="min-w-screen lg:min-w-full"
           style={{
             background: "#fafafe",
             display: "flex",
@@ -948,6 +949,7 @@ export default function Seller() {
             justifyContent: "center",
             padding: "32px 20px",
             minHeight: "100vh",
+            
           }}
         >
           {step === 2 && (
