@@ -1033,146 +1033,146 @@ export default function Home() {
             </Reveal>
 
             {/* ── HOW IT WORKS ── */}
-            <section className="bg-white py-24 px-[5%]">
-              <Reveal>
-                <div className="max-w-6xl mx-auto">
-                  <div className="flex justify-center mb-5">
-                    <span className="text-xs font-semibold tracking-widest uppercase text-[#0000FF] bg-blue-50 px-4 py-1.5 rounded-full border border-blue-100">
-                      How it works
-                    </span>
-                  </div>
-                  <h2 className="text-center text-3xl sm:text-4xl lg:text-[2.75rem] font-bold text-[#0a0a1a] leading-tight mb-4">
-                    Trade in four simple steps
-                  </h2>
-                  <p className="text-center text-gray-500 max-w-xl mx-auto mb-16 text-base leading-relaxed">
-                    From registration to completed trade, every step is designed
-                    for speed, clarity, and complete security.
-                  </p>
+          {/* ── HOW IT WORKS ── */}
+<section className="bg-white py-24 px-[5%] overflow-x-hidden">
+  <Reveal>
+    <div className="max-w-6xl mx-auto">
+      <div className="flex justify-center mb-5">
+        <span className="text-xs font-semibold tracking-widest uppercase text-[#0000FF] bg-blue-50 px-4 py-1.5 rounded-full border border-blue-100">
+          Why Trade Nepogames?
+        </span>
+      </div>
+      <h2 className="text-center text-3xl sm:text-4xl lg:text-[2.75rem] font-bold text-[#0a0a1a] leading-tight mb-4">
+        Why trade with us!
+      </h2>
+      <p className="text-center text-gray-500 max-w-xl mx-auto mb-16 text-base leading-relaxed">
+        Everything you need for a secure, seamless gaming account marketplace — built for buyers and sellers alike.
+      </p>
 
-                  <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-6">
-                    <RevealLeft>
-                      <Link href={"/signup"}>
-                        <div className="group relative bg-white border border-gray-100 rounded-2xl p-6 pb-0 hover:border-blue-200 hover:shadow-[0_8px_40px_rgba(0,0,255,0.07)] transition-all duration-300 overflow-hidden h-full flex flex-col">
-                          <span className="absolute top-5 right-5 text-[10px] font-bold tracking-widest text-gray-300 uppercase">
-                            01
-                          </span>
-                          <div className="w-11 h-11 rounded-xl bg-blue-50 flex items-center justify-center mb-5 group-hover:bg-blue-100 transition-colors duration-300">
-                            <User2Icon size={20} className="text-[#0000FF]" />
-                          </div>
-                          <h3 className="text-base font-semibold text-[#0a0a1a] mb-2">
-                            Create Account
-                          </h3>
-                          <p className="text-sm text-gray-500 leading-relaxed mb-6 flex-1">
-                            Register to access a protected marketplace built for
-                            secure, transparent gaming account trading.
-                          </p>
-                          <div className="px-4 mt-auto">
-                            <Image
-                              src="/ex-sign.png"
-                              alt=""
-                              width={300}
-                              height={160}
-                              className="rounded-t-xl w-full"
-                            />
-                          </div>
-                        </div>
-                      </Link>
-                    </RevealLeft>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        {/* Card 1 — E-SCROW (large, spans 2 cols on lg) */}
+        <RevealLeft>
+          <Link href="/marketplace" className="block h-full">
+            <div className="group relative bg-white border border-gray-100 rounded-2xl p-7 hover:border-blue-200 hover:shadow-[0_8px_40px_rgba(0,0,255,0.07)] transition-all duration-300 h-full flex flex-col gap-4 sm:col-span-2 lg:col-span-1">
+              <div className="w-11 h-11 rounded-xl bg-blue-50 flex items-center justify-center group-hover:bg-blue-100 transition-colors duration-300">
+                <BadgeDollarSign size={22} className="text-[#0000FF]" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-[#0a0a1a] uppercase tracking-wide mb-2">
+                  E-Scrow Payment.
+                </h3>
+                <p className="text-sm text-gray-500 leading-relaxed">
+                  Trade with confidence — your payment stays protected until both parties confirm the deal.
+                </p>
+              </div>
+              <div className="mt-auto pt-2">
+                <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#0000FF] group-hover:gap-2.5 transition-all duration-200">
+                  Browse Marketplace <ArrowRight size={14} />
+                </span>
+              </div>
+            </div>
+          </Link>
+        </RevealLeft>
 
-                    <RevealRight>
-                      <Link href="/sell-game">
-                        <div className="group relative bg-white border border-gray-100 rounded-2xl p-6 pb-0 hover:border-blue-200 hover:shadow-[0_8px_40px_rgba(0,0,255,0.07)] transition-all duration-300 overflow-hidden h-full flex flex-col">
-                          <span className="absolute top-5 right-5 text-[10px] font-bold tracking-widest text-gray-300 uppercase">
-                            02
-                          </span>
-                          <div className="w-11 h-11 rounded-xl bg-violet-50 flex items-center justify-center mb-5 group-hover:bg-violet-100 transition-colors duration-300">
-                            <Plus size={20} className="text-violet-600" />
-                          </div>
-                          <h3 className="text-base font-semibold text-[#0a0a1a] mb-2">
-                            List Your Account
-                          </h3>
-                          <p className="text-sm text-gray-500 leading-relaxed mb-6 flex-1">
-                            Add your gaming account in minutes and connect with
-                            serious buyers instantly. Fast, safe, and verified.
-                          </p>
-                          <div className="px-4 mt-auto">
-                            <Image
-                              src="/game-gen.png"
-                              alt=""
-                              width={300}
-                              height={160}
-                              className="rounded-t-xl w-full"
-                            />
-                          </div>
-                        </div>
-                      </Link>
-                    </RevealRight>
+        {/* Card 2 — CHAT */}
+        <RevealRight>
+          <Link href="/marketplace" className="block h-full">
+            <div className="group relative bg-white border border-gray-100 rounded-2xl p-7 hover:border-blue-200 hover:shadow-[0_8px_40px_rgba(0,0,255,0.07)] transition-all duration-300 h-full flex flex-col gap-4">
+              <div className="w-11 h-11 rounded-xl bg-violet-50 flex items-center justify-center group-hover:bg-violet-100 transition-colors duration-300">
+                <Headphones size={22} className="text-violet-600" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-[#0a0a1a] uppercase tracking-wide mb-2">
+                  Chat.
+                </h3>
+                <p className="text-sm text-gray-500 leading-relaxed">
+                  Communicate directly with buyers and sellers to ensure smooth, transparent transactions.
+                </p>
+              </div>
+              <div className="mt-auto pt-2">
+                <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#0000FF] group-hover:gap-2.5 transition-all duration-200">
+                  Browse Marketplace <ArrowRight size={14} />
+                </span>
+              </div>
+            </div>
+          </Link>
+        </RevealRight>
 
-                    <RevealLeft>
-                      <Link href={"/marketplace"}>
-                        <div className="group relative bg-white border border-gray-100 rounded-2xl p-6 pb-0 hover:border-blue-200 hover:shadow-[0_8px_40px_rgba(0,0,255,0.07)] transition-all duration-300 overflow-hidden h-full flex flex-col">
-                          <span className="absolute top-5 right-5 text-[10px] font-bold tracking-widest text-gray-300 uppercase">
-                            03
-                          </span>
-                          <div className="w-11 h-11 rounded-xl bg-emerald-50 flex items-center justify-center mb-5 group-hover:bg-emerald-100 transition-colors duration-300">
-                            <Tag size={20} className="text-emerald-600" />
-                          </div>
-                          <h3 className="text-base font-semibold text-[#0a0a1a] mb-2">
-                            Buy or Sell
-                          </h3>
-                          <p className="text-sm text-gray-500 leading-relaxed mb-6 flex-1">
-                            Browse listings, make an offer, and close the deal —
-                            with zero hassle and full price transparency.
-                          </p>
-                          <div className="px-4 mt-auto">
-                            <Image
-                              src="/buy-sign.png"
-                              alt=""
-                              width={300}
-                              height={160}
-                              className="rounded-t-xl w-full"
-                            />
-                          </div>
-                        </div>
-                      </Link>
-                    </RevealLeft>
+        {/* Card 3 — FILTERED SEARCH */}
+        <RevealLeft>
+          <Link href="/marketplace" className="block h-full">
+            <div className="group relative bg-white border border-gray-100 rounded-2xl p-7 hover:border-blue-200 hover:shadow-[0_8px_40px_rgba(0,0,255,0.07)] transition-all duration-300 h-full flex flex-col gap-4">
+              <div className="w-11 h-11 rounded-xl bg-emerald-50 flex items-center justify-center group-hover:bg-emerald-100 transition-colors duration-300">
+                <SlidersHorizontal size={22} className="text-emerald-600" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-[#0a0a1a] uppercase tracking-wide mb-2">
+                  Filtered Search.
+                </h3>
+                <p className="text-sm text-gray-500 leading-relaxed">
+                  Easily filter listings by game, price, rank, and more to find the perfect account in seconds.
+                </p>
+              </div>
+              <div className="mt-auto pt-2">
+                <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#0000FF] group-hover:gap-2.5 transition-all duration-200">
+                  Browse Marketplace <ArrowRight size={14} />
+                </span>
+              </div>
+            </div>
+          </Link>
+        </RevealLeft>
 
-                    <RevealRight>
-                      <Link href={`/profile`}>
-                        <div className="group relative bg-white border border-gray-100 rounded-2xl p-6 pb-0 hover:border-blue-200 hover:shadow-[0_8px_40px_rgba(0,0,255,0.07)] transition-all duration-300 overflow-hidden h-full flex flex-col">
-                          <span className="absolute top-5 right-5 text-[10px] font-bold tracking-widest text-gray-300 uppercase">
-                            04
-                          </span>
-                          <div className="w-11 h-11 rounded-xl bg-amber-50 flex items-center justify-center mb-5 group-hover:bg-amber-100 transition-colors duration-300">
-                            <SlidersHorizontal
-                              size={20}
-                              className="text-amber-600"
-                            />
-                          </div>
-                          <h3 className="text-base font-semibold text-[#0a0a1a] mb-2">
-                            Manage Trades
-                          </h3>
-                          <p className="text-sm text-gray-500 leading-relaxed mb-6 flex-1">
-                            Track every transaction in real time with a clean
-                            dashboard built for complete transparency.
-                          </p>
-                          <div className="px-4 mt-auto">
-                            <Image
-                              src="/page-gen.png"
-                              alt=""
-                              width={300}
-                              height={160}
-                              className="rounded-t-xl w-full"
-                            />
-                          </div>
-                        </div>
-                      </Link>
-                    </RevealRight>
-                  </div>
-                </div>
-              </Reveal>
-            </section>
+        {/* Card 4 — FAST & SECURE */}
+        <RevealRight>
+          <Link href="/marketplace" className="block h-full">
+            <div className="group relative bg-white border border-gray-100 rounded-2xl p-7 hover:border-blue-200 hover:shadow-[0_8px_40px_rgba(0,0,255,0.07)] transition-all duration-300 h-full flex flex-col gap-4">
+              <div className="w-11 h-11 rounded-xl bg-amber-50 flex items-center justify-center group-hover:bg-amber-100 transition-colors duration-300">
+                <Zap size={22} className="text-amber-600" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-[#0a0a1a] uppercase tracking-wide mb-2">
+                  Fast &amp; Secure
+                </h3>
+                <p className="text-sm text-gray-500 leading-relaxed">
+                  Enjoy lightning-fast transactions and robust security designed to keep every trade safe and seamless.
+                </p>
+              </div>
+              <div className="mt-auto pt-2">
+                <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#0000FF] group-hover:gap-2.5 transition-all duration-200">
+                  Browse Marketplace <ArrowRight size={14} />
+                </span>
+              </div>
+            </div>
+          </Link>
+        </RevealRight>
 
+        {/* Card 5 — 24/7 SUPPORT */}
+        <RevealLeft>
+          <Link href="/contact" className="block h-full">
+            <div className="group relative bg-white border border-gray-100 rounded-2xl p-7 hover:border-blue-200 hover:shadow-[0_8px_40px_rgba(0,0,255,0.07)] transition-all duration-300 h-full flex flex-col gap-4">
+              <div className="w-11 h-11 rounded-xl bg-blue-50 flex items-center justify-center group-hover:bg-blue-100 transition-colors duration-300">
+                <Users size={22} className="text-[#0000FF]" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-[#0a0a1a] uppercase tracking-wide mb-2">
+                  24/7 Support.
+                </h3>
+                <p className="text-sm text-gray-500 leading-relaxed">
+                  Get fast, reliable assistance anytime with our dedicated 24/7 support team.
+                </p>
+              </div>
+              <div className="mt-auto pt-2">
+                <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#0000FF] group-hover:gap-2.5 transition-all duration-200">
+                  Browse Marketplace <ArrowRight size={14} />
+                </span>
+              </div>
+            </div>
+          </Link>
+        </RevealLeft>
+      </div>
+    </div>
+  </Reveal>
+</section>
             {/* ── TRUST / ESCROW SECTION ── */}
             <section className="bg-[#FAFAFA] border-t border-b border-gray-100 py-24 px-[5%]">
               <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-16 items-center">
