@@ -4,7 +4,6 @@ import PageLoader from "@/components/PageLoader";
 import LoginClient from "./LoginClient";
 import { SessionProvider, useSession } from "next-auth/react";
 import { useEffect } from "react";
-import { Suspense } from "react";
 import Loader from "@/components/Loader";
 
 function PageContent() {
@@ -30,7 +29,7 @@ function PageContent() {
   // if (status === "loading") {
   //   return (
   //     <div className="min-h-screen flex items-center justify-center">
-
+  //       <Loader />
   //     </div>
   //   );
   // }
@@ -41,11 +40,10 @@ function PageContent() {
 export default function LoginPage() {
   return (
     <SessionProvider>
-      <Suspense fallback={null}>
-        <div>
-          <PageContent />
-        </div>
-      </Suspense>
+      {" "}
+      <PageLoader>
+        <PageContent />{" "}
+      </PageLoader>
     </SessionProvider>
   );
 }
