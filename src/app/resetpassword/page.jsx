@@ -471,7 +471,7 @@ export default function ForgotPassword() {
         /* ── RESPONSIVE ── */
         @media (max-width: 768px) {
           .fp-panel { display: none; }
-          .fp-main { padding: 32px 20px; background: #f8fafc; min-height: 100vh; align-items: flex-start; padding-top: 60px; }
+          .fp-main { padding: 32px 20px; background: #f8fafc; min-height: 100vh; align-items: center; padding-top: 0; }
           .fp-card {
             background: #ffffff;
             border-radius: 16px;
