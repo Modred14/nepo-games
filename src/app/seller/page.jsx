@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 
 // ─── Tiny CSS-in-JS animation primitives ────────────────────────────────────
 const fadeUp = {
@@ -473,6 +474,7 @@ export default function Seller() {
   };
 
   const handleVerify = async () => {
+     const { update } = useSession();
     setError("");
     const code = otp.join("");
     if (code.length !== 6) {
@@ -494,6 +496,7 @@ export default function Seller() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
       });
+      await update({ phone_verified: true });
       setStep(4);
     } catch (err) {
       setError(err.message || "Invalid code");
