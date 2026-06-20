@@ -180,7 +180,7 @@ export default function Login() {
   };
 
   return (
-    <PageLoader>
+    <div>
       <Reveal>
         <div className="lg:h-screen flex  flex-col lg:flex-row bg-white">
           <div className="w-full lg:hidden lg:w-1/2 flex justify-center items-center bg-white">
@@ -584,6 +584,6 @@ export default function Login() {
           </div>
         </div>
       </Reveal>
-    </PageLoader>
+    </div>
   );
 }
