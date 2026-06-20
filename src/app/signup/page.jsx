@@ -25,13 +25,13 @@ function PageContent() {
     }
   }, [status, session]);
 
-  if (status === "loading") {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader />
-      </div>
-    );
-  }
+  // if (status === "loading") {
+  //   return (
+  //     <div className="min-h-screen flex items-center justify-center">
+
+  //     </div>
+  //   );
+  // }
 
   return <Signup />;
 }
@@ -39,7 +39,9 @@ function PageContent() {
 export default function SignupPage() {
   return (
     <SessionProvider>
-      <PageContent />
+      <div className="page-fader-in">
+        <PageContent />
+      </div>
     </SessionProvider>
   );
 }

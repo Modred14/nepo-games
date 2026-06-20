@@ -26,13 +26,13 @@ function PageContent() {
     }
   }, [status, session]);
 
-  if (status === "loading") {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader />
-      </div>
-    );
-  }
+  // if (status === "loading") {
+  //   return (
+  //     <div className="min-h-screen flex items-center justify-center">
+
+  //     </div>
+  //   );
+  // }
 
   return <LoginClient />;
 }
@@ -40,10 +40,9 @@ function PageContent() {
 export default function LoginPage() {
   return (
     <SessionProvider>
-      {" "}
-      <PageLoader>
-        <PageContent />{" "}
-      </PageLoader>
+      <div className="page-fader-in">
+        <PageContent />
+      </div>
     </SessionProvider>
   );
 }
