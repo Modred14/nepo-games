@@ -10,7 +10,7 @@ import SuccessModal from "../../components/SuccessModal";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
-import { signIn, signOut } from "next-auth/react";
+import { signOut } from "next-auth/react";
 import Image from "next/image";
 
 export default function LoginClient() {
