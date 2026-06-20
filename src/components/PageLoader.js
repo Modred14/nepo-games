@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Reveal from "@/app/reveal";
+import Image from "next/image";
 
 export default function PageLoader({ children }) {
   const [loaded, setLoaded] = useState(false);
