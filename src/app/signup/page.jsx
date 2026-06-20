@@ -39,7 +39,7 @@ function PageContent() {
 export default function SignupPage() {
   return (
     <SessionProvider>
-      <div className="page-fader-in">
+      <div>
         <PageContent />
       </div>
     </SessionProvider>

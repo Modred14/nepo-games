@@ -41,10 +41,11 @@ function PageContent() {
 export default function LoginPage() {
   return (
     <SessionProvider>
-       <Suspense fallback={null}>
-      <div className="page-fader-in">
-        <PageContent />
-      </div></Suspense>
+      <Suspense fallback={null}>
+        <div>
+          <PageContent />
+        </div>
+      </Suspense>
     </SessionProvider>
   );
 }
