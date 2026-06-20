@@ -46,7 +46,7 @@ export default async function handler(req, res) {
       `UPDATE users 
        SET phone_verified = true, phone = $1
        WHERE id = $2`,
-      [phone, userId],
+      [phone, user.id],
     );
 
     // 🧹 cleanup
