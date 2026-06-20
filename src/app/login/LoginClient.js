@@ -10,6 +10,7 @@ import SuccessModal from "../../components/SuccessModal";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
+import { signIn, signOut } from "next-auth/react";
 import Image from "next/image";
 
 export default function LoginClient() {
@@ -29,6 +30,7 @@ export default function LoginClient() {
   const verified = params.get("verified");
   const signupSuccess = params.get("signupSuccess");
   const oauthError = params.get("oauthError");
+  const oauthErr = params.get("error") === "OAuthCallback";
 
   useEffect(() => {
     if ((verified || signupSuccess) && msg) {
@@ -42,11 +44,21 @@ export default function LoginClient() {
   }, []);
 
   useEffect(() => {
+    if (oauthErr) {
+         signOut({ redirect: false });
+      setMessage("Sign in with Google failed. Please try again.");
+      setErrorOpen(true);
+      setErrorTrigger((prev) => prev + 1);
+    }
+  }, [oauthErr]);
+
+  useEffect(() => {
     if (oauthError && msg) {
       setMessage(msg);
       setErrorOpen(true);
+      setErrorTrigger((prev) => prev + 1); // ← you were missing this
     }
-  }, [oauthError]);
+  }, [oauthError, msg]);
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem("nepo-user"));
 

@@ -8,6 +8,8 @@ body {
 
 :root {
   background-color: white;
+  margin-inline: auto;
+  max-width: 1600px;
 }
 
 @keyframes draw {
