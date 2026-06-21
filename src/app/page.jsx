@@ -1039,7 +1039,7 @@ export default function Home() {
     <div className="max-w-6xl mx-auto">
       <div className="flex justify-center mb-5">
         <span className="text-xs font-semibold tracking-widest uppercase text-[#0000FF] bg-blue-50 px-4 py-1.5 rounded-full border border-blue-100">
-          Why Trade Nepogames?
+          Why Nepogames?
         </span>
       </div>
       <h2 className="text-center text-3xl sm:text-4xl lg:text-[2.75rem] font-bold text-[#0a0a1a] leading-tight mb-4">
@@ -1051,8 +1051,8 @@ export default function Home() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
         {/* Card 1 — E-SCROW (large, spans 2 cols on lg) */}
-        <RevealLeft>
-          <Link href="/marketplace" className="block h-full">
+        <RevealLeft className="sm:col-span-2">
+          <Link href="/marketplace" className="block h-full ">
             <div className="group relative bg-white border border-gray-100 rounded-2xl p-7 hover:border-blue-200 hover:shadow-[0_8px_40px_rgba(0,0,255,0.07)] transition-all duration-300 h-full flex flex-col gap-4 sm:col-span-2 lg:col-span-1">
               <div className="w-11 h-11 rounded-xl bg-blue-50 flex items-center justify-center group-hover:bg-blue-100 transition-colors duration-300">
                 <BadgeDollarSign size={22} className="text-[#0000FF]" />
