@@ -1188,20 +1188,25 @@ export default function Home() {
 
             {/* ── TRUST / ESCROW SECTION ── */}
             {/* ── HOW IT WORKS / BUYER STEPS ── */}
-            <section className="relative overflow-hidden py-24 px-[5%]">
-              {/* Background: soft blue-purple gradient with mesh blobs */}
-              <div className="absolute inset-0 bg-gradient-to-br from-[#eef2ff] via-[#f0f4ff] to-[#e8eeff] pointer-events-none" />
-              <div className="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-blue-300/20 blur-3xl pointer-events-none" />
-              <div className="absolute -bottom-32 -right-32 w-96 h-96 rounded-full bg-violet-300/20 blur-3xl pointer-events-none" />
-              {/* Dot grid overlay */}
-              <div
-                className="absolute inset-0 pointer-events-none opacity-30"
-                style={{
-                  backgroundImage:
-                    "radial-gradient(circle, #a0a8f0 1px, transparent 1px)",
-                  backgroundSize: "28px 28px",
-                }}
-              />
+          <section
+  className="relative overflow-hidden py-24 px-[5%]"
+  style={{ background: 'radial-gradient(ellipse at 40% 50%, #dde8f8 0%, #eef3fc 100%)' }}
+>
+  {/* Top-left blob */}
+  <div className="absolute pointer-events-none" style={{ top: '-60px', left: '-80px', width: '380px', height: '340px', background: 'radial-gradient(ellipse at center, rgba(184,207,238,0.55) 0%, transparent 70%)', filter: 'blur(40px)' }} />
+
+  {/* Bottom-right blob */}
+  <div className="absolute pointer-events-none" style={{ bottom: '-60px', right: '-60px', width: '340px', height: '280px', background: 'radial-gradient(ellipse at center, rgba(200,213,240,0.45) 0%, transparent 70%)', filter: 'blur(32px)' }} />
+
+  {/* Center-right blob */}
+  <div className="absolute pointer-events-none" style={{ top: '20px', right: '180px', width: '260px', height: '220px', background: 'radial-gradient(ellipse at center, rgba(208,223,246,0.35) 0%, transparent 70%)', filter: 'blur(28px)' }} />
+
+  {/* Dotted grid top-right */}
+  <div className="absolute top-4 right-4 pointer-events-none grid opacity-35" style={{ gridTemplateColumns: 'repeat(9, 18px)', gridTemplateRows: 'repeat(6, 18px)' }}>
+    {Array.from({ length: 54 }).map((_, i) => (
+      <div key={i} className="m-auto rounded-full" style={{ width: '4.4px', height: '4.4px', background: '#6b8ecf' }} />
+    ))}
+  </div>
               <div className="relative z-10 max-w-5xl mx-auto">
                 <Reveal>
                   <div className="flex justify-center mb-5">
