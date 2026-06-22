@@ -2239,7 +2239,7 @@ export default function Home() {
 
               <div className="w-full h-px bg-white/5"></div>
 
-              <Reveal>
+              
                 <div className="max-w-6xl mx-auto px-5 py-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-600">
                   <span>
                     © {new Date().getFullYear()} Nepo Games · All rights
@@ -2270,7 +2270,7 @@ export default function Home() {
                     </span>
                   </div>
                 </div>
-              </Reveal>
+              
             </section>
           </main>
         </div>
