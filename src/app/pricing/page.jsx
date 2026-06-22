@@ -52,12 +52,12 @@ export default function PricingPage() {
   const [user, setUser] = useState(null);
   const router = useRouter();
   const [upgrading, setUpgrading] = useState(false);
+  const [visible, setVisible] = useState(false);
+
   useEffect(() => {
     const fetchUser = async () => {
       try {
         const res = await fetch("/api/user/me");
-
-        // 🔥 ONLY redirect if truly unauthorized
         if (res.status === 401) {
           setUser(null);
           const currentPath = window.location.pathname + window.location.search;
@@ -65,27 +65,24 @@ export default function PricingPage() {
           router.push("/login");
           return;
         }
-
-        // ❌ Other errors (500, 404, etc)
         if (!res.ok) {
           console.error("Server error:", res.status);
           setUser(null);
-          return; // stay on page
+          return;
         }
-
         const data = await res.json();
         setUser(data);
       } catch (err) {
-        // 🌐 Network error lands here
         console.error("Network error:", err);
         setUser(null);
       } finally {
         setLoad(false);
+        setTimeout(() => setVisible(true), 50);
       }
     };
-
     fetchUser();
   }, []);
+
   const currentPlan = user?.plan;
 
   const handleUpgrade = async (plan) => {
@@ -95,32 +92,23 @@ export default function PricingPage() {
       router.push("/login");
       return;
     }
-
     if (!user.phone_verified) {
       router.push("/seller");
       return;
     }
-
     if (user?.plan === plan) return;
-
     try {
       setUpgrading(true);
-
       const res = await fetch("/api/paystack/initialize", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ plan }),
       });
-
       const data = await res.json();
-
       if (!res.ok) {
         setUpgrading(false);
         throw new Error(data.error || "Something went wrong");
       }
-
       if (data.url) {
         window.location.href = data.url;
       } else {
@@ -130,94 +118,175 @@ export default function PricingPage() {
     } catch (err) {
       console.error("Upgrade error:", err);
       alert(err.message);
-      setUpgrading(false); // replace with toast later
+      setUpgrading(false);
     }
   };
-  if (load || upgrading) {
-    return <Loader />;
-  }
+
+  if (load || upgrading) return <Loader />;
+
   return (
-    <div className="w-full min-h-screen flex flex-col items-center justify-center py-16 px-4">
-      <div className="text-center mb-12">
-        <h1 className="text-3xl sm:text-4xl font-bold text-blue-700">
-          Simple, transparent pricing
-        </h1>
-        <p className="text-gray-600 mt-2">
-          Upgrade anytime — your remaining subscription time is automatically
-          carried over to your new plan.
-        </p>{" "}
-      </div>
+    <>
+      <style>{`
+        @keyframes fadeUp {
+          from { opacity: 0; transform: translateY(24px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        .pricing-fade-up {
+          opacity: 0;
+          animation: fadeUp 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+        .pricing-card {
+          transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.3s ease;
+        }
+        .pricing-card:hover {
+          transform: translateY(-6px);
+          box-shadow: 0 24px 48px rgba(0,0,0,0.12);
+        }
+        .pricing-btn {
+          transition: background 0.2s ease, color 0.2s ease, transform 0.15s ease;
+        }
+        .pricing-btn:not(:disabled):hover {
+          transform: scale(1.02);
+        }
+        .pricing-btn:not(:disabled):active {
+          transform: scale(0.98);
+        }
+      `}</style>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 w-full max-w-7xl">
-        {plans.map((plan, index) => (
-          <div
-            key={index}
-            className={`rounded-2xl border hover:scale-102 duration-300 transition-all shadow-lg p-6 flex flex-col justify-between ${
-              plan.name === "Free"
-                ? "bg-gray-200 border-black/20"
-                : "bg-linear-to-b border-black/20 from-blue-700 to-blue-900 text-white"
-            }`}
-          >
-            <div>
-              <h2 className="text-xl font-semibold">{plan.name}</h2>
-              {plan.name === "Free" ? (
-                <p className="text-sm opacity-80 mb-4">
-                  Perfect to start selling and explore the platform
-                </p>
-              ) : (
-                <p className="text-sm opacity-80 mb-4">
-                  Same benefits, different duration
-                </p>
-              )}
+      <div className="w-full min-h-screen flex flex-col items-center justify-center py-20 px-4 bg-gray-50">
 
-              <h3 className="text-3xl font-bold">
-                {plan.price}
-                <span className="text-sm ml-1">{plan.duration}</span>
-              </h3>
+        {/* Header */}
+        <div
+          className="text-center mb-14 pricing-fade-up"
+          style={{ animationDelay: "0ms" }}
+        >
+          <span className="inline-block text-xs font-semibold tracking-widest text-blue-600 uppercase bg-blue-50 border border-blue-100 px-4 py-1.5 rounded-full mb-4">
+            Seller Plans
+          </span>
+          <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 leading-tight">
+            Simple, transparent pricing
+          </h1>
+          <p className="text-gray-500 mt-3 max-w-lg mx-auto text-base leading-relaxed">
+            Upgrade anytime — your remaining subscription time is automatically
+            carried over to your new plan.
+          </p>
+        </div>
 
-              <hr
-                className={`my-4  ${
-                  plan.name === "Free" ? "border-white/60 " : "border-white/20"
+        {/* Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 w-full max-w-6xl">
+          {plans.map((plan, index) => {
+            const isFree = plan.name === "Free";
+            const isCurrent = currentPlan === plan.name.toLowerCase();
+
+            return (
+              <div
+                key={index}
+                className={`pricing-card pricing-fade-up rounded-2xl flex flex-col justify-between overflow-hidden ${
+                  isFree
+                    ? "bg-white border border-gray-200 shadow-sm"
+                    : "bg-gray-900 border border-gray-800 shadow-xl text-white"
                 }`}
-              />
-
-              <ul className="space-y-2 text-sm">
-                {plan.type === "free" ? (
-                  <>
-                    <li>✔ List and sell game accounts</li>
-                    <li>✔ Standard visibility in search results</li>
-                    <li>✔ Basic seller profile</li>
-                    <li>✔ Platform-secured transactions</li>
-                    <li>
-                      ✔ Withdraw funds anytime (standard processing time
-                      applies)
-                    </li>
-                    <li>✔ Basic customer support access</li>
-                  </>
-                ) : (
-                  features.map((item, i) => <li key={i}>✔ {item}</li>)
+                style={{ animationDelay: `${100 + index * 80}ms` }}
+              >
+                {/* Card top accent line */}
+                {!isFree && (
+                  <div className="h-0.5 w-full bg-gradient-to-r from-blue-500 via-blue-400 to-blue-600" />
                 )}
-              </ul>
-            </div>
 
-            <button
-              disabled={currentPlan === plan.name.toLowerCase()}
-              className={`mt-6 rounded-lg py-2 transition ${
-                currentPlan === plan.name.toLowerCase()
-                  ? "bg-green-500 text-white cursor-not-allowed"
-                  : plan.name === "Free"
-                    ? "border border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white"
-                    : "bg-gray-200 text-blue-800 hover:bg-white"
-              }`}
-              onClick={() => handleUpgrade(plan.name.toLowerCase())}
-            >
-              {currentPlan === plan.name.toLowerCase()
-                ? "Current Plan"
-                : plan.button}
-            </button>
-          </div>
-        ))}
+                <div className="p-6 flex flex-col flex-1">
+                  {/* Plan name + badge */}
+                  <div className="flex items-center justify-between mb-1">
+                    <h2 className={`text-base font-semibold ${isFree ? "text-gray-800" : "text-white"}`}>
+                      {plan.name}
+                    </h2>
+                    {isCurrent && (
+                      <span className="text-[10px] font-semibold tracking-wide bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
+                        Active
+                      </span>
+                    )}
+                  </div>
+
+                  <p className={`text-xs mb-5 ${isFree ? "text-gray-400" : "text-gray-400"}`}>
+                    {isFree
+                      ? "Start selling with no upfront cost"
+                      : "Same benefits, flexible billing"}
+                  </p>
+
+                  {/* Price */}
+                  <div className="mb-5">
+                    <div className="flex items-end gap-1">
+                      {!isFree && (
+                        <span className={`text-sm mb-1 ${isFree ? "text-gray-500" : "text-gray-400"}`}>
+                          ₦
+                        </span>
+                      )}
+                      <span className={`text-4xl font-bold tracking-tight ${isFree ? "text-gray-900" : "text-white"}`}>
+                        {plan.price}
+                      </span>
+                    </div>
+                    <span className={`text-xs ${isFree ? "text-gray-400" : "text-gray-500"}`}>
+                      {plan.duration}
+                    </span>
+                  </div>
+
+                  <hr className={`mb-5 ${isFree ? "border-gray-100" : "border-white/10"}`} />
+
+                  {/* Features */}
+                  <ul className="space-y-2.5 text-sm flex-1">
+                    {isFree ? (
+                      <>
+                        {[
+                          "List and sell game accounts",
+                          "Standard visibility in search results",
+                          "Basic seller profile",
+                          "Platform-secured transactions",
+                          "Withdraw funds anytime",
+                          "Basic customer support access",
+                        ].map((item, i) => (
+                          <li key={i} className="flex items-start gap-2 text-gray-600">
+                            <span className="mt-0.5 text-blue-500 shrink-0">✓</span>
+                            {item}
+                          </li>
+                        ))}
+                      </>
+                    ) : (
+                      features.map((item, i) => (
+                        <li key={i} className="flex items-start gap-2 text-gray-300">
+                          <span className="mt-0.5 text-blue-400 shrink-0">✓</span>
+                          {item}
+                        </li>
+                      ))
+                    )}
+                  </ul>
+
+                  {/* CTA */}
+                  <button
+                    disabled={isCurrent}
+                    className={`pricing-btn mt-6 w-full rounded-xl py-2.5 text-sm font-semibold ${
+                      isCurrent
+                        ? "bg-green-500 text-white cursor-not-allowed opacity-80"
+                        : isFree
+                          ? "bg-gray-900 text-white hover:bg-gray-800"
+                          : "bg-blue-600 text-white hover:bg-blue-500"
+                    }`}
+                    onClick={() => handleUpgrade(plan.name.toLowerCase())}
+                  >
+                    {isCurrent ? "Current Plan" : plan.button}
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Footer note */}
+        <p
+          className="mt-10 text-xs text-gray-400 text-center pricing-fade-up"
+          style={{ animationDelay: "500ms" }}
+        >
+          All plans include platform-secured transactions. Prices are in Nigerian Naira (₦).
+        </p>
       </div>
-    </div>
+    </>
   );
 }
