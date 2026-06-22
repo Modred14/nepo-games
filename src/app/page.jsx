@@ -1273,26 +1273,26 @@ export default function Home() {
                   <div className="relative grid grid-cols-2 sm:flex sm:flex-row items-center justify-between gap-10 sm:gap-0">
                     {/* Connector line (desktop only) */}
                   {/* Connector line - desktop */}
-<div className="hidden sm:block absolute top-[42px] left-[calc(12.5%+32px)] right-[calc(12.5%+32px)] h-px bg-blue-200 pointer-events-none z-0" />
+<div className="hidden sm:block absolute top-[42px] left-[calc(12.5%+32px)] right-[calc(12.5%+32px)] h-0.5 bg-blue-200 pointer-events-none z-0" />
 
 {/* Connector lines - mobile (Z pattern) */}
 <div className="sm:hidden absolute inset-0 pointer-events-none z-0">
   {/* Row 1: left icon to right icon (top) */}
-  <div className="absolute top-[42px] left-[calc(25%+16px)] right-[calc(25%+16px)] h-px bg-blue-200" />
+  <div className="absolute top-[42px] left-[calc(25%+16px)] right-[calc(25%+16px)] h-0.5 bg-blue-200" />
   {/* Diagonal: right of row 1 down to left of row 2 */}
   <div className="absolute"
     style={{
       top: "42px",
       left: "calc(75% - 16px)",
       width: "calc(50% + 32px)",
-      height: "1px",
+      height: "1.5px",
       backgroundColor: "#bfdbfe",
       transformOrigin: "left center",
-      transform: "rotate(136deg)",
+      transform: "rotate(135deg)",
     }}
   />
   {/* Row 2: left icon to right icon (bottom) */}
-  <div className="absolute top-[calc(50%+60px)] left-[calc(25%+16px)] right-[calc(25%+16px)] h-px bg-blue-200" />
+  <div className="absolute top-[calc(50%+60px)] left-[calc(25%+16px)] right-[calc(25%+16px)] h-0.5 bg-blue-200" />
 </div>
                     {[
                       {
