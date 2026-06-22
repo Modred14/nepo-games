@@ -48,7 +48,7 @@ export default function PaymentSuccess() {
         }
         @keyframes ripple {
           0%   { transform: scale(1); opacity: 0.4; }
-          100% { transform: scale(2.4); opacity: 0; }
+          100% { transform: scale(1.2); opacity: 0; }
         }
         .fade-up { animation: fadeUp 0.55s cubic-bezier(0.22,1,0.36,1) both; }
         .scale-in { animation: scaleIn 0.5s cubic-bezier(0.34,1.56,0.64,1) both; }

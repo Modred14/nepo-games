@@ -320,6 +320,7 @@ function InfoRow({ icon: Icon, label, updateUser, user, value, editable }) {
             <div className="flex justify-end gap-2.5 mt-5">
               <button
                 onClick={() => setEditing(false)}
+                disabled={saving}
                 className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
               >
                 Cancel
