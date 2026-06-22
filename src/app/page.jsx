@@ -1571,12 +1571,12 @@ export default function Home() {
 
                           {/* Y-axis labels */}
                           {[
-                            "1000 Users",
-                            "800 Users",
-                            "600 Users",
-                            "400 Users",
-                            "200 Users",
-                            "100 Users",
+                            "1000k Users",
+                            "800k Users",
+                            "600k Users",
+                            "400k Users",
+                            "200k Users",
+                            "100k Users",
                           ].map((label, i) => (
                             <text
                               key={i}
@@ -1637,23 +1637,23 @@ export default function Home() {
 
                           {/* Interactive data points */}
                           {[
-                            { x: 70, y: 220, month: "January", users: "80" },
-                            { x: 138, y: 215, month: "February", users: "95" },
-                            { x: 206, y: 210, month: "March", users: "100" },
-                            { x: 274, y: 200, month: "April", users: "120" },
-                            { x: 342, y: 190, month: "May", users: "180" },
-                            { x: 410, y: 175, month: "June", users: "200" },
-                            { x: 478, y: 155, month: "July", users: "300" },
-                            { x: 546, y: 133, month: "August", users: "400" },
+                            { x: 70, y: 220, month: "January", users: "80k" },
+                            { x: 138, y: 215, month: "February", users: "95k" },
+                            { x: 206, y: 210, month: "March", users: "100k" },
+                            { x: 274, y: 200, month: "April", users: "120k" },
+                            { x: 342, y: 190, month: "May", users: "170k" },
+                            { x: 410, y: 175, month: "June", users: "190k" },
+                            { x: 478, y: 155, month: "July", users: "300k" },
+                            { x: 546, y: 133, month: "August", users: "400k" },
                             {
                               x: 614,
                               y: 118,
                               month: "September",
-                              users: "480",
+                              users: "480k",
                             },
-                            { x: 682, y: 95, month: "October", users: "580" },
-                            { x: 750, y: 72, month: "November", users: "700" },
-                            { x: 818, y: 55, month: "December", users: "790" },
+                            { x: 682, y: 95, month: "October", users: "580k" },
+                            { x: 750, y: 72, month: "November", users: "700k" },
+                            { x: 818, y: 55, month: "December", users: "780k" },
                           ].map(({ x, y, month, users }, i) => {
                             const tipW = 90;
                             const tipH = 38;
