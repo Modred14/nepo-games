@@ -1957,7 +1957,7 @@ export default function Home() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 h-[560px] overflow-hidden [mask-image:linear-gradient(to_bottom,transparent_0%,black_10%,black_90%,transparent_100%)]">
                   {/* Column 1 — fast */}
                   <div className="overflow-hidden hidden md:block">
-                    <div className="col-fast flex flex-col gap-4 ">
+                    <div className="col-fast flex flex-col gap-1">
                       {[
                         {
                           text: "The website is incredibly easy to navigate. Finding accounts takes just a few clicks, and everything feels professional.",
@@ -2007,7 +2007,7 @@ export default function Home() {
 
                   {/* Column 2 — medium */}
                   <div className="overflow-hidden hidden sm:block">
-                    <div className="col-medium flex flex-col gap-4">
+                    <div className="col-medium flex flex-col gap-1">
                       {[
                         {
                           text: "I've tried several gaming marketplaces before, and NepoGames has one of the cleanest interfaces I've seen. It feels premium.",
@@ -2057,7 +2057,7 @@ export default function Home() {
 
                   {/* Column 3 — slow */}
                   <div className="overflow-hidden">
-                    <div className="col-slow flex flex-col gap-4">
+                    <div className="col-slow flex flex-col gap-1">
                       {[
                         {
                           text: "The communication system between buyers and sellers is simple and effective. I always knew what was happening during the transaction.",
