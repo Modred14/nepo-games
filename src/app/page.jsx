@@ -1018,7 +1018,6 @@ export default function Home() {
                       priority
                     />
                   </div>
-                  
                 </div>
               </Reveal>
             </div>
@@ -1029,399 +1028,961 @@ export default function Home() {
 
             {/* ── Game logo scroller ── */}
             <Reveal>
-              <Marquee/>
+              <Marquee />
             </Reveal>
 
             {/* ── HOW IT WORKS ── */}
-          {/* ── HOW IT WORKS ── */}
-<section className="bg-white py-24 px-[5%] overflow-x-hidden">
-  <Reveal>
-    <div className="max-w-6xl mx-auto">
-      <div className="flex justify-center mb-5">
-        <span className="text-xs font-semibold tracking-widest uppercase text-[#0000FF] bg-blue-50 px-4 py-1.5 rounded-full border border-blue-100">
-          Why Nepogames?
-        </span>
-      </div>
-      <h2 className="text-center text-3xl sm:text-4xl lg:text-[2.75rem] font-bold text-[#0a0a1a] leading-tight mb-4">
-        Why trade with us!
-      </h2>
-      <p className="text-center text-gray-500 max-w-xl mx-auto mb-16 text-base leading-relaxed">
-        Everything you need for a secure, seamless gaming account marketplace — built for buyers and sellers alike.
-      </p>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-        {/* Card 1 — E-SCROW (large, spans 2 cols on lg) */}
-        <RevealLeft className="sm:col-span-2">
-          <Link href="/marketplace" className="block h-full ">
-            <div className="group relative bg-white border border-gray-100 rounded-2xl p-7 hover:border-blue-200 hover:shadow-[0_8px_40px_rgba(0,0,255,0.07)] transition-all duration-300 h-full flex flex-col gap-4 sm:col-span-2 lg:col-span-1">
-              <div className="w-11 h-11 rounded-xl bg-blue-50 flex items-center justify-center group-hover:bg-blue-100 transition-colors duration-300">
-                <BadgeDollarSign size={22} className="text-[#0000FF]" />
-              </div>
-              <div>
-                <h3 className="text-base font-bold text-[#0a0a1a] uppercase tracking-wide mb-2">
-                  E-Scrow Payment.
-                </h3>
-                <p className="text-sm text-gray-500 leading-relaxed">
-                  Trade with confidence — your payment stays protected until both parties confirm the deal.
-                </p>
-              </div>
-              <div className="mt-auto pt-2">
-                <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#0000FF] group-hover:gap-2.5 transition-all duration-200">
-                  Browse Marketplace <ArrowRight size={14} />
-                </span>
-              </div>
-            </div>
-          </Link>
-        </RevealLeft>
-
-        {/* Card 2 — CHAT */}
-        <RevealRight>
-          <Link href="/marketplace" className="block h-full">
-            <div className="group relative bg-white border border-gray-100 rounded-2xl p-7 hover:border-blue-200 hover:shadow-[0_8px_40px_rgba(0,0,255,0.07)] transition-all duration-300 h-full flex flex-col gap-4">
-              <div className="w-11 h-11 rounded-xl bg-violet-50 flex items-center justify-center group-hover:bg-violet-100 transition-colors duration-300">
-                <Headphones size={22} className="text-violet-600" />
-              </div>
-              <div>
-                <h3 className="text-base font-bold text-[#0a0a1a] uppercase tracking-wide mb-2">
-                  Chat.
-                </h3>
-                <p className="text-sm text-gray-500 leading-relaxed">
-                  Communicate directly with buyers and sellers to ensure smooth, transparent transactions.
-                </p>
-              </div>
-              <div className="mt-auto pt-2">
-                <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#0000FF] group-hover:gap-2.5 transition-all duration-200">
-                  Browse Marketplace <ArrowRight size={14} />
-                </span>
-              </div>
-            </div>
-          </Link>
-        </RevealRight>
-
-        {/* Card 3 — FILTERED SEARCH */}
-        <RevealLeft>
-          <Link href="/marketplace" className="block h-full">
-            <div className="group relative bg-white border border-gray-100 rounded-2xl p-7 hover:border-blue-200 hover:shadow-[0_8px_40px_rgba(0,0,255,0.07)] transition-all duration-300 h-full flex flex-col gap-4">
-              <div className="w-11 h-11 rounded-xl bg-emerald-50 flex items-center justify-center group-hover:bg-emerald-100 transition-colors duration-300">
-                <SlidersHorizontal size={22} className="text-emerald-600" />
-              </div>
-              <div>
-                <h3 className="text-base font-bold text-[#0a0a1a] uppercase tracking-wide mb-2">
-                  Filtered Search.
-                </h3>
-                <p className="text-sm text-gray-500 leading-relaxed">
-                  Easily filter listings by game, price, rank, and more to find the perfect account in seconds.
-                </p>
-              </div>
-              <div className="mt-auto pt-2">
-                <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#0000FF] group-hover:gap-2.5 transition-all duration-200">
-                  Browse Marketplace <ArrowRight size={14} />
-                </span>
-              </div>
-            </div>
-          </Link>
-        </RevealLeft>
-
-        {/* Card 4 — FAST & SECURE */}
-        <RevealRight>
-          <Link href="/marketplace" className="block h-full">
-            <div className="group relative bg-white border border-gray-100 rounded-2xl p-7 hover:border-blue-200 hover:shadow-[0_8px_40px_rgba(0,0,255,0.07)] transition-all duration-300 h-full flex flex-col gap-4">
-              <div className="w-11 h-11 rounded-xl bg-amber-50 flex items-center justify-center group-hover:bg-amber-100 transition-colors duration-300">
-                <Zap size={22} className="text-amber-600" />
-              </div>
-              <div>
-                <h3 className="text-base font-bold text-[#0a0a1a] uppercase tracking-wide mb-2">
-                  Fast &amp; Secure
-                </h3>
-                <p className="text-sm text-gray-500 leading-relaxed">
-                  Enjoy lightning-fast transactions and robust security designed to keep every trade safe and seamless.
-                </p>
-              </div>
-              <div className="mt-auto pt-2">
-                <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#0000FF] group-hover:gap-2.5 transition-all duration-200">
-                  Browse Marketplace <ArrowRight size={14} />
-                </span>
-              </div>
-            </div>
-          </Link>
-        </RevealRight>
-
-        {/* Card 5 — 24/7 SUPPORT */}
-        <RevealLeft>
-          <Link href="/contact" className="block h-full">
-            <div className="group relative bg-white border border-gray-100 rounded-2xl p-7 hover:border-blue-200 hover:shadow-[0_8px_40px_rgba(0,0,255,0.07)] transition-all duration-300 h-full flex flex-col gap-4">
-              <div className="w-11 h-11 rounded-xl bg-blue-50 flex items-center justify-center group-hover:bg-blue-100 transition-colors duration-300">
-                <Users size={22} className="text-[#0000FF]" />
-              </div>
-              <div>
-                <h3 className="text-base font-bold text-[#0a0a1a] uppercase tracking-wide mb-2">
-                  24/7 Support.
-                </h3>
-                <p className="text-sm text-gray-500 leading-relaxed">
-                  Get fast, reliable assistance anytime with our dedicated 24/7 support team.
-                </p>
-              </div>
-              <div className="mt-auto pt-2">
-                <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#0000FF] group-hover:gap-2.5 transition-all duration-200">
-                  Browse Marketplace <ArrowRight size={14} />
-                </span>
-              </div>
-            </div>
-          </Link>
-        </RevealLeft>
-      </div>
-    </div>
-  </Reveal>
-</section>
-            {/* ── TRUST / ESCROW SECTION ── */}
-            <section className="bg-[#FAFAFA] border-t border-b border-gray-100 py-24 px-[5%]">
-              <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-16 items-center">
-                <Reveal>
-                  <div className="flex justify-center">
-                    <div className="relative">
-                      <div className="absolute inset-0 blur-3xl bg-blue-200/40 rounded-full scale-75 translate-y-8 pointer-events-none" />
-                      <Image
-                        src="/phone-gen-pic.png"
-                        alt="Secure trading on Nepogames"
-                        width={240}
-                        height={400}
-                        className="relative z-10"
-                      />
-                    </div>
-                  </div>
-                </Reveal>
-
-                <Reveal>
-                  <div>
+            {/* ── HOW IT WORKS ── */}
+            <section className="bg-white py-24 px-[5%] overflow-x-hidden">
+              <Reveal>
+                <div className="max-w-6xl mx-auto">
+                  <div className="flex justify-center mb-5">
                     <span className="text-xs font-semibold tracking-widest uppercase text-[#0000FF] bg-blue-50 px-4 py-1.5 rounded-full border border-blue-100">
-                      Escrow Protection
+                      Why Nepogames?
                     </span>
-                    <h2 className="mt-5 text-3xl sm:text-4xl font-bold text-[#0a0a1a] leading-tight">
-                      Trade with complete
-                      <br />
-                      <span className="text-[#0000FF]">peace of mind</span>
-                    </h2>
-                    <p className="mt-5 text-gray-500 leading-relaxed text-base max-w-md">
-                      Every transaction is protected by our secure escrow
-                      system, which safely holds funds until the account
-                      transfer is fully verified. No scams, no chargebacks —
-                      just clean trades.
-                    </p>
+                  </div>
+                  <h2 className="text-center text-3xl sm:text-4xl lg:text-[2.75rem] font-bold text-[#0a0a1a] leading-tight mb-4">
+                    Why trade with us!
+                  </h2>
+                  <p className="text-center text-gray-500 max-w-xl mx-auto mb-16 text-base leading-relaxed">
+                    Everything you need for a secure, seamless gaming account
+                    marketplace — built for buyers and sellers alike.
+                  </p>
 
-                    <div className="mt-8 space-y-4">
-                      {[
-                        {
-                          icon: Shield,
-                          label: "Escrow-protected payments",
-                          color: "text-blue-600 bg-blue-50",
-                        },
-                        {
-                          icon: Zap,
-                          label: "Instant delivery on confirmation",
-                          color: "text-violet-600 bg-violet-50",
-                        },
-                        {
-                          icon: Lock,
-                          label: "Encrypted account transfers",
-                          color: "text-emerald-600 bg-emerald-50",
-                        },
-                      ].map(({ icon: Icon, label, color }) => (
-                        <div key={label} className="flex items-center gap-3">
-                          <div
-                            className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${color}`}
-                          >
-                            <Icon size={15} />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                    {/* Card 1 — E-SCROW (large, spans 2 cols on lg) */}
+                    <RevealLeft className="sm:col-span-2">
+                      <Link href="/marketplace" className="block h-full ">
+                        <div className="group relative bg-white border border-gray-100 rounded-2xl p-7 hover:border-blue-200 hover:shadow-[0_8px_40px_rgba(0,0,255,0.07)] transition-all duration-300 h-full flex flex-col gap-4 sm:col-span-2 lg:col-span-1">
+                          <div className="w-11 h-11 rounded-xl bg-blue-50 flex items-center justify-center group-hover:bg-blue-100 transition-colors duration-300">
+                            <BadgeDollarSign
+                              size={22}
+                              className="text-[#0000FF]"
+                            />
                           </div>
-                          <span className="text-sm font-medium text-gray-700">
-                            {label}
-                          </span>
+                          <div>
+                            <h3 className="text-base font-bold text-[#0a0a1a] uppercase tracking-wide mb-2">
+                              E-Scrow Payment.
+                            </h3>
+                            <p className="text-sm text-gray-500 leading-relaxed">
+                              Trade with confidence — your payment stays
+                              protected until both parties confirm the deal.
+                            </p>
+                          </div>
+                          <div className="mt-auto pt-2">
+                            <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#0000FF] group-hover:gap-2.5 transition-all duration-200">
+                              Browse Marketplace <ArrowRight size={14} />
+                            </span>
+                          </div>
                         </div>
-                      ))}
-                    </div>
-
-                    <div className="mt-10">
-                      <Link
-                        href="/marketplace"
-                        className="inline-flex items-center gap-2 bg-[#0000FF] text-white px-6 py-3 rounded-xl font-semibold text-sm hover:bg-blue-700 transition-all duration-200 hover:gap-3 active:scale-95"
-                      >
-                        Browse marketplace
-                        <ArrowRight size={16} />
                       </Link>
-                    </div>
+                    </RevealLeft>
+
+                    {/* Card 2 — CHAT */}
+                    <RevealRight>
+                      <Link href="/marketplace" className="block h-full">
+                        <div className="group relative bg-white border border-gray-100 rounded-2xl p-7 hover:border-blue-200 hover:shadow-[0_8px_40px_rgba(0,0,255,0.07)] transition-all duration-300 h-full flex flex-col gap-4">
+                          <div className="w-11 h-11 rounded-xl bg-violet-50 flex items-center justify-center group-hover:bg-violet-100 transition-colors duration-300">
+                            <Headphones size={22} className="text-violet-600" />
+                          </div>
+                          <div>
+                            <h3 className="text-base font-bold text-[#0a0a1a] uppercase tracking-wide mb-2">
+                              Chat.
+                            </h3>
+                            <p className="text-sm text-gray-500 leading-relaxed">
+                              Communicate directly with buyers and sellers to
+                              ensure smooth, transparent transactions.
+                            </p>
+                          </div>
+                          <div className="mt-auto pt-2">
+                            <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#0000FF] group-hover:gap-2.5 transition-all duration-200">
+                              Browse Marketplace <ArrowRight size={14} />
+                            </span>
+                          </div>
+                        </div>
+                      </Link>
+                    </RevealRight>
+
+                    {/* Card 3 — FILTERED SEARCH */}
+                    <RevealLeft>
+                      <Link href="/marketplace" className="block h-full">
+                        <div className="group relative bg-white border border-gray-100 rounded-2xl p-7 hover:border-blue-200 hover:shadow-[0_8px_40px_rgba(0,0,255,0.07)] transition-all duration-300 h-full flex flex-col gap-4">
+                          <div className="w-11 h-11 rounded-xl bg-emerald-50 flex items-center justify-center group-hover:bg-emerald-100 transition-colors duration-300">
+                            <SlidersHorizontal
+                              size={22}
+                              className="text-emerald-600"
+                            />
+                          </div>
+                          <div>
+                            <h3 className="text-base font-bold text-[#0a0a1a] uppercase tracking-wide mb-2">
+                              Filtered Search.
+                            </h3>
+                            <p className="text-sm text-gray-500 leading-relaxed">
+                              Easily filter listings by game, price, rank, and
+                              more to find the perfect account in seconds.
+                            </p>
+                          </div>
+                          <div className="mt-auto pt-2">
+                            <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#0000FF] group-hover:gap-2.5 transition-all duration-200">
+                              Browse Marketplace <ArrowRight size={14} />
+                            </span>
+                          </div>
+                        </div>
+                      </Link>
+                    </RevealLeft>
+
+                    {/* Card 4 — FAST & SECURE */}
+                    <RevealRight>
+                      <Link href="/marketplace" className="block h-full">
+                        <div className="group relative bg-white border border-gray-100 rounded-2xl p-7 hover:border-blue-200 hover:shadow-[0_8px_40px_rgba(0,0,255,0.07)] transition-all duration-300 h-full flex flex-col gap-4">
+                          <div className="w-11 h-11 rounded-xl bg-amber-50 flex items-center justify-center group-hover:bg-amber-100 transition-colors duration-300">
+                            <Zap size={22} className="text-amber-600" />
+                          </div>
+                          <div>
+                            <h3 className="text-base font-bold text-[#0a0a1a] uppercase tracking-wide mb-2">
+                              Fast &amp; Secure
+                            </h3>
+                            <p className="text-sm text-gray-500 leading-relaxed">
+                              Enjoy lightning-fast transactions and robust
+                              security designed to keep every trade safe and
+                              seamless.
+                            </p>
+                          </div>
+                          <div className="mt-auto pt-2">
+                            <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#0000FF] group-hover:gap-2.5 transition-all duration-200">
+                              Browse Marketplace <ArrowRight size={14} />
+                            </span>
+                          </div>
+                        </div>
+                      </Link>
+                    </RevealRight>
+
+                    {/* Card 5 — 24/7 SUPPORT */}
+                    <RevealLeft>
+                      <Link href="/contact" className="block h-full">
+                        <div className="group relative bg-white border border-gray-100 rounded-2xl p-7 hover:border-blue-200 hover:shadow-[0_8px_40px_rgba(0,0,255,0.07)] transition-all duration-300 h-full flex flex-col gap-4">
+                          <div className="w-11 h-11 rounded-xl bg-blue-50 flex items-center justify-center group-hover:bg-blue-100 transition-colors duration-300">
+                            <Users size={22} className="text-[#0000FF]" />
+                          </div>
+                          <div>
+                            <h3 className="text-base font-bold text-[#0a0a1a] uppercase tracking-wide mb-2">
+                              24/7 Support.
+                            </h3>
+                            <p className="text-sm text-gray-500 leading-relaxed">
+                              Get fast, reliable assistance anytime with our
+                              dedicated 24/7 support team.
+                            </p>
+                          </div>
+                          <div className="mt-auto pt-2">
+                            <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#0000FF] group-hover:gap-2.5 transition-all duration-200">
+                              Browse Marketplace <ArrowRight size={14} />
+                            </span>
+                          </div>
+                        </div>
+                      </Link>
+                    </RevealLeft>
+                  </div>
+                </div>
+              </Reveal>
+            </section>
+
+            {/* ── TRUST / ESCROW SECTION ── */}
+            {/* ── HOW IT WORKS / BUYER STEPS ── */}
+            <section className="relative overflow-hidden py-24 px-[5%]">
+              {/* Background: soft blue-purple gradient with mesh blobs */}
+              <div className="absolute inset-0 bg-gradient-to-br from-[#eef2ff] via-[#f0f4ff] to-[#e8eeff] pointer-events-none" />
+              <div className="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-blue-300/20 blur-3xl pointer-events-none" />
+              <div className="absolute -bottom-32 -right-32 w-96 h-96 rounded-full bg-violet-300/20 blur-3xl pointer-events-none" />
+              {/* Dot grid overlay */}
+              <div
+                className="absolute inset-0 pointer-events-none opacity-30"
+                style={{
+                  backgroundImage:
+                    "radial-gradient(circle, #a0a8f0 1px, transparent 1px)",
+                  backgroundSize: "28px 28px",
+                }}
+              />
+              <div className="relative z-10 max-w-5xl mx-auto">
+                <Reveal>
+                  <div className="flex justify-center mb-5">
+                    <span className="text-xs font-semibold tracking-widest uppercase text-[#0000FF] bg-blue-50 px-4 py-1.5 rounded-full border border-blue-100">
+                      How does Nepogames work for buyers?
+                    </span>
+                  </div>
+                  <h2 className="text-center text-3xl sm:text-4xl lg:text-[2.75rem] font-bold text-[#0a0a1a] leading-tight mb-16">
+                    How our marketplace work!
+                  </h2>
+                </Reveal>
+                {/* Steps row */}
+                <Reveal>
+                  <div className="relative grid grid-cols-2 sm:flex sm:flex-row items-center justify-between gap-10 sm:gap-0">
+                    {/* Connector line (desktop only) */}
+                    <div className="hidden sm:block absolute top-[42px] left-[calc(12.5%+32px)] right-[calc(12.5%+32px)] h-px border-t-2 border-dashed border-blue-300/70 pointer-events-none z-0" />
+
+                    {[
+                      {
+                        step: 1,
+                        icon: (
+                          <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="1.7"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className="w-7 h-7 text-[#0000FF]"
+                          >
+                            <circle cx="17" cy="7" r="3" />
+                            <circle cx="7" cy="7" r="3" />
+                            <path d="M1 20c0-4 2.5-6 6-6h1m6 0h1c3.5 0 6 2 6 6" />
+                            <path d="M10 14v6m0 0H8m2 0h2" />
+                          </svg>
+                        ),
+                        label: "Sign Up",
+                        desc: "Create an account",
+                      },
+                      {
+                        step: 2,
+                        icon: (
+                          <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="1.7"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className="w-7 h-7 text-[#0000FF]"
+                          >
+                            <circle cx="11" cy="11" r="8" />
+                            <path d="M21 21l-4.35-4.35" />
+                          </svg>
+                        ),
+                        label: "Search",
+                        desc: "Search for gaming accounts",
+                      },
+                      {
+                        step: 3,
+                        icon: (
+                          <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="1.7"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className="w-7 h-7 text-[#0000FF]"
+                          >
+                            <path d="M22 2L11 13" />
+                            <path d="M22 2L15 22 11 13 2 9l20-7z" />
+                          </svg>
+                        ),
+                        label: "Chat",
+                        desc: "Communicate with the seller.",
+                      },
+                      {
+                        step: 4,
+                        icon: (
+                          <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="1.7"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className="w-7 h-7 text-[#0000FF]"
+                          >
+                            <rect x="2" y="5" width="20" height="14" rx="3" />
+                            <path d="M2 10h20" />
+                            <path d="M6 15h2m4 0h2" />
+                          </svg>
+                        ),
+                        label: "Pay",
+                        desc: "Pay through a secured platform",
+                      },
+                    ].map(({ step, icon, label, desc }, i) => (
+                      <div
+                        key={step}
+                        className="relative z-10 flex flex-col items-center text-center gap-4 w-full sm:w-1/4"
+                        style={{ animationDelay: `${i * 0.1}s` }}
+                      >
+                        {/* Circle icon */}
+                        <div className="relative group">
+                          {/* Outer soft ring */}
+                          <div className="absolute inset-0 rounded-full bg-white/60 scale-110 blur-sm group-hover:scale-125 transition-transform duration-500 pointer-events-none" />
+                          <div className="relative w-20 h-20 rounded-full bg-white border-2 border-blue-100 shadow-[0_4px_24px_rgba(0,0,255,0.10)] flex items-center justify-center group-hover:shadow-[0_8px_32px_rgba(0,0,255,0.18)] group-hover:border-blue-300 transition-all duration-300">
+                            {icon}
+                          </div>
+                          {/* Step badge */}
+                          <div className="absolute -top-1.5 -right-1.5 w-6 h-6 rounded-full bg-[#0000FF] text-white text-xs font-bold flex items-center justify-center shadow-md border-2 border-white">
+                            {step}
+                          </div>
+                        </div>
+
+                        <div>
+                          <p className="font-bold text-[#0a0a1a] text-sm">
+                            {label}
+                          </p>
+                          <p className="text-gray-400 text-xs mt-0.5 leading-snug max-w-[110px]">
+                            {desc}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </Reveal>
               </div>
             </section>
 
             {/* ── STATS BENTO ── */}
-            <section className="bg-white py-24 px-[5%]">
+            <section className="bg-[#F4F6FB] py-24 px-[5%] overflow-x-hidden">
               <div className="max-w-6xl mx-auto">
                 <Reveal>
-                  <div className="flex justify-center mb-5">
+                  <div className="flex justify-center mb-3">
                     <span className="text-xs font-semibold tracking-widest uppercase text-[#0000FF] bg-blue-50 px-4 py-1.5 rounded-full border border-blue-100">
-                      By the numbers
+                      What's the data driving Nepogames?
                     </span>
                   </div>
-                  <h2 className="text-center text-3xl sm:text-4xl font-bold text-[#0a0a1a] mb-16">
-                    The data behind our marketplace
+                  <h2 className="text-center text-3xl sm:text-4xl lg:text-5xl font-bold text-[#0000FF] mb-10">
+                    Trusted by multiple users!
                   </h2>
                 </Reveal>
 
+                {/* Chart card */}
+                {/* Chart card */}
                 <Reveal>
-                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div className="col-span-2 bg-[#0000FF] rounded-2xl p-8 flex flex-col justify-between min-h-[180px]">
-                      <p className="text-blue-200 text-xs font-semibold tracking-widest uppercase">
-                        Active users
-                      </p>
-                      <div>
-                        <div className="text-white text-5xl font-bold tracking-tight">
-                          <StatCard value={"100k+"} />
-                        </div>
-                        <p className="text-blue-200 text-sm mt-2">
-                          verified traders on the platform
-                        </p>
-                      </div>
+                  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 sm:p-7 mb-5">
+                    <div className="w-full h-[220px] sm:h-[280px] relative overflow-hidden group">
+                      <svg
+                        viewBox="0 0 900 260"
+                        preserveAspectRatio="none"
+                        className="w-full h-full"
+                        xmlns="http://www.w3.org/2000/svg"
+                        style={{ overflow: "visible" }}
+                      >
+                        <defs>
+                          <linearGradient
+                            id="chartGrad"
+                            x1="0"
+                            y1="0"
+                            x2="0"
+                            y2="1"
+                          >
+                            <stop
+                              offset="0%"
+                              stopColor="#6366F1"
+                              stopOpacity="0.25"
+                            />
+                            <stop
+                              offset="100%"
+                              stopColor="#6366F1"
+                              stopOpacity="0.02"
+                            />
+                          </linearGradient>
+                          <linearGradient
+                            id="chartGradHover"
+                            x1="0"
+                            y1="0"
+                            x2="0"
+                            y2="1"
+                          >
+                            <stop
+                              offset="0%"
+                              stopColor="#0000FF"
+                              stopOpacity="0.35"
+                            />
+                            <stop
+                              offset="100%"
+                              stopColor="#0000FF"
+                              stopOpacity="0.03"
+                            />
+                          </linearGradient>
+                          <filter id="dotGlow">
+                            <feGaussianBlur stdDeviation="3" result="blur" />
+                            <feMerge>
+                              <feMergeNode in="blur" />
+                              <feMergeNode in="SourceGraphic" />
+                            </feMerge>
+                          </filter>
+                          <style>{`
+            .chart-area { transition: fill 0.4s ease; }
+            .chart-line { transition: stroke 0.4s ease, stroke-width 0.3s ease; }
+            .chart-grid { transition: opacity 0.3s ease; }
+            .chart-dot {
+              opacity: 0;
+              transition: opacity 0.3s ease, r 0.3s ease;
+            }
+            .chart-tooltip {
+              opacity: 0;
+              transition: opacity 0.3s ease;
+              pointer-events: none;
+            }
+            .chart-crosshair {
+              opacity: 0;
+              transition: opacity 0.25s ease;
+              pointer-events: none;
+            }
+            .chart-wrap:hover .chart-area { fill: url(#chartGradHover); }
+            .chart-wrap:hover .chart-line { stroke: #0000FF; stroke-width: 3; }
+            .chart-wrap:hover .chart-dot { opacity: 1; }
+            .chart-dot-group:hover .chart-dot { r: 6; }
+            .chart-dot-group:hover .chart-tooltip { opacity: 1; }
+            .chart-dot-group:hover .chart-crosshair { opacity: 1; }
+          `}</style>
+                        </defs>
+
+                        <g className="chart-wrap">
+                          {/* Grid lines */}
+                          {[0, 1, 2, 3, 4, 5].map((i) => (
+                            <line
+                              key={i}
+                              x1="70"
+                              y1={10 + i * 40}
+                              x2="890"
+                              y2={10 + i * 40}
+                              stroke="#E8EAF0"
+                              strokeWidth="1"
+                              className="chart-grid"
+                            />
+                          ))}
+
+                          {/* Y-axis labels */}
+                          {[
+                            "1000 Users",
+                            "800 Users",
+                            "600 Users",
+                            "400 Users",
+                            "200 Users",
+                            "100 Users",
+                          ].map((label, i) => (
+                            <text
+                              key={i}
+                              x="62"
+                              y={14 + i * 40}
+                              fontSize="9"
+                              fill="#9CA3AF"
+                              textAnchor="end"
+                            >
+                              {label}
+                            </text>
+                          ))}
+
+                          {/* X-axis labels */}
+                          {[
+                            "January",
+                            "February",
+                            "March",
+                            "April",
+                            "May",
+                            "June",
+                            "July",
+                            "August",
+                            "September",
+                            "October",
+                            "November",
+                            "December",
+                          ].map((m, i) => (
+                            <text
+                              key={i}
+                              x={70 + i * 68}
+                              y="255"
+                              fontSize="9"
+                              fill="#9CA3AF"
+                              textAnchor="middle"
+                            >
+                              {m}
+                            </text>
+                          ))}
+
+                          {/* Area fill */}
+                          <path
+                            className="chart-area"
+                            d="M70,220 C138,215 206,210 274,200 C342,190 410,175 478,155 C512,145 530,138 546,133 C580,122 614,118 682,95 C716,83 750,72 818,55 C852,47 871,42 890,38 L890,245 L70,245 Z"
+                            fill="url(#chartGrad)"
+                          />
+
+                          {/* Line */}
+                          <path
+                            className="chart-line"
+                            d="M70,220 C138,215 206,210 274,200 C342,190 410,175 478,155 C512,145 530,138 546,133 C580,122 614,118 682,95 C716,83 750,72 818,55 C852,47 871,42 890,38"
+                            fill="none"
+                            stroke="#0000FF"
+                            strokeWidth="2.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+
+                          {/* Interactive data points */}
+                          {[
+                            { x: 70, y: 220, month: "January", users: "100" },
+                            { x: 138, y: 215, month: "February", users: "130" },
+                            { x: 206, y: 210, month: "March", users: "160" },
+                            { x: 274, y: 200, month: "April", users: "220" },
+                            { x: 342, y: 190, month: "May", users: "290" },
+                            { x: 410, y: 175, month: "June", users: "380" },
+                            { x: 478, y: 155, month: "July", users: "490" },
+                            { x: 546, y: 133, month: "August", users: "590" },
+                            {
+                              x: 614,
+                              y: 118,
+                              month: "September",
+                              users: "650",
+                            },
+                            { x: 682, y: 95, month: "October", users: "760" },
+                            { x: 750, y: 72, month: "November", users: "870" },
+                            { x: 818, y: 55, month: "December", users: "950" },
+                          ].map(({ x, y, month, users }, i) => {
+                            const tipW = 90;
+                            const tipH = 38;
+                            const tipX = Math.min(
+                              Math.max(x - tipW / 2, 72),
+                              900 - tipW - 4,
+                            );
+                            const tipY = y - tipH - 14;
+                            return (
+                              <g
+                                key={i}
+                                className="chart-dot-group"
+                                style={{ cursor: "pointer" }}
+                              >
+                                {/* Crosshair */}
+                                <line
+                                  x1={x}
+                                  y1={y}
+                                  x2={x}
+                                  y2={242}
+                                  stroke="#0000FF"
+                                  strokeWidth="1"
+                                  strokeDasharray="3 3"
+                                  className="chart-crosshair"
+                                />
+
+                                {/* Dot outer ring */}
+                                <circle
+                                  cx={x}
+                                  cy={y}
+                                  r="10"
+                                  fill="#0000FF"
+                                  fillOpacity="0.1"
+                                  className="chart-dot"
+                                />
+                                {/* Dot */}
+                                <circle
+                                  cx={x}
+                                  cy={y}
+                                  r="4.5"
+                                  fill="#0000FF"
+                                  stroke="white"
+                                  strokeWidth="2"
+                                  className="chart-dot"
+                                  filter="url(#dotGlow)"
+                                />
+
+                                {/* Tooltip box */}
+                                <g className="chart-tooltip">
+                                  <rect
+                                    x={tipX}
+                                    y={tipY}
+                                    width={tipW}
+                                    height={tipH}
+                                    rx="7"
+                                    ry="7"
+                                    fill="#0000FF"
+                                  />
+                                  {/* Tooltip arrow */}
+                                  <polygon
+                                    points={`${x - 5},${tipY + tipH} ${x + 5},${tipY + tipH} ${x},${tipY + tipH + 7}`}
+                                    fill="#0000FF"
+                                  />
+                                  <text
+                                    x={tipX + tipW / 2}
+                                    y={tipY + 14}
+                                    fontSize="9"
+                                    fill="rgba(255,255,255,0.75)"
+                                    textAnchor="middle"
+                                    fontWeight="500"
+                                  >
+                                    {month}
+                                  </text>
+                                  <text
+                                    x={tipX + tipW / 2}
+                                    y={tipY + 28}
+                                    fontSize="11"
+                                    fill="white"
+                                    textAnchor="middle"
+                                    fontWeight="700"
+                                  >
+                                    {users} Users
+                                  </text>
+                                </g>
+
+                                {/* Invisible large hit area */}
+                                <rect
+                                  x={x - 18}
+                                  y={y - 18}
+                                  width="36"
+                                  height="36"
+                                  fill="transparent"
+                                />
+                              </g>
+                            );
+                          })}
+                        </g>
+                      </svg>
                     </div>
 
-                    <div className="bg-[#FAFAFA] border border-gray-100 rounded-2xl p-7 flex flex-col justify-between min-h-[180px]">
-                      <p className="text-gray-400 text-xs font-semibold tracking-widest uppercase">
-                        Games supported
-                      </p>
-                      <div>
-                        <div className="text-[#0a0a1a] text-4xl font-bold tracking-tight">
-                          <StatCard value={"10+"} />
-                        </div>
-                        <p className="text-gray-400 text-sm mt-2">
-                          popular titles
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="bg-[#FAFAFA] border border-gray-100 rounded-2xl p-7 flex flex-col justify-between min-h-[180px]">
-                      <p className="text-gray-400 text-xs font-semibold tracking-widest uppercase">
-                        Avg. delivery
-                      </p>
-                      <div>
-                        <div className="text-[#0a0a1a] text-4xl font-bold tracking-tight">
-                          Fast
-                        </div>
-                        <p className="text-gray-400 text-sm mt-2">
-                          instant on confirmation
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="bg-[#FAFAFA] border border-gray-100 rounded-2xl p-7 flex flex-col justify-between">
-                      <p className="text-gray-400 text-xs font-semibold tracking-widest uppercase">
-                        Security
-                      </p>
-                      <div>
-                        <div className="text-[#0a0a1a] text-4xl font-bold tracking-tight">
-                          100%
-                        </div>
-                        <p className="text-gray-400 text-sm mt-2">
-                          escrow protected
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="bg-[#FAFAFA] border border-gray-100 rounded-2xl p-7 flex flex-col justify-between">
-                      <p className="text-gray-400 text-xs font-semibold tracking-widest uppercase">
-                        Satisfaction
-                      </p>
-                      <div>
-                        <div className="text-[#0a0a1a] text-4xl font-bold tracking-tight">
-                          4.9★
-                        </div>
-                        <p className="text-gray-400 text-sm mt-2">
-                          avg. user rating
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="col-span-2 bg-[#0a0a1a] rounded-2xl p-8 flex flex-col justify-between min-h-[160px]">
-                      <p className="text-gray-400 text-xs font-semibold tracking-widest uppercase">
-                        Platform uptime
-                      </p>
-                      <div className="flex items-end justify-between">
-                        <div>
-                          <div className="text-white text-4xl font-bold tracking-tight">
-                            99.9%
-                          </div>
-                          <p className="text-gray-500 text-sm mt-2">
-                            always trading, always live
-                          </p>
-                        </div>
-                        <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse mb-2" />
-                      </div>
+                    <div className="flex justify-center mt-2">
+                      <span className="text-xs text-gray-400 flex items-center gap-1.5">
+                        <span className="w-4 h-px bg-[#0000FF] inline-block rounded-full" />
+                        2026
+                      </span>
                     </div>
                   </div>
                 </Reveal>
 
+                {/* Stat cards row */}
                 <Reveal>
-                  <div className="mt-10 flex justify-center">
-                    <Image
-                      src="/group.png"
-                      alt=""
-                      width={0}
-                      height={0}
-                      sizes="100vw"
-                      className="w-full h-auto px-[5%] sm:px-[15%] lg:px-[25%] opacity-90"
-                    />
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+                    {/* Games Supported */}
+                    <div className="bg-white border border-gray-100 rounded-2xl p-7 shadow-sm flex flex-col gap-3 hover:shadow-md hover:border-blue-100 transition-all duration-300">
+                      <p className="text-xs font-bold tracking-widest uppercase text-[#0a0a1a]">
+                        Games Supported
+                      </p>
+                      <div className="text-[#0000FF] text-5xl font-bold tracking-tight">
+                        <StatCard value={"10+"} />
+                      </div>
+                      <p className="text-[#0000FF] text-sm font-medium">
+                        Popular games
+                      </p>
+                    </div>
+
+                    {/* Avg. Delivery */}
+                    <div className="bg-white border border-gray-100 rounded-2xl p-7 shadow-sm flex flex-col gap-3 hover:shadow-md hover:border-blue-100 transition-all duration-300">
+                      <p className="text-xs font-bold tracking-widest uppercase text-gray-400">
+                        AVG. Delivery
+                      </p>
+                      <div className="text-[#0000FF] text-5xl font-bold tracking-tight">
+                        Fast
+                      </div>
+                      <p className="text-[#0000FF] text-sm font-medium">
+                        Instant on confirmation
+                      </p>
+                    </div>
+
+                    {/* Active Users — blue */}
+                    <div className="bg-[#0000FF] rounded-2xl p-7 flex flex-col gap-3 border-gray-100 shadow-sm hover:shadow-md transition-all duration-300">
+                      <p className="text-xs font-bold tracking-widest uppercase text-blue-200">
+                        Active Users
+                      </p>
+                      <div className="text-white text-5xl font-bold tracking-tight">
+                        <StatCard value={"100k+"} />
+                      </div>
+                      <p className="text-blue-200 text-sm font-medium">
+                        Verified traders on the platform
+                      </p>
+                    </div>
+                  </div>
+                </Reveal>
+
+                {/* CTA */}
+                <Reveal>
+                  <div className="flex justify-center">
+                    <Link
+                      href="/marketplace"
+                      className="inline-flex items-center gap-2 bg-[#0000FF] text-white px-10 py-4 rounded-xl font-semibold text-sm shadow-[0_4px_16px_rgba(0,0,255,0.35)] hover:bg-blue-700 hover:shadow-[0_6px_24px_rgba(0,0,255,0.45)] hover:gap-3 active:scale-95 transition-all duration-200"
+                    >
+                      Explore Marketplace
+                      <ArrowRight size={15} />
+                    </Link>
                   </div>
                 </Reveal>
               </div>
             </section>
 
             {/* ── REVIEWS SECTION ── */}
-            <section className="bg-[#FAFAFA] border-t border-gray-100 py-24 px-[5%]">
+            <section className="bg-white py-15 px-[5%] overflow-x-hidden">
               <div className="max-w-6xl mx-auto">
                 <Reveal>
-                  <div className="grid md:grid-cols-2 gap-16 items-start">
-                    <div className="md:sticky md:top-28">
-                      <span className="text-xs font-semibold tracking-widest uppercase text-[#0000FF] bg-blue-50 px-4 py-1.5 rounded-full border border-blue-100">
-                        User reviews
-                      </span>
-                      <h2 className="mt-5 text-3xl sm:text-4xl font-bold text-[#0a0a1a] leading-tight">
-                        What our traders
-                        <br />
-                        <span className="text-[#0000FF]">actually say</span>
-                      </h2>
-                      <p className="mt-4 text-gray-500 leading-relaxed text-base max-w-sm">
-                        Real feedback from buyers and sellers across the
-                        platform — unfiltered and honest.
-                      </p>
+                  <div className="flex justify-center mb-5">
+                    <span className="text-xs font-semibold tracking-widest uppercase text-[#0000FF] bg-blue-50 px-4 py-1.5 rounded-full border border-blue-100">
+                      The difference
+                    </span>
+                  </div>
+                  <h2 className="text-center text-3xl sm:text-4xl font-bold text-[#0a0a1a] mb-10">
+                    Why it matters
+                  </h2>
+                </Reveal>
 
-                      <div className="mt-8 inline-flex flex-col gap-1 bg-white border border-gray-100 rounded-2xl px-6 py-5 shadow-sm">
-                        <div className="flex items-baseline gap-1.5">
-                          <span className="text-3xl font-bold text-[#0a0a1a]">
-                            <StatCard value={"100k+"} />
-                          </span>
-                          <span className="text-gray-400 text-sm">
-                            active users
-                          </span>
-                        </div>
-                        <div className="mt-3">
-                          <Image
-                            src="/user-list.png"
-                            alt=""
-                            width={0}
-                            height={0}
-                            sizes="100vw"
-                            className="w-full h-auto rounded-xl"
-                          />
-                        </div>
+                <Reveal>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    {/* WITHOUT card */}
+                    <div className="bg-red-50 border border-red-100 rounded-2xl p-7 sm:p-9 flex flex-col gap-6 hover:shadow-[0_8px_40px_rgba(239,68,68,0.10)] transition-all duration-300">
+                      <div className="inline-flex items-center gap-2 bg-white border border-red-200 rounded-full px-4 py-1.5 w-fit">
+                        <X size={14} className="text-red-500" />
+                        <span className="text-xs font-bold tracking-widest uppercase text-red-500">
+                          Without Nepogames
+                        </span>
+                      </div>
+
+                      <div>
+                        <p className="text-[#0a0a1a] text-lg sm:text-xl font-bold leading-snug">
+                          Many people loose their money due to scams from
+                          account vendors.
+                        </p>
+                      </div>
+
+                      <div className="flex flex-col gap-4">
+                        <p className="text-red-400 text-xs font-semibold tracking-wide">
+                          Reasons :
+                        </p>
+                        {[
+                          "Impersonation of vendors",
+                          "Fake payment",
+                          "Unfiltered account searches",
+                          "Unsafe & Unsecure",
+                          "Fear of scams",
+                        ].map((item) => (
+                          <div
+                            key={item}
+                            className="flex items-center gap-3 border-b border-red-100 pb-4 last:border-0 last:pb-0"
+                          >
+                            <div className="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+                              <X size={12} className="text-red-500" />
+                            </div>
+                            <span className="text-sm text-[#0a0a1a] font-medium">
+                              {item}
+                            </span>
+                          </div>
+                        ))}
                       </div>
                     </div>
 
-                    <div>
-                      <Reviews />
+                    {/* WITH card */}
+                    <div className="bg-green-50 border border-green-100 rounded-2xl p-7 sm:p-9 flex flex-col gap-6 hover:shadow-[0_8px_40px_rgba(34,197,94,0.10)] transition-all duration-300">
+                      <div className="inline-flex items-center gap-2 bg-white border border-green-200 rounded-full px-4 py-1.5 w-fit">
+                        <CheckCircle2 size={14} className="text-green-500" />
+                        <span className="text-xs font-bold tracking-widest uppercase text-green-600">
+                          With Nepogames
+                        </span>
+                      </div>
+
+                      <div>
+                        <p className="text-[#0a0a1a] text-lg sm:text-xl font-bold leading-snug">
+                          Nepogames is the solution for gamers trying to buy
+                          gaming account
+                        </p>
+                      </div>
+
+                      <div className="flex flex-col gap-4">
+                        <p className="text-green-500 text-xs font-semibold tracking-wide">
+                          Reasons :
+                        </p>
+                        {[
+                          "End-to-End encrypted chat between buyer&seller",
+                          "Escrow payment",
+                          "Advanced and filtered searches",
+                          "Safe & Secure",
+                          "100% scam free. Trade with peace of mind",
+                        ].map((item) => (
+                          <div
+                            key={item}
+                            className="flex items-center gap-3 border-b border-green-100 pb-4 last:border-0 last:pb-0"
+                          >
+                            <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                              <CheckCircle2
+                                size={12}
+                                className="text-green-500"
+                              />
+                            </div>
+                            <span className="text-sm text-[#0a0a1a] font-medium">
+                              {item}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </Reveal>
               </div>
             </section>
+            <section className="bg-white py-10 px-[5%] overflow-hidden">
+              <div className="max-w-6xl mx-auto">
+                <Reveal>
+                  <div className="flex justify-center mb-3">
+                    <span className="text-xs font-semibold tracking-widest uppercase text-[#0000FF] bg-blue-50 px-4 py-1.5 rounded-full border border-blue-100">
+                      What do our users say?
+                    </span>
+                  </div>
+                  <h2 className="text-center text-3xl sm:text-4xl lg:text-5xl font-bold text-[#0000FF] mb-12">
+                    Testimonials from our users!
+                  </h2>
+                </Reveal>
 
+                <style>{`
+      @keyframes scrollUp {
+        0% { transform: translateY(0); }
+        100% { transform: translateY(-50%); }
+      }
+      .col-fast   { animation: scrollUp 18s linear infinite; }
+      .col-medium { animation: scrollUp 24s linear infinite; }
+      .col-slow   { animation: scrollUp 32s linear infinite; }
+      .col-fast:hover,
+      .col-medium:hover,
+      .col-slow:hover { animation-play-state: paused; }
+    `}</style>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 h-[560px] overflow-hidden [mask-image:linear-gradient(to_bottom,transparent_0%,black_10%,black_90%,transparent_100%)]">
+                  {/* Column 1 — fast */}
+                  <div className="overflow-hidden hidden md:block">
+                    <div className="col-fast flex flex-col gap-4 ">
+                      {[
+                        {
+                          text: "The website is incredibly easy to navigate. Finding accounts takes just a few clicks, and everything feels professional.",
+                          name: "Jason M.",
+                          role: "Seller",
+                        },
+                        {
+                          text: "As someone who frequently buys and sells gaming accounts, NepoGames is exactly what the market needed. Clean interface, trusted users, and a secure transaction experience.",
+                          name: "Sarah K.",
+                          role: "Gamer & Trader",
+                        },
+                        {
+                          text: "The platform is fast, modern, and easy to understand. Everything just works.",
+                          name: "Daniel O.",
+                          role: "Verified Trader",
+                        },
+                        {
+                          text: "The website is incredibly easy to navigate. Finding accounts takes just a few clicks, and everything feels professional.",
+                          name: "Jason M.",
+                          role: "Seller",
+                        },
+                        {
+                          text: "As someone who frequently buys and sells gaming accounts, NepoGames is exactly what the market needed. Clean interface, trusted users, and a secure transaction experience.",
+                          name: "Sarah K.",
+                          role: "Gamer & Trader",
+                        },
+                        {
+                          text: "The platform is fast, modern, and easy to understand. Everything just works.",
+                          name: "Daniel O.",
+                          role: "Verified Trader",
+                        },
+                      ].map((r, i) => (
+                        <div
+                          key={i}
+                          className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm hover:shadow-md hover:border-blue-100 transition-all duration-300 flex flex-col justify-between gap-6 min-h-[170px]"
+                        >
+                          <p className="text-sm text-gray-600 leading-relaxed">
+                            {r.text}
+                          </p>
+                          <p className="text-sm font-bold text-[#0000FF]">
+                            — {r.name}, {r.role}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Column 2 — medium */}
+                  <div className="overflow-hidden hidden sm:block">
+                    <div className="col-medium flex flex-col gap-4">
+                      {[
+                        {
+                          text: "I've tried several gaming marketplaces before, and NepoGames has one of the cleanest interfaces I've seen. It feels premium.",
+                          name: "Emmanuel T.",
+                          role: "Seller",
+                        },
+                        {
+                          text: "I sold my gaming account on NepoGames in less than 24 hours. The process was smooth, the buyer was verified, and payment was released quickly. Definitely the safest marketplace I've used.",
+                          name: "David O.",
+                          role: "Seller",
+                        },
+                        {
+                          text: "I found the exact gaming account I was looking for within minutes. Smooth experience and great communication.",
+                          name: "Brain K.",
+                          role: "Seller",
+                        },
+                        {
+                          text: "I've tried several gaming marketplaces before, and NepoGames has one of the cleanest interfaces I've seen. It feels premium.",
+                          name: "Emmanuel T.",
+                          role: "Seller",
+                        },
+                        {
+                          text: "I sold my gaming account on NepoGames in less than 24 hours. The process was smooth, the buyer was verified, and payment was released quickly. Definitely the safest marketplace I've used.",
+                          name: "David O.",
+                          role: "Seller",
+                        },
+                        {
+                          text: "I found the exact gaming account I was looking for within minutes. Smooth experience and great communication.",
+                          name: "Brain K.",
+                          role: "Seller",
+                        },
+                      ].map((r, i) => (
+                        <div
+                          key={i}
+                          className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm hover:shadow-md hover:border-blue-100 transition-all duration-300 flex flex-col justify-between gap-6 min-h-[170px]"
+                        >
+                          <p className="text-sm text-gray-600 leading-relaxed">
+                            {r.text}
+                          </p>
+                          <p className="text-sm font-bold text-[#0000FF]">
+                            — {r.name}, {r.role}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Column 3 — slow */}
+                  <div className="overflow-hidden">
+                    <div className="col-slow flex flex-col gap-4">
+                      {[
+                        {
+                          text: "The communication system between buyers and sellers is simple and effective. I always knew what was happening during the transaction.",
+                          name: "Kelvin A.",
+                          role: "User",
+                        },
+                        {
+                          text: "I was skeptical about buying gaming accounts online, but NepoGames made it easy. The chat system allowed me to speak directly with the seller, and the secure payment process gave me confidence.",
+                          name: "Micheal A.",
+                          role: "Buyer",
+                        },
+                        {
+                          text: "The entire process felt secure from start to finish. Nepogames gives buyers and sellers the confidence they need.",
+                          name: "Alex R.",
+                          role: "Marketplace User",
+                        },
+                        {
+                          text: "The communication system between buyers and sellers is simple and effective. I always knew what was happening during the transaction.",
+                          name: "Kelvin A.",
+                          role: "User",
+                        },
+                        {
+                          text: "I was skeptical about buying gaming accounts online, but NepoGames made it easy. The chat system allowed me to speak directly with the seller, and the secure payment process gave me confidence.",
+                          name: "Micheal A.",
+                          role: "Buyer",
+                        },
+                        {
+                          text: "The entire process felt secure from start to finish. Nepogames gives buyers and sellers the confidence they need.",
+                          name: "Alex R.",
+                          role: "Marketplace User",
+                        },
+                      ].map((r, i) => (
+                        <div
+                          key={i}
+                          className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm hover:shadow-md hover:border-blue-100 transition-all duration-300 flex flex-col justify-between gap-6 min-h-[170px]"
+                        >
+                          <p className="text-sm text-gray-600 leading-relaxed">
+                            {r.text}
+                          </p>
+                          <p className="text-sm font-bold text-[#0000FF]">
+                            — {r.name}, {r.role}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
             {/* ── FAQ SECTION ── */}
             <section id="faq" className="scroll-mt-24 bg-white py-24 px-[5%]">
               <div className="max-w-6xl mx-auto">
