@@ -71,7 +71,7 @@ export async function GET(req) {
     ? "__Secure-next-auth.session-token"
     : "next-auth.session-token";
 
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const existingToken = cookieStore.get(cookieName)?.value;
 
   const currentToken = await decode({
