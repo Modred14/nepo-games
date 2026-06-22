@@ -281,9 +281,74 @@ export default function Home() {
       scrollerInner.appendChild(clone);
     });
   }, []);
+  const chartRef = useRef(null);
+
+useEffect(() => {
+  const el = chartRef.current;
+  if (!el) return;
+
+  const observer = new IntersectionObserver(
+    ([entry]) => {
+      if (entry.isIntersecting) {
+        el.classList.add("chart-animate");
+        observer.disconnect();
+      }
+    },
+    { threshold: 0.3 }
+  );
+
+  observer.observe(el);
+  return () => observer.disconnect();
+}, []);
 
   return (
     <div>
+      <style>{`
+  .chart-area {
+    transition: fill 0.4s ease;
+    opacity: 0;
+  }
+  .chart-line {
+    stroke-dasharray: 2000;
+    stroke-dashoffset: 2000;
+    transition: stroke 0.4s ease;
+  }
+  .chart-grid { transition: opacity 0.3s ease; }
+  .chart-dot {
+    opacity: 0;
+    transition: opacity 0.3s ease, r 0.3s ease;
+  }
+  .chart-tooltip {
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+  }
+  .chart-crosshair {
+    opacity: 0;
+    transition: opacity 0.25s ease;
+    pointer-events: none;
+  }
+  .chart-wrap:hover .chart-area { fill: url(#chartGradHover); }
+  .chart-wrap:hover .chart-line { stroke: #0000FF; stroke-width: 3; }
+  .chart-wrap:hover .chart-dot { opacity: 1; }
+  .chart-dot-group:hover .chart-dot { r: 6; }
+  .chart-dot-group:hover .chart-tooltip { opacity: 1; }
+  .chart-dot-group:hover .chart-crosshair { opacity: 1; }
+
+  .chart-animate .chart-line {
+    animation: drawLine 1.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+  .chart-animate .chart-area {
+    animation: fadeArea 0.6s ease 1s forwards;
+  }
+
+  @keyframes drawLine {
+    to { stroke-dashoffset: 0; }
+  }
+  @keyframes fadeArea {
+    to { opacity: 1; }
+  }
+`}</style>
       <HashScrollHandler />
 
       {/* ── Logout confirmation modal ── */}
@@ -1272,28 +1337,11 @@ export default function Home() {
                 <Reveal>
                   <div className="relative grid grid-cols-2 sm:flex sm:flex-row items-center justify-between gap-10 sm:gap-0">
                     {/* Connector line (desktop only) */}
-                  {/* Connector line - desktop */}
-<div className="hidden sm:block absolute top-[42px] left-[calc(12.5%+32px)] right-[calc(12.5%+32px)] h-0.5 bg-blue-200 pointer-events-none z-0" />
+                    {/* Connector line - desktop */}
+                    <div className="hidden sm:block absolute top-[42px] left-[calc(12.5%+32px)] right-[calc(12.5%+32px)] h-0.5 bg-blue-200 pointer-events-none z-0" />
 
-{/* Connector lines - mobile (Z pattern) */}
-<div className="sm:hidden absolute inset-0 pointer-events-none z-0">
-  {/* Row 1: left icon to right icon (top) */}
-  <div className="absolute top-[42px] left-[calc(25%+16px)] right-[calc(25%+16px)] h-0.5 bg-blue-200" />
-  {/* Diagonal: right of row 1 down to left of row 2 */}
-  <div className="absolute"
-    style={{
-      top: "42px",
-      left: "calc(75% - 16px)",
-      width: "calc(50% + 32px)",
-      height: "1.5px",
-      backgroundColor: "#bfdbfe",
-      transformOrigin: "left center",
-      transform: "rotate(135deg)",
-    }}
-  />
-  {/* Row 2: left icon to right icon (bottom) */}
-  <div className="absolute top-[calc(50%+60px)] left-[calc(25%+16px)] right-[calc(25%+16px)] h-0.5 bg-blue-200" />
-</div>
+                    {/* Connector lines - mobile (Z pattern) */}
+
                     {[
                       {
                         step: 1,
@@ -1422,11 +1470,9 @@ export default function Home() {
                   </h2>
                 </Reveal>
 
-                {/* Chart card */}
-                {/* Chart card */}
                 <Reveal>
                   <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 sm:p-7 mb-5">
-                    <div className="w-full h-[220px] sm:h-[280px] relative overflow-hidden group">
+                    <div  ref={chartRef} className="w-full h-[220px] sm:h-[280px] relative overflow-hidden group">
                       <svg
                         viewBox="0 0 900 260"
                         preserveAspectRatio="none"
