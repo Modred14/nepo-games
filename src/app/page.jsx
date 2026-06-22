@@ -1188,25 +1188,75 @@ export default function Home() {
 
             {/* ── TRUST / ESCROW SECTION ── */}
             {/* ── HOW IT WORKS / BUYER STEPS ── */}
-          <section
-  className="relative overflow-hidden py-24 px-[5%]"
-  style={{ background: 'radial-gradient(ellipse at 40% 50%, #dde8f8 0%, #eef3fc 100%)' }}
->
-  {/* Top-left blob */}
-  <div className="absolute pointer-events-none" style={{ top: '-60px', left: '-80px', width: '380px', height: '340px', background: 'radial-gradient(ellipse at center, rgba(184,207,238,0.55) 0%, transparent 70%)', filter: 'blur(40px)' }} />
+            <section
+              className="relative overflow-hidden py-24 px-[5%]"
+              style={{
+                background:
+                  "radial-gradient(ellipse at 40% 50%, #dde8f8 0%, #eef3fc 100%)",
+              }}
+            >
+              {/* Top-left blob */}
+              <div
+                className="absolute pointer-events-none"
+                style={{
+                  top: "-60px",
+                  left: "-80px",
+                  width: "380px",
+                  height: "340px",
+                  background:
+                    "radial-gradient(ellipse at center, rgba(184,207,238,0.55) 0%, transparent 70%)",
+                  filter: "blur(40px)",
+                }}
+              />
 
-  {/* Bottom-right blob */}
-  <div className="absolute pointer-events-none" style={{ bottom: '-60px', right: '-60px', width: '340px', height: '280px', background: 'radial-gradient(ellipse at center, rgba(200,213,240,0.45) 0%, transparent 70%)', filter: 'blur(32px)' }} />
+              {/* Bottom-right blob */}
+              <div
+                className="absolute pointer-events-none"
+                style={{
+                  bottom: "-60px",
+                  right: "-60px",
+                  width: "340px",
+                  height: "280px",
+                  background:
+                    "radial-gradient(ellipse at center, rgba(200,213,240,0.45) 0%, transparent 70%)",
+                  filter: "blur(32px)",
+                }}
+              />
 
-  {/* Center-right blob */}
-  <div className="absolute pointer-events-none" style={{ top: '20px', right: '180px', width: '260px', height: '220px', background: 'radial-gradient(ellipse at center, rgba(208,223,246,0.35) 0%, transparent 70%)', filter: 'blur(28px)' }} />
+              {/* Center-right blob */}
+              <div
+                className="absolute pointer-events-none"
+                style={{
+                  top: "20px",
+                  right: "180px",
+                  width: "260px",
+                  height: "220px",
+                  background:
+                    "radial-gradient(ellipse at center, rgba(208,223,246,0.35) 0%, transparent 70%)",
+                  filter: "blur(28px)",
+                }}
+              />
 
-  {/* Dotted grid top-right */}
-  <div className="absolute top-4 right-4 pointer-events-none grid opacity-35" style={{ gridTemplateColumns: 'repeat(9, 18px)', gridTemplateRows: 'repeat(6, 18px)' }}>
-    {Array.from({ length: 54 }).map((_, i) => (
-      <div key={i} className="m-auto rounded-full" style={{ width: '4.4px', height: '4.4px', background: '#6b8ecf' }} />
-    ))}
-  </div>
+              {/* Dotted grid top-right */}
+              <div
+                className="absolute top-4 right-4 pointer-events-none grid opacity-35"
+                style={{
+                  gridTemplateColumns: "repeat(9, 18px)",
+                  gridTemplateRows: "repeat(6, 18px)",
+                }}
+              >
+                {Array.from({ length: 54 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="m-auto rounded-full"
+                    style={{
+                      width: "4.4px",
+                      height: "4.4px",
+                      background: "#6b8ecf",
+                    }}
+                  />
+                ))}
+              </div>
               <div className="relative z-10 max-w-5xl mx-auto">
                 <Reveal>
                   <div className="flex justify-center mb-5">
@@ -1222,8 +1272,28 @@ export default function Home() {
                 <Reveal>
                   <div className="relative grid grid-cols-2 sm:flex sm:flex-row items-center justify-between gap-10 sm:gap-0">
                     {/* Connector line (desktop only) */}
-                    <div className="hidden sm:block absolute top-[42px] left-[calc(12.5%+32px)] right-[calc(12.5%+32px)] h-px border-t-2 border-dashed border-blue-300/70 pointer-events-none z-0" />
+                  {/* Connector line - desktop */}
+<div className="hidden sm:block absolute top-[42px] left-[calc(12.5%+32px)] right-[calc(12.5%+32px)] h-px bg-blue-200 pointer-events-none z-0" />
 
+{/* Connector lines - mobile (Z pattern) */}
+<div className="sm:hidden absolute inset-0 pointer-events-none z-0">
+  {/* Row 1: left icon to right icon (top) */}
+  <div className="absolute top-[42px] left-[calc(25%+16px)] right-[calc(25%+16px)] h-px bg-blue-200" />
+  {/* Diagonal: right of row 1 down to left of row 2 */}
+  <div className="absolute"
+    style={{
+      top: "42px",
+      left: "calc(75% - 16px)",
+      width: "calc(50% + 32px)",
+      height: "1px",
+      backgroundColor: "#bfdbfe",
+      transformOrigin: "left center",
+      transform: "rotate(136deg)",
+    }}
+  />
+  {/* Row 2: left icon to right icon (bottom) */}
+  <div className="absolute top-[calc(50%+60px)] left-[calc(25%+16px)] right-[calc(25%+16px)] h-px bg-blue-200" />
+</div>
                     {[
                       {
                         step: 1,
