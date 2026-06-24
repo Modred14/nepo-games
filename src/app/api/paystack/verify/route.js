@@ -48,8 +48,19 @@ export async function GET(req) {
   }
 
   const now = new Date();
-  const end = new Date(now);
-  end.setDate(end.getDate() + days);
+   const existing = await pool.query(
+  `SELECT subscription_end FROM users WHERE id = $1`,
+  [session.user.id]
+);
+
+const currentEnd = existing.rows[0]?.subscription_end;
+const startFrom = currentEnd && new Date(currentEnd) > now 
+  ? new Date(currentEnd) 
+  : now;
+
+const end = new Date(startFrom);
+end.setDate(end.getDate() + days);
+
 
   // Update DB
   const result = await pool.query(
@@ -60,7 +71,7 @@ export async function GET(req) {
          subscription_end = $3
      WHERE id = $4
      RETURNING plan, subscription_status, subscription_start, subscription_end`,
-    [plan, now, end, session.user.id],
+    [plan, startFrom, end, session.user.id],
   );
 
   const updated = result.rows[0];
@@ -78,6 +89,8 @@ export async function GET(req) {
     token: existingToken,
     secret: process.env.NEXTAUTH_SECRET,
   });
+
+
 
   const newToken = await encode({
     token: {
