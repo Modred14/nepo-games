@@ -211,6 +211,13 @@ export async function POST(req) {
        VALUES ($1,$2,$3,$4)`,
           [userId, data.amount, reference, "success"],
         );
+          await pool.query(
+          `
+  INSERT INTO users_transactions (user_id, type, amount, status, description, reference)
+  VALUES ($1, 'credit', $2, 'success', 'Subscription payment', $3)
+  `,
+          [userId, amount, reference],
+        );
         await pool.query(
           `
   INSERT INTO users_transactions (user_id, type, amount, status, description, reference)
