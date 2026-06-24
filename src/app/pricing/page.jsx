@@ -46,6 +46,24 @@ const plans = [
     button: "Upgrade to Premium",
   },
 ];
+function derivePlan(subscription_start, subscription_end, subscription_status) {
+  if (!subscription_start || !subscription_end || subscription_status !== "active") {
+    return "free";
+  }
+
+  // Check if subscription has expired
+  if (new Date(subscription_end) < new Date()) return "free";
+
+  const start = new Date(subscription_start);
+  const end = new Date(subscription_end);
+  const days = Math.round((end - start) / (1000 * 60 * 60 * 24));
+
+  if (days <= 30) return "pro";
+  if (days <= 90) return "plus";
+  if (days <= 365) return "premium";
+
+  return "free";
+}
 
 export default function PricingPage() {
   const [load, setLoad] = useState(true);
@@ -83,7 +101,11 @@ export default function PricingPage() {
     fetchUser();
   }, []);
 
-  const currentPlan = user?.plan;
+  const currentPlan = derivePlan(
+    user?.subscription_start,
+    user?.subscription_end,
+    user?.subscription_status,
+  );
 
   const handleUpgrade = async (plan) => {
     if (!user) {
@@ -96,7 +118,7 @@ export default function PricingPage() {
       router.push("/seller");
       return;
     }
-    if (user?.plan === plan) return;
+  if (currentPlan === plan) return;  
     try {
       setUpgrading(true);
       const res = await fetch("/api/paystack/initialize", {
@@ -154,7 +176,6 @@ export default function PricingPage() {
       `}</style>
 
       <div className="w-full min-h-screen flex flex-col items-center justify-center py-20 px-4 bg-gray-50">
-
         {/* Header */}
         <div
           className="text-center mb-14 pricing-fade-up"
@@ -196,7 +217,9 @@ export default function PricingPage() {
                 <div className="p-6 flex flex-col flex-1">
                   {/* Plan name + badge */}
                   <div className="flex items-center justify-between mb-1">
-                    <h2 className={`text-base font-semibold ${isFree ? "text-gray-800" : "text-white"}`}>
+                    <h2
+                      className={`text-base font-semibold ${isFree ? "text-gray-800" : "text-white"}`}
+                    >
                       {plan.name}
                     </h2>
                     {isCurrent && (
@@ -206,7 +229,9 @@ export default function PricingPage() {
                     )}
                   </div>
 
-                  <p className={`text-xs mb-5 ${isFree ? "text-gray-400" : "text-gray-400"}`}>
+                  <p
+                    className={`text-xs mb-5 ${isFree ? "text-gray-400" : "text-gray-400"}`}
+                  >
                     {isFree
                       ? "Start selling with no upfront cost"
                       : "Same benefits, flexible billing"}
@@ -216,20 +241,28 @@ export default function PricingPage() {
                   <div className="mb-5">
                     <div className="flex items-end gap-1">
                       {!isFree && (
-                        <span className={`text-sm mb-1 ${isFree ? "text-gray-500" : "text-gray-400"}`}>
+                        <span
+                          className={`text-sm mb-1 ${isFree ? "text-gray-500" : "text-gray-400"}`}
+                        >
                           ₦
                         </span>
                       )}
-                      <span className={`text-4xl font-bold tracking-tight ${isFree ? "text-gray-900" : "text-white"}`}>
+                      <span
+                        className={`text-4xl font-bold tracking-tight ${isFree ? "text-gray-900" : "text-white"}`}
+                      >
                         {plan.price}
                       </span>
                     </div>
-                    <span className={`text-xs ${isFree ? "text-gray-400" : "text-gray-500"}`}>
+                    <span
+                      className={`text-xs ${isFree ? "text-gray-400" : "text-gray-500"}`}
+                    >
                       {plan.duration}
                     </span>
                   </div>
 
-                  <hr className={`mb-5 ${isFree ? "border-gray-100" : "border-white/10"}`} />
+                  <hr
+                    className={`mb-5 ${isFree ? "border-gray-100" : "border-white/10"}`}
+                  />
 
                   {/* Features */}
                   <ul className="space-y-2.5 text-sm flex-1">
@@ -243,16 +276,26 @@ export default function PricingPage() {
                           "Withdraw funds anytime",
                           "Basic customer support access",
                         ].map((item, i) => (
-                          <li key={i} className="flex items-start gap-2 text-gray-600">
-                            <span className="mt-0.5 text-blue-500 shrink-0">✓</span>
+                          <li
+                            key={i}
+                            className="flex items-start gap-2 text-gray-600"
+                          >
+                            <span className="mt-0.5 text-blue-500 shrink-0">
+                              ✓
+                            </span>
                             {item}
                           </li>
                         ))}
                       </>
                     ) : (
                       features.map((item, i) => (
-                        <li key={i} className="flex items-start gap-2 text-gray-300">
-                          <span className="mt-0.5 text-blue-400 shrink-0">✓</span>
+                        <li
+                          key={i}
+                          className="flex items-start gap-2 text-gray-300"
+                        >
+                          <span className="mt-0.5 text-blue-400 shrink-0">
+                            ✓
+                          </span>
                           {item}
                         </li>
                       ))
@@ -284,7 +327,8 @@ export default function PricingPage() {
           className="mt-10 text-xs text-gray-400 text-center pricing-fade-up"
           style={{ animationDelay: "500ms" }}
         >
-          All plans include platform-secured transactions. Prices are in Nigerian Naira (₦).
+          All plans include platform-secured transactions. Prices are in
+          Nigerian Naira (₦).
         </p>
       </div>
     </>
