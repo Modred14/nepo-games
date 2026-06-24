@@ -1019,7 +1019,7 @@ export default function Home() {
 
                   {/* ── CTA buttons — LOCKED, unchanged ── */}
                   <Reveal>
-                    <div className="mt-8 flex flex-col sm:flex-row items-center gap-3 justify-center">
+                    <div className="mt-8 flex flex-row items-center gap-3 justify-center">
                       <Link
                         href="/marketplace"
                         className="
@@ -1033,8 +1033,11 @@ export default function Home() {
                   transition-all duration-200
                 "
                       >
-                        Browse marketplace
-                        <ArrowRight size={15} />
+                        <div>
+                          <span className="hidden sm:inline">Browse m</span>
+                          <span  className="sm:hidden">M</span>arketplace
+                        </div>
+                        <ArrowRight className="hidden sm:block" size={15} />
                       </Link>
                       <Link
                         href="/sell-game"
@@ -1049,7 +1052,9 @@ export default function Home() {
                   transition-all duration-200
                 "
                       >
-                        List your account
+                        <div>
+                          List <span className="hidden sm:inline">your</span> account
+                        </div>
                       </Link>
                     </div>
                   </Reveal>
@@ -2239,38 +2244,35 @@ export default function Home() {
 
               <div className="w-full h-px bg-white/5"></div>
 
-              
-                <div className="max-w-6xl mx-auto px-5 py-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-600">
+              <div className="max-w-6xl mx-auto px-5 py-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-600">
+                <span>
+                  © {new Date().getFullYear()} Nepo Games · All rights reserved
+                </span>
+                <div className="flex gap-5">
                   <span>
-                    © {new Date().getFullYear()} Nepo Games · All rights
-                    reserved
+                    Designed by{" "}
+                    <a
+                      href=""
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-gray-400 hover:text-white transition-colors duration-200 font-semibold"
+                    >
+                      Faiq
+                    </a>
                   </span>
-                  <div className="flex gap-5">
-                    <span>
-                      Designed by{" "}
-                      <a
-                        href=""
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-gray-400 hover:text-white transition-colors duration-200 font-semibold"
-                      >
-                        Faiq
-                      </a>
-                    </span>
-                    <span>
-                      Developed by{" "}
-                      <a
-                        href="http://modred.dev"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-gray-400 hover:text-white transition-colors duration-200 font-semibold"
-                      >
-                        Modred
-                      </a>
-                    </span>
-                  </div>
+                  <span>
+                    Developed by{" "}
+                    <a
+                      href="http://modred.dev"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-gray-400 hover:text-white transition-colors duration-200 font-semibold"
+                    >
+                      Modred
+                    </a>
+                  </span>
                 </div>
-              
+              </div>
             </section>
           </main>
         </div>
