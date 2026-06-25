@@ -1084,7 +1084,7 @@ export default function Home() {
                       alt=""
                       width={1152}
                       height={200}
-                      className="object-cover overflow-hidden rounded-b-2xl w-6xl h-50 sm:h-70 lg:h-96.75"
+                      className="object-cover overflow-hidden rounded-b-2xl w-6xl h-57 sm:h-70 lg:h-96.75"
                       priority
                     />
                   </div>
