@@ -2252,7 +2252,7 @@ export default function Home() {
                   <span>
                     Designed by{" "}
                     <a
-                      href=""
+                      href="https://faiiq.netlify.app/"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-gray-400 hover:text-white transition-colors duration-200 font-semibold"

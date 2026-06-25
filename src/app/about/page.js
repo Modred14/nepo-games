@@ -1158,7 +1158,7 @@ export default function AboutPage() {
                 experience of the platform.
               </p>
               <Link
-                href="https://faiq.com"
+                href="https://faiiq.netlify.app/"
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{
@@ -1174,7 +1174,7 @@ export default function AboutPage() {
                   paddingBottom: "1px",
                 }}
               >
-                faiq.com ↗
+                faiq.netlify.app ↗
               </Link>
             </div>
           </div>
