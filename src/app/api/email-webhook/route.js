@@ -21,7 +21,14 @@ export async function POST(request) {
     return Response.json({ ignored: true });
   }
 
-  const { from, subject, html, text } = payload.data;
+  const { from, subject, email_id, received_for } = payload.data;
+
+  // Fetch the full email content from Resend
+  const emailRes = await fetch(`https://api.resend.com/emails/${email_id}`, {
+    headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
+  });
+  const emailData = await emailRes.json();
+  const htmlBody = emailData.html || `<p>${emailData.text || "(no body)"}</p>`;
 
   const forwardResponse = await fetch("https://api.resend.com/emails", {
     method: "POST",
@@ -32,13 +39,18 @@ export async function POST(request) {
     body: JSON.stringify({
       from: "Nepogames Support <contact@support.nepogames.com>",
       to: [email],
-      subject: `[Support] ${subject}`,
-      html: html || `<p>${text}</p>`,
+      subject: `[Support] ${subject || "(no subject)"}`,
+      html: `<p><strong>From:</strong> ${from}</p>
+             <p><strong>To:</strong> ${received_for[0]}</p>
+             <hr/>
+             ${htmlBody}`,
       reply_to: from,
     }),
   });
 
   if (!forwardResponse.ok) {
+    const err = await forwardResponse.text();
+    console.error("Failed to forward:", err);
     return Response.json({ error: "Failed to forward" }, { status: 500 });
   }
 
