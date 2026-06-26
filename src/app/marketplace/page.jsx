@@ -101,6 +101,7 @@ export default function Marketplace() {
     return numericPrice;
   };
 
+
   useEffect(() => {
     const storedUser = localStorage.getItem("nepo-user");
 
@@ -188,6 +189,11 @@ export default function Marketplace() {
       };
     });
   }, [filteredGames]);
+  useEffect(() => {
+  const params = new URLSearchParams(window.location.search);
+  const q = params.get("q");
+  if (q) setSearch(q);
+}, []);
 
   if (load) return <MarketplaceSkeleton />;
   return (

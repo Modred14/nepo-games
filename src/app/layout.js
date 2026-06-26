@@ -34,6 +34,7 @@ export const metadata = {
     url: "https://nepogames.com",
     siteName: "Nepogames",
     type: "website",
+    images: [{ url: "/og-image.png", width: 1200, height: 630 }],
   },
   alternates: {
     canonical: "https://nepogames.com",
@@ -42,6 +43,7 @@ export const metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Nepogames",
+    images: ["/og-image.png"],
     description: "Secure marketplace for buying and selling game accounts.",
   },
 
@@ -65,17 +67,29 @@ export default function RootLayout({ children }) {
           type="application/ld+json"
           dangerouslySetInnerHTML={{
             __html: JSON.stringify([
+             
               {
                 "@context": "https://schema.org",
                 "@type": "WebSite",
                 name: "Nepogames",
                 url: "https://nepogames.com",
+                potentialAction: {
+                  "@type": "SearchAction",
+                  target: {
+                    "@type": "EntryPoint",
+                    urlTemplate:
+                      "https://nepogames.com/marketplace?q={search_term_string}",
+                  },
+                  "query-input": "required name=search_term_string",
+                },
               },
               {
                 "@context": "https://schema.org",
                 "@type": "Organization",
                 name: "Nepogames",
                 url: "https://nepogames.com",
+                description:
+                  "Secure marketplace for buying and selling game accounts with escrow protection.",
                 logo: {
                   "@type": "ImageObject",
                   url: "https://nepogames.com/nepo-logo.png",
