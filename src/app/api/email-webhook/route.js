@@ -1,26 +1,24 @@
 import { Webhook } from "svix";
-// netlify/functions/email-webhook.js
-export async function handler(event) {
-  const email = "favourdomirin@gmail.com";
 
-  if (event.httpMethod !== "POST") {
-    return { statusCode: 405, body: "Method Not Allowed" };
-  }
+export async function POST(request) {
+  const email = "support.nepogames@gmail.com";
+  const body = await request.text();
+  const headers = request.headers;
 
   const wh = new Webhook(process.env.RESEND_WEBHOOK_SECRET);
   let payload;
   try {
-    payload = wh.verify(event.body, {
-      "svix-id": event.headers["svix-id"],
-      "svix-timestamp": event.headers["svix-timestamp"],
-      "svix-signature": event.headers["svix-signature"],
+    payload = wh.verify(body, {
+      "svix-id": headers.get("svix-id"),
+      "svix-timestamp": headers.get("svix-timestamp"),
+      "svix-signature": headers.get("svix-signature"),
     });
   } catch {
-    return { statusCode: 400, body: "Invalid signature" };
+    return Response.json({ error: "Invalid signature" }, { status: 400 });
   }
 
   if (payload.type !== "email.received") {
-    return { statusCode: 200, body: "Ignored" };
+    return Response.json({ ignored: true });
   }
 
   const { from, subject, html, text } = payload.data;
@@ -41,10 +39,8 @@ export async function handler(event) {
   });
 
   if (!forwardResponse.ok) {
-    const err = await forwardResponse.text();
-    console.error("Failed to forward email:", err);
-    return { statusCode: 500, body: "Failed to forward" };
+    return Response.json({ error: "Failed to forward" }, { status: 500 });
   }
 
-  return { statusCode: 200, body: "Forwarded" };
+  return Response.json({ ok: true });
 }
