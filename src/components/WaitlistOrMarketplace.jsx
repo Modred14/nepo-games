@@ -153,7 +153,7 @@ export default function WaitlistOrMarketplace() {
           <span className="wl-success-icon">🎮</span>
           <p className="wl-success-title">You're on the list!</p>
           <p className="wl-success-sub">
-            We'll email you the moment Nepo Games goes live on July 1.
+            We'll email you the moment Nepogames goes live on July 1.
           </p>
         </div>
       )}

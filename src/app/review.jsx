@@ -30,7 +30,7 @@ export default function Reviews() {
       name: "Henry Peter",
       userName: "Verified Trader",
       message:
-        "I’ve completed multiple trades on Nepo Games and every single one went smoothly. This is the future of game account trading",
+        "I’ve completed multiple trades on Nepogames and every single one went smoothly. This is the future of game account trading",
     },
     {
       img: "/peters.jpg",
@@ -44,7 +44,7 @@ export default function Reviews() {
       name: "Sarah Logans",
       userName: "Verified Trader",
       message:
-        "Sold my FIFA account in less than 24 hours. The dashboard is simple and professional. Definitely using Nepo Games again.",
+        "Sold my FIFA account in less than 24 hours. The dashboard is simple and professional. Definitely using Nepogames again.",
     },
   ];
 

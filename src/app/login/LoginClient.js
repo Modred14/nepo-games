@@ -198,7 +198,7 @@ export default function LoginClient() {
             <div className="border border-blue-500 rounded-xl p-4 flex items-center gap-4 mb-8">
               <Image
                 src="/logo.png"
-                alt="Nepo Games"
+                alt="Nepogames"
                 width={56}
                 height={56}
                 priority
@@ -210,7 +210,7 @@ export default function LoginClient() {
                 </h2>
                 <p className="text-sm text-gray-600">
                   Sign in to{" "}
-                  <span className="text-blue-600 font-bold">NEPO GAMES</span>{" "}
+                  <span className="text-blue-600 font-bold">Nepogames</span>{" "}
                   and trade your games securely.
                 </p>
               </div>
@@ -222,7 +222,7 @@ export default function LoginClient() {
             </h1>
 
             <p className="text-center text-blue-600 mb-8">
-              Sign in to your account to continue to Nepo Games
+              Sign in to your account to continue to Nepogames
             </p>
             <ErrorModal
               isOpen={errorOpen}

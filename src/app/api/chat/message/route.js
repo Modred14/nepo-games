@@ -85,7 +85,7 @@ export async function POST(req) {
           system_instruction: {
             parts: [
               {
-                text: `You are a support agent for Nepo Games, a game trading marketplace.
+                text: `You are a support agent for Nepogames, a game trading marketplace.
 
 IMPORTANT: Do NOT jump straight into giving solutions. Instead, follow this flow:
 

@@ -311,7 +311,7 @@ export default function Marketplace() {
                     <img
                       src={user?.profile_image}
                       onClick={() => setOpen(true)}
-                      alt="Nepo Games"
+                      alt="Nepogames"
                       className="border-blue-600/70 border w-9 h-9 rounded-full object-cover cursor-pointer"
                     />
                     {user?.plan && user.plan !== "free" && (

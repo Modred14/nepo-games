@@ -13,16 +13,16 @@ const features = [
 
 export async function sendSellerWelcomeEmail(duration, email, plan) {
   return await resend.emails.send({
-    from: "Nepo Games <no-reply@support.nepogames.com>",
+    from: "Nepogames <no-reply@support.nepogames.com>",
     to: email,
-    subject: "🎉 Welcome to Nepo Games Seller Program",
+    subject: "🎉 Welcome to Nepogames Seller Program",
     html: `
     <!DOCTYPE html>
     <html lang="en">
     <head>
       <meta charset="UTF-8" />
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <title>Welcome to Nepo Games Seller Program</title>
+      <title>Welcome to Nepogames Seller Program</title>
     </head>
     <body style="margin:0;padding:0;background:#F5F5F4;font-family:'DM Sans',Helvetica,Arial,sans-serif;">
       <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 16px;">
@@ -34,7 +34,7 @@ export async function sendSellerWelcomeEmail(duration, email, plan) {
               <tr>
                 <td style="background:#0A0A0A;padding:24px 40px;">
                   <span style="font-family:Georgia,serif;font-size:20px;color:#ffffff;font-weight:400;letter-spacing:-0.3px;">
-                    Nepo Games
+                    Nepogames
                   </span>
                 </td>
               </tr>
@@ -63,7 +63,7 @@ export async function sendSellerWelcomeEmail(duration, email, plan) {
                           You're a verified seller!
                         </h1>
                         <p style="margin:0;font-size:15px;color:#57534E;line-height:1.6;">
-                          Welcome to Nepo Games — your journey as a trusted seller starts now.
+                          Welcome to Nepogames — your journey as a trusted seller starts now.
                         </p>
                       </td>
                     </tr>
@@ -128,7 +128,7 @@ export async function sendSellerWelcomeEmail(duration, email, plan) {
                     Questions? Contact <a href="mailto:support@nepogames.com" style="color:#78716C;">support@nepogames.com</a>.
                   </p>
                   <p style="margin:8px 0 0;font-size:12px;color:#A8A29E;">
-                    © ${new Date().getFullYear()} Nepo Games. All rights reserved.
+                    © ${new Date().getFullYear()} Nepogames. All rights reserved.
                   </p>
                 </td>
               </tr>

@@ -21,9 +21,9 @@ export async function POST(req) {
     const { first_name, username } = result.rows[0];
 
     await resend.emails.send({
-      from: "Nepo Games <no-reply@support.nepogames.com>",
+      from: "Nepogames <no-reply@support.nepogames.com>",
       to: email,
-      subject: "You're now a seller on Nepo Games 🎮",
+      subject: "You're now a seller on Nepogames 🎮",
       html: `
         <!DOCTYPE html>
         <html lang="en">
@@ -64,7 +64,7 @@ export async function POST(req) {
                         Congratulations, ${first_name}!
                       </h1>
                       <p style="margin:0 0 28px;font-size:15px;color:#57534E;line-height:1.6;">
-                        Your seller account (<strong>@${username}</strong>) is now active on <strong>Nepo Games</strong>.
+                        Your seller account (<strong>@${username}</strong>) is now active on <strong>Nepogames</strong>.
                         You can start listing your game accounts and reaching buyers right away.
                       </p>
 
@@ -137,7 +137,7 @@ export async function POST(req) {
                         Questions? Contact <a href="mailto:support@nepogames.com" style="color:#78716C;">support@nepogames.com</a>.
                       </p>
                       <p style="margin:8px 0 0;font-size:12px;color:#A8A29E;">
-                        © ${new Date().getFullYear()} Nepo Games. All rights reserved.
+                        © ${new Date().getFullYear()} Nepogames. All rights reserved.
                       </p>
                     </td>
                   </tr>
@@ -149,7 +149,7 @@ export async function POST(req) {
         </body>
         </html>
       `,
-      text: `Congratulations ${first_name}, you're now a seller on Nepo Games!
+      text: `Congratulations ${first_name}, you're now a seller on Nepogames!
 
 Your account (@${username}) is active. Here's how to get started:
 

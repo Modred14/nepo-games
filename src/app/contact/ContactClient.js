@@ -515,7 +515,7 @@ export default function ContactPage() {
               <div className="flex md:grid grid-cols-3 justify-between md:py-3 py-2 font-semibold items-center text-[#808080]  w-full">
                 <img
                   src="/logo.png"
-                  alt="Nepo Games"
+                  alt="Nepogames"
                   className="w-9 h-9 p-2 rounded-[50%] bg-blue-700 object-cover"
                 />
                 <div className="hidden md:flex font-medium justify-center gap-9">
@@ -641,7 +641,7 @@ hover:text-[#0000FF]
                             <img
                               src={user?.profile_image}
                               onClick={() => setOpenRef(true)}
-                              alt="Nepo Games"
+                              alt="Nepogames"
                               className="border-blue-600/70 border w-10 h-10 rounded-full object-cover cursor-pointer"
                             />
                             {user?.plan && user.plan !== "free" && (
@@ -1207,7 +1207,7 @@ hover:text-[#0000FF]
 
       {/* FOOTER STRIP */}
       <div className="footer-strip">
-        © {new Date().getFullYear()} Nepo Games · All rights reserved · Built
+        © {new Date().getFullYear()} Nepogames · All rights reserved · Built
         with care for the gaming community
       </div>
     </>

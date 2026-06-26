@@ -503,7 +503,7 @@ export default function SupportDashboard() {
             </div>
             <div>
               <div className="dash-logo-text">Support Dashboard</div>
-              <div className="dash-logo-sub">Nepo Games · Admin</div>
+              <div className="dash-logo-sub">Nepogames · Admin</div>
             </div>
           </div>
 

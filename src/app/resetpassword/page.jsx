@@ -496,7 +496,7 @@ export default function ForgotPassword() {
             <div className="fp-logo-mark">
               <img src="/logo.png" alt="" className="p-2" />
             </div>
-            <span className="fp-logo-text">Nepo Games</span>
+            <span className="fp-logo-text">Nepogames</span>
           </div>
 
           <div className="fp-panel-mid">
@@ -535,7 +535,7 @@ export default function ForgotPassword() {
           </div>
 
           <div className="fp-panel-footer">
-            © 2026 Nepo games
+            © 2026 Nepogames
           </div>
         </div>
 

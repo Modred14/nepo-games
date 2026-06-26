@@ -909,7 +909,7 @@ export default function AboutPage() {
               Buying games should feel <em>safe.</em>
             </h1>
             <p className="hero-body">
-              Nepo Games was born from frustration. We watched too many people
+              Nepogames was born from frustration. We watched too many people
               lose money buying game accounts online — with nothing to protect
               them. We decided to change that.
             </p>
@@ -998,7 +998,7 @@ export default function AboutPage() {
               trust needed to exist
             </h2>
             <p className="section-body reveal reveal-delay-2">
-              Nepo Games is the first dedicated marketplace for buying and
+              Nepogames is the first dedicated marketplace for buying and
               selling game accounts in Nigeria — with built-in escrow, verified
               sellers, and a dispute system that actually works.
             </p>
@@ -1018,7 +1018,7 @@ export default function AboutPage() {
                 {
                   icon: "💬",
                   title: "In-app messaging",
-                  desc: "All communication between buyer and seller happens inside Nepo Games — fully logged and monitored for safety.",
+                  desc: "All communication between buyer and seller happens inside Nepogames — fully logged and monitored for safety.",
                 },
                 {
                   icon: "⚖️",
@@ -1028,7 +1028,7 @@ export default function AboutPage() {
                 {
                   icon: "🏦",
                   title: "Wallet & withdrawals",
-                  desc: "Sellers receive funds directly into their Nepo Games wallet and can withdraw to any Nigerian bank account.",
+                  desc: "Sellers receive funds directly into their Nepogames wallet and can withdraw to any Nigerian bank account.",
                 },
                 {
                   icon: "🌍",
@@ -1064,7 +1064,7 @@ export default function AboutPage() {
               },
               {
                 title: "Buyer pays into escrow",
-                desc: "The buyer pays via Paystack or their Nepo Games wallet. Funds are held securely in escrow — the seller does not receive anything yet.",
+                desc: "The buyer pays via Paystack or their Nepogames wallet. Funds are held securely in escrow — the seller does not receive anything yet.",
               },
               {
                 title: "Seller delivers login details",
@@ -1109,7 +1109,7 @@ export default function AboutPage() {
             className="section-body reveal reveal-delay-2"
             style={{ marginBottom: "0" }}
           >
-            Nepo Games is a two-person startup driven by a shared belief: that
+            Nepogames is a two-person startup driven by a shared belief: that
             fair, safe, and accessible game trading should exist for everyone —
             especially in markets that have been ignored by the rest of the
             world.
@@ -1121,7 +1121,7 @@ export default function AboutPage() {
               <p className="founder-name">Favour Omirin</p>
               <p className="founder-role">CEO &amp; Co-Founder</p>
               <p className="founder-bio">
-                Favour built Nepo Games from the ground up — from the first line
+                Favour built Nepogames from the ground up — from the first line
                 of code to the product you use today. A full stack web developer
                 driven by the belief that technology should protect people, not
                 expose them.
@@ -1152,7 +1152,7 @@ export default function AboutPage() {
               <p className="founder-name">Faiq Quadri</p>
               <p className="founder-role">Co-Founder</p>
               <p className="founder-bio">
-                Faiq co-founded Nepo Games with a shared vision of building
+                Faiq co-founded Nepogames with a shared vision of building
                 something that genuinely solves a real problem for gamers. A
                 product designer and app developer behind the look, feel, and
                 experience of the platform.
@@ -1184,16 +1184,16 @@ export default function AboutPage() {
         <section className="section" style={{ paddingTop: 0 }}>
           <div className="mission-banner reveal">
             <p className="mission-quote">
-              "We built Nepo Games because we got tired of watching people lose
+              "We built Nepogames because we got tired of watching people lose
               money that they worked hard to earn — just trying to buy a game."
             </p>
-            <p className="mission-sub">— Favour Omirin, CEO of Nepo Games</p>
+            <p className="mission-sub">— Favour Omirin, CEO of Nepogames</p>
           </div>
         </section>
 
         {/* WHY TRUST */}
         <section className="section" style={{ paddingTop: 0 }}>
-          <p className="section-eyebrow reveal">Why choose Nepo Games</p>
+          <p className="section-eyebrow reveal">Why choose Nepogames</p>
           <h2 className="section-title reveal reveal-delay-1">
             Everything designed to protect you
           </h2>
@@ -1213,7 +1213,7 @@ export default function AboutPage() {
               {
                 icon: "📱",
                 title: "Fully in-platform",
-                desc: "Every message, every file, every payment happens inside Nepo Games. No WhatsApp, no risk.",
+                desc: "Every message, every file, every payment happens inside Nepogames. No WhatsApp, no risk.",
               },
               {
                 icon: "🧾",

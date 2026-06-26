@@ -393,7 +393,7 @@ export default function Home() {
                     <Link href={"/#"}>
                       <Image
                         src="/logo.png"
-                        alt="Nepo Games"
+                        alt="Nepogames"
                         height={36}
                         width={36}
                         className="w-9 h-9 p-2 rounded-[50%] bg-blue-700 object-cover"
@@ -444,7 +444,7 @@ export default function Home() {
                                 onClick={() => setOpenRef(true)}
                                 width={40}
                                 height={40}
-                                alt="Nepo Games"
+                                alt="Nepogames"
                                 className="border-blue-600/70 border w-10 h-10 rounded-full object-cover cursor-pointer"
                                 priority
                               />
@@ -988,7 +988,7 @@ export default function Home() {
                           width={20}
                           priority
                           src="/logo.png"
-                          alt="Nepo Games"
+                          alt="Nepogames"
                           className="w-5 h-5 p-1 animate-pulse rounded-[50%] bg-white/20 object-cover"
                         />
                       </Link>
@@ -2127,7 +2127,7 @@ export default function Home() {
                         questions
                       </h2>
                       <p className="mt-4 text-gray-500 text-base leading-relaxed max-w-xs">
-                        Everything you need to know about Nepo Games and how the
+                        Everything you need to know about Nepogames and how the
                         marketplace works.
                       </p>
                       <Link
@@ -2246,7 +2246,7 @@ export default function Home() {
 
               <div className="max-w-6xl mx-auto px-5 py-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-600">
                 <span>
-                  © {new Date().getFullYear()} Nepo Games · All rights reserved
+                  © {new Date().getFullYear()} Nepogames · All rights reserved
                 </span>
                 <div className="flex gap-5">
                   <span>

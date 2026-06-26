@@ -174,7 +174,7 @@ export default function LaunchCountdown() {
         </h2>
 
         <p className="cd-sub">
-          Nepo Games officially opens its doors on{" "}
+          Nepogames officially opens its doors on{" "}
           <strong>July 1, 2026</strong>. Be ready.
         </p>
 

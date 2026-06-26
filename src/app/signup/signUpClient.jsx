@@ -214,7 +214,7 @@ export default function Login() {
             <div className="border  border-blue-500 rounded-xl p-4 flex items-center gap-4 mb-8">
               <Image
                 src="/logo.png"
-                alt="Nepo Games"
+                alt="Nepogames"
                 width={56}
                 height={56}
                 priority
@@ -226,7 +226,7 @@ export default function Login() {
                 </h2>
                 <p className="text-sm text-gray-600">
                   Sign up to{" "}
-                  <span className="text-blue-600 font-bold">NEPO GAMES</span>{" "}
+                  <span className="text-blue-600 font-bold">Nepogames</span>{" "}
                   and trade your games securely.
                 </p>
               </div>

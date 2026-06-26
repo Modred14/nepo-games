@@ -110,7 +110,7 @@ export default function Conversation({ gameId, receiverId }) {
     id: "1",
     listing_id: "1",
     gamedetails: "NepoGames",
-    username: "Nepo Games",
+    username: "Nepogames",
     email: "nepogames.com@gmail.com",
     profile_image: "/conversation.png",
     receiver_id: 1,
@@ -1285,7 +1285,7 @@ export default function Conversation({ gameId, receiverId }) {
                   <div className="mb-4">
                     <div className="bg-yellow-50 border border-yellow-300 rounded-xl p-4 text-sm text-gray-800 space-y-2">
                       <p className="font-bold text-base text-yellow-700">
-                        Welcome to Nepo Games Chat 👋
+                        Welcome to Nepogames Chat 👋
                       </p>
                       <p>
                         This is a secure space for buyers and sellers to discuss
@@ -1299,7 +1299,7 @@ export default function Conversation({ gameId, receiverId }) {
                         </li>
                         <li>
                           <strong>
-                            Do not move conversations outside Nepo Games
+                            Do not move conversations outside Nepogames
                           </strong>{" "}
                           (WhatsApp, Telegram, etc.)
                         </li>
@@ -1309,7 +1309,7 @@ export default function Conversation({ gameId, receiverId }) {
                           </strong>
                         </li>
                         <li>
-                          <strong>Use only Nepo Games payment method</strong>{" "}
+                          <strong>Use only Nepogames payment method</strong>{" "}
                           for all transactions
                         </li>
                         <li>

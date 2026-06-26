@@ -28,9 +28,9 @@ export async function POST(req) {
     );
 
     await resend.emails.send({
-      from: "Nepo Games <no-reply@support.nepogames.com>",
+      from: "Nepogames <no-reply@support.nepogames.com>",
       to: email,
-      subject: "Your Nepo Games OTP Code",
+      subject: "Your Nepogames OTP Code",
       html: `
         <!DOCTYPE html>
         <html lang="en">
@@ -98,7 +98,7 @@ export async function POST(req) {
                         Questions? Contact <a href="mailto:support@nepogames.com" style="color:#78716C;">support@nepogames.com</a>.
                       </p>
                       <p style="margin:8px 0 0;font-size:12px;color:#A8A29E;">
-                        © ${new Date().getFullYear()} Nepo Games. All rights reserved.
+                        © ${new Date().getFullYear()} Nepogames. All rights reserved.
                       </p>
                     </td>
                   </tr>
@@ -110,7 +110,7 @@ export async function POST(req) {
         </body>
         </html>
       `,
-      text: `Your Nepo Games OTP is: ${otp}\n\nThis code expires in 10 minutes. Do not share it with anyone.`,
+      text: `Your Nepogames OTP is: ${otp}\n\nThis code expires in 10 minutes. Do not share it with anyone.`,
     });
 
     return Response.json({ message: "OTP sent successfully" }, { status: 200 });

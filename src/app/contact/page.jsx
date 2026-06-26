@@ -1,8 +1,8 @@
 import ContactClient from "./ContactClient";
 
 export const metadata = {
-  title: "Contact Support | Nepo Games",
-  description: "Get help from Nepo Games support team",
+  title: "Contact Support | Nepogames",
+  description: "Get help from Nepogames support team",
 };
 
 export default function ContactPage() {

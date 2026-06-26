@@ -40,7 +40,7 @@ if (!user) {
     const resetLink = `${process.env.NEXT_PUBLIC_BASE_URL}/reset/${token}`;
 
 await resend.emails.send({
-  from: "Nepo Games <no-reply@support.nepogames.com>",
+  from: "Nepogames <no-reply@support.nepogames.com>",
   to: email,
   subject: "Reset your password",
   html: `
@@ -61,7 +61,7 @@ await resend.emails.send({
               <tr>
                 <td style="background:#0A0A0A;padding:24px 40px;">
                   <span style="font-family:Georgia,serif;font-size:20px;color:#ffffff;font-weight:400;letter-spacing:-0.3px;">
-                    Nepo Games 
+                    Nepogames 
                   </span>
                 </td>
               </tr>
@@ -122,7 +122,7 @@ await resend.emails.send({
                     If you have trouble, contact <a href="mailto:support@nepogames.com" style="color:#78716C;">support@nepogames.com</a>.
                   </p>
                   <p style="margin:8px 0 0;font-size:12px;color:#A8A29E;">
-                    © 2026 Nepo Games
+                    © 2026 Nepogames
                   </p>
                 </td>
               </tr>

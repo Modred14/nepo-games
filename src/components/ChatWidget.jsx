@@ -200,7 +200,7 @@ export default function ChatWidget({ isOpen, onClose }) {
           setMessages([
             {
               role: "assistant",
-              text: "Hey! 👋 I'm the Nepo Games support bot. I can help with account issues, trades, payments, and more.\n\nWhat can I help you with today?",
+              text: "Hey! 👋 I'm the Nepogames support bot. I can help with account issues, trades, payments, and more.\n\nWhat can I help you with today?",
               created_at: new Date().toISOString(),
             },
           ]);
@@ -555,7 +555,7 @@ export default function ChatWidget({ isOpen, onClose }) {
               />
             </div>
             <div className="nepo-hdr-info">
-              <div className="nepo-hdr-name">Nepo Games Support</div>
+              <div className="nepo-hdr-name">Nepogames Support</div>
               <div className="nepo-hdr-status">
                 <span
                   style={{

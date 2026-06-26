@@ -66,7 +66,7 @@ export async function POST(req) {
     const verifyLink = `${process.env.NEXT_PUBLIC_BASE_URL}/verify?token=${token}`;
 
     await resend.emails.send({
-      from: "Nepo Games <no-reply@support.nepogames.com>",
+      from: "Nepogames <no-reply@support.nepogames.com>",
       to: email,
       subject: "Verify your email address",
       html: `
@@ -90,7 +90,7 @@ export async function POST(req) {
               <tr>
                 <td>
                   <img src="https://res.cloudinary.com/dagot597u/image/upload/v1776988411/welcome_mfzptd.png"
-                       alt="Welcome to Nepo Games" width="520"
+                       alt="Welcome to Nepogames" width="520"
                        style="display:block;border:none;width:100%;max-height:200px;object-fit:cover;" />
                 </td>
               </tr>
@@ -112,7 +112,7 @@ export async function POST(req) {
                     Verify your email address
                   </h1>
                   <p style="margin:0 0 28px;font-size:15px;color:#57534E;line-height:1.6;">
-                    Welcome to <strong>Nepo Games</strong>! You're one step away from buying and selling games securely.
+                    Welcome to <strong>Nepogames</strong>! You're one step away from buying and selling games securely.
                     Click the button below to confirm your email address.
                   </p>
 
@@ -163,7 +163,7 @@ export async function POST(req) {
                     Questions? Contact <a href="mailto:support@nepogames.com" style="color:#78716C;">support@nepogames.com</a>.
                   </p>
                   <p style="margin:8px 0 0;font-size:12px;color:#A8A29E;">
-                    © ${new Date().getFullYear()} Nepo Games. All rights reserved.
+                    © ${new Date().getFullYear()} Nepogames. All rights reserved.
                   </p>
                 </td>
               </tr>
@@ -175,7 +175,7 @@ export async function POST(req) {
     </body>
     </html>
   `,
-      text: `Welcome to Nepo Games!
+      text: `Welcome to Nepogames!
 
 Verify your email by visiting the link below (expires in 1 hour):
 ${verifyLink}

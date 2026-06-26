@@ -142,7 +142,7 @@ export async function POST(req, { params }) {
 
     // 7. Send admin dispute alert email
     await resend.emails.send({
-      from: "Nepo Games <no-reply@support.nepogames.com>",
+      from: "Nepogames <no-reply@support.nepogames.com>",
       to: "favourdomirin@gmail.com",
       subject: `⚠️ Dispute Raised — ${login.game_title} (Ref: ${login.payment_reference})`,
       html: `
@@ -163,7 +163,7 @@ export async function POST(req, { params }) {
                   <tr>
                     <td style="background:#0A0A0A;padding:24px 40px;">
                       <span style="font-family:Georgia,serif;font-size:20px;color:#ffffff;font-weight:400;letter-spacing:-0.3px;">
-                        Nepo Games<span style="color:#60A5FA;">.</span>
+                        Nepogames<span style="color:#60A5FA;">.</span>
                       </span>
                     </td>
                   </tr>
@@ -274,10 +274,10 @@ export async function POST(req, { params }) {
                   <tr>
                     <td style="background:#FAFAF9;border-top:1px solid #E7E5E4;padding:20px 40px;">
                       <p style="margin:0 0 4px;font-size:12px;color:#78716C;line-height:1.6;">
-                        This is an automated alert from the Nepo Games dispute system.
+                        This is an automated alert from the Nepogames dispute system.
                       </p>
                       <p style="margin:8px 0 0;font-size:12px;color:#A8A29E;">
-                        © ${new Date().getFullYear()} Nepo Games. All rights reserved.
+                        © ${new Date().getFullYear()} Nepogames. All rights reserved.
                       </p>
                     </td>
                   </tr>

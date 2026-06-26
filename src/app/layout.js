@@ -11,12 +11,12 @@ export const metadata = {
   metadataBase: new URL("https://nepogames.com"),
 
   title: {
-    default: "Nepo Games | Buy & Sell Game Accounts Securely",
-    template: "%s | Nepo Games",
+    default: "Nepogames | Buy & Sell Game Accounts Securely",
+    template: "%s | Nepogames",
   },
 
   description:
-    "Buy and sell game accounts safely on Nepo Games with secure transactions, direct buyer-seller chat, and scam protection.",
+    "Buy and sell game accounts safely on Nepogames with secure transactions, direct buyer-seller chat, and scam protection.",
 
   keywords: [
     "buy game accounts",
@@ -29,10 +29,10 @@ export const metadata = {
   ],
 
   openGraph: {
-    title: "Nepo Games | Buy & Sell Game Accounts Securely",
+    title: "Nepogames | Buy & Sell Game Accounts Securely",
     description: "Secure marketplace for buying and selling game accounts.",
     url: "https://nepogames.com",
-    siteName: "Nepo Games",
+    siteName: "Nepogames",
     type: "website",
   },
   alternates: {
@@ -41,7 +41,7 @@ export const metadata = {
 
   twitter: {
     card: "summary_large_image",
-    title: "Nepo Games",
+    title: "Nepogames",
     description: "Secure marketplace for buying and selling game accounts.",
   },
 
@@ -68,13 +68,13 @@ export default function RootLayout({ children }) {
               {
                 "@context": "https://schema.org",
                 "@type": "WebSite",
-                name: "Nepo Games", // ✅ fixes site name in Google
+                name: "Nepogames", // ✅ fixes site name in Google
                 url: "https://nepogames.com",
               },
               {
                 "@context": "https://schema.org",
                 "@type": "Organization",
-                name: "Nepo Games",
+                name: "Nepogames",
                 url: "https://nepogames.com",
                 logo: {
                   "@type": "ImageObject",
