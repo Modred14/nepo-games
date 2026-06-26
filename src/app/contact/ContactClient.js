@@ -949,8 +949,8 @@ hover:text-[#0000FF]
         <ChannelCard
           icon={Mail}
           title="Email Support"
-          desc="support@nepogames.gg"
-          href="mailto:support@nepogames.gg"
+          desc="contact@support.nepogames.com"
+          href="mailto:contact@support.nepogames.com"
           delay={80}
         />
       </div>
