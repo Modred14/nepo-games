@@ -31,7 +31,8 @@
     "resend": "^6.9.3",
     "slider": "^1.0.4",
     "socket.io": "^4.8.3",
-    "socket.io-client": "^4.8.3"
+    "socket.io-client": "^4.8.3",
+    "svix": "^1.96.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

@@ -950,7 +950,7 @@ hover:text-[#0000FF]
           icon={Mail}
           title="Email Support"
           desc="support@nepogames.gg"
-          // href="mailto:support@nepogames.gg"
+          href="mailto:support@nepogames.gg"
           delay={80}
         />
       </div>
