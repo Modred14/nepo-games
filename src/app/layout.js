@@ -68,7 +68,7 @@ export default function RootLayout({ children }) {
               {
                 "@context": "https://schema.org",
                 "@type": "WebSite",
-                name: "Nepogames", // ✅ fixes site name in Google
+                name: "Nepogames",
                 url: "https://nepogames.com",
               },
               {
@@ -78,7 +78,6 @@ export default function RootLayout({ children }) {
                 url: "https://nepogames.com",
                 logo: {
                   "@type": "ImageObject",
-                  // ✅ Must be an absolute URL to your logo image
                   url: "https://nepogames.com/nepo-logo.png",
                   width: 512,
                   height: 512,

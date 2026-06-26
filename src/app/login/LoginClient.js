@@ -206,7 +206,7 @@ export default function LoginClient() {
               />
               <div>
                 <h2 className="font-semibold text-sm">
-                  <span className="text-blue-600 font-bold">NEPO</span> GAMES
+                  <span className="text-blue-600 font-bold">NEPO</span>GAMES
                 </h2>
                 <p className="text-sm text-gray-600">
                   Sign in to{" "}
