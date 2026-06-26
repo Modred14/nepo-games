@@ -4,7 +4,7 @@ const SYSTEM_USER_ID = 1;
 
 // ✅ fixed
 export async function GET(req) {
-    const authHeader = req.headers.get("authorization");
+  const authHeader = req.headers.get("authorization");
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -101,6 +101,26 @@ export async function GET(req) {
             AND status = 'pending'
           `,
           [login.seller_id, login.payment_reference],
+        );
+        await client.query(
+          `UPDATE users_transactions
+   SET status = 'success',
+       updated_at = NOW()
+   WHERE user_id = $1
+     AND reference = $2
+     AND status = 'pending'
+     `,
+          [login.seller_id, login.payment_reference],
+        );
+        await client.query(
+          `UPDATE users_transactions
+   SET status = 'success',
+       updated_at = NOW()
+   WHERE user_id = $1
+     AND reference = $2
+     AND status = 'pending'
+     AND description = 'Platform fee'`,
+          [1, login.payment_reference],
         );
 
         // 6. System message — mirrors manual confirm
