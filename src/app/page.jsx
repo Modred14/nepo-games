@@ -1906,7 +1906,7 @@ export default function Home() {
                           Reasons :
                         </p>
                         {[
-                          "End-to-End encrypted chat between buyer&seller",
+                          "End-to-End encrypted chat between buyer & seller",
                           "Escrow payment",
                           "Advanced and filtered searches",
                           "Safe & Secure",
