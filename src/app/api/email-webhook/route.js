@@ -28,7 +28,7 @@ export async function POST(request) {
     headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
   });
   const emailData = await emailRes.json();
-  const htmlBody = emailData.html || `<p>${emailData.text || "(no body)"}</p>`;
+  const htmlBody = `<p>${"(You have a new mail kindly check your resend dashboard)"}</p>`;
 
   const forwardResponse = await fetch("https://api.resend.com/emails", {
     method: "POST",
@@ -39,7 +39,7 @@ export async function POST(request) {
     body: JSON.stringify({
       from: "Nepogames Support <contact@support.nepogames.com>",
       to: [email],
-      subject: `[Support] ${subject || "(no subject)"}`,
+      subject: `${subject || "(no subject)"}`,
       html: `<p><strong>From:</strong> ${from}</p>
              <p><strong>To:</strong> ${received_for[0]}</p>
              <hr/>
