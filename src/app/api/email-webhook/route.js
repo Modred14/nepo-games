@@ -1,7 +1,7 @@
 import { Webhook } from "svix";
 // netlify/functions/email-webhook.js
 export async function handler(event) {
-  const email = "support.nepogames@gmail.com";
+  const email = "favourdomirin@gmail.com";
 
   if (event.httpMethod !== "POST") {
     return { statusCode: 405, body: "Method Not Allowed" };
