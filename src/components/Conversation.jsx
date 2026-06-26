@@ -873,15 +873,15 @@ export default function Conversation({ gameId, receiverId }) {
                   </p>
                   <p>
                     <strong>Price:</strong> ₦
-                    {Number(selectedListing.price * 1.05).toLocaleString()}
+                    {Number(selectedListing.price).toLocaleString()}
                   </p>
                 </div>
                 <div className="bg-yellow-50 border border-yellow-300 p-3 rounded text-xs text-gray-700">
-                  <p className="font-medium">
+                  {/* <p className="font-medium">
                     Note: An additional 5% processing fee has been added to this
                     payment.
                   </p>
-                  <hr className="my-3 border-yellow-200" />
+                  <hr className="my-3 border-yellow-200" /> */}
                   Make sure you confirm all details before payment. Refunds are
                   only possible via dispute system.
                 </div>

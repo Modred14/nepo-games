@@ -37,6 +37,7 @@ export async function POST(req) {
       const userId = data?.metadata?.userId;
       const purpose = metadata?.purpose;
       const amount = data.amount / 100;
+      const sellerAmount = amount * 0.95; // Seller receives 95%
 
       if (!reference || !userId || !purpose) {
         console.error("❌ Missing critical data:", data);
@@ -134,16 +135,18 @@ export async function POST(req) {
     (user_id, type, amount, status, description, reference)
     VALUES ($1, 'credit', $2, 'pending', 'Game account purchase', $3)
     `,
-          [transaction.seller_id, amount, reference],
+          [transaction.seller_id, sellerAmount, reference],
         );
+        const platformFee = amount * 0.05;
 
-        // 3. Update listing → pending
         await pool.query(
-          `UPDATE listings
-     SET status = 'pending'
-     WHERE id = $1`,
-          [listingId],
-        );
+          `
+  INSERT INTO users_transactions
+  (user_id, type, amount, status, description, reference)
+  VALUES ($1, 'credit', $2, 'success', 'Platform fee', $3)
+`,
+          [1, platformFee, reference],
+        ); 
 
         // 4. Notify seller (chat system message)
         await pool.query(
@@ -211,7 +214,7 @@ export async function POST(req) {
        VALUES ($1,$2,$3,$4)`,
           [userId, data.amount, reference, "success"],
         );
-          await pool.query(
+        await pool.query(
           `
   INSERT INTO users_transactions (user_id, type, amount, status, description, reference)
   VALUES ($1, 'credit', $2, 'success', 'Subscription payment', $3)

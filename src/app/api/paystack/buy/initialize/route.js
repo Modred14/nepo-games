@@ -66,7 +66,12 @@ export async function POST(req) {
       return Response.json({ error: "Listing not available" }, { status: 400 });
     }
 
-    const amount = Number(listing.price) * 1.05;
+    const amount = Number(listing.price);
+    const sellerAmount = amount * 0.95; // Seller receives 95%
+
+    if (amount <= 0) {
+      return Response.json({ error: "Invalid listing price" }, { status: 400 });
+    }
     if (paymentMethod === "wallet") {
       // 1. Check user balance
       const balanceResult = await pool.query(
@@ -134,10 +139,10 @@ export async function POST(req) {
       (user_id, type, amount, status, description, reference)
       VALUES ($1, 'credit', $2, 'pending', 'Game account purchase', $3)
       `,
-        [listing.user_id, amount, reference],
+        [listing.user_id, sellerAmount, reference],
       );
-         await pool.query(
-          `INSERT INTO messages 
+      await pool.query(
+        `INSERT INTO messages 
     (conversation_id, sender_id, message, type, created_at)
     VALUES (
       (SELECT id FROM conversations WHERE listing_id = $1 LIMIT 1),
@@ -146,8 +151,18 @@ export async function POST(req) {
       'payment_made',
       NOW()
     )`,
-          [listingId],
-        );
+        [listingId],
+      );
+      const platformFee = amount * 0.05;
+
+      await pool.query(
+        `
+  INSERT INTO users_transactions
+  (user_id, type, amount, status, description, reference)
+  VALUES ($1, 'credit', $2, 'success', 'Platform fee', $3)
+`,
+        [1, platformFee, reference],
+      );
 
       return Response.json({ success: true });
     }
