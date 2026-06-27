@@ -733,53 +733,53 @@ function StatCard({ label, value }) {
   );
 }
 
-function TransactionItem({ tx }) {
-  const isCredit = tx.type === "credit";
-  const formatMoney = (value) =>
-    new Intl.NumberFormat("en-NG", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(value);
+// function TransactionItem({ tx }) {
+//   const isCredit = tx.type === "credit";
+//   const formatMoney = (value) =>
+//     new Intl.NumberFormat("en-NG", {
+//       minimumFractionDigits: 2,
+//       maximumFractionDigits: 2,
+//     }).format(value);
 
-  return (
-    <div className="flex justify-between items-center border-b pb-2 last:border-b-0">
-      <div>
-        <p className="text-sm font-medium">{tx.description}</p>
-        <p className="text-xs text-gray-400">
-          {new Date(tx.created_at).toLocaleString("en-NG", {
-            day: "numeric",
-            month: "short",
-            year: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-          })}
-        </p>
-      </div>
+//   return (
+//     <div className="flex justify-between items-center border-b pb-2 last:border-b-0">
+//       <div>
+//         <p className="text-sm font-medium">{tx.description}</p>
+//         <p className="text-xs text-gray-400">
+//           {new Date(tx.created_at).toLocaleString("en-NG", {
+//             day: "numeric",
+//             month: "short",
+//             year: "numeric",
+//             hour: "2-digit",
+//             minute: "2-digit",
+//           })}
+//         </p>
+//       </div>
 
-      <div className="text-right">
-        <p
-          className={`text-sm font-semibold ${
-            isCredit ? "text-green-600" : "text-red-500"
-          }`}
-        >
-          {isCredit ? "+" : "-"}₦{formatMoney(Number(tx.amount || 0))}
-        </p>
+//       <div className="text-right">
+//         <p
+//           className={`text-sm font-semibold ${
+//             isCredit ? "text-green-600" : "text-red-500"
+//           }`}
+//         >
+//           {isCredit ? "+" : "-"}₦{formatMoney(Number(tx.amount || 0))}
+//         </p>
 
-        <p
-          className={`text-xs ${
-            tx.status === "success"
-              ? "text-green-500"
-              : tx.status === "pending"
-                ? "text-yellow-500"
-                : "text-red-500"
-          }`}
-        >
-          {tx.status}
-        </p>
-      </div>
-    </div>
-  );
-}
+//         <p
+//           className={`text-xs ${
+//             tx.status === "success"
+//               ? "text-green-500"
+//               : tx.status === "pending"
+//                 ? "text-yellow-500"
+//                 : "text-red-500"
+//           }`}
+//         >
+//           {tx.status}
+//         </p>
+//       </div>
+//     </div>
+//   );
+// }
 
 function PinGetInput({ value = "", onChange }) {
   const inputs = useRef([]);
@@ -847,6 +847,9 @@ function PinGetInput({ value = "", onChange }) {
   );
 }
 
+// ─── REPLACE ONLY AccountTab and AccountTabSkeleton ──────────────────────────
+// All logic/state/handlers are untouched. Only markup + styling changed.
+
 function AccountTab({ user }) {
   const [balance, setBalance] = useState(0.0);
   const [showPinConfirm, setShowPinConfirm] = useState(false);
@@ -876,33 +879,23 @@ function AccountTab({ user }) {
   const end = start + ITEMS_PER_PAGE;
 
   const currentTransactions = transactions.slice(start, end);
-  useEffect(() => {
-    setLoadingWithdraw(false);
-  }, []);
+
+  useEffect(() => { setLoadingWithdraw(false); }, []);
+
   useEffect(() => {
     if (accountNumber.length !== 10 || !bankCode) return;
-
     setGettingAccountName(true);
     setAccountName("");
-
     const timeout = setTimeout(async () => {
       try {
         const res = await fetch("/api/paystack/resolve-account", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ accountNumber, bankCode }),
         });
-
         const data = await res.json();
-
-        if (!res.ok) {
-          setAccountName("");
-          return;
-        }
-
-        setAccountName(data.account_name); // ✅ correct key
+        if (!res.ok) { setAccountName(""); return; }
+        setAccountName(data.account_name);
       } catch (err) {
         console.error(err);
         setAccountName("");
@@ -910,21 +903,14 @@ function AccountTab({ user }) {
         setGettingAccountName(false);
       }
     }, 800);
-
     return () => clearTimeout(timeout);
   }, [accountNumber, bankCode]);
 
   const fetchAccount = async () => {
     try {
       const res = await fetch("/api/user/account");
-
-      if (!res.ok) {
-        console.error("Failed to load account");
-        return;
-      }
-
+      if (!res.ok) { console.error("Failed to load account"); return; }
       const data = await res.json();
-
       setBalance(Number(data.balance || 0));
       setTransactions(data.transactions || []);
       setUserPlan(data.plan);
@@ -935,137 +921,70 @@ function AccountTab({ user }) {
     }
   };
 
-  useEffect(() => {
-    fetchAccount();
-  }, []);
+  useEffect(() => { fetchAccount(); }, []);
+
   const triggerAnimation = () => {
     setShowLine(false);
-
-    requestAnimationFrame(() => {
-      setShowLine(true);
-    });
+    requestAnimationFrame(() => { setShowLine(true); });
   };
+
   const searchParams = useSearchParams();
   useEffect(() => {
     const tab = searchParams.get("tab");
-
-    if (tab) {
-      triggerAnimation();
-    }
+    if (tab) { triggerAnimation(); }
   }, [searchParams]);
 
   const handleAddMoney = async () => {
     const value = Number(amount);
-
-    if (!value || value < 100) {
-      setError("Amount must be greater than ₦100.00");
-      return;
-    }
-
+    if (!value || value < 100) { setError("Amount must be greater than ₦100.00"); return; }
     try {
       setLoadingPay(true);
-
       const res = await fetch("/api/paystack/wallet/initialize", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          amount: Number(amount),
-          purpose: "wallet",
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount: Number(amount), purpose: "wallet" }),
       });
-
       const data = await res.json();
-
-      if (!res.ok) {
-        console.error(data.error);
-        setLoadingPay(false);
-        return;
-      }
-
+      if (!res.ok) { console.error(data.error); setLoadingPay(false); return; }
       window.location.href = data.url;
     } catch (err) {
       console.error("Payment init failed:", err);
       setLoadingPay(false);
     }
   };
+
   const formatMoney = (value) =>
-    new Intl.NumberFormat("en-NG", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(value);
+    new Intl.NumberFormat("en-NG", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
 
   useEffect(() => {
     const fetchBanks = async () => {
       const res = await fetch("https://api.paystack.co/bank?country=nigeria", {
-        headers: {
-          Authorization: `Bearer ${process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY}`,
-        },
+        headers: { Authorization: `Bearer ${process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY}` },
       });
-
       const data = await res.json();
       setBanks(data.data);
     };
-
     fetchBanks();
   }, []);
 
   const handleWithdraw = async () => {
     const value = Number(withdrawAmount);
-
-    // ❌ invalid input
-    if (!value || value <= 0) {
-      setWithdrawError("Enter a valid amount");
-      return;
-    }
-    if (!withdrawPin || withdrawPin.length !== 4) {
-      setWithdrawError("Enter valid PIN");
-      return;
-    }
-
-    // ❌ below minimum
-    if (value < 100) {
-      setWithdrawError("Minimum withdrawal is ₦100.00");
-      return;
-    }
-
-    // ❌ exceeds balance
-    if (value > balance) {
-      setWithdrawError("Insufficient balance");
-      return;
-    }
-
+    if (!value || value <= 0) { setWithdrawError("Enter a valid amount"); return; }
+    if (!withdrawPin || withdrawPin.length !== 4) { setWithdrawError("Enter valid PIN"); return; }
+    if (value < 100) { setWithdrawError("Minimum withdrawal is ₦100.00"); return; }
+    if (value > balance) { setWithdrawError("Insufficient balance"); return; }
     try {
       setLoadingWithdraw(true);
-
       const res = await fetch("/api/user/withdraw", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          amount: value,
-          accountNumber,
-          bankCode,
-          accountName,
-          pin: withdrawPin,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount: value, accountNumber, bankCode, accountName, pin: withdrawPin }),
       });
-
       const data = await res.json();
-
-      if (!res.ok) {
-        setWithdrawError(data.error || "Withdrawal failed");
-        setLoadingWithdraw(false);
-        return;
-      }
-
-      // ✅ success
+      if (!res.ok) { setWithdrawError(data.error || "Withdrawal failed"); setLoadingWithdraw(false); return; }
       setShowWithdrawModal(false);
       setWithdrawAmount("");
       setWithdrawError("");
-
       fetchAccount();
     } catch (err) {
       console.error(err);
@@ -1074,484 +993,836 @@ function AccountTab({ user }) {
       setLoadingWithdraw(false);
     }
   };
+
   const fetchBanks = async () => {
     const res = await fetch("/api/user/get-banks");
     const data = await res.json();
     setSavedBanks(data.banks || []);
   };
-  useEffect(() => {
-    fetchBanks();
-  }, []);
+
+  useEffect(() => { fetchBanks(); }, []);
+
   const maskAccountNumber = (acc) => {
     if (!acc || acc.length < 7) return acc;
-
     const first = acc.slice(0, 4);
     const last = acc.slice(-3);
     const stars = "*".repeat(acc.length - 7);
-
     return `${first}${stars}${last}`;
   };
-  const getFirstTwoNames = (fullName) => {
-    return fullName.split(" ").slice(0, 2).join(" ");
-  };
-  const getFirstName = (fullName) => {
-    return fullName.split(" ").slice(0, 3).join(" ");
-  };
-  if (loading) {
-    return <AccountTabSkeleton />;
-  }
+
+  const getFirstTwoNames = (fullName) => fullName.split(" ").slice(0, 2).join(" ");
+  const getFirstName = (fullName) => fullName.split(" ").slice(0, 3).join(" ");
+
+  if (loading) return <AccountTabSkeleton />;
 
   return (
-    <div>
-      {showPinConfirm && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          {user?.pin_set ? (
-            <div className="w-[90%] border border-black/25 max-w-sm bg-white rounded-xl p-4 shadow-lg">
-              <p className="text-base font-semibold text-center">
-                Confirm Transaction PIN
-              </p>
+    <>
+      {/* ── Styles ────────────────────────────────────────────────── */}
+      <style>{`
+        @keyframes at-fadeUp {
+          from { opacity: 0; transform: translateY(12px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes at-fadeIn {
+          from { opacity: 0; }
+          to   { opacity: 1; }
+        }
+        @keyframes at-shimmer {
+          0%   { background-position: -400px 0; }
+          100% { background-position: 400px 0; }
+        }
+        .at-card { animation: at-fadeUp 0.35s cubic-bezier(0.22,1,0.36,1) both; }
+        .at-card:nth-child(1) { animation-delay: 0s; }
+        .at-card:nth-child(2) { animation-delay: 0.05s; }
+        .at-card:nth-child(3) { animation-delay: 0.10s; }
+        .at-card:nth-child(4) { animation-delay: 0.15s; }
 
-              <p className="text-xs text-gray-500 text-center mt-1">
-                Enter your PIN to complete withdrawal
-              </p>
+        .at-overlay { animation: at-fadeIn 0.2s ease both; }
+        .at-modal {
+          animation: at-fadeUp 0.25s cubic-bezier(0.22,1,0.36,1) both;
+        }
+
+        .at-balance-card {
+          background: linear-gradient(135deg, #1a56db 0%, #1e40af 60%, #1e3a8a 100%);
+          position: relative;
+          overflow: hidden;
+        }
+        .at-balance-card::before {
+          content: "";
+          position: absolute;
+          top: -60px; right: -60px;
+          width: 200px; height: 200px;
+          border-radius: 50%;
+          background: rgba(255,255,255,0.06);
+          pointer-events: none;
+        }
+        .at-balance-card::after {
+          content: "";
+          position: absolute;
+          bottom: -40px; left: 20px;
+          width: 140px; height: 140px;
+          border-radius: 50%;
+          background: rgba(255,255,255,0.04);
+          pointer-events: none;
+        }
+
+        .at-btn-add {
+          background: rgba(255,255,255,0.95);
+          color: #1a56db;
+          border: none;
+          padding: 9px 20px;
+          border-radius: 10px;
+          font-size: 13px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: background 0.15s, transform 0.12s;
+          letter-spacing: 0.01em;
+        }
+        .at-btn-add:hover { background: #fff; transform: translateY(-1px); }
+        .at-btn-add:active { transform: translateY(0); }
+
+        .at-btn-withdraw {
+          background: rgba(255,255,255,0.1);
+          color: #fff;
+          border: 1px solid rgba(255,255,255,0.3);
+          padding: 9px 20px;
+          border-radius: 10px;
+          font-size: 13px;
+          font-weight: 500;
+          cursor: pointer;
+          transition: background 0.15s, border-color 0.15s, transform 0.12s;
+        }
+        .at-btn-withdraw:hover { background: rgba(255,255,255,0.18); border-color: rgba(255,255,255,0.5); transform: translateY(-1px); }
+        .at-btn-withdraw:active { transform: translateY(0); }
+
+        .at-stat {
+          background: #fff;
+          border: 1px solid #f1f5f9;
+          border-radius: 14px;
+          padding: 14px 16px;
+          transition: box-shadow 0.2s, transform 0.2s;
+        }
+        .at-stat:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.07); transform: translateY(-2px); }
+
+        .at-history {
+          background: #fff;
+          border: 1px solid #f1f5f9;
+          border-radius: 16px;
+          overflow: hidden;
+        }
+
+        .at-tx-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 12px 0;
+          border-bottom: 1px solid #f8fafc;
+          transition: background 0.15s;
+        }
+        .at-tx-row:last-child { border-bottom: none; }
+
+        .at-tx-icon {
+          width: 38px;
+          height: 38px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+          font-size: 15px;
+        }
+
+        .at-page-btn {
+          width: 30px;
+          height: 30px;
+          border-radius: 8px;
+          border: 1px solid #e2e8f0;
+          background: #fff;
+          color: #64748b;
+          font-size: 16px;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: background 0.15s, border-color 0.15s, transform 0.1s;
+        }
+        .at-page-btn:hover:not(:disabled) { background: #f1f5f9; border-color: #cbd5e1; }
+        .at-page-btn:active:not(:disabled) { transform: scale(0.95); }
+        .at-page-btn:disabled { opacity: 0.3; cursor: default; }
+
+        /* Modal inputs */
+        .at-input {
+          width: 100%;
+          border: 1.5px solid #e2e8f0;
+          border-radius: 10px;
+          padding: 10px 14px;
+          font-size: 14px;
+          color: #0f172a;
+          outline: none;
+          transition: border-color 0.15s, box-shadow 0.15s;
+          background: #fafafa;
+          box-sizing: border-box;
+        }
+        .at-input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.12); background: #fff; }
+        .at-input:disabled { opacity: 0.6; cursor: default; background: #f8fafc; }
+
+        .at-select {
+          width: 100%;
+          border: 1.5px solid #e2e8f0;
+          border-radius: 10px;
+          padding: 10px 14px;
+          font-size: 14px;
+          color: #0f172a;
+          outline: none;
+          transition: border-color 0.15s;
+          background: #fafafa;
+          cursor: pointer;
+          appearance: none;
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+          background-repeat: no-repeat;
+          background-position: right 14px center;
+          padding-right: 36px;
+          box-sizing: border-box;
+        }
+        .at-select:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.12); background-color: #fff; }
+
+        .at-modal-btn-ghost {
+          flex: 1;
+          border: 1.5px solid #e2e8f0;
+          border-radius: 10px;
+          padding: 10px 0;
+          font-size: 13.5px;
+          font-weight: 500;
+          color: #475569;
+          background: #fff;
+          cursor: pointer;
+          transition: background 0.15s, border-color 0.15s;
+        }
+        .at-modal-btn-ghost:hover { background: #f8fafc; border-color: #cbd5e1; }
+
+        .at-modal-btn-primary {
+          flex: 1;
+          border: none;
+          border-radius: 10px;
+          padding: 10px 0;
+          font-size: 13.5px;
+          font-weight: 600;
+          color: #fff;
+          background: linear-gradient(135deg, #2563eb, #1d4ed8);
+          cursor: pointer;
+          transition: opacity 0.15s, transform 0.12s;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 7px;
+        }
+        .at-modal-btn-primary:hover:not(:disabled) { opacity: 0.92; transform: translateY(-1px); }
+        .at-modal-btn-primary:active:not(:disabled) { transform: translateY(0); }
+        .at-modal-btn-primary:disabled { opacity: 0.55; cursor: default; }
+
+        .at-saved-bank {
+          padding: 8px 10px;
+          border: 1.5px solid #e2e8f0;
+          border-radius: 10px;
+          cursor: pointer;
+          transition: border-color 0.15s, background 0.15s, transform 0.12s;
+          overflow: hidden;
+        }
+        .at-saved-bank:hover { border-color: #93c5fd; background: #eff6ff; transform: translateY(-1px); }
+
+        .at-spin {
+          width: 14px; height: 14px;
+          border: 2px solid rgba(255,255,255,0.4);
+          border-top-color: #fff;
+          border-radius: 50%;
+          animation: spin 0.7s linear infinite;
+          display: inline-block;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .at-badge-success {
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+          background: #f0fdf4;
+          border: 1px solid #bbf7d0;
+          color: #15803d;
+          font-size: 11px;
+          font-weight: 600;
+          padding: 3px 9px;
+          border-radius: 20px;
+          letter-spacing: 0.02em;
+        }
+
+        .at-view-more {
+          font-size: 12px;
+          font-weight: 600;
+          color: #3b82f6;
+          background: none;
+          border: none;
+          cursor: pointer;
+          padding: 4px 8px;
+          border-radius: 6px;
+          transition: background 0.15s;
+          letter-spacing: 0.01em;
+        }
+        .at-view-more:hover { background: #eff6ff; }
+
+        /* PIN overlay input */
+        .at-pin-box {
+          width: 46px; height: 50px;
+          text-align: center;
+          font-size: 20px;
+          font-weight: 600;
+          border: 2px solid #e2e8f0;
+          border-radius: 12px;
+          outline: none;
+          background: #f8fafc;
+          color: #0f172a;
+          transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+        }
+        .at-pin-box:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.15); background: #fff; }
+      `}</style>
+
+      {/* ── PIN Confirm Overlay ───────────────────────────────────── */}
+      {showPinConfirm && (
+        <div className="at-overlay" style={{
+          position: "fixed", inset: 0, zIndex: 9999,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          background: "rgba(15,23,42,0.55)", backdropFilter: "blur(6px)",
+        }}>
+          {user?.pin_set ? (
+            <div className="at-modal" style={{
+              width: "92%", maxWidth: 360,
+              background: "#fff",
+              borderRadius: 20,
+              padding: "28px 24px",
+              boxShadow: "0 20px 60px rgba(0,0,0,0.18), 0 0 0 1px rgba(0,0,0,0.06)",
+            }}>
+              <div style={{ textAlign: "center", marginBottom: 4 }}>
+                <div style={{
+                  width: 48, height: 48, borderRadius: "50%",
+                  background: "#eff6ff", margin: "0 auto 12px",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }}>
+                  <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="#2563eb" strokeWidth="2">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                  </svg>
+                </div>
+                <p style={{ fontSize: 16, fontWeight: 700, color: "#0f172a", margin: 0 }}>Confirm your PIN</p>
+                <p style={{ fontSize: 13, color: "#64748b", marginTop: 4 }}>Enter your 4-digit transaction PIN</p>
+              </div>
 
               {withdrawError && (
-                <p className="text-xs text-red-600 text-center mt-2">
+                <div style={{
+                  background: "#fef2f2", border: "1px solid #fecaca",
+                  borderRadius: 8, padding: "8px 12px",
+                  fontSize: 12, color: "#dc2626", textAlign: "center",
+                  marginTop: 12,
+                }}>
                   {withdrawError}
-                </p>
+                </div>
               )}
 
-              {/* PIN INPUT */}
-              <div className="mt-4">
+              <div style={{ marginTop: 20 }}>
                 <PinGetInput value={withdrawPin} onChange={setWithdrawPin} />
               </div>
 
-              <div className="flex gap-2 mt-5">
-                <button
-                  onClick={() => {
-                    setShowPinConfirm(false);
-                    setWithdrawPin("");
-                  }}
-                  className="flex-1 border py-2 rounded-md text-sm"
-                >
+              <div style={{ display: "flex", gap: 10, marginTop: 22 }}>
+                <button className="at-modal-btn-ghost"
+                  onClick={() => { setShowPinConfirm(false); setWithdrawPin(""); }}>
                   Cancel
                 </button>
-
-                <button
+                <button className="at-modal-btn-primary"
                   onClick={handleWithdraw}
-                  disabled={loadingWithdraw}
-                  className="flex-1 bg-blue-600 text-white py-2 rounded-md text-sm"
-                >
-                  {loadingWithdraw ? "Processing..." : "Confirm"}
+                  disabled={loadingWithdraw}>
+                  {loadingWithdraw ? <><span className="at-spin" /> Processing…</> : "Confirm withdrawal"}
                 </button>
               </div>
             </div>
           ) : (
-            <div className="w-[90%] max-w-sm bg-white rounded-xl border border-black/40 p-4 shadow-lg">
-              <p className=" font-semibold text-gray-900 text-center">
-                Transaction PIN Required
-              </p>
-
-              <p className="text-sm text-gray-600 text-center mt-2">
-                You need to set your transaction PIN before continuing.
-              </p>
-
-              <div className="flex justify-center mt-4">
-                <Link href="/profile?tab=password">
-                  <button className="bg-red-600 text-white px-3 py-1 rounded-lg text-sm font-medium hover:bg-red-700 transition duration-200">
-                    Set PIN
-                  </button>
-                </Link>
+            <div className="at-modal" style={{
+              width: "92%", maxWidth: 340,
+              background: "#fff",
+              borderRadius: 20,
+              padding: "28px 24px",
+              boxShadow: "0 20px 60px rgba(0,0,0,0.18)",
+              textAlign: "center",
+            }}>
+              <div style={{
+                width: 48, height: 48, borderRadius: "50%",
+                background: "#fff7ed", margin: "0 auto 14px",
+                display: "flex", alignItems: "center", justifyContent: "center",
+              }}>
+                <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="#ea580c" strokeWidth="2">
+                  <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
               </div>
+              <p style={{ fontSize: 16, fontWeight: 700, color: "#0f172a", margin: 0 }}>PIN not set</p>
+              <p style={{ fontSize: 13, color: "#64748b", marginTop: 6, marginBottom: 18 }}>
+                You need a transaction PIN before withdrawing funds.
+              </p>
+              <Link href="/profile?tab=password">
+                <button style={{
+                  background: "#dc2626", color: "#fff",
+                  border: "none", borderRadius: 10,
+                  padding: "10px 24px", fontSize: 13, fontWeight: 600,
+                  cursor: "pointer",
+                }}>
+                  Set up PIN
+                </button>
+              </Link>
             </div>
           )}
         </div>
       )}
-      {showModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white w-[90%] max-w-sm rounded-2xl p-5 shadow-lg">
-            <h2 className="text-lg font-semibold text-gray-800">Fund Wallet</h2>
 
-            <p className="text-sm text-gray-500 mt-1">
-              Enter amount you want to add
-            </p>
-            {error && <p className="text-sm text-red-600">{error}</p>}
+      {/* ── Fund Wallet Modal ─────────────────────────────────────── */}
+      {showModal && (
+        <div className="at-overlay" style={{
+          position: "fixed", inset: 0, zIndex: 50,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          background: "rgba(15,23,42,0.55)", backdropFilter: "blur(6px)",
+        }}>
+          <div className="at-modal border border-gray-200/10" style={{
+            background: "#fff", width: "92%", maxWidth: 380,
+            borderRadius: 20, padding: "28px 24px",
+            boxShadow: "0 20px 60px rgba(0,0,0,0.18)",
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
+              <div style={{
+                width: 42, height: 42, borderRadius: 12,
+                background: "#eff6ff",
+                display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+              }}>
+                <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="#2563eb" strokeWidth="2">
+                  <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>
+                </svg>
+              </div>
+              <div>
+                <p style={{ fontSize: 16, fontWeight: 700, color: "#0f172a", margin: 0 }}>Fund wallet</p>
+                <p className="text-gray-700" style={{ fontSize: 12.5, fontWeight: 600, marginTop: 2 }}>Minimum deposit ₦100</p>
+              </div>
+            </div>
+
+            {error && (
+              <div style={{
+                background: "#fef2f2", border: "1px solid #fecaca",
+                borderRadius: 8, padding: "8px 12px",
+                fontSize: 12, color: "#dc2626", marginBottom: 12,
+              }}>
+                {error}
+              </div>
+            )}
+
+            <label className="font-bold" style={{ fontSize: 11.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+              Amount (₦)
+            </label>
             <input
               type="number"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              placeholder="Enter amount (₦)"
-              className="w-full mt-4 border rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="0.00"
+              className="at-input"
+              style={{ marginTop: 6, marginBottom: 20, fontSize: 18, fontWeight: 600 }}
             />
 
-            <div className="flex gap-3 mt-5">
-              <button
-                onClick={() => {
-                  setShowModal(false);
-                  setAmount("");
-                  setError("");
-                }}
-                className="flex-1 border rounded-lg py-2 text-sm"
-              >
+            <div style={{ display: "flex", gap: 10 }}>
+              <button className="at-modal-btn-ghost" onClick={() => { setShowModal(false); setAmount(""); setError(""); }}>
                 Cancel
               </button>
-
-              <button
-                onClick={handleAddMoney}
-                disabled={loadingPay}
-                className="flex-1 bg-blue-600 text-white rounded-lg py-2 text-sm flex items-center justify-center gap-2 disabled:opacity-60"
-              >
-                {loadingPay ? (
-                  <>
-                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                    Processing...
-                  </>
-                ) : (
-                  "Continue"
-                )}
+              <button className="at-modal-btn-primary" onClick={handleAddMoney} disabled={loadingPay}>
+                {loadingPay ? <><span className="at-spin" /> Processing…</> : "Continue to pay"}
               </button>
             </div>
           </div>
         </div>
       )}
-      {showWithdrawModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white w-[90%] max-w-sm rounded-2xl p-5 shadow-lg">
-            <h2 className="text-lg font-semibold text-gray-800">
-              Withdraw Funds
-            </h2>
 
-            <p className="text-sm text-gray-500 mt-1">
-              Enter amount you want to withdraw
-            </p>
+      {/* ── Withdraw Modal ────────────────────────────────────────── */}
+      {showWithdrawModal && (
+        <div className="at-overlay" style={{
+          position: "fixed", inset: 0, zIndex: 50,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          background: "rgba(15,23,42,0.55)", backdropFilter: "blur(6px)",
+        }}>
+          <div className="at-modal" style={{
+            background: "#fff", width: "92%", maxWidth: 400,
+            borderRadius: 20, padding: "28px 24px",
+            boxShadow: "0 20px 60px rgba(0,0,0,0.18)",
+            maxHeight: "90vh", overflowY: "auto",
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
+              <div style={{
+                width: 42, height: 42, borderRadius: 12,
+                background: "#f0fdf4",
+                display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+              }}>
+                <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="#16a34a" strokeWidth="2">
+                  <polyline points="17 11 12 6 7 11"/><line x1="12" y1="6" x2="12" y2="18"/>
+                  <path d="M4 18h16"/>
+                </svg>
+              </div>
+              <div>
+                <p style={{ fontSize: 16, fontWeight: 700, color: "#0f172a", margin: 0 }}>Withdraw funds</p>
+                <p style={{ fontSize: 12.5, color: "#64748b", marginTop: 2 }}>Transfer to your bank account</p>
+              </div>
+            </div>
 
             {withdrawError && (
-              <p className="text-sm text-red-600">{withdrawError}</p>
+              <div style={{
+                background: "#fef2f2", border: "1px solid #fecaca",
+                borderRadius: 8, padding: "8px 12px",
+                fontSize: 12, color: "#dc2626", marginBottom: 14,
+              }}>
+                {withdrawError}
+              </div>
             )}
-            {savedBanks.length > 0 && userPlan !== "free" && (
-              <div className="mt-2">
-                <p className="text-xs text-gray-500 mb-2">Recent accounts</p>
 
-                <div className="space-y-2 xs:grid grid-cols-3 gap-1">
+            {savedBanks.length > 0 && userPlan !== "free" && (
+              <div style={{ marginBottom: 16 }}>
+                <p style={{ fontSize: 11, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>
+                  Recent accounts
+                </p>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(110px, 1fr))", gap: 8 }}>
                   {savedBanks.map((b, i) => (
-                    <div
-                      key={i}
-                      onClick={() => {
-                        setAccountNumber(b.account_number);
-                        setAccountName(b.account_name);
-                        setBankCode(b.bank_code);
-                      }}
-                      className="p-1 border h-full overflow-hidden rounded-lg cursor-pointer hover:bg-gray-50"
-                    >
-                      <p className="text-xs font-medium">
+                    <div key={i} className="at-saved-bank"
+                      onClick={() => { setAccountNumber(b.account_number); setAccountName(b.account_name); setBankCode(b.bank_code); }}>
+                      <p style={{ fontSize: 11.5, fontWeight: 600, color: "#0f172a", margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                         {getFirstTwoNames(b.account_name)}
                       </p>
-                      <p className="text-xs text-gray-500">
-                        {maskAccountNumber(b.account_number)}
-                      </p>
-                      <p className="text-xs text-gray-500">
+                      <p style={{ fontSize: 11, color: "#64748b", margin: "2px 0 0" }}>{maskAccountNumber(b.account_number)}</p>
+                      <p style={{ fontSize: 11, color: "#94a3b8", margin: "1px 0 0", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                         {getFirstName(b.bank_name)}
-                      </p>{" "}
+                      </p>
                     </div>
                   ))}
                 </div>
               </div>
             )}
-            <input
-              type="number"
-              value={withdrawAmount}
-              onChange={(e) => setWithdrawAmount(e.target.value)}
-              placeholder="Enter amount (₦)"
-              className="w-full mt-4 border rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <input
-              type="number"
-              value={accountNumber}
-              onChange={(e) => setAccountNumber(e.target.value)}
-              placeholder="Account Number"
-              className="w-full mt-3 border rounded-lg px-3 py-2"
-            />
 
-            <select
-              value={bankCode}
-              onChange={(e) => setBankCode(e.target.value)}
-              className="w-full mt-3 border rounded-lg px-3 py-2"
-            >
-              <option value="">Select Bank</option>
-              {banks.map((b) => (
-                <option key={b.code} value={b.code}>
-                  {b.name}
-                </option>
-              ))}
-            </select>
-            <input
-              type="number"
-              value={accountName}
-              placeholder="Account Name"
-              disabled
-              className="w-full mt-3 border rounded-lg px-3 py-2"
-            />
-            <div className="flex gap-3 mt-5">
-              <button
-                onClick={() => {
-                  fetchAccount();
-                  setShowWithdrawModal(false);
-                  setAccountNumber("");
-                  setAccountName("");
-                  setGettingAccountName(true);
-                  setBankCode("");
-                  setWithdrawAmount("");
-                  fetchBanks();
-                  setWithdrawError("");
-                }}
-                className="flex-1 border rounded-lg py-2 text-sm"
-              >
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <div>
+                <label style={{ fontSize: 11.5, fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                  Amount (₦)
+                </label>
+                <input type="number" value={withdrawAmount}
+                  onChange={(e) => setWithdrawAmount(e.target.value)}
+                  placeholder="0.00"
+                  className="at-input"
+                  style={{ marginTop: 5, fontSize: 16, fontWeight: 600 }}
+                />
+              </div>
+              <div>
+                <label style={{ fontSize: 11.5, fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                  Account number
+                </label>
+                <input type="number" value={accountNumber}
+                  onChange={(e) => setAccountNumber(e.target.value)}
+                  placeholder="0123456789"
+                  className="at-input" style={{ marginTop: 5 }}
+                />
+              </div>
+              <div>
+                <label style={{ fontSize: 11.5, fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                  Bank
+                </label>
+                <select value={bankCode} onChange={(e) => setBankCode(e.target.value)}
+                  className="at-select" style={{ marginTop: 5 }}>
+                  <option value="">Select bank</option>
+                  {banks.map((b) => <option key={b.code} value={b.code}>{b.name}</option>)}
+                </select>
+              </div>
+              <div>
+                <label style={{ fontSize: 11.5, fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                  Account name
+                </label>
+                <input type="text" value={accountName}
+                  placeholder={gettingAccountName && accountNumber.length === 10 && bankCode ? "Verifying…" : "Auto-filled after verification"}
+                  disabled
+                  className="at-input" style={{ marginTop: 5 }}
+                />
+              </div>
+            </div>
+
+            <div style={{ display: "flex", gap: 10, marginTop: 22 }}>
+              <button className="at-modal-btn-ghost" onClick={() => {
+                fetchAccount(); setShowWithdrawModal(false);
+                setAccountNumber(""); setAccountName(""); setGettingAccountName(true);
+                setBankCode(""); setWithdrawAmount(""); fetchBanks(); setWithdrawError("");
+              }}>
                 Cancel
               </button>
-
-              <button
-                onClick={() => {
-                  setWithdrawError("");
-
-                  if (!withdrawAmount || !accountNumber || !bankCode) {
-                    setWithdrawError("Complete all fields");
-                    return;
-                  }
-
-                  setShowPinConfirm(true); // 👈 NEW STEP
-                }}
-                className="flex-1 bg-blue-600 text-white rounded-lg py-2 text-sm"
-              >
+              <button className="at-modal-btn-primary" onClick={() => {
+                setWithdrawError("");
+                if (!withdrawAmount || !accountNumber || !bankCode) { setWithdrawError("Complete all fields"); return; }
+                setShowPinConfirm(true);
+              }}>
                 Withdraw
               </button>
             </div>
           </div>
         </div>
       )}
-      <div className="space-y-5">
-        <div className="relative bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-2xl p-5 shadow overflow-hidden">
-          {" "}
-          <div className="flex items-center gap-3 mt-1">
-            <div>
-              {" "}
-              <p className="text-sm opacity-80">Available Balance</p>
-              <h2 className="text-3xl font-semibold">
-                ₦ {formatMoney(balance)}
-              </h2>
-            </div>
-            {/* {showLine && (
-              <svg
-                className="w-12 h-12"
-                viewBox="0 0 100 50"
-                preserveAspectRatio="none"
-              >
-                <defs>
-                  <marker
-                    id="arrowThin"
-                    viewBox="0 0 10 10"
-                    refX="10"
-                    refY="5"
-                    markerWidth="3"
-                    markerHeight="3"
-                    orient="auto"
-                  >
-                    <path d="M 0 0 L 10 5 L 0 10 Z" fill="#00ff6a" />
-                  </marker>
-                </defs>
 
-                <path
-                  d="M0 40 Q50 0 100 10"
-                  stroke="#00ff6a"
-                  strokeWidth="1.5"
-                  fill="none"
-                  markerEnd="url(#arrowThin)"
-                  className="animate-draw"
-                />
-              </svg>
-            )} */}
-          </div>
-          <div className="flex gap-3 mt-4">
-            <button
-              onClick={() => setShowModal(true)}
-              className="bg-white text-blue-600 px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-100"
-            >
-              Add Money
+      {/* ── Main Content ──────────────────────────────────────────── */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+
+        {/* Balance card */}
+        <div className="at-card at-balance-card" style={{ borderRadius: 20, padding: "24px 22px 22px" }}>
+          <p style={{ fontSize: 12, fontWeight: 500, color: "rgba(255,255,255,0.65)", margin: 0, letterSpacing: "0.04em", textTransform: "uppercase" }}>
+            Available balance
+          </p>
+          <h2 style={{
+            fontSize: "clamp(28px, 6vw, 38px)",
+            fontWeight: 700,
+            color: "#fff",
+            margin: "6px 0 20px",
+            letterSpacing: "-0.02em",
+            lineHeight: 1.1,
+          }}>
+            ₦ {formatMoney(balance)}
+          </h2>
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+            <button className="at-btn-add" onClick={() => setShowModal(true)}>
+              + Add money
             </button>
-            <button
-              onClick={() => setShowWithdrawModal(true)}
-              className={`border border-white px-4 py-2 rounded-md text-sm transition
-    ${"hover:bg-white/10"}`}
-            >
+            <button className="at-btn-withdraw" onClick={() => setShowWithdrawModal(true)}>
               Withdraw
             </button>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          <StatCard
-            label="Total Earned"
-            value={transactions
-              .filter((t) => t.type === "credit" && t.status === "success")
-              .reduce((sum, t) => sum + Number(t.amount || 0), 0)}
-          />
-
-          <StatCard
-            label="Total Withdrawn"
-            value={transactions
-              .filter((t) => t.type === "debit" && t.status === "success")
-              .reduce((sum, t) => sum + Number(t.amount || 0), 0)}
-          />
-          <div className="bg-white shadow rounded-xl p-3">
-            <p className="text-xs text-gray-500">Transactions</p>
-            <p className="text-sm font-semibold text-gray-900 mt-1">
-              {transactions.length}
+        {/* Stat cards */}
+        <div className="at-card" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 12 }}>
+          <div className="at-stat">
+            <p style={{ fontSize: 11.5, fontWeight: 500, color: "#64748b", margin: 0, letterSpacing: "0.02em" }}>Total earned</p>
+            <p style={{ fontSize: 15, fontWeight: 700, color: "#0f172a", marginTop: 6, letterSpacing: "-0.01em" }}>
+              ₦ {formatMoney(
+                transactions.filter(t => t.type === "credit" && t.status === "success")
+                  .reduce((s, t) => s + Number(t.amount || 0), 0)
+              )}
             </p>
+          </div>
+          <div className="at-stat">
+            <p style={{ fontSize: 11.5, fontWeight: 500, color: "#64748b", margin: 0, letterSpacing: "0.02em" }}>Total withdrawn</p>
+            <p style={{ fontSize: 15, fontWeight: 700, color: "#0f172a", marginTop: 6, letterSpacing: "-0.01em" }}>
+              ₦ {formatMoney(
+                transactions.filter(t => t.type === "debit" && t.status === "success")
+                  .reduce((s, t) => s + Number(t.amount || 0), 0)
+              )}
+            </p>
+          </div>
+          <div className="at-stat">
+            <p style={{ fontSize: 11.5, fontWeight: 500, color: "#64748b", margin: 0, letterSpacing: "0.02em" }}>Transactions</p>
+            <p style={{ fontSize: 15, fontWeight: 700, color: "#0f172a", marginTop: 6 }}>{transactions.length}</p>
           </div>
         </div>
 
-        {/* 📜 TRANSACTION HISTORY */}
-        <div className="bg-white rounded-2xl shadow p-4">
-          <div className="flex justify-between items-center mb-3">
-            <h3 className="font-semibold text-sm">Transaction History</h3>
-            <button
-              onClick={() =>
-                setPage((p) =>
-                  p < Math.ceil(transactions.length / ITEMS_PER_PAGE)
-                    ? p + 1
-                    : p,
-                )
-              }
-              className="text-blue-600 text-xs hover:underline"
-            >
-              View more
+        {/* Transaction history */}
+        <div className="at-card at-history">
+          <div style={{
+            display: "flex", justifyContent: "space-between", alignItems: "center",
+            padding: "18px 20px 14px",
+            borderBottom: transactions.length > 0 ? "1px solid #f1f5f9" : "none",
+          }}>
+            <p style={{ fontSize: 14, fontWeight: 700, color: "#0f172a", margin: 0 }}>Transaction history</p>
+            <button className="at-view-more"
+              onClick={() => setPage(p => p < Math.ceil(transactions.length / ITEMS_PER_PAGE) ? p + 1 : p)}>
+              View more →
             </button>
           </div>
 
           {transactions.length === 0 ? (
-            <p className="text-sm text-gray-400 text-center py-6">
-              No transactions yet
-            </p>
+            <div style={{ padding: "48px 20px", textAlign: "center" }}>
+              <div style={{
+                width: 52, height: 52, borderRadius: "50%",
+                background: "#f8fafc", margin: "0 auto 14px",
+                display: "flex", alignItems: "center", justifyContent: "center",
+              }}>
+                <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="#cbd5e1" strokeWidth="1.5">
+                  <rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/>
+                </svg>
+              </div>
+              <p style={{ fontSize: 14, fontWeight: 600, color: "#64748b", margin: 0 }}>No transactions yet</p>
+              <p style={{ fontSize: 12.5, color: "#94a3b8", marginTop: 4 }}>Fund your wallet to get started</p>
+            </div>
           ) : (
-            <div className="space-y-3">
-              {currentTransactions.map((tx) => (
-                <TransactionItem key={tx.id} tx={tx} />
-              ))}
-              <div className="flex items-center justify-between mt-5">
-                {/* Left: info */}
-                <p className="text-xs text-gray-500">
-                  Page{" "}
-                  <span className="font-semibold text-gray-700">{page}</span> of{" "}
-                  <span className="font-semibold text-gray-700">
-                    {Math.max(
-                      1,
-                      Math.ceil(transactions.length / ITEMS_PER_PAGE),
-                    )}
+            <div style={{ padding: "0 20px" }}>
+              {currentTransactions.map((tx) => <TransactionItem key={tx.id} tx={tx} />)}
+
+              <div style={{
+                display: "flex", alignItems: "center", justifyContent: "space-between",
+                padding: "14px 0 16px",
+                borderTop: "1px solid #f1f5f9",
+                marginTop: 4,
+              }}>
+                <p style={{ fontSize: 12, color: "#94a3b8", margin: 0 }}>
+                  Page <span style={{ fontWeight: 600, color: "#475569" }}>{page}</span>{" "}
+                  of{" "}
+                  <span style={{ fontWeight: 600, color: "#475569" }}>
+                    {Math.max(1, Math.ceil(transactions.length / ITEMS_PER_PAGE))}
                   </span>
                 </p>
-
-                {/* Right: controls */}
-                <div className="flex items-center gap-1">
-                  {/* Prev */}
-                  <button
-                    onClick={() => setPage((p) => Math.max(p - 1, 1))}
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <button className="at-page-btn"
+                    onClick={() => setPage(p => Math.max(p - 1, 1))}
                     disabled={page === 1}
-                    className="w-7 h-7 flex items-center justify-center rounded-md text-gray-500 hover:bg-gray-100 active:scale-95 transition disabled:opacity-30"
-                  >
-                    ‹
-                  </button>
-
-                  {/* Current Page */}
-                  <span className="text-xs font-semibold text-blue-600 px-1">
-                    {page}
-                  </span>
-
-                  {/* Next */}
-                  <button
-                    onClick={() =>
-                      setPage((p) =>
-                        p < Math.ceil(transactions.length / ITEMS_PER_PAGE)
-                          ? p + 1
-                          : p,
-                      )
-                    }
-                    disabled={
-                      page >= Math.ceil(transactions.length / ITEMS_PER_PAGE)
-                    }
-                    className="w-7 h-7 flex items-center justify-center rounded-md text-gray-500 hover:bg-gray-100 active:scale-95 transition disabled:opacity-30"
-                  >
-                    ›
-                  </button>
+                    aria-label="Previous page">‹</button>
+                  <span style={{
+                    minWidth: 28, height: 30,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontSize: 13, fontWeight: 700, color: "#2563eb",
+                    background: "#eff6ff", borderRadius: 8,
+                  }}>{page}</span>
+                  <button className="at-page-btn"
+                    onClick={() => setPage(p => p < Math.ceil(transactions.length / ITEMS_PER_PAGE) ? p + 1 : p)}
+                    disabled={page >= Math.ceil(transactions.length / ITEMS_PER_PAGE)}
+                    aria-label="Next page">›</button>
                 </div>
               </div>
             </div>
           )}
         </div>
       </div>
+    </>
+  );
+}
+
+// ─── Upgraded TransactionItem (drop-in, same props) ──────────────────────────
+function TransactionItem({ tx }) {
+  const isCredit = tx.type === "credit";
+  const formatMoney = (value) =>
+    new Intl.NumberFormat("en-NG", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
+
+  const statusColor = tx.status === "success" ? "#16a34a" : tx.status === "pending" ? "#d97706" : "#dc2626";
+  const statusBg   = tx.status === "success" ? "#f0fdf4" : tx.status === "pending" ? "#fffbeb" : "#fef2f2";
+  const statusBorder = tx.status === "success" ? "#bbf7d0" : tx.status === "pending" ? "#fde68a" : "#fecaca";
+
+  return (
+    <div className="at-tx-row">
+      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <div className="at-tx-icon" style={{
+          background: isCredit ? "#f0fdf4" : "#fef2f2",
+        }}>
+          {isCredit ? (
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#16a34a" strokeWidth="2.2">
+              <line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/>
+            </svg>
+          ) : (
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#dc2626" strokeWidth="2.2">
+              <line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/>
+            </svg>
+          )}
+        </div>
+        <div>
+          <p style={{ fontSize: 13.5, fontWeight: 600, color: "#0f172a", margin: 0, lineHeight: 1.3 }}>
+            {tx.description}
+          </p>
+          <p style={{ fontSize: 11.5, color: "#94a3b8", margin: "3px 0 0" }}>
+            {new Date(tx.created_at).toLocaleString("en-NG", {
+              day: "numeric", month: "short", year: "numeric",
+              hour: "2-digit", minute: "2-digit",
+            })}
+          </p>
+        </div>
+      </div>
+
+      <div style={{ textAlign: "right", flexShrink: 0 }}>
+        <p style={{
+          fontSize: 14, fontWeight: 700, margin: 0,
+          color: isCredit ? "#16a34a" : "#dc2626",
+          letterSpacing: "-0.01em",
+        }}>
+          {isCredit ? "+" : "−"}₦{formatMoney(Number(tx.amount || 0))}
+        </p>
+        <span style={{
+          display: "inline-block", marginTop: 3,
+          fontSize: 10.5, fontWeight: 600,
+          color: statusColor, background: statusBg,
+          border: `1px solid ${statusBorder}`,
+          borderRadius: 20, padding: "2px 7px",
+          letterSpacing: "0.02em",
+        }}>
+          {tx.status}
+        </span>
+      </div>
     </div>
   );
 }
+
+// ─── Upgraded AccountTabSkeleton ─────────────────────────────────────────────
 function AccountTabSkeleton() {
+  const sk = {
+    borderRadius: 8,
+    background: "linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%)",
+    backgroundSize: "800px 100%",
+    animation: "at-skeleton 1.4s ease infinite",
+  };
+
   return (
-    <div className="space-y-5">
-      {/* Balance Card */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl p-5 shadow overflow-hidden">
-        <div className="h-3 w-28 rounded bg-white/20 animate-pulse mb-2" />
-        <div className="h-9 w-44 rounded bg-white/20 animate-pulse" />
-        <div className="flex gap-3 mt-4">
-          <div className="h-9 w-24 rounded-md bg-white/20 animate-pulse" />
-          <div className="h-9 w-24 rounded-md bg-white/20 animate-pulse" />
-        </div>
-      </div>
-
-      {/* Stat Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-        {[...Array(3)].map((_, i) => (
-          <div key={i} className="bg-white shadow rounded-xl p-3">
-            <div className="h-3 w-20 rounded bg-gray-200 animate-pulse" />
-            <div className="h-5 w-24 rounded bg-gray-200 animate-pulse mt-2" />
+    <>
+      <style>{`
+        @keyframes at-skeleton {
+          0%   { background-position: -400px 0; }
+          100% { background-position: 400px 0; }
+        }
+      `}</style>
+      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        {/* Balance card */}
+        <div style={{
+          background: "linear-gradient(135deg, #1a56db, #1e3a8a)",
+          borderRadius: 20, padding: "24px 22px 22px",
+        }}>
+          <div style={{ ...sk, height: 12, width: 120, background: "rgba(255,255,255,0.15)", marginBottom: 10 }} />
+          <div style={{ ...sk, height: 40, width: 180, background: "rgba(255,255,255,0.15)", marginBottom: 24 }} />
+          <div style={{ display: "flex", gap: 10 }}>
+            <div style={{ ...sk, height: 38, width: 110, borderRadius: 10, background: "rgba(255,255,255,0.15)" }} />
+            <div style={{ ...sk, height: 38, width: 100, borderRadius: 10, background: "rgba(255,255,255,0.12)" }} />
           </div>
-        ))}
-      </div>
-
-      {/* Transaction History */}
-      <div className="bg-white rounded-2xl shadow p-4">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-4">
-          <div className="h-4 w-36 rounded bg-gray-200 animate-pulse" />
-          <div className="h-3 w-16 rounded bg-gray-200 animate-pulse" />
         </div>
 
-        {/* Transaction rows */}
-        <div className="space-y-3">
-          {[...Array(5)].map((_, i) => (
-            <div
-              key={i}
-              className="flex items-center gap-3 py-2 border-b border-gray-50 last:border-none"
-            >
-              <div className="w-9 h-9 rounded-full bg-gray-200 animate-pulse shrink-0" />
-              <div className="flex-1 space-y-2">
-                <div className="h-3 w-36 rounded bg-gray-200 animate-pulse" />
-                <div className="h-2.5 w-20 rounded bg-gray-200 animate-pulse" />
-              </div>
-              <div className="h-3.5 w-16 rounded bg-gray-200 animate-pulse" />
+        {/* Stat cards */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 12 }}>
+          {[0,1,2].map(i => (
+            <div key={i} style={{ background: "#fff", border: "1px solid #f1f5f9", borderRadius: 14, padding: "14px 16px" }}>
+              <div style={{ ...sk, height: 11, width: 70, marginBottom: 10 }} />
+              <div style={{ ...sk, height: 18, width: 100 }} />
             </div>
           ))}
         </div>
 
-        {/* Pagination */}
-        <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-100">
-          <div className="h-3 w-16 rounded bg-gray-200 animate-pulse" />
-          <div className="flex gap-1">
-            {[...Array(3)].map((_, i) => (
-              <div
-                key={i}
-                className="w-7 h-7 rounded-md bg-gray-200 animate-pulse"
-              />
+        {/* History */}
+        <div style={{ background: "#fff", border: "1px solid #f1f5f9", borderRadius: 16, overflow: "hidden" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "18px 20px 14px", borderBottom: "1px solid #f1f5f9" }}>
+            <div style={{ ...sk, height: 14, width: 140 }} />
+            <div style={{ ...sk, height: 12, width: 70 }} />
+          </div>
+          <div style={{ padding: "0 20px" }}>
+            {[0,1,2,3,4].map(i => (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "13px 0", borderBottom: "1px solid #f8fafc" }}>
+                <div style={{ ...sk, width: 38, height: 38, borderRadius: "50%", flexShrink: 0 }} />
+                <div style={{ flex: 1 }}>
+                  <div style={{ ...sk, height: 12, width: "55%", marginBottom: 7 }} />
+                  <div style={{ ...sk, height: 10, width: "35%" }} />
+                </div>
+                <div style={{ textAlign: "right" }}>
+                  <div style={{ ...sk, height: 13, width: 70, marginBottom: 6 }} />
+                  <div style={{ ...sk, height: 16, width: 50, borderRadius: 20 }} />
+                </div>
+              </div>
             ))}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 0" }}>
+              <div style={{ ...sk, height: 11, width: 60 }} />
+              <div style={{ display: "flex", gap: 6 }}>
+                {[0,1,2].map(i => <div key={i} style={{ ...sk, width: 30, height: 30, borderRadius: 8 }} />)}
+              </div>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
 function Info({ label, value, user, setUser }) {
