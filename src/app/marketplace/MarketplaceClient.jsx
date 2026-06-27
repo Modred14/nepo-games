@@ -1105,7 +1105,68 @@ className="w-full bg-gray-50 border border-gray-200 text-gray-900 text-sm rounde
 function MarketplaceSkeleton() {
   return (
     <div className="flex min-h-screen bg-gray-50">
-      <div className="hidden lg:block w-[280px] shrink-0 h-screen bg-white border-r border-gray-200 animate-pulse" />
+      {/* Sidebar skeleton */}
+      <div className="hidden lg:flex flex-col w-[280px] shrink-0 h-screen bg-white border-r border-gray-200">
+        {/* Logo */}
+        <div className="flex items-center gap-2.5 px-5 py-4 border-b border-gray-200">
+          <div className="w-8 h-8 rounded-lg bg-gray-100 animate-pulse" />
+          <div className="h-4 w-24 bg-gray-100 rounded-lg animate-pulse" />
+        </div>
+
+        <div className="flex flex-col gap-1 px-3 py-4 flex-1">
+          {/* Profile row */}
+          <div className="flex items-center gap-3 p-3 mb-2">
+            <div className="w-10 h-10 rounded-full bg-gray-100 animate-pulse shrink-0" />
+            <div className="flex-1 space-y-2">
+              <div className="h-3 w-24 bg-gray-100 rounded animate-pulse" />
+              <div className="h-2.5 w-14 bg-gray-100 rounded animate-pulse" />
+            </div>
+          </div>
+
+          {/* Balance card */}
+          <div className="mx-1 rounded-xl border border-gray-100 p-4 space-y-3 animate-pulse">
+            <div className="flex justify-between">
+              <div className="h-3 w-28 bg-gray-100 rounded" />
+              <div className="h-3 w-4 bg-gray-100 rounded" />
+            </div>
+            <div className="space-y-1.5">
+              <div className="h-2.5 w-16 bg-gray-100 rounded" />
+              <div className="h-5 w-32 bg-gray-100 rounded" />
+            </div>
+            <div className="h-8 w-full bg-gray-100 rounded-lg" />
+          </div>
+
+          <div className="h-px bg-gray-100 my-3 mx-1" />
+
+          {/* Nav label */}
+          <div className="h-2.5 w-20 bg-gray-100 rounded animate-pulse px-3 mb-2 ml-3" />
+
+          {/* Nav items */}
+          <div className="flex flex-col gap-0.5">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="flex items-center gap-3 px-3 py-2.5 rounded-lg animate-pulse">
+                <div className="w-4 h-4 rounded bg-gray-100 shrink-0" />
+                <div className="h-3 bg-gray-100 rounded flex-1" style={{ width: `${55 + (i % 3) * 15}%` }} />
+              </div>
+            ))}
+          </div>
+
+          <div className="flex-1" />
+
+          {/* Upgrade card */}
+          <div className="mx-1 rounded-xl border border-gray-100 p-4 space-y-2 animate-pulse">
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 rounded bg-gray-100" />
+              <div className="h-3 w-20 bg-gray-100 rounded" />
+            </div>
+            <div className="h-2.5 w-full bg-gray-100 rounded" />
+            <div className="h-2.5 w-3/4 bg-gray-100 rounded" />
+            <div className="h-3 w-24 bg-gray-100 rounded mt-1" />
+          </div>
+        </div>
+      </div>
+
+      {/* Main content skeleton */}
       <div className="flex-1 p-6">
         <div className="h-12 bg-gray-100 rounded-2xl mb-5 animate-pulse" />
         <div className="h-24 bg-gray-100 rounded-2xl mb-5 animate-pulse" />
