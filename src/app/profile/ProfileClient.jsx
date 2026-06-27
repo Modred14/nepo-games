@@ -895,7 +895,7 @@ function AccountTab({ user }) {
         });
         const data = await res.json();
         if (!res.ok) { setAccountName(""); return; }
-        setAccountName(data.account_name);
+        setAccountName(data.accountName);
       } catch (err) {
         console.error(err);
         setAccountName("");

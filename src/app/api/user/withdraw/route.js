@@ -65,6 +65,7 @@ FOR UPDATE
     const isValid = await bcrypt.compare(pin, user.pin_hash);
 
     if (!isValid) {
+       await client.query("ROLLBACK");
       return Response.json({ error: "Incorrect PIN" }, { status: 403 });
     }
 
