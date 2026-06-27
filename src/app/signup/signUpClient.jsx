@@ -167,7 +167,7 @@ export default function Login() {
       setErrorOpen(false);
       router.push(
         `/login?signupSuccess=true&msg=${encodeURIComponent(
-          "Account created successfully! You can now log in.",
+          "Account created successfully! Kindly verify your email before logging in.",
         )}`,
       );
     } catch (err) {
@@ -226,8 +226,8 @@ export default function Login() {
                 </h2>
                 <p className="text-sm text-gray-600">
                   Sign up to{" "}
-                  <span className="text-blue-600 font-bold">Nepogames</span>{" "}
-                  and trade your games securely.
+                  <span className="text-blue-600 font-bold">Nepogames</span> and
+                  trade your games securely.
                 </p>
               </div>
             </div>

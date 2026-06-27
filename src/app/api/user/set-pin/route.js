@@ -17,6 +17,7 @@ export async function POST(req) {
         { status: 400 },
       );
     }
+
     if (currentPin === newPin) {
       return Response.json(
         { error: "New PIN cannot be the same as current PIN" },
@@ -24,9 +25,8 @@ export async function POST(req) {
       );
     }
 
-    // 🔥 get current user pin from DB
     const result = await pool.query(
-      `SELECT pin_hash, pin_set FROM users WHERE id = $1`,
+      `SELECT pin_hash, pin_set, pin_attempts, pin_locked_until FROM users WHERE id = $1`,
       [user.id],
     );
 
@@ -35,6 +35,7 @@ export async function POST(req) {
     if (!dbUser) {
       return Response.json({ error: "User not found" }, { status: 404 });
     }
+
     if (
       dbUser.pin_locked_until &&
       new Date(dbUser.pin_locked_until) > new Date()
@@ -44,52 +45,10 @@ export async function POST(req) {
         { status: 429 },
       );
     }
-    const isMatch = await bcrypt.compare(currentPin, dbUser.pin_hash);
 
-    if (!isMatch) {
-      const attempts = (dbUser.pin_attempts || 0) + 1;
-
-      // lock after 5 tries
-      if (attempts >= 5) {
-        await pool.query(
-          `
-      UPDATE users
-      SET pin_attempts = $1,
-          pin_locked_until = NOW() + INTERVAL '15 minutes'
-      WHERE id = $2
-      `,
-          [attempts, user.id],
-        );
-
-        return Response.json(
-          { error: "Too many failed attempts. Locked for 15 minutes." },
-          { status: 429 },
-        );
-      }
-
-      await pool.query(
-        `
-    UPDATE users
-    SET pin_attempts = $1
-    WHERE id = $2
-    `,
-        [attempts, user.id],
-      );
-
-      return Response.json({ error: "Incorrect PIN" }, { status: 400 });
-    }
     // ===============================
-    // CASE 1: PIN already exists
+    // CASE 1: PIN already set — verify current PIN
     // ===============================
-    await pool.query(
-      `
-  UPDATE users
-  SET pin_attempts = 0,
-      pin_locked_until = NULL
-  WHERE id = $1
-  `,
-      [user.id],
-    );
     if (dbUser.pin_set) {
       if (!currentPin) {
         return Response.json(
@@ -101,22 +60,50 @@ export async function POST(req) {
       const isMatch = await bcrypt.compare(currentPin, dbUser.pin_hash);
 
       if (!isMatch) {
-        return Response.json(
-          { error: "Incorrect current PIN" },
-          { status: 400 },
-        );
+        const attempts = (dbUser.pin_attempts || 0) + 1;
+
+        if (attempts >= 5) {
+          await pool.query(
+            `UPDATE users
+             SET pin_attempts = $1,
+                 pin_locked_until = NOW() + INTERVAL '15 minutes'
+             WHERE id = $2`,
+            [attempts, user.id],
+          );
+          return Response.json(
+            { error: "Too many failed attempts. Locked for 15 minutes." },
+            { status: 429 },
+          );
+        }
+
+        await pool.query(`UPDATE users SET pin_attempts = $1 WHERE id = $2`, [
+          attempts,
+          user.id,
+        ]);
+
+        return Response.json({ error: "Incorrect PIN" }, { status: 400 });
       }
+
+      // Reset attempts on successful match
+      await pool.query(
+        `UPDATE users
+         SET pin_attempts = 0,
+             pin_locked_until = NULL
+         WHERE id = $1`,
+        [user.id],
+      );
     }
 
+    // ===============================
+    // CASE 2: Set new PIN (first time or after verification)
+    // ===============================
     const hash = await bcrypt.hash(newPin, 10);
 
     await pool.query(
-      `
-      UPDATE users
-      SET pin_hash = $1,
-          pin_set = true
-      WHERE id = $2
-      `,
+      `UPDATE users
+       SET pin_hash = $1,
+           pin_set = true
+       WHERE id = $2`,
       [hash, user.id],
     );
 

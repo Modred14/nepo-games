@@ -89,37 +89,29 @@ export default function AccountSettingsPage() {
       </h1>
 
       {/* Mobile Tabs */}
-      <div className="flex md:hidden overflow-x-auto thin-scroll gap-2 mb-4 ">
-        <MobileTab
-          label="Profile"
-          active={activeTab === "profile"}
-          onClick={() => changeTab("profile")}
-        />
-        <MobileTab
-          label="Account"
-          active={activeTab === "account"}
-          onClick={() => changeTab("account")}
-        />
-        <MobileTab
-          label="Security"
-          active={activeTab === "password"}
-          onClick={() => changeTab("password")}
-        />
-        <MobileTab
-          label="Linked Account"
-          active={activeTab === "linked"}
-          onClick={() => changeTab("linked")}
-        />
-        <MobileTab
-          label="Data & Privacy "
-          active={activeTab === "data"}
-          onClick={() => changeTab("data")}
-        />
-        {/* <MobileTab
-          label="Notifications"
-          active={activeTab === "notifications"}
-          onClick={() => !globalLoading && setActiveTab("notifications")}
-        /> */}
+      <div className="flex md:hidden overflow-x-auto gap-1.5 mb-4 pb-1 scrollbar-none">
+        {[
+          { label: "Profile", tab: "profile", icon: <User size={12} /> },
+          { label: "Account", tab: "account", icon: <CreditCard size={12} /> },
+          { label: "Security", tab: "password", icon: <Lock size={12} /> },
+          { label: "Linked", tab: "linked", icon: <LinkIcon size={12} /> },
+          { label: "Privacy", tab: "data", icon: <Shield size={12} /> },
+        ].map(({ label, tab, icon }) => (
+          <button
+            key={tab}
+            onClick={() => changeTab(tab)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-medium whitespace-nowrap
+        transition-all duration-200 flex-shrink-0 border
+        ${
+          activeTab === tab
+            ? "bg-blue-600 text-white border-blue-600 shadow-sm shadow-blue-200"
+            : "bg-white text-gray-500 border-gray-200 hover:border-blue-300 hover:text-blue-500"
+        }`}
+          >
+            {icon}
+            {label}
+          </button>
+        ))}
       </div>
 
       <div className="flex flex-col md:flex-row gap-4 sm:gap-6">
@@ -183,6 +175,7 @@ export default function AccountSettingsPage() {
             <PasswordTab
               user={user}
               load={load}
+              setUser={setUser}
               setGlobalLoading={setGlobalLoading}
             />
           )}
@@ -298,7 +291,7 @@ function InfoRow({ icon: Icon, label, updateUser, user, value, editable }) {
             <h2 className="text-base font-semibold text-gray-900 mb-1">
               Edit {label}
             </h2>
-            <p className="text-xs text-gray-400 mb-4">
+            <p className="text-xs text-gray-900 mb-4">
               Update your {label.toLowerCase()} below.
             </p>
             <input
@@ -345,7 +338,7 @@ function InfoRow({ icon: Icon, label, updateUser, user, value, editable }) {
   );
 }
 
-function ProfileTab({ user, load, setUser }) { 
+function ProfileTab({ user, load, setUser }) {
   const [list, setList] = useState([]);
   const [error, setError] = useState("");
   const [correct, setCorrect] = useState("");
@@ -357,8 +350,6 @@ function ProfileTab({ user, load, setUser }) {
   const { update } = useSession();
 
   const handleLogout = async () => {
-    
-
     await signOut({
       callbackUrl: "/login",
     });
@@ -406,7 +397,7 @@ function ProfileTab({ user, load, setUser }) {
 
       setUser(updatedUser);
       await update({ user: { profile_image: data.imageUrl } });
-   
+
       setCorrect("Profile picture updated successfully.");
       setError("");
     } catch (err) {
@@ -448,7 +439,7 @@ function ProfileTab({ user, load, setUser }) {
 
       setUser(updatedUser);
       await update({ user: { profile_image: data.imageUrl } });
- 
+
       setCorrect("Profile picture updated successfully.");
       setError("");
     } catch (err) {
@@ -856,7 +847,7 @@ function PinGetInput({ value = "", onChange }) {
   );
 }
 
-function AccountTab({ user }) { 
+function AccountTab({ user }) {
   const [balance, setBalance] = useState(0.0);
   const [showPinConfirm, setShowPinConfirm] = useState(false);
   const [withdrawPin, setWithdrawPin] = useState("");
@@ -885,6 +876,9 @@ function AccountTab({ user }) {
   const end = start + ITEMS_PER_PAGE;
 
   const currentTransactions = transactions.slice(start, end);
+  useEffect(() => {
+    setLoadingWithdraw(false);
+  }, []);
   useEffect(() => {
     if (accountNumber.length !== 10 || !bankCode) return;
 
@@ -1606,7 +1600,7 @@ function Info({ label, value, user, setUser }) {
       };
 
       setUser(updatedUser);
-      await update({ user: { first_name, surname} });
+      await update({ user: { first_name, surname } });
 
       setSuccess("Name updated successfully");
       setError("");
@@ -1664,73 +1658,8 @@ function Info({ label, value, user, setUser }) {
     </div>
   );
 }
-function PinInput({ value = "", onChange }) {
-  const inputs = useRef([]);
 
-  const handleChange = (e, index) => {
-    const val = e.target.value.replace(/\D/g, ""); // only numbers
-
-    if (!val) return;
-
-    const newValue = value.split("");
-    newValue[index] = val[0];
-
-    const final = newValue.join("").slice(0, 4);
-    onChange(final);
-
-    // move to next input
-    if (index < 3) {
-      inputs.current[index + 1]?.focus();
-    }
-  };
-
-  const handleKeyDown = (e, index) => {
-    if (e.key === "Backspace") {
-      if (!value[index]) {
-        inputs.current[index - 1]?.focus();
-      }
-
-      const newValue = value.split("");
-      newValue[index] = "";
-      onChange(newValue.join(""));
-    }
-  };
-
-  const handlePaste = (e) => {
-    e.preventDefault();
-    const paste = e.clipboardData
-      .getData("text")
-      .replace(/\D/g, "")
-      .slice(0, 4);
-    onChange(paste);
-
-    paste.split("").forEach((char, i) => {
-      if (inputs.current[i]) {
-        inputs.current[i].value = char;
-      }
-    });
-  };
-
-  return (
-    <div className="flex gap-3" onPaste={handlePaste}>
-      {[0, 1, 2, 3].map((i) => (
-        <input
-          key={i}
-          type="number"
-          maxLength={1}
-          ref={(el) => (inputs.current[i] = el)}
-          value={value[i] || ""}
-          onChange={(e) => handleChange(e, i)}
-          onKeyDown={(e) => handleKeyDown(e, i)}
-          className="w-10 h-10 text-center text-lg border border-gray-300 rounded-lg 
-                     focus:border-blue-500 focus:ring-2 focus:ring-blue-500 outline-none transition"
-        />
-      ))}
-    </div>
-  );
-}
-
-function PasswordTab({ user, load, setGlobalLoading }) {
+function PasswordTab({ user, load, setGlobalLoading, setUser }) {
   const [form, setForm] = useState({ current: "", newPass: "", confirm: "" });
   const [show, setShow] = useState({
     current: false,
@@ -1749,58 +1678,47 @@ function PasswordTab({ user, load, setGlobalLoading }) {
   const cleanNewPin = String(pinForm.newPin).trim();
   const [correct, setCorrect] = useState("");
   const [loading, setLoading] = useState(false);
-
   const [error, setError] = useState("");
+
   const checks = {
     length: form.newPass.length >= 6,
     number: /\d/.test(form.newPass),
     special: /[^A-Za-z0-9]/.test(form.newPass),
     uppercase: /[A-Z]/.test(form.newPass),
   };
+
   const { update } = useSession();
+
   const handleChangePin = async () => {
     if (pinLoading) return;
-
     setPinError("");
     setPinSuccess("");
-
     const cleanNewPin = String(pinForm.newPin).trim();
-
-    if (!/^\d{4}$/.test(cleanNewPin)) {
+    if (!/^\d{4}$/.test(cleanNewPin))
       return setPinError("PIN must be exactly 4 digits");
-    }
-
-    if (pinForm.newPin !== pinForm.confirmPin) {
+    if (pinForm.newPin !== pinForm.confirmPin)
       return setPinError("PINs do not match");
-    }
-
-    if (user?.pin_set && !pinForm.currentPin) {
+    if (user?.pin_set && !pinForm.currentPin)
       return setPinError("Current PIN is required");
-    }
     setGlobalLoading(true);
-    setLoading(true);
+    // setLoading(true);
     setPinLoading(true);
-
     try {
       const res = await fetch("/api/user/set-pin", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           currentPin: pinForm.currentPin,
           newPin: pinForm.newPin,
         }),
       });
-
       const data = await res.json();
-
       if (!res.ok) {
         setPinError(data.error);
         return;
       }
-      // After successful PIN update:
       await update({ user: { pin_set: true } });
+      setUser((prev) => ({ ...prev, pin_set: true }));
       setPinSuccess("PIN updated successfully");
       setPinForm({ currentPin: "", newPin: "", confirmPin: "" });
     } catch (err) {
@@ -1814,8 +1732,7 @@ function PasswordTab({ user, load, setGlobalLoading }) {
   };
 
   const handleChangePassword = async () => {
-    if (loading) return; // prevent spam clicks
-
+    if (loading) return;
     if (!form.current) return setError("Current password is required");
     if (form.newPass !== form.confirm)
       return setError("Passwords do not match");
@@ -1831,315 +1748,405 @@ function PasswordTab({ user, load, setGlobalLoading }) {
     }
     setError("");
     setCorrect("");
-    setLoading(true);
-    setGlobalLoading(true); // ✅ ADDED
 
+    setGlobalLoading(true);
     try {
       const res = await fetch("/api/user/change-password", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           userId: user.id,
           currentPassword: form.current,
           newPassword: form.newPass,
         }),
       });
-
       const data = await res.json();
-
       if (!res.ok) {
         setError(data.error);
         setCorrect("");
         return;
       }
-
       setCorrect("Password updated successfully");
       setError("");
-
       setForm({ current: "", newPass: "", confirm: "" });
     } catch (err) {
       console.error(err);
       setError("Error updating password");
       setCorrect("");
     } finally {
-      setLoading(false);
-      setGlobalLoading(false); // ✅ ADDED
+      setGlobalLoading(false);
     }
   };
-  if (load || loading) {
-    return <PasswordTabSkeleton />;
-  }
+
+  if (load || loading) return <PasswordTabSkeleton />;
 
   return (
-    <div className="bg-white rounded-2xl shadow p-4 sm:p-6">
-      <div className="mb-7">
-        <h2 className="text-base sm:text-lg font-semibold mb-1">
-          {user?.pin_set ? "Change PIN" : "Set PIN"}
-        </h2>
+    <div className="space-y-4">
+      {/* ── PIN Section ── */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        {/* Section header */}
+        <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-100 bg-gradient-to-r from-blue-50/60 to-transparent">
+          <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center flex-shrink-0">
+            <Lock size={14} className="text-white" />
+          </div>
+          <div>
+            <h2 className="text-sm font-semibold text-gray-900">
+              {user?.pin_set ? "Change transaction PIN" : "Set transaction PIN"}
+            </h2>
+            <p className="text-[11.5px] text-gray-400 mt-0.5">
+              {user?.pin_set
+                ? "Enter your current PIN to update it"
+                : "Create a 4-digit PIN for secure actions"}
+            </p>
+          </div>
+          {user?.pin_set && (
+            <span className="ml-auto flex items-center gap-1 text-[10.5px] font-medium text-green-600 bg-green-50 border border-green-100 px-2 py-0.5 rounded-full">
+              <span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block" />
+              Active
+            </span>
+          )}
+        </div>
 
-        <p className="text-gray-500 text-sm mb-4">
-          {user?.pin_set
-            ? "Enter your current PIN to change it"
-            : "Set a 4-digit PIN for secure actions"}
-        </p>
-
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleChangePin();
-          }}
-        >
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-8 w-full">
-            {user?.pin_set && (
-              <div>
-                <p className="text-sm mb-1 text-blue-600">Current PIN</p>
-                <PinInput
+        <div className="px-5 py-5">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleChangePin();
+            }}
+          >
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {user?.pin_set && (
+                <PinField
+                  label="Current PIN"
                   value={pinForm.currentPin}
                   onChange={(val) =>
                     setPinForm({ ...pinForm, currentPin: val })
                   }
                 />
-              </div>
-            )}
-
-            <div>
-              <p className="text-sm mb-1 text-blue-600">New PIN</p>
-              <PinInput
+              )}
+              <PinField
+                label="New PIN"
                 value={pinForm.newPin}
                 onChange={(val) => setPinForm({ ...pinForm, newPin: val })}
               />
-            </div>
-
-            <div>
-              <p className="text-sm mb-1 text-blue-600">Confirm PIN</p>
-              <PinInput
+              <PinField
+                label="Confirm PIN"
                 value={pinForm.confirmPin}
                 onChange={(val) => setPinForm({ ...pinForm, confirmPin: val })}
               />
             </div>
-          </div>
 
-          {pinError && <p className="text-red-500 text-sm mt-2">{pinError}</p>}
-          {pinSuccess && (
-            <p className="text-green-500 text-sm mt-2">{pinSuccess}</p>
-          )}
-
-          <div className="mt-4 flex justify-end">
-            <button
-              disabled={pinLoading}
-              type="submit"
-              className="bg-blue-600 text-white px-5 py-2 rounded-md disabled:opacity-60"
-            >
-              {pinLoading ? (
-                <p className="flex items-center text-sm gap-2">Updating...</p>
-              ) : user?.pin_set ? (
-                <p className="flex items-center text-sm gap-2">Update PIN</p>
-              ) : (
-                <p className="flex items-center text-sm gap-2">
-                  <Lock size={16} /> Set PIN
-                </p>
-              )}
-            </button>
-          </div>
-        </form>
-      </div>
-      <hr className=" border-gray-300" />
-      <div>
-        <h2 className="text-base mt-7 sm:text-lg font-semibold mb-1">
-          Change Password
-        </h2>
-        <p className="text-gray-500 text-sm mb-4 sm:mb-6">
-          Enter your current password to change your password
-        </p>
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleChangePassword();
-          }}
-        >
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2">
-            <PasswordInput
-              label="Current Password"
-              value={form.current}
-              onChange={(v) => setForm({ ...form, current: v })}
-              show={show.current}
-              toggle={() => setShow({ ...show, current: !show.current })}
-              disabled={loading}
-            />
-            <PasswordInput
-              label="New Password"
-              value={form.newPass}
-              onChange={(v) => setForm({ ...form, newPass: v })}
-              show={show.newPass}
-              toggle={() => setShow({ ...show, newPass: !show.newPass })}
-              disabled={loading}
-            />
-            <PasswordInput
-              label="Confirm Password"
-              value={form.confirm}
-              onChange={(v) => setForm({ ...form, confirm: v })}
-              show={show.confirm}
-              toggle={() => setShow({ ...show, confirm: !show.confirm })}
-              disabled={loading}
-            />
-          </div>
-          {error ? (
-            <p className="text-red-500 text-sm mt-2">{error}</p>
-          ) : (
-            correct && <p className="text-green-500 text-sm mt-2">{correct}</p>
-          )}
-          <div className="text-xs sm:text-sm mt-2 space-y-1">
-            <CheckItem valid={checks.length} text="At least 6 characters" />
-            <CheckItem valid={checks.number} text="Contains a number" />
-            <CheckItem
-              valid={checks.special}
-              text="Contains a special character"
-            />
-            <CheckItem
-              valid={checks.uppercase}
-              text="Contains an uppercase letter"
-            />
-          </div>
-
-          <div className="mt-6 flex justify-center sm:justify-end">
-            <button
-              disabled={loading}
-              type="submit"
-              className="w-full sm:w-auto bg-blue-600 text-white px-5 py-2 rounded-md flex justify-center items-center gap-2 disabled:opacity-60"
-            >
-              {loading ? (
-                <>
-                  <svg
-                    className="animate-spin h-4 w-4"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    />
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 100 16v-4l-3 3 3 3v-4a8 8 0 01-8-8z"
-                    />
-                  </svg>
-                  <p className="flex items-center text-sm gap-2">Updating...</p>
-                </>
-              ) : (
-                <p className="flex items-center text-sm gap-2">
-                  <Lock size={16} /> Update password
-                </p>
-              )}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-}
-function PasswordTabSkeleton() {
-  return (
-    <div className="bg-white rounded-2xl shadow p-4 sm:p-6">
-      {/* PIN Section */}
-      <div className="mb-7">
-        <div className="h-5 w-24 rounded bg-gray-200 animate-pulse mb-2" />
-        <div className="h-3 w-56 rounded bg-gray-200 animate-pulse mb-6" />
-
-        {/* PIN inputs grid */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-8 w-full">
-          {[...Array(3)].map((_, i) => (
-            <div key={i}>
-              <div className="h-3 w-20 rounded bg-gray-200 animate-pulse mb-2" />
-              {/* 4 PIN boxes */}
-              <div className="flex gap-2">
-                {[...Array(4)].map((_, j) => (
-                  <div
-                    key={j}
-                    className="w-10 h-11 rounded-lg bg-gray-200 animate-pulse"
-                  />
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="mt-4 flex justify-end">
-          <div className="h-9 w-24 rounded-md bg-gray-200 animate-pulse" />
-        </div>
-      </div>
-
-      <hr className="border-gray-300" />
-
-      {/* Password Section */}
-      <div className="mt-7">
-        <div className="h-5 w-36 rounded bg-gray-200 animate-pulse mb-2" />
-        <div className="h-3 w-64 rounded bg-gray-200 animate-pulse mb-6" />
-
-        {/* Password fields grid */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2">
-          {[...Array(3)].map((_, i) => (
-            <div key={i} className="flex flex-col gap-2">
-              <div className="h-3 w-24 rounded bg-gray-200 animate-pulse" />
-              <div className="h-10 w-full rounded-md bg-gray-200 animate-pulse" />
-            </div>
-          ))}
-        </div>
-
-        {/* Check items */}
-        <div className="mt-3 space-y-2">
-          {[120, 100, 150, 130].map((w, i) => (
-            <div key={i} className="flex items-center gap-2">
-              <div className="w-3.5 h-3.5 rounded-full bg-gray-200 animate-pulse shrink-0" />
+            {/* Feedback */}
+            {(pinError || pinSuccess) && (
               <div
-                className={`h-3 w-[${w}px] rounded bg-gray-200 animate-pulse`}
-                style={{ width: w }}
+                className={`mt-4 flex items-center gap-2 text-sm px-3 py-2.5 rounded-lg border animate-fadeIn
+                ${
+                  pinError
+                    ? "text-red-700 bg-red-50 border-red-100"
+                    : "text-green-700 bg-green-50 border-green-100"
+                }`}
+              >
+                <span className="text-base">{pinError ? "⚠" : "✓"}</span>
+                {pinError || pinSuccess}
+              </div>
+            )}
+
+            <div className="mt-5 flex justify-end">
+              <button
+                disabled={pinLoading}
+                type="submit"
+                className={`inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 active:scale-[0.98]
+                  text-white text-sm font-medium px-5 py-2.5 rounded-xl transition-all duration-150
+                  disabled:opacity-60 disabled:cursor-not-allowed shadow-sm shadow-blue-200`}
+              >
+                {pinLoading ? (
+                  <>
+                    <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Updating...
+                  </>
+                ) : (
+                  <>
+                    <Lock size={13} />
+                    {user?.pin_set ? "Update PIN" : "Set PIN"}
+                  </>
+                )}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      {/* ── Password Section ── */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        {/* Section header */}
+        <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-100 bg-gradient-to-r from-purple-50/50 to-transparent">
+          <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center flex-shrink-0">
+            <Shield size={14} className="text-white" />
+          </div>
+          <div>
+            <h2 className="text-sm font-semibold text-gray-900">
+              Change password
+            </h2>
+            <p className="text-[11.5px] text-gray-400 mt-0.5">
+              Enter your current password to set a new one
+            </p>
+          </div>
+        </div>
+
+        <div className="px-5 py-5">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleChangePassword();
+            }}
+          >
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              <PasswordInput
+                label="Current password"
+                value={form.current}
+                onChange={(v) => setForm({ ...form, current: v })}
+                show={show.current}
+                toggle={() => setShow({ ...show, current: !show.current })}
+                disabled={loading}
+              />
+              <PasswordInput
+                label="New password"
+                value={form.newPass}
+                onChange={(v) => setForm({ ...form, newPass: v })}
+                show={show.newPass}
+                toggle={() => setShow({ ...show, newPass: !show.newPass })}
+                disabled={loading}
+              />
+              <PasswordInput
+                label="Confirm password"
+                value={form.confirm}
+                onChange={(v) => setForm({ ...form, confirm: v })}
+                show={show.confirm}
+                toggle={() => setShow({ ...show, confirm: !show.confirm })}
+                disabled={loading}
               />
             </div>
-          ))}
-        </div>
 
-        <div className="mt-6 flex justify-center sm:justify-end">
-          <div className="h-9 w-full sm:w-40 rounded-md bg-gray-200 animate-pulse" />
+            {/* Feedback */}
+            {(error || correct) && (
+              <div
+                className={`mt-4 flex items-center gap-2 text-sm px-3 py-2.5 rounded-lg border animate-fadeIn
+                ${
+                  error
+                    ? "text-red-700 bg-red-50 border-red-100"
+                    : "text-green-700 bg-green-50 border-green-100"
+                }`}
+              >
+                <span className="text-base">{error ? "⚠" : "✓"}</span>
+                {error || correct}
+              </div>
+            )}
+
+            {/* Strength checklist */}
+            <div className="mt-4 grid grid-cols-2 gap-x-6 gap-y-1.5">
+              <CheckItem valid={checks.length} text="At least 6 characters" />
+              <CheckItem valid={checks.number} text="Contains a number" />
+              <CheckItem
+                valid={checks.special}
+                text="Contains a special character"
+              />
+              <CheckItem
+                valid={checks.uppercase}
+                text="Contains an uppercase letter"
+              />
+            </div>
+
+            <div className="mt-5 flex justify-end">
+              <button
+                disabled={loading}
+                type="submit"
+                className={`inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98]
+                  text-white text-sm font-medium px-5 py-2.5 rounded-xl transition-all duration-150
+                  disabled:opacity-60 disabled:cursor-not-allowed shadow-sm shadow-indigo-200`}
+              >
+                {loading ? (
+                  <>
+                    <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Updating...
+                  </>
+                ) : (
+                  <>
+                    <Lock size={13} />
+                    Update password
+                  </>
+                )}
+              </button>
+            </div>
+          </form>
         </div>
       </div>
     </div>
   );
 }
+
+// ── Sub-components (visual upgrades only) ──
+
+function PinField({ label, value, onChange }) {
+  return (
+    <div>
+      <p className="text-[11.5px] font-semibold text-gray-500 uppercase tracking-wide mb-2.5">
+        {label}
+      </p>
+      <PinInput value={value} onChange={onChange} />
+    </div>
+  );
+}
+
+// PinInput — identical logic, refreshed look
+function PinInput({ value = "", onChange }) {
+  const inputs = useRef([]);
+
+  const handleChange = (e, index) => {
+    const val = e.target.value.replace(/\D/g, "");
+    if (!val) return;
+    const newValue = value.split("");
+    newValue[index] = val[0];
+    const final = newValue.join("").slice(0, 4);
+    onChange(final);
+    if (index < 3) inputs.current[index + 1]?.focus();
+  };
+
+  const handleKeyDown = (e, index) => {
+    if (e.key === "Backspace") {
+      if (!value[index]) inputs.current[index - 1]?.focus();
+      const newValue = value.split("");
+      newValue[index] = "";
+      onChange(newValue.join(""));
+    }
+  };
+
+  const handlePaste = (e) => {
+    e.preventDefault();
+    const paste = e.clipboardData
+      .getData("text")
+      .replace(/\D/g, "")
+      .slice(0, 4);
+    onChange(paste);
+    paste.split("").forEach((char, i) => {
+      if (inputs.current[i]) inputs.current[i].value = char;
+    });
+  };
+
+  return (
+    <div className="flex gap-2.5" onPaste={handlePaste}>
+      {[0, 1, 2, 3].map((i) => (
+        <input
+          key={i}
+          type="number"
+          maxLength={1}
+          ref={(el) => (inputs.current[i] = el)}
+          value={value[i] || ""}
+          onChange={(e) => handleChange(e, i)}
+          onKeyDown={(e) => handleKeyDown(e, i)}
+          className="w-11 h-12 text-center text-lg font-semibold text-gray-900
+            border border-gray-200 rounded-xl bg-gray-50
+            focus:border-blue-500 focus:ring-2 focus:ring-blue-100 focus:bg-white
+            outline-none transition-all duration-150
+            [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+        />
+      ))}
+    </div>
+  );
+}
+
+// PasswordInput — identical logic, refreshed look
+function PasswordInput({ label, value, onChange, show, toggle, disabled }) {
+  return (
+    <div>
+      <label className="text-[11.5px] font-semibold text-gray-500 uppercase tracking-wide mb-1.5 block">
+        {label}
+      </label>
+      <div
+        className={`flex items-center border rounded-xl px-3 gap-2 transition-all duration-150
+        ${disabled ? "bg-gray-50 opacity-60" : "bg-white"}
+        focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100 border-gray-200`}
+      >
+        <input
+          type={show ? "text" : "password"}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder="••••••••"
+          disabled={disabled}
+          className="flex-1 py-2.5 text-sm text-gray-900 placeholder-gray-300 outline-none bg-transparent"
+        />
+        <button
+          type="button"
+          onClick={toggle}
+          className="text-gray-400 hover:text-gray-600 transition-colors p-0.5"
+          tabIndex={-1}
+        >
+          {show ? <EyeOff size={15} /> : <Eye size={15} />}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// CheckItem — refined with smooth color transition
 function CheckItem({ valid, text }) {
   return (
     <p
-      className={`flex items-center gap-2 ${valid ? "text-green-600" : "text-gray-500"}`}
+      className={`flex items-center gap-2 text-xs transition-colors duration-300
+      ${valid ? "text-green-600" : "text-gray-400"}`}
     >
-      <span className={`text-sm ${valid ? "text-green-600" : "text-gray-400"}`}>
-        {valid ? "✔" : "○"}
+      <span
+        className={`w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 text-[10px] transition-all duration-300
+        ${valid ? "bg-green-100 text-green-600" : "bg-gray-100 text-gray-400"}`}
+      >
+        {valid ? "✓" : "○"}
       </span>
       {text}
     </p>
   );
 }
-function PasswordInput({ label, value, onChange, show, toggle }) {
+
+// PasswordTabSkeleton — unchanged structure, slightly softer
+function PasswordTabSkeleton() {
   return (
-    <div>
-      <label className="text-blue-600 text-xs sm:text-sm">{label}</label>
-      <div className="flex items-center border rounded-md px-3 mt-1">
-        <input
-          type={show ? "text" : "password"}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder="Enter password"
-          className="flex-1 py-2 text-sm outline-none"
-        />
-        <button type="button" onClick={toggle}>
-          {show ? <EyeOff size={16} /> : <Eye size={16} />}
-        </button>
-      </div>
+    <div className="space-y-4">
+      {[0, 1].map((s) => (
+        <div
+          key={s}
+          className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
+        >
+          <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-100 bg-gray-50/60">
+            <div className="w-8 h-8 rounded-lg bg-gray-200 animate-pulse" />
+            <div className="flex-1 space-y-1.5">
+              <div className="h-3.5 w-32 rounded bg-gray-200 animate-pulse" />
+              <div className="h-2.5 w-48 rounded bg-gray-200 animate-pulse" />
+            </div>
+          </div>
+          <div className="px-5 py-5">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {[...Array(s === 0 ? 3 : 3)].map((_, i) => (
+                <div key={i}>
+                  <div className="h-2.5 w-20 rounded bg-gray-200 animate-pulse mb-2.5" />
+                  {s === 0 ? (
+                    <div className="flex gap-2.5">
+                      {[...Array(4)].map((_, j) => (
+                        <div
+                          key={j}
+                          className="w-11 h-12 rounded-xl bg-gray-200 animate-pulse"
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="h-11 rounded-xl bg-gray-200 animate-pulse" />
+                  )}
+                </div>
+              ))}
+            </div>
+            <div className="mt-5 flex justify-end">
+              <div className="h-10 w-32 rounded-xl bg-gray-200 animate-pulse" />
+            </div>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }

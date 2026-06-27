@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@tabler/icons-webfont": "^3.44.0",
     "bcrypt": "^6.0.0",
     "cloudinary": "^2.9.0",
     "crypto": "^1.0.1",

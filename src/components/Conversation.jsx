@@ -109,9 +109,9 @@ export default function Conversation({ gameId, receiverId }) {
   const NEPO_CHAT = {
     id: "1",
     listing_id: "1",
-    gamedetails: "NepoGames",
+    gamedetails: "Nepogames",
     username: "Nepogames",
-    email: "nepogames.com@gmail.com",
+    email: "contact@support.nepogames.com",
     profile_image: "/conversation.png",
     receiver_id: 1,
     lastmessage: "This is an announcement channel",
@@ -1195,12 +1195,12 @@ export default function Conversation({ gameId, receiverId }) {
                     <div>
                       <p className="text-sm font-semibold text-blue-700">
                         {isAdmin
-                          ? "NepoGames"
+                          ? "Nepogames"
                           : activeChat?.username || "Unknown User"}
                       </p>
                       <p className="text-xs text-gray-800">
                         {isAdmin
-                          ? "nepogames.com@gmail.com"
+                          ? "contact@support.nepogames.com"
                           : maskEmail(activeChat?.email || "user@email.com")}
                       </p>
                     </div>
