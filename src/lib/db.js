@@ -6,7 +6,7 @@ const pool = new Pool({
   ssl: {
     rejectUnauthorized: false,
   },
-    max: 5,
+  max: 5,
   idleTimeoutMillis: 10000,
   connectionTimeoutMillis: 15000,
   keepAlive: true,
@@ -20,8 +20,9 @@ export async function query(text, params, retries = 1) {
   try {
     return await pool.query(text, params);
   } catch (err) {
-    if (retries > 0 && err.code === "ECONNRESET") {
-      console.warn("ECONNRESET — retrying query...");
+    const RETRYABLE = ["ECONNRESET", "ETIMEDOUT", "ENOTFOUND"];
+    if (retries > 0 && RETRYABLE.includes(err.code)) {
+      console.warn(`${err.code} — retrying query...`);
       return query(text, params, retries - 1);
     }
     throw err;
