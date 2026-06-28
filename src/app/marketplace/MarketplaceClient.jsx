@@ -841,173 +841,192 @@ export default function Marketplace() {
 
           {/* Filter bar */}
           <motion.div
-  initial={{ opacity: 0, y: 8 }}
-  animate={{ opacity: 1, y: 0 }}
-  transition={{ delay: 0.1, duration: 0.4 }}
-  className="bg-white border border-gray-200 rounded-2xl mb-5 overflow-hidden"
->
-  {/* Filter bar header */}
-  {/* <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-gray-50/60">
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1, duration: 0.4 }}
+            className="bg-white border border-gray-200 rounded-2xl mb-5 overflow-hidden"
+          >
+            {/* Filter bar header */}
+            {/* <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-gray-50/60">
     <i className="ti ti-adjustments-horizontal text-sm text-gray-400" aria-hidden="true" />
     <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-gray-400">Filters</span>
   </div> */}
 
-  <div className="flex flex-wrap items-end gap-4 p-4">
-    {/* Game */}
-    <div className="flex flex-col gap-1.5 flex-1 min-w-36">
-      <label className="text-gray-400 text-[10.5px] font-semibold uppercase tracking-widest">
-        Game
-      </label>
-      <div className="relative">
-        <select
-          value={type}
-          onChange={(e) => setType(e.target.value)}
-     className="w-full bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-xl px-3 py-2.5 pr-8 focus:outline-none focus:border-[#0047FF]/50 focus:bg-white transition appearance-none cursor-pointer"     >
-          <option value="">All Games</option>
-          <option value="Efootball">Efootball</option>
-          <option value="Call of Duty">Call of Duty</option>
-          <option value="Free Fire">Free Fire</option>
-          <option value="PubG">PubG</option>
-          <option value="Blood Strike">Blood Strike</option>
-          <option value="EA Sports">EA Sports (FIFA)</option>
-          <option value="Delta Force">Delta Force</option>
-          <option value="DLS">Dream League Soccer</option>
-        </select>
-        <i className="ti ti-chevron-down absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-gray-400 pointer-events-none" aria-hidden="true" />
-      </div>
-    </div>
+            <div className="flex flex-wrap items-end gap-4 p-4">
+              {/* Game */}
+              <div className="flex flex-col gap-1.5 flex-1 min-w-36">
+                <label className="text-gray-400 text-[10.5px] font-semibold uppercase tracking-widest">
+                  Game
+                </label>
+                <div className="relative">
+                  <select
+                    value={type}
+                    onChange={(e) => setType(e.target.value)}
+                    className="w-full bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-xl px-3 py-2.5 pr-8 focus:outline-none focus:border-[#0047FF]/50 focus:bg-white transition appearance-none cursor-pointer"
+                  >
+                    <option value="">All Games</option>
+                    <option value="Efootball">Efootball</option>
+                    <option value="Call of Duty">Call of Duty</option>
+                    <option value="Free Fire">Free Fire</option>
+                    <option value="PubG">PubG</option>
+                    <option value="Blood Strike">Blood Strike</option>
+                    <option value="EA Sports">EA Sports (FIFA)</option>
+                    <option value="Delta Force">Delta Force</option>
+                    <option value="DLS">Dream League Soccer</option>
+                  </select>
+                  <i
+                    className="ti ti-chevron-down absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-gray-400 pointer-events-none"
+                    aria-hidden="true"
+                  />
+                </div>
+              </div>
 
-    {/* Platform */}
-    <div className="flex flex-col gap-1.5 flex-1 min-w-36">
-      <label className="text-gray-400 text-[10.5px] font-semibold uppercase tracking-widest">
-        Platform
-      </label>
-      <div className="relative">
-        <select
-          value={platform}
-          onChange={(e) => setPlatform(e.target.value)}
-className="w-full bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-xl px-3 py-2.5 pr-8 focus:outline-none focus:border-[#0047FF]/50 focus:bg-white transition appearance-none cursor-pointer" >
-          <option value="">All Platforms</option>
-          <option value="mobile">Mobile</option>
-          <option value="pc">PC</option>
-          <option value="xbox">Xbox</option>
-          <option value="playstation">PlayStation</option>
-        </select>
-        <i className="ti ti-chevron-down absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-gray-400 pointer-events-none" aria-hidden="true" />
-      </div>
-    </div>
+              {/* Platform */}
+              <div className="flex flex-col gap-1.5 flex-1 min-w-36">
+                <label className="text-gray-400 text-[10.5px] font-semibold uppercase tracking-widest">
+                  Platform
+                </label>
+                <div className="relative">
+                  <select
+                    value={platform}
+                    onChange={(e) => setPlatform(e.target.value)}
+                    className="w-full bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-xl px-3 py-2.5 pr-8 focus:outline-none focus:border-[#0047FF]/50 focus:bg-white transition appearance-none cursor-pointer"
+                  >
+                    <option value="">All Platforms</option>
+                    <option value="mobile">Mobile</option>
+                    <option value="pc">PC</option>
+                    <option value="xbox">Xbox</option>
+                    <option value="playstation">PlayStation</option>
+                  </select>
+                  <i
+                    className="ti ti-chevron-down absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-gray-400 pointer-events-none"
+                    aria-hidden="true"
+                  />
+                </div>
+              </div>
 
-    {/* Price Range */}
-    <div className="flex flex-col gap-1.5 flex-1 min-w-36">
-      <label className="text-gray-400 text-[10.5px] font-semibold uppercase tracking-widest">
-        Price Range
-      </label>
-      <div className="flex gap-2  items-center">
-        <div className="relative flex-1">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none">
-            ₦
-          </span>
-          <input
-            type="number"
-            min="0"
-            value={priceRange[0] ?? ""}
-            onChange={(e) => {
-              const val = e.target.value;
-              if (val === "") { setPriceRange(["", priceRange[1]]); return; }
-              let value = Number(val);
-              if (value < 0) value = 0;
-              if (value > priceRange[1]) value = priceRange[1];
-              setPriceRange([value, priceRange[1]]);
-            }}
-            placeholder="Min"
-            className="w-full bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-xl pl-7 pr-3 py-1.5 focus:outline-none focus:border-[#0047FF]/50 focus:bg-white transition"
-          />
-        </div>
-        <span className="text-gray-300 text-sm font-light">–</span>
-        <div className="relative flex-1">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none">
-            ₦
-          </span>
-          <input
-            type="number"
-            min="0"
-            value={priceRange[1] ?? ""}
-            onChange={(e) => {
-              const val = e.target.value;
-              if (val === "") { setPriceRange([priceRange[0], ""]); return; }
-              let value = Number(val);
-              if (value > 50000000) value = 50000000;
-              if (priceRange[0] !== "" && value < priceRange[0]) value = priceRange[0];
-              setPriceRange([priceRange[0], value]);
-            }}
-            placeholder="Max"
-            className="w-full bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-xl pl-7 pr-3 py-1.5 focus:outline-none focus:border-[#0047FF]/50 focus:bg-white transition"
-          />
-        </div>
-      </div>
-      <ReactSlider
-        className="w-full pt-1 flex items-center mt-1"
-        thumbClassName="w-2.5 h-2.5 bg-[#0047FF] rounded-full cursor-grab focus:outline-none shadow-md shadow-[#0047FF]/30"
-        trackClassName="h-1 bg-gray-200 rounded-full"
-        min={0}
-        max={50000000}
-        value={priceRange}
-        onChange={(val) => setPriceRange(val)}
-        pearling
-        minDistance={0}
-        renderTrack={(props, state) => (
-          <div
-            {...props}
-            className={`h-[3px] rounded-full ${state.index === 1 ? "bg-[#0047FF]" : "bg-gray-200"}`}
-          />
-        )}
-      />
-    </div>
+              {/* Price Range */}
+              <div className="flex flex-col gap-1.5 flex-1 min-w-36">
+                <label className="text-gray-400 text-[10.5px] font-semibold uppercase tracking-widest">
+                  Price Range
+                </label>
+                <div className="flex gap-2  items-center">
+                  <div className="relative flex-1">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none">
+                      ₦
+                    </span>
+                    <input
+                      type="number"
+                      min="0"
+                      value={priceRange[0] ?? ""}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === "") {
+                          setPriceRange(["", priceRange[1]]);
+                          return;
+                        }
+                        let value = Number(val);
+                        if (value < 0) value = 0;
+                        if (value > priceRange[1]) value = priceRange[1];
+                        setPriceRange([value, priceRange[1]]);
+                      }}
+                      placeholder="Min"
+                      className="w-full bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-xl pl-7 pr-3 py-1.5 focus:outline-none focus:border-[#0047FF]/50 focus:bg-white transition"
+                    />
+                  </div>
+                  <span className="text-gray-300 text-sm font-light">–</span>
+                  <div className="relative flex-1">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none">
+                      ₦
+                    </span>
+                    <input
+                      type="number"
+                      min="0"
+                      value={priceRange[1] ?? ""}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === "") {
+                          setPriceRange([priceRange[0], ""]);
+                          return;
+                        }
+                        let value = Number(val);
+                        if (value > 50000000) value = 50000000;
+                        if (priceRange[0] !== "" && value < priceRange[0])
+                          value = priceRange[0];
+                        setPriceRange([priceRange[0], value]);
+                      }}
+                      placeholder="Max"
+                      className="w-full bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-xl pl-7 pr-3 py-1.5 focus:outline-none focus:border-[#0047FF]/50 focus:bg-white transition"
+                    />
+                  </div>
+                </div>
+                <ReactSlider
+                  className="w-full pt-1 flex items-center mt-1"
+                  thumbClassName="w-2.5 h-2.5 bg-[#0047FF] rounded-full cursor-grab focus:outline-none shadow-md shadow-[#0047FF]/30"
+                  trackClassName="h-1 bg-gray-200 rounded-full"
+                  min={0}
+                  max={50000000}
+                  value={priceRange}
+                  onChange={(val) => setPriceRange(val)}
+                  pearling
+                  minDistance={0}
+                  renderTrack={(props, state) => (
+                    <div
+                      {...props}
+                      className={`h-[3px] rounded-full ${state.index === 1 ? "bg-[#0047FF]" : "bg-gray-200"}`}
+                    />
+                  )}
+                />
+              </div>
 
-    {/* Right side controls */}
-    <div className="flex items-center gap-3 pb-0.5">
-      {/* Verified toggle */}
-      <label className="flex items-center gap-2 cursor-pointer">
-        <div
-          onClick={() => setVerifiedOnly((v) => !v)}
-          className={`w-9 h-5 rounded-full transition-colors duration-200 relative ${verifiedOnly ? "bg-emerald-500" : "bg-gray-200"}`}
-        >
-          <motion.div
-            animate={{ x: verifiedOnly ? 16 : 2 }}
-            transition={{ type: "spring", stiffness: 500, damping: 30 }}
-            className="absolute top-0.5 w-4 h-4 bg-white rounded-full shadow-sm"
-          />
-        </div>
-        <span className={`text-xs font-semibold whitespace-nowrap transition-colors ${verifiedOnly ? "text-emerald-600" : "text-gray-400"}`}>
-          Verified Only
-        </span>
-      </label>
+              {/* Right side controls */}
+              <div className="flex items-center gap-3 pb-0.5">
+                {/* Verified toggle */}
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <div
+                    onClick={() => setVerifiedOnly((v) => !v)}
+                    className={`w-9 h-5 rounded-full transition-colors duration-200 relative ${verifiedOnly ? "bg-emerald-500" : "bg-gray-200"}`}
+                  >
+                    <motion.div
+                      animate={{ x: verifiedOnly ? 16 : 2 }}
+                      transition={{
+                        type: "spring",
+                        stiffness: 500,
+                        damping: 30,
+                      }}
+                      className="absolute top-0.5 w-4 h-4 bg-white rounded-full shadow-sm"
+                    />
+                  </div>
+                  <span
+                    className={`text-xs font-semibold whitespace-nowrap transition-colors ${verifiedOnly ? "text-emerald-600" : "text-gray-400"}`}
+                  >
+                    Verified Only
+                  </span>
+                </label>
 
-      {/* Divider */}
-      <div className="w-px h-5 bg-gray-200" />
+                {/* Divider */}
+                <div className="w-px h-5 bg-gray-200" />
 
-      {/* Reset */}
-      <button
-        onClick={() => {
-          setPlatform("");
-          setType("");
-          setVerifiedOnly(false);
-          setSearch("");
-          setPriceRange([0, 50000000]);
-        }}
-        className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-gray-200 text-gray-400 hover:text-gray-600 hover:border-gray-300 hover:bg-gray-50 text-xs font-medium transition-all"
-      >
-        <i className="ti ti-rotate text-xs" aria-hidden="true" />
-        Reset
-      </button>
-    </div>
-  </div>
-</motion.div>
+                {/* Reset */}
+                <button
+                  onClick={() => {
+                    setPlatform("");
+                    setType("");
+                    setVerifiedOnly(false);
+                    setSearch("");
+                    setPriceRange([0, 50000000]);
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-gray-200 text-gray-400 hover:text-gray-600 hover:border-gray-300 hover:bg-gray-50 text-xs font-medium transition-all"
+                >
+                  <i className="ti ti-rotate text-xs" aria-hidden="true" />
+                  Reset
+                </button>
+              </div>
+            </div>
+          </motion.div>
 
           {/* Seller stats */}
-          <div className="mb-5">
-          {isSeller && <DashboardStats />}
-</div>
+          <div className="mb-5 sm:mb-10">{isSeller && <DashboardStats />}</div>
           {/* Games grid */}
           {loading || !isImagesReady ? (
             <GameCardsSkeleton />
@@ -1145,9 +1164,15 @@ function MarketplaceSkeleton() {
           {/* Nav items */}
           <div className="flex flex-col gap-0.5">
             {[...Array(5)].map((_, i) => (
-              <div key={i} className="flex items-center gap-3 px-3 py-2.5 rounded-lg animate-pulse">
+              <div
+                key={i}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-lg animate-pulse"
+              >
                 <div className="w-4 h-4 rounded bg-gray-100 shrink-0" />
-                <div className="h-3 bg-gray-100 rounded flex-1" style={{ width: `${55 + (i % 3) * 15}%` }} />
+                <div
+                  className="h-3 bg-gray-100 rounded flex-1"
+                  style={{ width: `${55 + (i % 3) * 15}%` }}
+                />
               </div>
             ))}
           </div>
