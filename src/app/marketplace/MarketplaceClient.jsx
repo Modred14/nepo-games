@@ -531,7 +531,7 @@ export default function Marketplace() {
     let count = 0;
     if (filteredGames.length === 0) return;
     filteredGames.forEach((game) => {
-      const img = new Image();
+      const img = new window.Image();
       img.src = game.cover_image;
       img.onload = img.onerror = () => {
         count++;
