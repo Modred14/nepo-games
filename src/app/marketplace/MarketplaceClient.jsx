@@ -1005,8 +1005,9 @@ className="w-full bg-gray-50 border border-gray-200 text-gray-900 text-sm rounde
 </motion.div>
 
           {/* Seller stats */}
+          <div className="mb-5">
           {isSeller && <DashboardStats />}
-
+</div>
           {/* Games grid */}
           {loading || !isImagesReady ? (
             <GameCardsSkeleton />
