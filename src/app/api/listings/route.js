@@ -2,6 +2,19 @@ import pool from "../../../lib/db";
 import { uploadImage } from "../../../lib/uploadImage";
 import crypto from "crypto";
 import { requireUser } from "@/lib/auth";
+import sharp from "sharp";
+
+// Tune these to taste
+const MAX_WIDTH = 1600;   // resize down if larger
+const JPEG_QUALITY = 80;  // 75-85 is the sweet spot: small file, no visible loss
+
+async function compressImage(buffer) {
+  return sharp(buffer)
+    .rotate() // auto-orient based on EXIF, then strips EXIF
+    .resize({ width: MAX_WIDTH, withoutEnlargement: true })
+    .jpeg({ quality: JPEG_QUALITY, mozjpeg: true })
+    .toBuffer();
+}
 
 export async function POST(req) {
   try {
@@ -57,14 +70,22 @@ export async function POST(req) {
         try {
           console.log(`[UPLOAD] Processing image ${index + 1}`);
 
-          const buffer = Buffer.from(await file.arrayBuffer());
+          const rawBuffer = Buffer.from(await file.arrayBuffer());
 
-          if (!buffer) {
+          if (!rawBuffer || rawBuffer.length === 0) {
             console.error(`[UPLOAD ERROR] Empty buffer at image ${index + 1}`);
             throw new Error("Empty buffer");
           }
 
-          const url = await uploadImage(buffer);
+          const beforeSize = rawBuffer.length;
+          const compressedBuffer = await compressImage(rawBuffer);
+          const afterSize = compressedBuffer.length;
+
+          console.log(
+            `[COMPRESS] Image ${index + 1}: ${(beforeSize / 1024).toFixed(0)}KB -> ${(afterSize / 1024).toFixed(0)}KB`
+          );
+
+          const url = await uploadImage(compressedBuffer);
 
           if (!url) {
             console.error(
