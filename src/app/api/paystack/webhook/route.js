@@ -1,3 +1,4 @@
+// File: src/app/api/paystack/webhook/route.js
 import { NextResponse } from "next/server";
 import crypto from "crypto";
 import pool from "@/lib/db";
@@ -33,11 +34,25 @@ export async function POST(req) {
     const reference = data?.reference;
 
     // ─────────────────────────────────────────────
+    // charge.success — Dedicated Virtual Account (bank transfer) funding
+    // ─────────────────────────────────────────────
+    // DVA-funded charges have no metadata.userId/purpose (that metadata only
+    // exists because our own /wallet/initialize, /initialize, /buy/initialize
+    // routes set it on checkout sessions we create ourselves). We identify a
+    // DVA transfer by its channel and the receiving account number instead,
+    // and handle it completely separately, before any of the metadata-based
+    // purpose branches below run.
+    if (event?.event === "charge.success" && data?.channel === "dedicated_nuban") {
+      return handleDvaCharge(data, reference);
+    }
+
+    // ─────────────────────────────────────────────
     // charge.success
     // ─────────────────────────────────────────────
     if (event?.event === "charge.success") {
       const metadata = data?.metadata || {};
       const userId = data?.metadata?.userId;
+
       const purpose = metadata?.purpose;
       const amount = data.amount / 100;
       const sellerAmount = amount;
@@ -542,5 +557,87 @@ export async function POST(req) {
       { error: "Internal server error" },
       { status: 500 },
     );
+  }
+}
+
+// ─────────────────────────────────────────────
+// Dedicated Virtual Account (bank transfer) crediting
+// ─────────────────────────────────────────────
+// Credits whatever amount arrives — no minimum, since the money has already
+// physically landed in the account (unlike checkout, there's nothing to
+// "reject"). Idempotency is enforced at the DB level via a UNIQUE constraint
+// on (event_type, reference) in paystack_webhook_events, inserted in the same
+// transaction as the credit itself — this closes the check-then-insert race
+// window that the reference-existence checks elsewhere in this file have.
+async function handleDvaCharge(data, reference) {
+  const receiverAccountNumber = data?.authorization?.receiver_bank_account_number;
+  const amount = Number(data?.amount || 0) / 100;
+
+  if (!reference || !receiverAccountNumber || !amount) {
+    console.error("❌ DVA charge missing required fields:", data);
+    return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+
+    const dedupe = await client.query(
+      `INSERT INTO paystack_webhook_events (event_type, reference)
+       VALUES ('charge.success.dva', $1)
+       ON CONFLICT (event_type, reference) DO NOTHING
+       RETURNING id`,
+      [reference],
+    );
+
+    if (dedupe.rows.length === 0) {
+      await client.query("ROLLBACK");
+      console.log("⚠️ Duplicate DVA webhook ignored:", reference);
+      return NextResponse.json({ status: "already processed" });
+    }
+
+    const vaRes = await client.query(
+      `SELECT user_id FROM user_virtual_accounts
+       WHERE account_number = $1 AND active = true
+       FOR UPDATE`,
+      [receiverAccountNumber],
+    );
+    const virtualAccount = vaRes.rows[0];
+
+    if (!virtualAccount) {
+      // Money landed on an account number we don't recognise. We never
+      // silently drop funds — log it for manual reconciliation and keep the
+      // dedupe row so Paystack's retries don't re-trigger this repeatedly.
+      await client.query(
+        `INSERT INTO paystack_unmatched_credits (reference, account_number, amount, raw_payload)
+         VALUES ($1, $2, $3, $4)
+         ON CONFLICT (reference) DO NOTHING`,
+        [reference, receiverAccountNumber, amount, JSON.stringify(data)],
+      );
+      await client.query("COMMIT");
+      console.error(
+        "🚨 DVA charge for unrecognised account number, flagged for reconciliation:",
+        receiverAccountNumber,
+        "ref:",
+        reference,
+      );
+      return NextResponse.json({ status: "unrecognised account, flagged" });
+    }
+
+    await client.query(
+      `INSERT INTO users_transactions (user_id, type, amount, status, description, reference)
+       VALUES ($1, 'credit', $2, 'success', 'Bank transfer funding', $3)`,
+      [virtualAccount.user_id, amount, reference],
+    );
+
+    await client.query("COMMIT");
+    console.log("💰 DVA wallet funded:", virtualAccount.user_id, amount);
+    return NextResponse.json({ status: "dva wallet credited" });
+  } catch (err) {
+    await client.query("ROLLBACK");
+    console.error("❌ DVA webhook error:", err);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  } finally {
+    client.release();
   }
 }

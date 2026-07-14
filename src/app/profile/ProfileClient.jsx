@@ -1,3 +1,4 @@
+// File: src/app/profile/ProfileClient.jsx
 "use client";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
@@ -875,6 +876,17 @@ function AccountTab({ user }) {
   const [banks, setBanks] = useState([]);
   const [page, setPage] = useState(1);
   const ITEMS_PER_PAGE = 5;
+
+  // ── Dedicated Virtual Account (bank transfer funding) ──────────────
+  const [virtualAccount, setVirtualAccount] = useState(null);
+  const [loadingVA, setLoadingVA] = useState(true);
+  const [creatingVA, setCreatingVA] = useState(false);
+  const [vaError, setVaError] = useState("");
+  const [vaNeedsPhone, setVaNeedsPhone] = useState(false);
+  const [vaPhone, setVaPhone] = useState("");
+  const [vaUnavailable, setVaUnavailable] = useState(false);
+  const [copiedVA, setCopiedVA] = useState(false);
+
   const start = (page - 1) * ITEMS_PER_PAGE;
   const end = start + ITEMS_PER_PAGE;
 
@@ -922,6 +934,66 @@ function AccountTab({ user }) {
   };
 
   useEffect(() => { fetchAccount(); }, []);
+
+  const fetchVirtualAccount = async () => {
+    try {
+      const res = await fetch("/api/user/virtual-account");
+      if (!res.ok) { setLoadingVA(false); return; }
+      const data = await res.json();
+      setVirtualAccount(data.virtualAccount || null);
+    } catch (err) {
+      console.error("Failed to load virtual account:", err);
+    } finally {
+      setLoadingVA(false);
+    }
+  };
+
+  useEffect(() => { fetchVirtualAccount(); }, []);
+
+  const handleActivateVirtualAccount = async () => {
+    setVaError("");
+    setCreatingVA(true);
+    try {
+      const body = vaNeedsPhone ? { phone: vaPhone } : {};
+      const res = await fetch("/api/user/virtual-account", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        if (data.error === "phone_required") {
+          setVaNeedsPhone(true);
+          setVaError(data.message || "Enter your phone number to continue.");
+          return;
+        }
+        if (data.error === "dva_unavailable") {
+          setVaUnavailable(true);
+          setVaError(data.message || "Bank transfer funding isn't available yet.");
+          return;
+        }
+        setVaError(data.error || "Something went wrong. Please try again.");
+        return;
+      }
+
+      setVirtualAccount(data.virtualAccount);
+      setVaNeedsPhone(false);
+      setVaPhone("");
+    } catch (err) {
+      console.error("Virtual account activation failed:", err);
+      setVaError("Network error. Please try again.");
+    } finally {
+      setCreatingVA(false);
+    }
+  };
+
+  const handleCopyVirtualAccount = () => {
+    if (!virtualAccount?.account_number) return;
+    navigator.clipboard.writeText(virtualAccount.account_number);
+    setCopiedVA(true);
+    setTimeout(() => setCopiedVA(false), 2000);
+  };
 
   const triggerAnimation = () => {
     setShowLine(false);
@@ -1593,6 +1665,81 @@ function AccountTab({ user }) {
             </button>
           </div>
         </div>
+
+        {/* Dedicated Virtual Account card */}
+        {!loadingVA && !vaUnavailable && (
+          <div className="at-card" style={{ borderRadius: 20, padding: "20px 22px" }}>
+            <p style={{ fontSize: 12, fontWeight: 700, color: "#0f172a", margin: 0, letterSpacing: "0.02em", textTransform: "uppercase" }}>
+              Bank transfer funding
+            </p>
+
+            {virtualAccount ? (
+              <div style={{ marginTop: 12 }}>
+                <p style={{ fontSize: 12, color: "#64748b", margin: 0 }}>{virtualAccount.bank_name}</p>
+                <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginTop: 4 }}>
+                  <h3 style={{ fontSize: 22, fontWeight: 700, color: "#0f172a", margin: 0, letterSpacing: "-0.01em" }}>
+                    {virtualAccount.account_number}
+                  </h3>
+                  <button
+                    onClick={handleCopyVirtualAccount}
+                    style={{
+                      fontSize: 11.5, fontWeight: 600, color: "#2563eb",
+                      background: "#eff6ff", border: "none", borderRadius: 8,
+                      padding: "4px 10px", cursor: "pointer",
+                    }}
+                  >
+                    {copiedVA ? "Copied ✓" : "Copy"}
+                  </button>
+                </div>
+                <p style={{ fontSize: 13, color: "#334155", marginTop: 6, fontWeight: 600 }}>{virtualAccount.account_name}</p>
+                <p style={{ fontSize: 12, color: "#94a3b8", marginTop: 10 }}>
+                  Transfer to this account anytime — your wallet is credited automatically.
+                </p>
+              </div>
+            ) : (
+              <div style={{ marginTop: 10 }}>
+                <p style={{ fontSize: 12.5, color: "#64748b", margin: 0 }}>
+                  Get a personal bank account number for funding your wallet by transfer.
+                </p>
+
+                {vaError && (
+                  <div style={{
+                    background: "#fef2f2", border: "1px solid #fecaca",
+                    borderRadius: 8, padding: "8px 12px",
+                    fontSize: 12, color: "#dc2626", marginTop: 10,
+                  }}>
+                    {vaError}
+                  </div>
+                )}
+
+                {vaNeedsPhone && (
+                  <div style={{ marginTop: 10 }}>
+                    <label style={{ fontSize: 11.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "#64748b" }}>
+                      Phone number
+                    </label>
+                    <input
+                      type="tel"
+                      className="at-input"
+                      style={{ marginTop: 5 }}
+                      placeholder="08012345678"
+                      value={vaPhone}
+                      onChange={(e) => setVaPhone(e.target.value)}
+                    />
+                  </div>
+                )}
+
+                <button
+                  className="at-btn-add"
+                  style={{ marginTop: 12 }}
+                  disabled={creatingVA || (vaNeedsPhone && !vaPhone)}
+                  onClick={handleActivateVirtualAccount}
+                >
+                  {creatingVA ? <><span className="at-spin" /> Setting up…</> : "Activate bank transfer"}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Stat cards */}
         <div className="at-card" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 12 }}>
