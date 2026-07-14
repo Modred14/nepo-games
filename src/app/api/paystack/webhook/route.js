@@ -3,6 +3,28 @@ import { NextResponse } from "next/server";
 import crypto from "crypto";
 import pool from "@/lib/db";
 import { sendSellerWelcomeEmail } from "@/lib/emails/sendSellerWelcome";
+import { sendAdminAlert } from "@/lib/emails/sendAdminAlert";
+
+// Race-proof idempotency check, used by every charge.success branch below.
+// Inserts a row into paystack_webhook_events keyed on (event_type, reference)
+// INSIDE the same DB transaction as the credit/side-effects that follow.
+// Because of the UNIQUE(event_type, reference) constraint, two concurrent or
+// retried deliveries of the same webhook can never both win this insert —
+// only one transaction proceeds past this point, the other rolls back and
+// reports "already processed". This replaces the previous "SELECT, then
+// INSERT if not found" pattern in several branches, which had a real race
+// window under concurrent webhook delivery (which becomes far more likely
+// at scale, since Paystack retries on any timeout/5xx).
+async function markProcessed(client, eventType, reference) {
+  const res = await client.query(
+    `INSERT INTO paystack_webhook_events (event_type, reference)
+     VALUES ($1, $2)
+     ON CONFLICT (event_type, reference) DO NOTHING
+     RETURNING id`,
+    [eventType, reference],
+  );
+  return res.rows.length > 0;
+}
 
 export async function POST(req) {
   console.log("🔥 PAYSTACK WEBHOOK HIT");
@@ -94,6 +116,16 @@ export async function POST(req) {
         const client = await pool.connect();
         try {
           await client.query("BEGIN");
+
+          // Extra idempotency layer (defense-in-depth alongside the
+          // payment_status='paid' guard below, which relies on the row
+          // lock rather than a DB constraint).
+          const isNew = await markProcessed(client, "charge.success.marketplace", reference);
+          if (!isNew) {
+            await client.query("ROLLBACK");
+            console.log("⚠️ Duplicate marketplace webhook ignored:", reference);
+            return NextResponse.json({ status: "already processed" });
+          }
 
           const txRes = await client.query(
             `SELECT * FROM transactions WHERE id = $1 FOR UPDATE`,
@@ -205,37 +237,41 @@ export async function POST(req) {
 
       // ── WALLET ───────────────────────────────────
       if (purpose === "wallet") {
-        const existing = await pool.query(
-          "SELECT id FROM users_transactions WHERE reference = $1",
-          [reference],
-        );
-        if (existing.rows.length > 0) {
-          console.log("⚠️ Duplicate webhook ignored:", reference);
-          return NextResponse.json({ status: "already processed" });
+        // Previously: "SELECT, then INSERT if not found" outside any
+        // transaction — a real double-credit race window under concurrent
+        // webhook delivery. Now atomic: the dedupe insert and the credit
+        // insert happen in the same transaction, guarded by a DB UNIQUE
+        // constraint.
+        const client = await pool.connect();
+        try {
+          await client.query("BEGIN");
+
+          const isNew = await markProcessed(client, "charge.success.wallet", reference);
+          if (!isNew) {
+            await client.query("ROLLBACK");
+            console.log("⚠️ Duplicate webhook ignored:", reference);
+            return NextResponse.json({ status: "already processed" });
+          }
+
+          await client.query(
+            `INSERT INTO users_transactions (user_id, type, amount, status, description, reference)
+             VALUES ($1, 'credit', $2, 'success', 'Wallet funding', $3)`,
+            [userId, amount, reference],
+          );
+
+          await client.query("COMMIT");
+          console.log("💰 Wallet funded:", amount);
+          return NextResponse.json({ status: "wallet credited" });
+        } catch (err) {
+          await client.query("ROLLBACK");
+          throw err;
+        } finally {
+          client.release();
         }
-
-        await pool.query(
-          `INSERT INTO users_transactions (user_id, type, amount, status, description, reference)
-           VALUES ($1, 'credit', $2, 'success', 'Wallet funding', $3)`,
-          [userId, amount, reference],
-        );
-
-        console.log("💰 Wallet funded:", amount);
-        return NextResponse.json({ status: "wallet credited" });
       }
 
       // ── SUBSCRIPTION ─────────────────────────────
       if (purpose === "subscription") {
-        // FIX #6: Duplicate webhook protection — check by reference before doing anything
-        const existing = await pool.query(
-          "SELECT id FROM payments WHERE reference = $1",
-          [reference],
-        );
-        if (existing.rows.length > 0) {
-          console.log("⚠️ Duplicate subscription webhook ignored:", reference);
-          return NextResponse.json({ status: "already processed" });
-        }
-
         const PLAN_BY_AMOUNT = {
           2900: { plan: "pro", days: 30, label: "1 month" },
           8500: { plan: "plus", days: 90, label: "3 months" },
@@ -253,43 +289,69 @@ export async function POST(req) {
 
         const { plan, days, label } = planData;
 
-        await pool.query(
-          `INSERT INTO payments (user_id, amount, reference, status)
-           VALUES ($1, $2, $3, $4)`,
-          [userId, data.amount, reference, "success"],
-        );
-        await pool.query(
-          `INSERT INTO users_transactions (user_id, type, amount, status, description, reference)
-           VALUES ($1, 'credit', $2, 'success', 'Subscription payment', $3)`,
-          [userId, amount, reference],
-        );
-        await pool.query(
-          `INSERT INTO users_transactions (user_id, type, amount, status, description, reference)
-           VALUES ($1, 'debit', $2, 'success', 'Subscription payment', $3)`,
-          [userId, amount, reference],
-        );
-        await pool.query(
-          `UPDATE users
-           SET
-             plan = $1,
-             subscription_status = 'active',
-             subscription_start = NOW(),
-             subscription_end =
-               CASE
-                 WHEN subscription_end > NOW()
-                 THEN subscription_end + ($2 * interval '1 day')
-                 ELSE NOW() + ($2 * interval '1 day')
-               END,
-             paystack_reference = $3
-           WHERE id = $4`,
-          [plan, days, reference, userId],
-        );
+        // Previously: a plain SELECT against `payments` for the dedupe
+        // check, followed by four separate, non-transactional pool.query
+        // calls — not just a race window on the dedupe check, but a real
+        // risk of partial application if the process crashed or the DB
+        // connection dropped mid-sequence (e.g. payment recorded but plan
+        // never activated, or vice versa). Now wrapped in one transaction,
+        // guarded by the same DB-level dedupe used everywhere else.
+        const client = await pool.connect();
+        try {
+          await client.query("BEGIN");
 
-        sendSellerWelcomeEmail(label, user.email, plan)
-          .then(() => console.log("📧 Email sent"))
-          .catch((err) => console.error("❌ Email failed:", err));
+          const isNew = await markProcessed(client, "charge.success.subscription", reference);
+          if (!isNew) {
+            await client.query("ROLLBACK");
+            console.log("⚠️ Duplicate subscription webhook ignored:", reference);
+            return NextResponse.json({ status: "already processed" });
+          }
 
-        return NextResponse.json({ status: "subscription activated" });
+          await client.query(
+            `INSERT INTO payments (user_id, amount, reference, status)
+             VALUES ($1, $2, $3, $4)`,
+            [userId, data.amount, reference, "success"],
+          );
+          await client.query(
+            `INSERT INTO users_transactions (user_id, type, amount, status, description, reference)
+             VALUES ($1, 'credit', $2, 'success', 'Subscription payment', $3)`,
+            [userId, amount, reference],
+          );
+          await client.query(
+            `INSERT INTO users_transactions (user_id, type, amount, status, description, reference)
+             VALUES ($1, 'debit', $2, 'success', 'Subscription payment', $3)`,
+            [userId, amount, reference],
+          );
+          await client.query(
+            `UPDATE users
+             SET
+               plan = $1,
+               subscription_status = 'active',
+               subscription_start = NOW(),
+               subscription_end =
+                 CASE
+                   WHEN subscription_end > NOW()
+                   THEN subscription_end + ($2 * interval '1 day')
+                   ELSE NOW() + ($2 * interval '1 day')
+                 END,
+               paystack_reference = $3
+             WHERE id = $4`,
+            [plan, days, reference, userId],
+          );
+
+          await client.query("COMMIT");
+
+          sendSellerWelcomeEmail(label, user.email, plan)
+            .then(() => console.log("📧 Email sent"))
+            .catch((err) => console.error("❌ Email failed:", err));
+
+          return NextResponse.json({ status: "subscription activated" });
+        } catch (err) {
+          await client.query("ROLLBACK");
+          throw err;
+        } finally {
+          client.release();
+        }
       }
 
       // ── TOURNAMENT ───────────────────────────────
@@ -308,22 +370,22 @@ export async function POST(req) {
           );
         }
 
-        const existing = await pool.query(
-          `SELECT id FROM tournament_contestants WHERE tournament_id = $1 AND user_id = $2`,
-          [tournament_id, userId],
-        );
-        if (existing.rows.length > 0) {
-          console.log(
-            "⚠️ Tournament already registered:",
-            userId,
-            tournament_id,
-          );
-          return NextResponse.json({ status: "already processed" });
-        }
-
+        // Previously: the "already registered" check ran as a plain SELECT
+        // BEFORE the transaction/lock even started — two concurrent
+        // deliveries of the same webhook could both pass that check before
+        // either had inserted anything. Now the dedupe check happens inside
+        // the same transaction as the slots_left row lock, so it's atomic
+        // with the rest of the registration.
         const client = await pool.connect();
         try {
           await client.query("BEGIN");
+
+          const isNew = await markProcessed(client, "charge.success.tournament", reference);
+          if (!isNew) {
+            await client.query("ROLLBACK");
+            console.log("⚠️ Duplicate tournament webhook ignored:", reference);
+            return NextResponse.json({ status: "already processed" });
+          }
 
           const { rows } = await client.query(
             `SELECT slots_left FROM tournaments WHERE id = $1 FOR UPDATE`,
@@ -390,6 +452,11 @@ export async function POST(req) {
       // withdrawal row is CREATED when the withdrawal is initiated (as 'pending'),
       // so it always existed, meaning the UPDATE to 'success' never ran.
       // Fix: check if it's already 'success' specifically, not just if it exists.
+      //
+      // Note: this branch only ever flips an existing row's status field —
+      // it never INSERTs a new ledger row — so re-running it concurrently is
+      // naturally idempotent (same end state either way) and doesn't need
+      // the paystack_webhook_events guard the INSERT-based branches above do.
       const existing = await pool.query(
         "SELECT id, status FROM users_transactions WHERE reference = $1",
         [reference],
@@ -621,6 +688,13 @@ async function handleDvaCharge(data, reference) {
         "ref:",
         reference,
       );
+
+      sendAdminAlert("Unrecognised DVA credit — needs manual reconciliation", {
+        reference,
+        accountNumber: receiverAccountNumber,
+        amount,
+      }).catch((err) => console.error("❌ Admin alert email failed:", err));
+
       return NextResponse.json({ status: "unrecognised account, flagged" });
     }
 
