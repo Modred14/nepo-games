@@ -131,17 +131,33 @@ export async function POST(req, { params }) {
 
     await client.query("COMMIT");
 
-    // 6. Emit to socket server
-    await emitToRoom(
-      `room:${conversationId}`,
-      "new_message",
-      systemMsg.rows[0],
-    );
-    await emitToRoom(`user:${login.buyer_id}`, "sidebar_update", {});
-    await emitToRoom(`user:${login.seller_id}`, "sidebar_update", {});
+    // FIX: everything from here on happens AFTER the dispute has already
+    // been committed to the DB — escrow is frozen and the dispute is real
+    // regardless of what happens next. Previously, if the socket emit or
+    // the admin alert email threw (e.g. Resend having an outage), execution
+    // fell into the outer catch block, which tried to ROLLBACK an
+    // already-committed transaction (a no-op) and then told the buyer
+    // "Server error" even though their dispute had genuinely gone through.
+    // That's confusing for the buyer and generates duplicate support
+    // tickets when they retry and get "Already disputed." Wrapping this in
+    // its own try/catch means a notification hiccup can never turn a
+    // successful dispute into a false failure response.
+    try {
+      // 6. Emit to socket server
+      await emitToRoom(
+        `room:${conversationId}`,
+        "new_message",
+        systemMsg.rows[0],
+      );
+      await emitToRoom(`user:${login.buyer_id}`, "sidebar_update", {});
+      await emitToRoom(`user:${login.seller_id}`, "sidebar_update", {});
+    } catch (notifyErr) {
+      console.error("DISPUTE: socket emit failed (dispute still recorded):", notifyErr);
+    }
 
     // 7. Send admin dispute alert email
-    await resend.emails.send({
+    try {
+      await resend.emails.send({
       from: "Nepogames <no-reply@support.nepogames.com>",
       to: "favourdomirin@gmail.com",
       subject: `⚠️ Dispute Raised — ${login.game_title} (Ref: ${login.payment_reference})`,
@@ -289,11 +305,22 @@ export async function POST(req, { params }) {
         </body>
         </html>
       `,
-    });
+      });
+    } catch (emailErr) {
+      console.error("DISPUTE: admin alert email failed (dispute still recorded):", emailErr);
+    }
 
     return Response.json({ success: true });
   } catch (err) {
-    await client.query("ROLLBACK");
+    // At this point the dispute transaction itself has NOT committed yet
+    // (a commit failure would have to happen before the try/catch blocks
+    // above, which only wrap post-commit side effects), so a rollback here
+    // is always safe and correct.
+    try {
+      await client.query("ROLLBACK");
+    } catch (rollbackErr) {
+      // transaction may already be closed — ignore
+    }
     console.error("DISPUTE ERROR:", err);
     return Response.json({ error: "Server error" }, { status: 500 });
   } finally {
