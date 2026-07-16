@@ -1,3 +1,4 @@
+// src/app/api/listing/delete/route.js
 import pool from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import bcrypt from "bcrypt";
@@ -30,6 +31,16 @@ export async function POST(req) {
       return Response.json({ error: "User not found" }, { status: 404 });
     }
 
+    // FIX: bcrypt.compare throws when the stored hash is null/undefined
+    // (users who never set a withdrawal/delete PIN). Handle that case with
+    // a clear message instead of falling through to a generic 500 error.
+    if (!dbUser.pin_hash) {
+      return Response.json(
+        { error: "You haven't set a PIN yet. Please set one first." },
+        { status: 400 },
+      );
+    }
+
     const isValid = await bcrypt.compare(pin, dbUser.pin_hash);
     if (!isValid) {
       return Response.json({ error: "Incorrect pin" }, { status: 403 });
@@ -54,6 +65,16 @@ export async function POST(req) {
     if (listing.status === "pending") {
       return Response.json(
         { error: "Cannot delete a pending listing" },
+        { status: 400 }
+      );
+    }
+
+    // FIX: a listing with status "processing" is currently locked to a buyer
+    // who is mid-checkout (e.g. on the Paystack payment page). Deleting it
+    // out from under them would orphan that in-flight transaction.
+    if (listing.status === "processing") {
+      return Response.json(
+        { error: "Cannot delete a listing that is currently being purchased" },
         { status: 400 }
       );
     }

@@ -1,3 +1,4 @@
+// src/app/api/listings/route.js
 import pool from "../../../lib/db";
 import { uploadImage } from "../../../lib/uploadImage";
 import crypto from "crypto";
@@ -45,6 +46,32 @@ export async function POST(req) {
       console.error("[ERROR] Missing required fields");
       return Response.json(
         { error: "Missing fields", step: "validation" },
+        { status: 400 },
+      );
+    }
+
+    // FIX: price came straight from formData (a string) with no numeric
+    // validation at all — a garbage, zero, or negative price could reach
+    // the DB. Validate it here, before the costly image upload work below,
+    // and cap it at a sane upper bound to guard against typos/overflow.
+    const numericPrice = Number(price);
+    const MAX_LISTING_PRICE = 50_000_000; // ₦10,000,000 sanity cap
+
+    if (!Number.isFinite(numericPrice) || numericPrice <= 0) {
+      console.error("[ERROR] Invalid price", { price });
+      return Response.json(
+        { error: "Price must be a positive number", step: "validation" },
+        { status: 400 },
+      );
+    }
+
+    if (numericPrice > MAX_LISTING_PRICE) {
+      console.error("[ERROR] Price exceeds sane maximum", { price });
+      return Response.json(
+        {
+          error: `Price cannot exceed ₦${MAX_LISTING_PRICE.toLocaleString()}`,
+          step: "validation",
+        },
         { status: 400 },
       );
     }
@@ -134,7 +161,7 @@ export async function POST(req) {
             title,
             slug,
             description,
-            price,
+            numericPrice,
             "NGN",
             platform,
             cover_image,

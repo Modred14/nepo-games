@@ -1,3 +1,4 @@
+// src/app/api/auth/[...nextauth]/route.js
 import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import crypto from "crypto";
@@ -67,6 +68,13 @@ export const authOptions = {
 
           if (!user) {
             throw new Error("INVALID_CREDENTIALS");
+          }
+
+          // FIX: accounts created via Google sign-in have password_hash = null.
+          // bcrypt.compare throws on a null hash, which previously surfaced as
+          // a generic error instead of telling the person to use Google login.
+          if (!user.password_hash) {
+            throw new Error("USE_GOOGLE_LOGIN");
           }
 
           const isValid = await bcrypt.compare(password, user.password_hash);
@@ -244,6 +252,18 @@ If you didn't create an account, ignore this email.`,
     strategy: "jwt",
     maxAge: 7 * 24 * 60 * 60,
   },
+  // NOTE: role/plan/etc. live on the JWT and can be up to `maxAge` stale
+  // (e.g. a revoked admin keeps admin-looking data in their token until
+  // they re-login). We deliberately do NOT re-check the DB here on every
+  // request — doing that in this jwt() callback would run on effectively
+  // every authenticated request across the app, since most routes call
+  // getServerSession() directly rather than through NextAuth's own
+  // session endpoint (which is the only place a mutated token reliably
+  // gets written back to the cookie). Instead, anywhere authorization
+  // actually matters (admin actions), use requireAdmin() from
+  // src/lib/auth.js, which re-verifies the role straight from the DB at
+  // the point of use — cheap, because admin actions are rare compared to
+  // total traffic, and it can't be fooled by a stale token.
 
   callbacks: {
     // 🔥 HANDLE GOOGLE SIGN-IN + DB SYNC

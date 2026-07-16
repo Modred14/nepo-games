@@ -1,3 +1,4 @@
+// src/app/login/LoginClient.js
 "use client";
 
 import { useSearchParams } from "next/navigation";
@@ -125,6 +126,10 @@ export default function LoginClient() {
           );
         } else if (res.error.includes("INVALID_CREDENTIALS")) {
           setMessage("Invalid email or password.");
+        } else if (res.error.includes("USE_GOOGLE_LOGIN")) {
+          setMessage(
+            "This account was created with Google. Please sign in with Google instead.",
+          );
         } else {
           setMessage("Network error. Please try again.");
         }

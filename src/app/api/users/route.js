@@ -1,3 +1,4 @@
+// src/app/api/users/route.js
 import pool from "../../../lib/db";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
@@ -10,6 +11,25 @@ export async function POST(req) {
       "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
     const expires = new Date(Date.now() + 1000 * 60 * 60);
     const { first_name, surname, username, email, password } = await req.json();
+
+    // FIX: signup previously accepted any password at all (even 1 character)
+    // while reset-password enforced a 6-char minimum — inconsistent, and a
+    // weak-password hole on the most important entry point. Mirror the same
+    // rule here.
+    if (!first_name || !surname || !username || !email || !password) {
+      return Response.json(
+        { error: "All fields are required." },
+        { status: 400 },
+      );
+    }
+
+    if (typeof password !== "string" || password.length < 6) {
+      return Response.json(
+        { error: "Password must be at least 6 characters long." },
+        { status: 400 },
+      );
+    }
+
     const existingUsers = await pool.query(
       "SELECT email, username FROM users WHERE email = $1 OR username = $2",
       [email, username],
@@ -186,6 +206,23 @@ If you didn't create an account, ignore this email.`,
     return Response.json(result.rows[0], { status: 201 });
   } catch (err) {
     console.error(err);
+
+    // FIX: the SELECT-then-INSERT duplicate check above isn't atomic — two
+    // signups for the same email/username submitted at the same instant can
+    // both pass the SELECT before either INSERT commits. This requires a
+    // UNIQUE constraint on users.email and users.username at the DB level
+    // to actually be caught here (Postgres error code 23505); add that
+    // constraint via migration if it doesn't already exist. This catch turns
+    // that race into a clean, friendly error instead of a generic 500.
+    if (err.code === "23505") {
+      return Response.json(
+        {
+          error:
+            "That email or username was just taken by someone else. Please try again.",
+        },
+        { status: 409 },
+      );
+    }
 
     return Response.json(
       { error: "Something went wrong while creating the account." },

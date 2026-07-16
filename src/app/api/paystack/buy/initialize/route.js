@@ -1,3 +1,4 @@
+// src/app/api/paystack/buy/initialize/route.js
 import pool from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 
@@ -43,6 +44,16 @@ export async function POST(req) {
       if (Number(receiverId) !== Number(listing.user_id)) {
         await client.query("ROLLBACK");
         return Response.json({ error: "Invalid receiverId" }, { status: 400 });
+      }
+
+      // FIX #12: Block self-dealing — a seller must not be able to buy their
+      // own listing (fake sales, rating manipulation, fee laundering).
+      if (Number(listing.user_id) === Number(user.id)) {
+        await client.query("ROLLBACK");
+        return Response.json(
+          { error: "You cannot buy your own listing" },
+          { status: 400 },
+        );
       }
 
       if (listing.status !== "active") {

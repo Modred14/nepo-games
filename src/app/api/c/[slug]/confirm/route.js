@@ -1,3 +1,4 @@
+// src/app/api/c/[slug]/confirm/route.js
 import pool from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import { emitToRoom } from "@/lib/socket";
@@ -111,26 +112,16 @@ export async function POST(req, { params }) {
          AND status = 'pending'`,
       [login.seller_id, login.payment_reference],
     );
-     await client.query(
-          `UPDATE users_transactions
-   SET status = 'success',
-       updated_at = NOW()
-   WHERE user_id = $1
-     AND reference = $2
-     AND status = 'pending'
-     `,
-          [login.seller_id, login.payment_reference],
-        );
-        await client.query(
-          `UPDATE users_transactions
+    await client.query(
+      `UPDATE users_transactions
    SET status = 'success',
        updated_at = NOW()
    WHERE user_id = $1
      AND reference = $2
      AND status = 'pending'
      AND description = 'Platform fee'`,
-          [1, login.payment_reference],
-        );
+      [1, login.payment_reference],
+    );
 
     // 9. System message
     const systemMsg = await client.query(
@@ -154,9 +145,9 @@ export async function POST(req, { params }) {
       "new_message",
       systemMsg.rows[0],
     );
-   await emitToRoom(`user:${login.buyer_id}`, "sidebar_update", {});
+    await emitToRoom(`user:${login.buyer_id}`, "sidebar_update", {});
     await emitToRoom(`user:${login.seller_id}`, "sidebar_update", {});
- 
+
     return Response.json({ success: true });
   } catch (err) {
     await client.query("ROLLBACK");
