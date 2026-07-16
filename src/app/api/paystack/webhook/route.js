@@ -39,7 +39,19 @@ export async function POST(req) {
       .update(rawBody)
       .digest("hex");
 
-    if (hash !== signature) {
+    // Timing-safe comparison — a plain `hash !== signature` string compare
+    // leaks timing information byte-by-byte, which is a (narrow, but real)
+    // forgery risk for something that gates money movement. Both buffers
+    // must be equal length for timingSafeEqual, so an invalid/malformed
+    // signature header (wrong length) is treated as a mismatch rather than
+    // thrown as an error.
+    const signatureBuffer = Buffer.from(signature || "", "utf8");
+    const hashBuffer = Buffer.from(hash, "utf8");
+    const isValidSignature =
+      signatureBuffer.length === hashBuffer.length &&
+      crypto.timingSafeEqual(signatureBuffer, hashBuffer);
+
+    if (!isValidSignature) {
       console.error("❌ Invalid Paystack signature");
       return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
     }
