@@ -886,6 +886,7 @@ function AccountTab({ user }) {
   const [vaPhone, setVaPhone] = useState("");
   const [vaUnavailable, setVaUnavailable] = useState(false);
   const [copiedVA, setCopiedVA] = useState(false);
+  const [showVaModal, setShowVaModal] = useState(false);
 
   const start = (page - 1) * ITEMS_PER_PAGE;
   const end = start + ITEMS_PER_PAGE;
@@ -1354,6 +1355,199 @@ function AccountTab({ user }) {
           transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
         }
         .at-pin-box:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.15); background: #fff; }
+
+        /* Virtual account — bank card */
+        .at-va-card {
+          position: relative;
+          overflow: hidden;
+          border-radius: 18px;
+          padding: 20px 20px 18px;
+          background:
+            radial-gradient(circle at 88% -10%, rgba(255,255,255,0.10), transparent 55%),
+            linear-gradient(135deg, #0f2f7a 0%, #1a56db 55%, #2563eb 100%);
+          box-shadow: 0 10px 30px -8px rgba(26,86,219,0.45);
+        }
+        .at-va-card::before {
+          content: "";
+          position: absolute;
+          top: -70px; right: -50px;
+          width: 220px; height: 220px;
+          border-radius: 50%;
+          background: rgba(255,255,255,0.05);
+          pointer-events: none;
+        }
+        .at-va-card::after {
+          content: "";
+          position: absolute;
+          inset: 0;
+          background-image: repeating-linear-gradient(115deg, rgba(255,255,255,0.035) 0px, rgba(255,255,255,0.035) 1px, transparent 1px, transparent 10px);
+          pointer-events: none;
+        }
+        .at-va-card-top {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          position: relative;
+          z-index: 1;
+        }
+        .at-va-chip {
+          width: 34px;
+          height: 26px;
+          border-radius: 6px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: rgba(255,255,255,0.06);
+        }
+        .at-va-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+          font-size: 10.5px;
+          font-weight: 600;
+          letter-spacing: 0.04em;
+          color: rgba(255,255,255,0.9);
+          background: rgba(255,255,255,0.12);
+          border: 1px solid rgba(255,255,255,0.25);
+          padding: 3px 10px 3px 8px;
+          border-radius: 20px;
+        }
+        .at-va-dot {
+          width: 6px; height: 6px; border-radius: 50%;
+          background: #4ade80;
+          box-shadow: 0 0 0 2px rgba(74,222,128,0.25);
+        }
+        .at-va-number-row {
+          position: relative;
+          z-index: 1;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 10px;
+          margin-top: 20px;
+        }
+        .at-va-number {
+          display: flex;
+          gap: 10px;
+          font-family: "SF Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace;
+          font-size: clamp(19px, 5vw, 25px);
+          font-weight: 600;
+          color: #fff;
+          letter-spacing: 0.03em;
+        }
+        .at-va-group { white-space: nowrap; }
+        .at-va-copy {
+          flex-shrink: 0;
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+          font-size: 11.5px;
+          font-weight: 600;
+          color: #1a56db;
+          background: rgba(255,255,255,0.95);
+          border: none;
+          border-radius: 9px;
+          padding: 7px 12px;
+          cursor: pointer;
+          transition: background 0.15s, transform 0.12s;
+        }
+        .at-va-copy:hover { background: #fff; transform: translateY(-1px); }
+        .at-va-copy:active { transform: translateY(0); }
+        .at-va-bottom-row {
+          position: relative;
+          z-index: 1;
+          display: flex;
+          align-items: flex-end;
+          justify-content: space-between;
+          gap: 12px;
+          margin-top: 22px;
+          padding-top: 14px;
+          border-top: 1px solid rgba(255,255,255,0.16);
+        }
+        .at-va-label {
+          font-size: 10px;
+          font-weight: 600;
+          letter-spacing: 0.07em;
+          text-transform: uppercase;
+          color: rgba(255,255,255,0.55);
+          margin: 0 0 3px;
+        }
+        .at-va-value {
+          font-size: 13px;
+          font-weight: 600;
+          color: #fff;
+          margin: 0;
+          max-width: 170px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        /* Compact "fund by transfer" strip inside the balance card */
+        .at-va-strip {
+          position: relative;
+          z-index: 1;
+          width: 100%;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          margin-top: 16px;
+          padding: 10px 12px;
+          border: 1px solid rgba(255,255,255,0.18);
+          background: rgba(255,255,255,0.08);
+          border-radius: 12px;
+          cursor: pointer;
+          transition: background 0.15s, transform 0.12s;
+          text-align: left;
+        }
+        .at-va-strip:hover { background: rgba(255,255,255,0.13); transform: translateY(-1px); }
+        .at-va-strip:active { transform: translateY(0); }
+        .at-va-strip-chip {
+          width: 30px; height: 22px; flex-shrink: 0;
+          border-radius: 5px;
+          display: flex; align-items: center; justify-content: center;
+          background: rgba(255,255,255,0.06);
+        }
+        .at-va-strip-text {
+          flex: 1;
+          min-width: 0;
+          display: flex;
+          flex-direction: column;
+          gap: 1px;
+        }
+        .at-va-strip-label {
+          font-size: 10px;
+          font-weight: 600;
+          letter-spacing: 0.05em;
+          text-transform: uppercase;
+          color: rgba(255,255,255,0.6);
+        }
+        .at-va-strip-number {
+          font-size: 14px;
+          font-weight: 700;
+          color: #fff;
+          font-family: "SF Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace;
+          letter-spacing: 0.02em;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+        .at-va-strip-arrow {
+          flex-shrink: 0;
+          color: rgba(255,255,255,0.65);
+          display: flex;
+        }
+
+        /* Mobile refinements */
+        @media (max-width: 480px) {
+          .at-va-card { padding: 17px 16px 15px; border-radius: 16px; }
+          .at-va-number { gap: 7px; font-size: clamp(17px, 5.5vw, 21px); }
+          .at-va-number-row { margin-top: 16px; gap: 8px; }
+          .at-va-bottom-row { margin-top: 18px; padding-top: 12px; gap: 8px; }
+          .at-va-value { max-width: 120px; font-size: 12px; }
+          .at-va-copy { padding: 6px 10px; font-size: 11px; }
+          .at-va-strip { padding: 9px 10px; gap: 8px; }
+        }
       `}</style>
 
       {/* ── PIN Confirm Overlay ───────────────────────────────────── */}
@@ -1512,6 +1706,104 @@ function AccountTab({ user }) {
         </div>
       )}
 
+      {/* ── Account Details Modal (bank transfer funding) ───────────── */}
+      {showVaModal && virtualAccount && (
+        <div className="at-overlay" style={{
+          position: "fixed", inset: 0, zIndex: 50,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          background: "rgba(15,23,42,0.55)", backdropFilter: "blur(6px)",
+          padding: 16,
+        }}>
+          <div className="at-modal" style={{
+            background: "#fff", width: "100%", maxWidth: 400,
+            borderRadius: 22, padding: "22px 20px 24px",
+            boxShadow: "0 20px 60px rgba(0,0,0,0.18)",
+          }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+              <div>
+                <p style={{ fontSize: 15.5, fontWeight: 700, color: "#0f172a", margin: 0 }}>Account details</p>
+                <p style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>Transfer here anytime to fund your wallet</p>
+              </div>
+              <button
+                onClick={() => setShowVaModal(false)}
+                aria-label="Close"
+                style={{
+                  width: 30, height: 30, borderRadius: 9, flexShrink: 0,
+                  border: "none", background: "#f1f5f9", color: "#64748b",
+                  display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer",
+                }}
+              >
+                <X size={15} />
+              </button>
+            </div>
+
+            <div className="at-va-card">
+              <div className="at-va-card-top">
+                <div className="at-va-chip">
+                  <svg width="26" height="20" viewBox="0 0 26 20" fill="none">
+                    <rect x="0.5" y="0.5" width="25" height="19" rx="3.5" fill="url(#at-chip-grad)" stroke="rgba(255,255,255,0.35)"/>
+                    <line x1="8.5" y1="0.5" x2="8.5" y2="19.5" stroke="rgba(255,255,255,0.3)"/>
+                    <line x1="17.5" y1="0.5" x2="17.5" y2="19.5" stroke="rgba(255,255,255,0.3)"/>
+                    <line x1="0.5" y1="7" x2="25.5" y2="7" stroke="rgba(255,255,255,0.3)"/>
+                    <line x1="0.5" y1="13" x2="25.5" y2="13" stroke="rgba(255,255,255,0.3)"/>
+                    <defs>
+                      <linearGradient id="at-chip-grad" x1="0" y1="0" x2="26" y2="20">
+                        <stop stopColor="#fde68a"/>
+                        <stop offset="1" stopColor="#d4a94a"/>
+                      </linearGradient>
+                    </defs>
+                  </svg>
+                </div>
+                <span className="at-va-badge">
+                  <span className="at-va-dot" />
+                  Active
+                </span>
+              </div>
+
+              <div className="at-va-number-row">
+                <div className="at-va-number">
+                  {virtualAccount.account_number.match(/.{1,10}/g).map((chunk, i) => (
+                    <span key={i} className="at-va-group">{chunk}</span>
+                  ))}
+                </div>
+                <button onClick={handleCopyVirtualAccount} className="at-va-copy" aria-label="Copy account number">
+                  {copiedVA ? (
+                    <>
+                      <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                      Copied
+                    </>
+                  ) : (
+                    <>
+                      <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                      Copy
+                    </>
+                  )}
+                </button>
+              </div>
+
+              <div className="at-va-bottom-row">
+                <div>
+                  <p className="at-va-label">Account name</p>
+                  <p className="at-va-value">{virtualAccount.account_name}</p>
+                </div>
+                <div style={{ textAlign: "right" }}>
+                  <p className="at-va-label">Bank</p>
+                  <p className="at-va-value">{virtualAccount.bank_name}</p>
+                </div>
+              </div>
+            </div>
+
+            <p style={{ fontSize: 12, color: "#94a3b8", marginTop: 14, textAlign: "center" }}>
+              Transfers land in your wallet automatically — no need to confirm.
+            </p>
+
+            <button className="at-modal-btn-primary" style={{ width: "100%", marginTop: 16 }} onClick={() => setShowVaModal(false)}>
+              Done
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* ── Withdraw Modal ────────────────────────────────────────── */}
       {showWithdrawModal && (
         <div className="at-overlay" style={{
@@ -1664,80 +1956,82 @@ function AccountTab({ user }) {
               Withdraw
             </button>
           </div>
+
+          {/* Bank transfer funding — compact strip, opens the full card in a modal */}
+          {!loadingVA && !vaUnavailable && virtualAccount && (
+            <button className="at-va-strip" onClick={() => setShowVaModal(true)}>
+              <span className="at-va-strip-chip">
+                <svg width="18" height="14" viewBox="0 0 26 20" fill="none">
+                  <rect x="0.5" y="0.5" width="25" height="19" rx="3.5" fill="url(#at-chip-grad-strip)" stroke="rgba(255,255,255,0.35)"/>
+                  <line x1="8.5" y1="0.5" x2="8.5" y2="19.5" stroke="rgba(255,255,255,0.3)"/>
+                  <line x1="17.5" y1="0.5" x2="17.5" y2="19.5" stroke="rgba(255,255,255,0.3)"/>
+                  <line x1="0.5" y1="7" x2="25.5" y2="7" stroke="rgba(255,255,255,0.3)"/>
+                  <line x1="0.5" y1="13" x2="25.5" y2="13" stroke="rgba(255,255,255,0.3)"/>
+                  <defs>
+                    <linearGradient id="at-chip-grad-strip" x1="0" y1="0" x2="26" y2="20">
+                      <stop stopColor="#fde68a"/>
+                      <stop offset="1" stopColor="#d4a94a"/>
+                    </linearGradient>
+                  </defs>
+                </svg>
+              </span>
+              <span className="at-va-strip-text">
+                <span className="at-va-strip-label">Fund by transfer</span>
+                <span className="at-va-strip-number">{virtualAccount.account_number}</span>
+              </span>
+              <span className="at-va-strip-arrow">
+                <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2"><polyline points="9 18 15 12 9 6"/></svg>
+              </span>
+            </button>
+          )}
         </div>
 
-        {/* Dedicated Virtual Account card */}
-        {!loadingVA && !vaUnavailable && (
+        {/* Bank transfer activation prompt — only shown before an account exists */}
+        {!loadingVA && !vaUnavailable && !virtualAccount && (
           <div className="at-card" style={{ borderRadius: 20, padding: "20px 22px" }}>
             <p style={{ fontSize: 12, fontWeight: 700, color: "#0f172a", margin: 0, letterSpacing: "0.02em", textTransform: "uppercase" }}>
               Bank transfer funding
             </p>
+            <div style={{ marginTop: 10 }}>
+              <p style={{ fontSize: 12.5, color: "#64748b", margin: 0 }}>
+                Get a personal bank account number for funding your wallet by transfer.
+              </p>
 
-            {virtualAccount ? (
-              <div style={{ marginTop: 12 }}>
-                <p style={{ fontSize: 12, color: "#64748b", margin: 0 }}>{virtualAccount.bank_name}</p>
-                <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginTop: 4 }}>
-                  <h3 style={{ fontSize: 22, fontWeight: 700, color: "#0f172a", margin: 0, letterSpacing: "-0.01em" }}>
-                    {virtualAccount.account_number}
-                  </h3>
-                  <button
-                    onClick={handleCopyVirtualAccount}
-                    style={{
-                      fontSize: 11.5, fontWeight: 600, color: "#2563eb",
-                      background: "#eff6ff", border: "none", borderRadius: 8,
-                      padding: "4px 10px", cursor: "pointer",
-                    }}
-                  >
-                    {copiedVA ? "Copied ✓" : "Copy"}
-                  </button>
+              {vaError && (
+                <div style={{
+                  background: "#fef2f2", border: "1px solid #fecaca",
+                  borderRadius: 8, padding: "8px 12px",
+                  fontSize: 12, color: "#dc2626", marginTop: 10,
+                }}>
+                  {vaError}
                 </div>
-                <p style={{ fontSize: 13, color: "#334155", marginTop: 6, fontWeight: 600 }}>{virtualAccount.account_name}</p>
-                <p style={{ fontSize: 12, color: "#94a3b8", marginTop: 10 }}>
-                  Transfer to this account anytime — your wallet is credited automatically.
-                </p>
-              </div>
-            ) : (
-              <div style={{ marginTop: 10 }}>
-                <p style={{ fontSize: 12.5, color: "#64748b", margin: 0 }}>
-                  Get a personal bank account number for funding your wallet by transfer.
-                </p>
+              )}
 
-                {vaError && (
-                  <div style={{
-                    background: "#fef2f2", border: "1px solid #fecaca",
-                    borderRadius: 8, padding: "8px 12px",
-                    fontSize: 12, color: "#dc2626", marginTop: 10,
-                  }}>
-                    {vaError}
-                  </div>
-                )}
+              {vaNeedsPhone && (
+                <div style={{ marginTop: 10 }}>
+                  <label style={{ fontSize: 11.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "#64748b" }}>
+                    Phone number
+                  </label>
+                  <input
+                    type="tel"
+                    className="at-input"
+                    style={{ marginTop: 5 }}
+                    placeholder="08012345678"
+                    value={vaPhone}
+                    onChange={(e) => setVaPhone(e.target.value)}
+                  />
+                </div>
+              )}
 
-                {vaNeedsPhone && (
-                  <div style={{ marginTop: 10 }}>
-                    <label style={{ fontSize: 11.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "#64748b" }}>
-                      Phone number
-                    </label>
-                    <input
-                      type="tel"
-                      className="at-input"
-                      style={{ marginTop: 5 }}
-                      placeholder="08012345678"
-                      value={vaPhone}
-                      onChange={(e) => setVaPhone(e.target.value)}
-                    />
-                  </div>
-                )}
-
-                <button
-                  className="at-btn-add"
-                  style={{ marginTop: 12 }}
-                  disabled={creatingVA || (vaNeedsPhone && !vaPhone)}
-                  onClick={handleActivateVirtualAccount}
-                >
-                  {creatingVA ? <><span className="at-spin" /> Setting up…</> : "Activate bank transfer"}
-                </button>
-              </div>
-            )}
+              <button
+                className="at-btn-add"
+                style={{ marginTop: 12 }}
+                disabled={creatingVA || (vaNeedsPhone && !vaPhone)}
+                onClick={handleActivateVirtualAccount}
+              >
+                {creatingVA ? <><span className="at-spin" /> Setting up…</> : "Activate bank transfer"}
+              </button>
+            </div>
           </div>
         )}
 
