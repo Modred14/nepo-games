@@ -13,6 +13,39 @@ import LoginDropBox from "./LoginDropBox";
 import Image from "next/image";
 import { io } from "socket.io-client";
 
+// FIX (critical, socket auth): previously `socket.emit("join", chatId)` let
+// any connected client join ANY conversation's room just by knowing/
+// guessing its numeric id — no proof they were actually part of that
+// conversation. This fetches a short-lived signed token from
+// /api/socket-token first, which only issues a token after checking (in
+// the DB) that the current user is actually a participant of that
+// conversation (or, for the personal room, that it's their own user id).
+// See src/app/api/socket-token/route.js and src/lib/socketAuth.js.
+//
+// IMPORTANT: this repo's local server.js has been updated to verify these
+// tokens (see server.js), but production chat runs through an external
+// socket service (NEXT_PUBLIC_SOCKET_URL) that isn't part of this
+// codebase. That service's "join" handler needs the equivalent
+// verification added to it too, or this client-side change alone won't
+// close the gap — see the note left for you in server.js for the exact
+// logic to port over.
+async function authJoin(socket, { conversationId } = {}) {
+  try {
+    const res = await fetch("/api/socket-token", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(conversationId ? { conversationId } : {}),
+    });
+    if (!res.ok) return;
+    const { room, token } = await res.json();
+    if (room && token) {
+      socket.emit("join", { room, token });
+    }
+  } catch (err) {
+    console.error("Failed to join socket room:", err.message);
+  }
+}
+
 export default function Conversation({ gameId, receiverId }) {
   const [textMessage, setTextMessage] = useState("");
   const [load, setLoad] = useState(true);
@@ -317,10 +350,10 @@ export default function Conversation({ gameId, receiverId }) {
     socket.on("connect", () => {
       console.log("Socket connected:", socket.id);
       if (chatIdRef.current) {
-        socket.emit("join", chatIdRef.current);
+        authJoin(socket, { conversationId: chatIdRef.current });
       }
       if (userRef.current?.id) {
-        socket.emit("join", `user:${userRef.current.id}`);
+        authJoin(socket);
       }
     });
 
@@ -406,7 +439,7 @@ export default function Conversation({ gameId, receiverId }) {
 
     return () => {
       if (chatIdRef.current) {
-        socket.emit("leave", chatIdRef.current);
+        socket.emit("leave", { room: `room:${chatIdRef.current}` });
       }
       socket.disconnect();
       socketRef.current = null;
@@ -416,7 +449,7 @@ export default function Conversation({ gameId, receiverId }) {
   // ─── Join personal room once user loads ──────────────────────────────────
   useEffect(() => {
     if (!user?.id || !socketRef.current) return;
-    socketRef.current.emit("join", `user:${user.id}`);
+    authJoin(socketRef.current);
     console.log("Joined personal room:", `user:${user.id}`);
   }, [user?.id]);
 
@@ -427,10 +460,10 @@ export default function Conversation({ gameId, receiverId }) {
     if (!socket || !chatId) return;
 
     if (prevChatIdRef.current && prevChatIdRef.current !== chatId) {
-      socket.emit("leave", prevChatIdRef.current);
+      socket.emit("leave", { room: `room:${prevChatIdRef.current}` });
     }
 
-    socket.emit("join", chatId);
+    authJoin(socket, { conversationId: chatId });
     prevChatIdRef.current = chatId;
   }, [chatId]);
 

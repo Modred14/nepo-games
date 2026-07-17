@@ -1,37 +1,66 @@
-import { saveOTP } from "@/lib/otpStore";
+// src/app/api/send-otp/route.js
 import crypto from "crypto";
 import pool from "@/lib/db";
+import { requireUser } from "@/lib/auth";
 
-export default async function handler(req, res) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ message: "Method not allowed" });
-  }
-
-  const { phone } = req.body;
-
-  if (!phone) {
-    return res.status(400).json({ error: "Phone is required" });
-  }
-
+// FIX (critical): this file previously used `export default function
+// handler(req, res)` with `req.body` / `res.status()` — the Pages Router
+// API style. This file lives under the App Router (`src/app/api/...`),
+// which only recognizes named exports like `export async function POST`.
+// Next.js was never routing requests to this handler at all; phone OTP
+// sending was completely non-functional. Rewritten below as a proper App
+// Router POST handler, and switched the in-memory otpStore (which doesn't
+// survive across Fly.io machine restarts/auto-stop, see fly.toml) for
+// DB-backed storage on the users row itself, matching the pattern already
+// used by send-email-otp/route.js.
+//
+// NOTE: nothing in the frontend currently calls this endpoint — phone
+// verification isn't wired into any page yet. This fix makes the endpoint
+// itself work correctly; you'll still need to build the UI that calls it
+// when you're ready to turn phone verification on.
+export async function POST(req) {
   try {
+    const user = await requireUser();
+    if (!user) {
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { phone } = await req.json();
+
+    if (!phone) {
+      return Response.json({ error: "Phone is required" }, { status: 400 });
+    }
+
     const existingUser = await pool.query(
-      "SELECT id FROM users WHERE phone_number = $1 LIMIT 1",
-      [phone],
+      "SELECT id FROM users WHERE phone_number = $1 AND id != $2 LIMIT 1",
+      [phone, user.id],
     );
 
     if (existingUser.rows.length > 0) {
-      return res.status(400).json({
-        error: "Phone number already in use",
-      });
+      return Response.json(
+        { error: "Phone number already in use" },
+        { status: 400 },
+      );
     }
-    // ✅ Generate OTP on server
+
     const otp = crypto.randomInt(100000, 1000000).toString();
+    const expires = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
 
-    // ✅ Store it
-    saveOTP(phone, otp);
+    // FIX: the phone number itself is packed alongside the OTP (as
+    // "<otp>:<phone>") in the existing phone_verification_code column,
+    // rather than requiring a new DB column that isn't confirmed to exist.
+    // verify-otp splits this back apart and checks BOTH the code and the
+    // phone number match what was actually texted — otherwise a user could
+    // request an OTP for one phone number and use the resulting code to
+    // verify a completely different one.
+    await pool.query(
+      `UPDATE users
+       SET phone_verification_code = $1, verification_expires = $2
+       WHERE id = $3`,
+      [`${otp}:${phone}`, expires, user.id],
+    );
 
-    // ✅ Send SMS
-    const response = await fetch("https://api.termii.com/api/sms/send", {
+    const smsRes = await fetch("https://api.termii.com/api/sms/send", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -46,10 +75,14 @@ export default async function handler(req, res) {
       }),
     });
 
-    const data = await response.json();
+    if (!smsRes.ok) {
+      console.error("Termii SMS send failed:", smsRes.status, await smsRes.text());
+      return Response.json({ error: "Failed to send OTP" }, { status: 502 });
+    }
 
-    return res.status(200).json({ success: true });
-  } catch (error) {
-    return res.status(500).json({ error: "Failed to send OTP" });
+    return Response.json({ success: true });
+  } catch (err) {
+    console.error("SEND OTP ERROR:", err);
+    return Response.json({ error: "Failed to send OTP" }, { status: 500 });
   }
 }

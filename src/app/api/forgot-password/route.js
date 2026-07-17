@@ -1,3 +1,4 @@
+// src/app/api/forgot-password/route.js
 import { NextResponse } from "next/server";
 import crypto from "crypto";
 import pool from "../../../lib/db";
@@ -28,8 +29,10 @@ if (!user) {
     const token = crypto.randomBytes(32).toString("hex");
     const expiry = new Date(Date.now() + 15 * 60 * 1000).toISOString(); // 15 min
 
-    // store token
-    console.log(token, expiry);
+    // FIX: this used to be `console.log(token, expiry)` — logging the raw
+    // reset token to the server console. That token is functionally a
+    // temporary password: anyone who read it from logs could reset the
+    // account themselves within the 15-minute window.
 
     await pool.query(
       `UPDATE users 

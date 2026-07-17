@@ -1,60 +1,82 @@
-import { getOTP, deleteOTP } from "@/lib/otpStore";
+// src/app/api/verify-otp/route.js
 import pool from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 
-export default async function handler(req, res) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ message: "Method not allowed" });
-  }
-
+// FIX (critical): same App Router handler-signature bug as send-otp/route.js
+// — this was `export default function handler(req, res)` with `req.body`,
+// which Next.js's App Router never routes to at all. On top of that, the
+// UPDATE statement below used to write `phone = $1`, but the real column
+// on the users table (used everywhere else in this codebase, e.g.
+// market/route.js, users/route.js) is `phone_number` — so even with the
+// routing bug fixed, this query would have thrown "column phone does not
+// exist" on every attempt. Rewritten as a proper POST handler, using
+// DB-backed OTP storage (see send-otp/route.js) instead of the in-memory
+// Map in lib/otpStore.js, which doesn't survive Fly.io machine restarts.
+export async function POST(req) {
   try {
-  const user = await requireUser(); // ✅ reads from JWT
-    if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
+    const user = await requireUser();
+    if (!user) {
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
-    const { phone, otp } = req.body;
+    const { phone, otp } = await req.json();
 
     if (!phone || !otp) {
-      return res.status(400).json({ error: "Phone and OTP required" });
+      return Response.json(
+        { error: "Phone and OTP required" },
+        { status: 400 },
+      );
     }
 
-    const record = getOTP(phone);
+    const result = await pool.query(
+      `SELECT phone_verification_code, verification_expires
+       FROM users WHERE id = $1`,
+      [user.id],
+    );
 
-    if (!record) {
-      return res.status(400).json({ error: "OTP not found" });
+    const row = result.rows[0];
+
+    if (!row?.phone_verification_code) {
+      return Response.json({ error: "No OTP was requested." }, { status: 400 });
     }
 
-    // ❌ Expired
-    if (Date.now() > record.expiresAt) {
-      deleteOTP(phone);
-      return res.status(400).json({ error: "OTP expired" });
+    // Expired
+    if (!row.verification_expires || new Date(row.verification_expires) < new Date()) {
+      await pool.query(
+        `UPDATE users
+         SET phone_verification_code = NULL, verification_expires = NULL
+         WHERE id = $1`,
+        [user.id],
+      );
+      return Response.json({ error: "OTP expired" }, { status: 410 });
     }
 
-    // ❌ Wrong OTP
-    if (record.otp !== otp) {
-      record.attempts += 1;
+    // FIX: the stored value is "<otp>:<phone>" (see send-otp/route.js) so
+    // we can verify the submitted phone number is the SAME one the code
+    // was actually sent to, not just that the code matches.
+    const separatorIndex = row.phone_verification_code.indexOf(":");
+    const storedOtp = row.phone_verification_code.slice(0, separatorIndex);
+    const storedPhone = row.phone_verification_code.slice(separatorIndex + 1);
 
-      if (record.attempts >= 5) {
-        deleteOTP(phone);
-        return res.status(400).json({ error: "Too many attempts" });
-      }
-
-      return res.status(400).json({ error: "Invalid OTP" });
+    if (storedOtp !== otp || storedPhone !== phone) {
+      return Response.json({ error: "Invalid OTP" }, { status: 400 });
     }
 
-    // ✅ update user
+    // FIX: was `SET phone_verified = true, phone = $1` — "phone" isn't a
+    // real column; this now writes to "phone_number", the actual column.
     await pool.query(
-      `UPDATE users 
-       SET phone_verified = true, phone = $1
+      `UPDATE users
+       SET phone_verified = true,
+           phone_number = $1,
+           phone_verification_code = NULL,
+           verification_expires = NULL
        WHERE id = $2`,
       [phone, user.id],
     );
 
-    // 🧹 cleanup
-    deleteOTP(phone);
-
-    return res.status(200).json({ success: true });
+    return Response.json({ success: true });
   } catch (err) {
     console.error("VERIFY OTP ERROR:", err);
-    return res.status(500).json({ error: "Server error" });
+    return Response.json({ error: "Server error" }, { status: 500 });
   }
 }

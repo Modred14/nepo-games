@@ -1,3 +1,4 @@
+// src/app/api/reset-password/route.js
 import { NextResponse } from "next/server";
 import bcrypt from "bcrypt";
 import pool from "../../../lib/db";
@@ -5,7 +6,10 @@ import pool from "../../../lib/db";
 export async function POST(req) {
   try {
     const { token, newPassword } = await req.json();
-    console.log(token, newPassword);
+    // FIX: this line used to be `console.log(token, newPassword)` — it was
+    // logging the user's brand-new plaintext password (and their reset
+    // token) to the server console on every password reset. Anyone with
+    // access to logs/log aggregation could read users' passwords directly.
     // 1. basic validation
     if (!token || !newPassword) {
       return NextResponse.json(
