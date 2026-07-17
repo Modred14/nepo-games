@@ -113,6 +113,33 @@ export async function POST(req) {
     if (lookupRes.ok && lookupData.status && lookupData.data) {
       customerCode = lookupData.data.customer_code;
       customerId = lookupData.data.id;
+
+      // Existing Paystack customer (e.g. created before we started collecting
+      // phone numbers) may not have a phone on file yet. Paystack requires
+      // one to create a DVA, so patch it in now — this is what was causing
+      // "Customer phone number is required" even though we already validated
+      // phoneToUse above.
+      if (!lookupData.data.phone) {
+        const updateRes = await fetch(
+          `${PAYSTACK_BASE_URL}/customer/${encodeURIComponent(customerCode)}`,
+          {
+            method: "PUT",
+            headers: {
+              Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ phone: phoneToUse }),
+          },
+        );
+        const updateData = await updateRes.json();
+        if (!updateRes.ok || !updateData.status) {
+          console.error("❌ Paystack customer phone update failed:", updateData);
+          return NextResponse.json(
+            { error: updateData.message || "Unable to set up bank transfer funding right now." },
+            { status: 400 },
+          );
+        }
+      }
     } else {
       const createRes = await fetch(`${PAYSTACK_BASE_URL}/customer`, {
         method: "POST",

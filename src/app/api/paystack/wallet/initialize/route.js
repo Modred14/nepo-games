@@ -1,3 +1,4 @@
+// File: src/app/api/paystack/wallet/initialize/route.js
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../../../auth/[...nextauth]/route";
@@ -29,6 +30,11 @@ export async function POST(req) {
         metadata: {
           userId: session.user.id,
           purpose: "wallet",
+          // Store the exact amount the user asked to fund. If Paystack's
+          // fee-bearer setting has the customer covering the transaction
+          // charge, data.amount on the webhook can come back higher than
+          // this — we don't want that extra charge credited to the wallet.
+          requestedAmount: amount,
         },
         callback_url: `${process.env.NEXT_PUBLIC_BASE_URL}/profile?tab=account`,
       }),

@@ -265,14 +265,23 @@ export async function POST(req) {
             return NextResponse.json({ status: "already processed" });
           }
 
+          // Credit exactly what the user asked to fund, not data.amount.
+          // If Paystack's fee-bearer setting has the customer covering the
+          // transaction charge, data.amount includes that extra charge —
+          // crediting it would hand the user Paystack's fee on top of their
+          // own money. Fall back to `amount` only for older references that
+          // predate requestedAmount being sent.
+          const requestedAmount = Number(metadata?.requestedAmount);
+          const creditAmount = requestedAmount > 0 ? requestedAmount : amount;
+
           await client.query(
             `INSERT INTO users_transactions (user_id, type, amount, status, description, reference)
              VALUES ($1, 'credit', $2, 'success', 'Wallet funding', $3)`,
-            [userId, amount, reference],
+            [userId, creditAmount, reference],
           );
 
           await client.query("COMMIT");
-          console.log("💰 Wallet funded:", amount);
+          console.log("💰 Wallet funded:", creditAmount);
           return NextResponse.json({ status: "wallet credited" });
         } catch (err) {
           await client.query("ROLLBACK");
