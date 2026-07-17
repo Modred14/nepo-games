@@ -178,6 +178,9 @@ export async function POST(req) {
       body: JSON.stringify({
         customer: customerCode,
         preferred_bank: PREFERRED_BANK,
+        first_name: firstName,
+        last_name: lastName,
+        phone: phoneToUse,
       }),
     });
     const dvaData = await dvaRes.json();
