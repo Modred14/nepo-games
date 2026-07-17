@@ -1,4 +1,4 @@
-
+// src/app/api/c/[slug]/rate/route.js
 import { NextResponse } from "next/server";
 import pool from "@/lib/db";
 import { requireUser } from "@/lib/auth";
@@ -35,6 +35,32 @@ export async function POST(req, { params }) {
       : row.sender_id;
 
     const listingId = row.listing_id;
+
+    // FIX (critical): this previously let anyone in a conversation rate the
+    // other party, with no check that a transaction ever happened — and a
+    // conversation gets created just by messaging a listing, no purchase
+    // required. That meant two accounts could message each other and
+    // immediately post 5-star (or 1-star) ratings on each other with zero
+    // money ever changing hands, making the rating system trivially
+    // gameable. Require a transaction between these exact two parties for
+    // this listing that actually completed (escrow released) before a
+    // rating is allowed.
+    const completedTx = await pool.query(
+      `SELECT id FROM transactions
+       WHERE listing_id = $1
+         AND buyer_id = $2
+         AND seller_id = $3
+         AND escrow_status = 'released'
+       LIMIT 1`,
+      [listingId, buyerId, sellerId],
+    );
+
+    if (completedTx.rows.length === 0) {
+      return NextResponse.json(
+        { error: "You can only rate a completed transaction" },
+        { status: 403 },
+      );
+    }
 
     const existing = await pool.query(
       `SELECT id FROM ratings WHERE conversation_id = $1 AND buyer_id = $2 LIMIT 1`,

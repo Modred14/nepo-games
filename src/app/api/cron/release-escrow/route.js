@@ -1,3 +1,4 @@
+// src/app/api/cron/release-escrow/route.js
 import pool from "@/lib/db";
 
 const SYSTEM_USER_ID = 1;
@@ -100,16 +101,6 @@ export async function GET(req) {
             AND reference = $2
             AND status = 'pending'
           `,
-          [login.seller_id, login.payment_reference],
-        );
-        await client.query(
-          `UPDATE users_transactions
-   SET status = 'success',
-       updated_at = NOW()
-   WHERE user_id = $1
-     AND reference = $2
-     AND status = 'pending'
-     `,
           [login.seller_id, login.payment_reference],
         );
         await client.query(
