@@ -1059,6 +1059,7 @@ function AccountTab({ user }) {
       setWithdrawAmount("");
       setWithdrawError("");
       fetchAccount();
+      setShowPinConfirm(false)
     } catch (err) {
       console.error(err);
       setWithdrawError("Network error");
