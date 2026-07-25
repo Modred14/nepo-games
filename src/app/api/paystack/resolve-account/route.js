@@ -1,15 +1,10 @@
-// src/app/api/paystack/resolve-account/route.js
+// ORIGINAL ROUTE: src/app/api/paystack/resolve-account/route.js
+// CHANGED: Paystack GET /bank/resolve -> Flutterwave POST /v3/accounts/resolve
 import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
 
 export async function POST(req) {
   try {
-    // FIX (high): this route had no auth check at all — anyone, logged in
-    // or not, could POST any accountNumber/bankCode and get back the real
-    // account holder's name via your Paystack credentials. That's both a
-    // privacy problem (a free "whose bank account is this" lookup tool for
-    // the whole internet) and a cost/abuse vector against your own
-    // Paystack API usage.
     const user = await requireUser();
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -25,18 +20,23 @@ export async function POST(req) {
     }
 
     const response = await fetch(
-      `https://api.paystack.co/bank/resolve?account_number=${accountNumber}&bank_code=${bankCode}`,
+      "https://api.flutterwave.com/v3/accounts/resolve",
       {
-        method: "GET",
+        method: "POST",
         headers: {
-          Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+          Authorization: `Bearer ${process.env.FLW_SECRET_KEY}`,
+          "Content-Type": "application/json",
         },
+        body: JSON.stringify({
+          account_number: accountNumber,
+          account_bank: bankCode,
+        }),
       },
     );
 
     const data = await response.json();
 
-    if (!response.ok || !data.status) {
+    if (!response.ok || data.status !== "success") {
       return NextResponse.json(
         {
           error: data.message || "Unable to resolve account",
@@ -48,7 +48,10 @@ export async function POST(req) {
     return NextResponse.json({
       accountName: data.data.account_name,
       accountNumber: data.data.account_number,
-      bankId: data.data.bank_id,
+      // Flutterwave's resolve endpoint doesn't return a bank_id the way
+      // Paystack's did — omit it; nothing downstream in this codebase used
+      // bankId from this response other than passing it back to the client,
+      // which didn't use it either.
     });
   } catch (err) {
     console.error("Account resolve error:", err);

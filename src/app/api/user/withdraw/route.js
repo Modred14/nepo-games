@@ -1,3 +1,19 @@
+// ORIGINAL ROUTE: src/app/api/user/withdraw/route.js
+// CHANGED: Paystack transferrecipient + /transfer -> Flutterwave /v3/transfers
+//
+// SIMPLIFICATION: Flutterwave's /v3/transfers takes account_bank +
+// account_number + amount directly on every call — there's no separate
+// "create a transfer recipient first, then reuse its code" step like
+// Paystack's transferrecipient object. So the recipient_code caching logic
+// from the original file is removed entirely; we just pass the bank details
+// straight through each time. The `users.recipient_code` column is left
+// alone (unused now) rather than dropped, to avoid a migration.
+//
+// Also see the note in src/app/api/paystack/transfer-approval/route.js —
+// the synchronous OTP-bypass approval step Paystack had is not a Flutterwave
+// concept. This route's own pre-transfer validation (PIN check, balance
+// check, pending-row-created-before-calling-the-provider) is what actually
+// carries that safety property forward, and is unchanged below.
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../../auth/[...nextauth]/route";
@@ -17,9 +33,6 @@ export async function POST(req) {
     const body = await req.json();
     const { accountNumber, bankCode, accountName, pin } = body;
 
-    // FIX: coerce amount to a real number explicitly instead of relying on
-    // loose JS comparisons, which let non-numeric strings slip past the
-    // old `!amount` / `amount <= 0` checks via NaN comparison quirks.
     const amount = Number(body.amount);
 
     if (!Number.isFinite(amount) || amount <= 0) {
@@ -39,10 +52,9 @@ export async function POST(req) {
 
     await client.query("BEGIN");
 
-    // 1. Get user + lock row
     const userRes = await client.query(
       `
-      SELECT id, plan, recipient_code, email, pin_hash, pin_attempts, pin_locked_until
+      SELECT id, plan, email, pin_hash, pin_attempts, pin_locked_until
       FROM users
       WHERE email = $1
       FOR UPDATE
@@ -59,9 +71,6 @@ export async function POST(req) {
 
     const userId = user.id;
 
-    // FIX: PIN attempt lockout, mirroring the logic already used in
-    // /api/user/set-pin. Previously this endpoint let anyone with a valid
-    // session brute-force the 4-digit withdrawal PIN with no rate limit.
     if (user.pin_locked_until && new Date(user.pin_locked_until) > new Date()) {
       await client.query("ROLLBACK");
       return NextResponse.json(
@@ -106,23 +115,11 @@ export async function POST(req) {
       return NextResponse.json({ error: "Incorrect PIN" }, { status: 403 });
     }
 
-    // Reset attempts on successful PIN match
     await client.query(
       `UPDATE users SET pin_attempts = 0, pin_locked_until = NULL WHERE id = $1`,
       [userId],
     );
 
-    // 2. Get balance
-    // FIX (the critical one): pending debits — i.e. withdrawals that have
-    // been submitted but not yet confirmed by Paystack's transfer.success
-    // webhook — were previously invisible to this calculation because it
-    // only summed status = 'success' rows. That let someone submit several
-    // withdrawal requests back-to-back, each one reading the same
-    // not-yet-reduced balance before any single one had been confirmed,
-    // withdrawing the same money multiple times over. Counting pending
-    // debits as already-reserved closes that window: as soon as one
-    // withdrawal's pending row commits, every subsequent balance check
-    // (for this user) correctly sees the reduced, available amount.
     const balanceRes = await client.query(
       `
       SELECT COALESCE(SUM(
@@ -148,60 +145,18 @@ export async function POST(req) {
       );
     }
 
-    let recipientCode = user.recipient_code;
-
-    if (!recipientCode) {
-      const recipientRes = await fetch(
-        "https://api.paystack.co/transferrecipient",
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            type: "nuban",
-            name: user.email,
-            account_number: accountNumber,
-            bank_code: bankCode,
-            currency: "NGN",
-          }),
-        },
-      );
-
-      const recipientData = await recipientRes.json();
-
-      if (!recipientRes.ok) {
-        await client.query("ROLLBACK");
-        return NextResponse.json(
-          { error: recipientData.message },
-          { status: 400 },
-        );
-      }
-
-      recipientCode = recipientData.data.recipient_code;
-
-      await client.query("UPDATE users SET recipient_code = $1 WHERE id = $2", [
-        recipientCode,
-        userId,
-      ]);
-    }
-
     // 3. Create reference
     const reference = `WD_${Date.now()}_${userId}`;
 
-    const banksRes = await fetch(
-      "https://api.paystack.co/bank?country=nigeria",
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
-        },
+    const banksRes = await fetch("https://api.flutterwave.com/v3/banks/NG", {
+      headers: {
+        Authorization: `Bearer ${process.env.FLW_SECRET_KEY}`,
       },
-    );
+    });
 
     const banksData = await banksRes.json();
 
-    if (!banksRes.ok) {
+    if (!banksRes.ok || banksData.status !== "success") {
       await client.query("ROLLBACK");
       return NextResponse.json(
         { error: "Unable to fetch bank list" },
@@ -245,40 +200,35 @@ export async function POST(req) {
 
     await client.query("COMMIT");
 
-    // 5. CALL PAYSTACK (outside DB transaction)
-    // FIX: this whole block is now wrapped so that ANY failure here
-    // (network error, bad JSON, thrown exception) explicitly marks the
-    // transaction as 'failed' instead of leaving it stuck as 'pending'
-    // forever. Previously, an exception thrown after COMMIT would hit the
-    // outer catch block, which tried to ROLLBACK a transaction that had
-    // already been committed — a no-op — leaving the withdrawal row
-    // orphaned in 'pending' status indefinitely.
+    // 5. CALL FLUTTERWAVE (outside DB transaction)
     try {
-      const paystackRes = await fetch("https://api.paystack.co/transfer", {
+      const flwRes = await fetch("https://api.flutterwave.com/v3/transfers", {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+          Authorization: `Bearer ${process.env.FLW_SECRET_KEY}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          source: "balance",
-          amount: amount * 100,
-          recipient: recipientCode,
-          reason: "Wallet withdrawal",
+          account_bank: bankCode,
+          account_number: accountNumber,
+          // Flutterwave amount is in naira, not kobo.
+          amount,
+          currency: "NGN",
+          narration: "Wallet withdrawal",
           reference,
         }),
       });
 
-      const paystackData = await paystackRes.json();
+      const flwData = await flwRes.json();
 
-      if (!paystackRes.ok) {
+      if (!flwRes.ok || flwData.status !== "success") {
         await pool.query(
           `UPDATE users_transactions SET status = 'failed' WHERE reference = $1`,
           [reference],
         );
 
         return NextResponse.json(
-          { error: paystackData.message || "Transfer failed" },
+          { error: flwData.message || "Transfer failed" },
           { status: 400 },
         );
       }
@@ -289,7 +239,7 @@ export async function POST(req) {
         reference,
       });
     } catch (transferErr) {
-      console.error("Paystack transfer call failed:", transferErr);
+      console.error("Flutterwave transfer call failed:", transferErr);
       await pool.query(
         `UPDATE users_transactions SET status = 'failed' WHERE reference = $1`,
         [reference],

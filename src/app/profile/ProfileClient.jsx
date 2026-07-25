@@ -884,6 +884,10 @@ function AccountTab({ user }) {
   const [vaError, setVaError] = useState("");
   const [vaNeedsPhone, setVaNeedsPhone] = useState(false);
   const [vaPhone, setVaPhone] = useState("");
+  // NEW: Flutterwave requires BVN to create a permanent virtual account —
+  // Paystack's version didn't need this, so this state/flow is new.
+  const [vaNeedsBvn, setVaNeedsBvn] = useState(false);
+  const [vaBvn, setVaBvn] = useState("");
   const [vaUnavailable, setVaUnavailable] = useState(false);
   const [copiedVA, setCopiedVA] = useState(false);
   const [showVaModal, setShowVaModal] = useState(false);
@@ -955,7 +959,10 @@ function AccountTab({ user }) {
     setVaError("");
     setCreatingVA(true);
     try {
-      const body = vaNeedsPhone ? { phone: vaPhone } : {};
+      const body = {
+        ...(vaNeedsPhone ? { phone: vaPhone } : {}),
+        ...(vaNeedsBvn ? { bvn: vaBvn } : {}),
+      };
       const res = await fetch("/api/user/virtual-account", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -967,6 +974,11 @@ function AccountTab({ user }) {
         if (data.error === "phone_required") {
           setVaNeedsPhone(true);
           setVaError(data.message || "Enter your phone number to continue.");
+          return;
+        }
+        if (data.error === "bvn_required") {
+          setVaNeedsBvn(true);
+          setVaError(data.message || "Enter your BVN to continue.");
           return;
         }
         if (data.error === "dva_unavailable") {
@@ -981,6 +993,8 @@ function AccountTab({ user }) {
       setVirtualAccount(data.virtualAccount);
       setVaNeedsPhone(false);
       setVaPhone("");
+      setVaNeedsBvn(false);
+      setVaBvn("");
     } catch (err) {
       console.error("Virtual account activation failed:", err);
       setVaError("Network error. Please try again.");
@@ -1030,10 +1044,13 @@ function AccountTab({ user }) {
     new Intl.NumberFormat("en-NG", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
 
   useEffect(() => {
+    // CHANGED: was a direct client-side call to Paystack's public /bank
+    // endpoint. Flutterwave's equivalent (GET /v3/banks/NG) requires a
+    // SECRET key, which must never be exposed to the browser — so this now
+    // goes through our own server-side proxy route instead
+    // (src/app/api/banks/route.js).
     const fetchBanks = async () => {
-      const res = await fetch("https://api.paystack.co/bank?country=nigeria", {
-        headers: { Authorization: `Bearer ${process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY}` },
-      });
+      const res = await fetch("/api/banks");
       const data = await res.json();
       setBanks(data.data);
     };
@@ -2024,10 +2041,38 @@ function AccountTab({ user }) {
                 </div>
               )}
 
+              {/* NEW: Flutterwave rejects virtual account creation without a
+                  BVN. Only shown once the API tells us it's needed, same
+                  pattern as the phone field above. */}
+              {vaNeedsBvn && (
+                <div style={{ marginTop: 10 }}>
+                  <label style={{ fontSize: 11.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "#64748b" }}>
+                    BVN (Bank Verification Number)
+                  </label>
+                  <input
+                    type="tel"
+                    inputMode="numeric"
+                    maxLength={11}
+                    className="at-input"
+                    style={{ marginTop: 5 }}
+                    placeholder="12345678901"
+                    value={vaBvn}
+                    onChange={(e) => setVaBvn(e.target.value.replace(/[^0-9]/g, ""))}
+                  />
+                  <p style={{ fontSize: 11, color: "#94a3b8", marginTop: 4 }}>
+                    Required by our payment provider to verify your bank details. Dial *565*0# on your registered line to retrieve it.
+                  </p>
+                </div>
+              )}
+
               <button
                 className="at-btn-add"
                 style={{ marginTop: 12 }}
-                disabled={creatingVA || (vaNeedsPhone && !vaPhone)}
+                disabled={
+                  creatingVA ||
+                  (vaNeedsPhone && !vaPhone) ||
+                  (vaNeedsBvn && vaBvn.length !== 11)
+                }
                 onClick={handleActivateVirtualAccount}
               >
                 {creatingVA ? <><span className="at-spin" /> Setting up…</> : "Activate bank transfer"}

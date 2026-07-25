@@ -1,11 +1,18 @@
+// ORIGINAL ROUTE: src/app/api/paystack/initialize/route.js
+// CHANGED: Paystack transaction/initialize -> Flutterwave /v3/payments (Standard checkout)
+// NOTE: file path/folder left as "paystack" so no other imports break — only the
+// outbound integration inside this file was swapped. Rename the folder later if desired.
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../../auth/[...nextauth]/route";
 
 const PLAN_PRICES = {
-  pro: 290000,
-  plus: 850000,
-  premium: 3200000,
+  // NOTE: these were kobo amounts for Paystack (e.g. 290000 kobo = ₦2,900).
+  // Flutterwave's /v3/payments amount field is in the major currency unit
+  // (naira), not kobo — so these are now divided by 100 vs. the original file.
+  pro: 2900,
+  plus: 8500,
+  premium: 32000,
 };
 
 export async function POST(req) {
@@ -23,30 +30,44 @@ export async function POST(req) {
     return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
   }
 
-  const response = await fetch(
-    "https://api.paystack.co/transaction/initialize",
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        email: session.user.email,
-        amount,
-        metadata: {
-          userId: session.user.id,
-          purpose: "subscription",
-          plan,
-        },
-        callback_url: `${process.env.NEXT_PUBLIC_BASE_URL}/payment-success`,
-      }),
+  // Flutterwave doesn't hand back a reference the way Paystack does at
+  // initialize-time — you generate the tx_ref yourself and it round-trips
+  // back to you via the redirect and the webhook.
+  const tx_ref = `sub_${session.user.id}_${plan}_${Date.now()}`;
+
+  const response = await fetch("https://api.flutterwave.com/v3/payments", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${process.env.FLW_SECRET_KEY}`,
+      "Content-Type": "application/json",
     },
-  );
+    body: JSON.stringify({
+      tx_ref,
+      amount,
+      currency: "NGN",
+      redirect_url: `${process.env.NEXT_PUBLIC_BASE_URL}/payment-success`,
+      customer: {
+        email: session.user.email,
+      },
+      meta: {
+        userId: session.user.id,
+        purpose: "subscription",
+        plan,
+      },
+    }),
+  });
 
   const data = await response.json();
 
+  if (data.status !== "success") {
+    console.error("❌ Flutterwave initialize failed:", data);
+    return NextResponse.json(
+      { error: data.message || "Payment init failed" },
+      { status: 500 },
+    );
+  }
+
   return NextResponse.json({
-    url: data.data.authorization_url,
+    url: data.data.link,
   });
 }
