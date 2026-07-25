@@ -1030,10 +1030,13 @@ function AccountTab({ user }) {
     new Intl.NumberFormat("en-NG", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
 
   useEffect(() => {
+    // CHANGED: was a direct client-side call to Paystack's public /bank
+    // endpoint. Flutterwave's equivalent (GET /v3/banks/NG) requires a
+    // SECRET key, which must never be exposed to the browser — so this now
+    // goes through our own server-side proxy route instead
+    // (src/app/api/banks/route.js).
     const fetchBanks = async () => {
-      const res = await fetch("https://api.paystack.co/bank?country=nigeria", {
-        headers: { Authorization: `Bearer ${process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY}` },
-      });
+      const res = await fetch("/api/banks");
       const data = await res.json();
       setBanks(data.data);
     };

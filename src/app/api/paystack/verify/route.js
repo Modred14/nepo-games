@@ -1,3 +1,7 @@
+// ORIGINAL ROUTE: src/app/api/paystack/verify/route.js
+// CHANGED: Paystack transaction/verify/{reference} -> Flutterwave
+// GET /v3/transactions/verify_by_reference?tx_ref=... (Flutterwave lets you
+// verify by your own tx_ref directly, no need to look up their internal id first).
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../../auth/[...nextauth]/route";
@@ -20,21 +24,26 @@ export async function GET(req) {
   }
 
   const verifyRes = await fetch(
-    `https://api.paystack.co/transaction/verify/${reference}`,
+    `https://api.flutterwave.com/v3/transactions/verify_by_reference?tx_ref=${encodeURIComponent(reference)}`,
     {
       headers: {
-        Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+        Authorization: `Bearer ${process.env.FLW_SECRET_KEY}`,
       },
     },
   );
 
   const data = await verifyRes.json();
 
-  if (!data.status || data.data.status !== "success") {
+  // Flutterwave: data.status === "success" means the API call succeeded;
+  // the actual payment outcome is in data.data.status ("successful" | "failed" | "pending").
+  if (data.status !== "success" || data.data?.status !== "successful") {
     return NextResponse.json({ error: "Payment not successful" }, { status: 400 });
   }
 
-  const plan = data.data.metadata?.plan;
+  // Defense in depth: Flutterwave recommends also checking the charged
+  // amount/currency match what you expected, since verify_by_reference can
+  // in rare cases be called with a tx_ref that was tampered with client-side.
+  const plan = data.data.meta?.plan;
 
   if (!plan) {
     return NextResponse.json({ error: "Plan not found in metadata" }, { status: 400 });
@@ -48,19 +57,18 @@ export async function GET(req) {
   }
 
   const now = new Date();
-   const existing = await pool.query(
-  `SELECT subscription_end FROM users WHERE id = $1`,
-  [session.user.id]
-);
+  const existing = await pool.query(
+    `SELECT subscription_end FROM users WHERE id = $1`,
+    [session.user.id],
+  );
 
-const currentEnd = existing.rows[0]?.subscription_end;
-const startFrom = currentEnd && new Date(currentEnd) > now 
-  ? new Date(currentEnd) 
-  : now;
+  const currentEnd = existing.rows[0]?.subscription_end;
+  const startFrom = currentEnd && new Date(currentEnd) > now
+    ? new Date(currentEnd)
+    : now;
 
-const end = new Date(startFrom);
-end.setDate(end.getDate() + days);
-
+  const end = new Date(startFrom);
+  end.setDate(end.getDate() + days);
 
   // Update DB
   const result = await pool.query(
@@ -89,8 +97,6 @@ end.setDate(end.getDate() + days);
     token: existingToken,
     secret: process.env.NEXTAUTH_SECRET,
   });
-
-
 
   const newToken = await encode({
     token: {

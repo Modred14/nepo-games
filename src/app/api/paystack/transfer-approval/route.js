@@ -1,96 +1,38 @@
-// File: src/app/api/paystack/transfer-approval/route.js
-import { NextResponse } from "next/server";
-import pool from "@/lib/db";
-
-// ─────────────────────────────────────────────
-// Paystack Transfer Approval URL
-// ─────────────────────────────────────────────
-// This is NOT a webhook you receive after a transfer completes — it's a
-// synchronous check Paystack makes DURING transfer initiation, in place of
-// the OTP prompt. Once you disable "Confirm transfers before sending" (OTP)
-// on the dashboard and register this URL under Settings → Preferences →
-// Transfer Approval, every transfer request we create in
-// src/app/api/user/withdraw/route.js gets checked here instead of pausing
-// for a human to type a code.
+// ORIGINAL ROUTE: src/app/api/paystack/transfer-approval/route.js
+// ⚠️ NOT A DIRECT CONVERSION — Flutterwave has no equivalent to this.
 //
-// Paystack sends the same payload it received on our transfer request
-// (reference, amount in kobo, recipient, source, etc). We must respond
-// within a few seconds:
-//   - 200 -> transfer proceeds
-//   - 400 -> transfer is rejected
-//   - no response in time -> Paystack marks it "blocked"
+// This route existed because Paystack lets you register a synchronous
+// "Transfer Approval URL" that stands in for the OTP prompt: Paystack calls
+// this URL DURING transfer initiation and expects a 200/400 response within
+// seconds, deciding right then whether to proceed.
 //
-// We treat our own `users_transactions` pending-debit row (created right
-// before we call /transfer in withdraw/route.js) as the source of truth:
-// the reference must exist, belong to a debit, still be pending, and its
-// naira amount must match what Paystack is about to send — in kobo — to
-// the recipient. Anything else is rejected outright, which is what actually
-// closes the "leaked secret key" risk that OTP used to cover.
-export async function POST(req) {
-  try {
-    const body = await req.json();
-    const { reference, amount } = body || {};
-
-    if (!reference || amount === undefined || amount === null) {
-      console.error("❌ Transfer approval: missing reference/amount", body);
-      return NextResponse.json({ error: "Missing reference or amount" }, {
-        status: 400,
-      });
-    }
-
-    // Paystack sends amount in kobo, same unit we sent it in.
-    const expectedKobo = Math.round(Number(amount));
-
-    const txRes = await pool.query(
-      `SELECT amount, type, status
-       FROM users_transactions
-       WHERE reference = $1`,
-      [reference],
-    );
-
-    const tx = txRes.rows[0];
-
-    if (!tx) {
-      console.error("🚨 Transfer approval: unknown reference, rejecting", reference);
-      return NextResponse.json({ error: "Unknown transfer reference" }, {
-        status: 400,
-      });
-    }
-
-    if (tx.type !== "debit" || tx.status !== "pending") {
-      console.error(
-        "🚨 Transfer approval: reference not a pending withdrawal, rejecting",
-        reference,
-        tx.type,
-        tx.status,
-      );
-      return NextResponse.json(
-        { error: "Transfer does not match a pending withdrawal" },
-        { status: 400 },
-      );
-    }
-
-    const ourKobo = Math.round(Number(tx.amount) * 100);
-
-    if (ourKobo !== expectedKobo) {
-      console.error(
-        "🚨 Transfer approval: amount mismatch, rejecting",
-        reference,
-        "ours(kobo):",
-        ourKobo,
-        "paystack(kobo):",
-        expectedKobo,
-      );
-      return NextResponse.json({ error: "Amount mismatch" }, { status: 400 });
-    }
-
-    console.log("✅ Transfer approved:", reference, expectedKobo);
-    return NextResponse.json({ status: "approved" });
-  } catch (err) {
-    console.error("🔥 Transfer approval crash:", err);
-    // Fail closed — never approve a transfer we couldn't validate.
-    return NextResponse.json({ error: "Internal server error" }, {
-      status: 400,
-    });
-  }
+// Flutterwave's transfer flow doesn't have a synchronous pre-approval hook
+// like this. Instead, Flutterwave transfers are approved/processed
+// server-side after you call POST /v3/transfers, and you find out the
+// outcome asynchronously via the transfer.completed webhook (already
+// handled in the updated src/app/api/paystack/webhook/route.js).
+//
+// What this means for your withdraw flow (src/app/api/user/withdraw/route.js):
+// the validation this route used to do synchronously — confirming the
+// reference/amount match a real pending withdrawal in YOUR OWN database
+// before Paystack actually moves money — now has to happen BEFORE you call
+// Flutterwave's /v3/transfers endpoint, not as a separate webhook Flutterwave
+// calls back into. The updated withdraw/route.js already does this (it
+// creates and validates the pending users_transactions row first, then
+// calls Flutterwave), so the actual security property this route provided is
+// preserved — it just no longer lives in its own endpoint.
+//
+// Recommendation: delete this route/folder once you're confident the new
+// withdraw/route.js covers the same validation, and remove any
+// "Transfer Approval URL" setting from your Flutterwave dashboard (there
+// isn't one — this is a Paystack-specific dashboard setting, so there's
+// nothing to unset there either).
+export async function POST() {
+  return new Response(
+    JSON.stringify({
+      error:
+        "This endpoint is a Paystack-specific concept (synchronous transfer approval) with no Flutterwave equivalent. It should not be called. See the comment at the top of this file.",
+    }),
+    { status: 410, headers: { "Content-Type": "application/json" } },
+  );
 }

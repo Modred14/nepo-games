@@ -1,14 +1,29 @@
-// File: src/app/api/user/virtual-account/route.js
+// ORIGINAL ROUTE: src/app/api/user/virtual-account/route.js
+// CHANGED: Paystack customer + dedicated_account -> Flutterwave
+// POST /v3/virtual-account-numbers
+//
+// ⚠️ IMPORTANT PRODUCT/COMPLIANCE DECISION NEEDED, NOT JUST A CODE CHANGE:
+// Flutterwave REQUIRES the user's BVN (Bank Verification Number) to create
+// a permanent/static virtual account in live mode — this is a hard 400 error
+// ("BVN is required for static account number") without it, not optional.
+// Paystack's DVA (what this route originally created) did NOT require BVN,
+// only a phone number — that's why the original code never collected one.
+//
+// This means your signup/profile flow needs a new field (BVN) and the
+// handling that comes with it: BVN is sensitive financial PII in Nigeria,
+// so you'll want to (a) confirm this is acceptable for your users before
+// shipping, (b) never log or store it beyond what's needed for this one
+// call, and (c) check Flutterwave's current data-handling requirements for
+// BVN. This route now expects `bvn` in the POST body alongside `phone` —
+// the frontend/profile UI collecting it is NOT included here since that's a
+// UX decision, not a mechanical swap.
 import { NextResponse } from "next/server";
 import pool from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 
-const PAYSTACK_BASE_URL = "https://api.paystack.co";
-const PREFERRED_BANK = process.env.PAYSTACK_DVA_PREFERRED_BANK || "wema-bank";
+const FLW_BASE_URL = "https://api.flutterwave.com/v3";
 
-// GET /api/user/virtual-account
-// Returns the caller's Dedicated Virtual Account if one has already been
-// created. Does NOT create one — creation is lazy and only happens via POST.
+// GET /api/user/virtual-account — unchanged, just reads our own DB.
 export async function GET() {
   const user = await requireUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -23,25 +38,19 @@ export async function GET() {
 }
 
 // POST /api/user/virtual-account
-// Lazily creates a Dedicated Virtual Account for the caller the first time
-// it's requested. Idempotent — if one already exists it's returned as-is,
-// Paystack is never called again for that user.
-//
-// Body (optional): { phone } — only needed the first time, if the user has
-// no phone_number on file yet (Paystack requires one to create the DVA).
+// Body (required now): { phone, bvn } if not already on file.
 export async function POST(req) {
   const user = await requireUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  if (!process.env.PAYSTACK_SECRET_KEY) {
-    console.error("❌ PAYSTACK_SECRET_KEY is not configured");
+  if (!process.env.FLW_SECRET_KEY) {
+    console.error("❌ FLW_SECRET_KEY is not configured");
     return NextResponse.json(
       { error: "Payments are not configured" },
       { status: 500 },
     );
   }
 
-  // Already exists — one permanent DVA per user, never recreate.
   const existing = await pool.query(
     `SELECT account_number, account_name, bank_name, currency, active
      FROM user_virtual_accounts WHERE user_id = $1`,
@@ -52,15 +61,17 @@ export async function POST(req) {
   }
 
   let phone = null;
+  let bvn = null;
   try {
     const body = await req.json();
     phone = body?.phone || null;
+    bvn = body?.bvn || null;
   } catch {
-    // no body sent — fine, we'll fall back to the user's stored phone_number
+    // no body sent
   }
 
   const userRes = await pool.query(
-    `SELECT id, first_name, surname, username, email, phone_number
+    `SELECT id, first_name, surname, username, email, phone_number, bvn
      FROM users WHERE id = $1`,
     [user.id],
   );
@@ -69,8 +80,6 @@ export async function POST(req) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
 
-  // Paystack requires a phone number to create the underlying customer/DVA.
-  // We don't ask for BVN/NIN — just first/last name, email, and phone.
   if (!dbUser.phone_number && !phone) {
     return NextResponse.json(
       { error: "phone_required", message: "A phone number is required to set up bank transfer funding." },
@@ -78,7 +87,22 @@ export async function POST(req) {
     );
   }
 
+  // NOTE: this assumes a new `bvn` column on `users` — add it via migration
+  // if it doesn't exist yet. Storing it is only necessary if you want to
+  // avoid asking again; you may instead choose to never persist it and only
+  // pass it through per-request, depending on your compliance posture.
+  if (!dbUser.bvn && !bvn) {
+    return NextResponse.json(
+      {
+        error: "bvn_required",
+        message: "Your BVN is required to set up bank transfer funding (required by Flutterwave for permanent virtual accounts).",
+      },
+      { status: 400 },
+    );
+  }
+
   const phoneToUse = dbUser.phone_number || phone;
+  const bvnToUse = dbUser.bvn || bvn;
 
   if (!dbUser.phone_number && phone) {
     const digitsOnly = String(phone).replace(/[^0-9+]/g, "");
@@ -94,103 +118,51 @@ export async function POST(req) {
     ]);
   }
 
-  // Paystack needs a non-empty last name — some Google sign-ups have a blank
-  // surname, so fall back to the username rather than sending "".
+  if (!dbUser.bvn && bvn) {
+    const digitsOnly = String(bvn).replace(/[^0-9]/g, "");
+    if (digitsOnly.length !== 11) {
+      return NextResponse.json(
+        { error: "Enter a valid 11-digit BVN." },
+        { status: 400 },
+      );
+    }
+    await pool.query(`UPDATE users SET bvn = $1 WHERE id = $2`, [
+      digitsOnly,
+      user.id,
+    ]);
+  }
+
   const lastName = dbUser.surname?.trim() || dbUser.username;
   const firstName = dbUser.first_name?.trim() || dbUser.username;
 
   try {
-    // 1. Find or create the Paystack customer for this user.
-    let customerCode;
-    let customerId;
+    const txRef = `va_${user.id}_${Date.now()}`;
 
-    const lookupRes = await fetch(
-      `${PAYSTACK_BASE_URL}/customer/${encodeURIComponent(dbUser.email)}`,
-      { headers: { Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}` } },
-    );
-    const lookupData = await lookupRes.json();
-
-    if (lookupRes.ok && lookupData.status && lookupData.data) {
-      customerCode = lookupData.data.customer_code;
-      customerId = lookupData.data.id;
-
-      // Existing Paystack customer (e.g. created before we started collecting
-      // phone numbers) may not have a phone on file yet. Paystack requires
-      // one to create a DVA, so patch it in now — this is what was causing
-      // "Customer phone number is required" even though we already validated
-      // phoneToUse above.
-      if (!lookupData.data.phone) {
-        const updateRes = await fetch(
-          `${PAYSTACK_BASE_URL}/customer/${encodeURIComponent(customerCode)}`,
-          {
-            method: "PUT",
-            headers: {
-              Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ phone: phoneToUse }),
-          },
-        );
-        const updateData = await updateRes.json();
-        if (!updateRes.ok || !updateData.status) {
-          console.error("❌ Paystack customer phone update failed:", updateData);
-          return NextResponse.json(
-            { error: updateData.message || "Unable to set up bank transfer funding right now." },
-            { status: 400 },
-          );
-        }
-      }
-    } else {
-      const createRes = await fetch(`${PAYSTACK_BASE_URL}/customer`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: dbUser.email,
-          first_name: firstName,
-          last_name: lastName,
-          phone: phoneToUse,
-        }),
-      });
-      const createData = await createRes.json();
-
-      if (!createRes.ok || !createData.status) {
-        console.error("❌ Paystack customer creation failed:", createData);
-        return NextResponse.json(
-          { error: createData.message || "Unable to set up bank transfer funding right now." },
-          { status: 400 },
-        );
-      }
-
-      customerCode = createData.data.customer_code;
-      customerId = createData.data.id;
-    }
-
-    // 2. Create the Dedicated Virtual Account for that customer.
-    const dvaRes = await fetch(`${PAYSTACK_BASE_URL}/dedicated_account`, {
+    const vaRes = await fetch(`${FLW_BASE_URL}/virtual-account-numbers`, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+        Authorization: `Bearer ${process.env.FLW_SECRET_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        customer: customerCode,
-        preferred_bank: PREFERRED_BANK,
-        first_name: firstName,
-        last_name: lastName,
-        phone: phoneToUse,
+        email: dbUser.email,
+        tx_ref: txRef,
+        phonenumber: phoneToUse,
+        is_permanent: true,
+        firstname: firstName,
+        lastname: lastName,
+        bvn: bvnToUse,
+        narration: `${firstName} ${lastName}`,
       }),
     });
-    const dvaData = await dvaRes.json();
+    const vaData = await vaRes.json();
 
-    if (!dvaRes.ok || !dvaData.status) {
-      const message = dvaData?.message || "";
+    if (!vaRes.ok || vaData.status !== "success") {
+      const message = vaData?.message || "";
       const notEnabled =
-        /not\s*enabled|not\s*available|contact\s*support|integration/i.test(message);
+        /not\s*enabled|not\s*available|contact\s*support/i.test(message);
 
-      console.error("❌ Paystack DVA creation failed:", dvaData);
+      console.error("❌ Flutterwave virtual account creation failed:", vaData);
 
       if (notEnabled) {
         return NextResponse.json(
@@ -209,22 +181,23 @@ export async function POST(req) {
       );
     }
 
-    const account = dvaData.data;
-    const bankName = account?.bank?.name || "Unknown Bank";
+    const account = vaData.data;
+    const bankName = account?.bank_name || "Unknown Bank";
     const accountNumber = account?.account_number;
-    const accountName = account?.account_name;
-    const dvaId = account?.id;
+    // Flutterwave's create response doesn't return an "account name" the
+    // way Paystack's DVA did (it returns a "note"/order_ref instead) — fall
+    // back to the name we sent, since that's what the bank record will show.
+    const accountName = `${firstName} ${lastName}`;
+    const orderRef = account?.order_ref;
 
-    if (!accountNumber || !accountName || !dvaId) {
-      console.error("❌ Unexpected Paystack DVA response shape:", dvaData);
+    if (!accountNumber || !orderRef) {
+      console.error("❌ Unexpected Flutterwave virtual account response shape:", vaData);
       return NextResponse.json(
         { error: "Unable to set up bank transfer funding right now." },
         { status: 400 },
       );
     }
 
-    // 3. Persist it. ON CONFLICT guards against a race between two
-    // near-simultaneous requests from the same user (unique on user_id).
     const insertRes = await pool.query(
       `INSERT INTO user_virtual_accounts
        (user_id, paystack_customer_code, paystack_customer_id, dva_id, account_number, account_name, bank_name, bank_slug, currency)
@@ -233,14 +206,18 @@ export async function POST(req) {
        RETURNING account_number, account_name, bank_name, currency, active`,
       [
         user.id,
-        customerCode,
-        customerId,
-        dvaId,
+        // NOTE: repurposing these Paystack-named columns to hold
+        // Flutterwave's equivalents (flw_ref / order_ref) rather than
+        // renaming the columns, to avoid a migration. Rename later if you'd
+        // like the schema to read cleanly.
+        account?.flw_ref || null,
+        null,
+        orderRef,
         accountNumber,
         accountName,
         bankName,
-        PREFERRED_BANK,
-        account?.currency || "NGN",
+        "wema-bank",
+        "NGN",
       ],
     );
 
@@ -248,10 +225,6 @@ export async function POST(req) {
       return NextResponse.json({ virtualAccount: insertRes.rows[0] });
     }
 
-    // Lost the race — a row for this user already exists now. Return that
-    // one instead. (The DVA we just created with Paystack above is an orphan
-    // in this rare case; it isn't linked to a users_transactions credit path
-    // since crediting only ever happens via account_number lookup.)
     const raceRes = await pool.query(
       `SELECT account_number, account_name, bank_name, currency, active
        FROM user_virtual_accounts WHERE user_id = $1`,
