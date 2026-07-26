@@ -1,3 +1,7 @@
+// ROUTE: src/components/Conversation.jsx
+// CHANGED: button text only — was "Pay with Paystack", now reflects the
+// Flutterwave backend. The paymentMethod === "paystack" value itself was
+// deliberately left unchanged (see api/paystack/buy/initialize/route.js).
 "use client";
 
 import { useEffect, useRef, useState, useMemo, useCallback } from "react";
@@ -924,7 +928,7 @@ export default function Conversation({ gameId, receiverId }) {
                     onClick={() => setPaymentMethod("paystack")}
                     className={`w-full py-2 rounded border ${paymentMethod === "paystack" ? "bg-blue-100 border-blue-500" : ""}`}
                   >
-                    Pay with Paystack
+                    Pay with Card / Bank (Flutterwave)
                   </button>
                   <button
                     onClick={() => setPaymentMethod("wallet")}
