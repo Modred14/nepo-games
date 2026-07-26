@@ -1,3 +1,5 @@
+// ROUTE: src/app/about/page.js
+// CHANGED: two lines of marketing copy only — "via Paystack" -> "via Flutterwave".
 "use client";
 
 import Link from "next/link";
@@ -1033,7 +1035,7 @@ export default function AboutPage() {
                 {
                   icon: "🌍",
                   title: "Built for Nigeria",
-                  desc: "Payments in Naira via Paystack. Designed for the Nigerian gamer and seller, with a local support team.",
+                  desc: "Payments in Naira via Flutterwave. Designed for the Nigerian gamer and seller, with a local support team.",
                 },
               ].map((f, i) => (
                 <div
@@ -1064,7 +1066,7 @@ export default function AboutPage() {
               },
               {
                 title: "Buyer pays into escrow",
-                desc: "The buyer pays via Paystack or their Nepogames wallet. Funds are held securely in escrow — the seller does not receive anything yet.",
+                desc: "The buyer pays via Flutterwave or their Nepogames wallet. Funds are held securely in escrow — the seller does not receive anything yet.",
               },
               {
                 title: "Seller delivers login details",
