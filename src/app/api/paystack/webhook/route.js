@@ -1,24 +1,3 @@
-// ORIGINAL ROUTE: src/app/api/paystack/webhook/route.js
-// CHANGED: Paystack webhook (event-per-type, HMAC-SHA512 signature) ->
-// Flutterwave webhook (single "charge.completed" / "transfer.completed"
-// event, branched by data.status; signature is a direct string compare of
-// the "verif-hash" header against your FLW_SECRET_HASH env var — Flutterwave
-// does NOT use HMAC here, you just set an arbitrary secret string in the
-// dashboard and they echo it back verbatim).
-//
-// DB table names (paystack_webhook_events, paystack_unmatched_credits) were
-// left AS-IS to avoid a migration — they're just internal table names now,
-// not tied to Paystack specifically. Rename via migration later if you want.
-//
-// ⚠️ VERIFY BEFORE GOING LIVE: the "bank transfer / virtual account funding"
-// branch below (handleDvaCharge) matches the incoming webhook to one of your
-// stored virtual accounts using data.customer.email, based on Flutterwave's
-// documented virtual-account webhook payload. Flutterwave's exact payload
-// shape has changed across doc versions (some show a top-level "meta_data"
-// object with the *payer's* originating account, not your receiving virtual
-// account number) — test this against a real sandbox transfer into a virtual
-// account before relying on it in production, and adjust the matching field
-// if what you see differs.
 import { NextResponse } from "next/server";
 import crypto from "crypto";
 import pool from "@/lib/db";
@@ -38,15 +17,9 @@ async function markProcessed(client, eventType, reference) {
 
 export async function POST(req) {
   console.log("🔥 FLUTTERWAVE WEBHOOK HIT");
-
   const rawBody = await req.text();
-
   try {
     const signature = req.headers.get("verif-hash");
-
-    // Flutterwave: direct string compare against your configured secret
-    // hash, NOT an HMAC digest. Still use timingSafeEqual to avoid leaking
-    // timing information byte-by-byte.
     const expected = process.env.FLW_SECRET_HASH || "";
     const signatureBuffer = Buffer.from(signature || "", "utf8");
     const expectedBuffer = Buffer.from(expected, "utf8");
@@ -54,7 +27,8 @@ export async function POST(req) {
       expected.length > 0 &&
       signatureBuffer.length === expectedBuffer.length &&
       crypto.timingSafeEqual(signatureBuffer, expectedBuffer);
-
+console.log("Header received:", JSON.stringify(signature));
+console.log("Env var value:", JSON.stringify(process.env.FLW_SECRET_HASH));
     if (!isValidSignature) {
       console.error("❌ Invalid Flutterwave signature");
       return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
