@@ -27,8 +27,7 @@ export async function POST(req) {
       expected.length > 0 &&
       signatureBuffer.length === expectedBuffer.length &&
       crypto.timingSafeEqual(signatureBuffer, expectedBuffer);
-console.log("Header received:", JSON.stringify(signature));
-console.log("Env var value:", JSON.stringify(process.env.FLW_SECRET_HASH));
+           
     if (!isValidSignature) {
       console.error("❌ Invalid Flutterwave signature");
       return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
