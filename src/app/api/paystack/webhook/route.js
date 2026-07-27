@@ -39,6 +39,21 @@ function isOwnInitiatedTxRef(reference) {
   return !!reference && OWN_TX_REF_PREFIXES.some((p) => reference.startsWith(p));
 }
 
+// Derives the plan TIER from total days remaining (after rollover), rather
+// than from whichever plan was just purchased. So buying "Pro" while 400
+// days of a previous Plus/Premium purchase are still on the clock correctly
+// keeps the account at Premium, instead of downgrading it.
+//   > 365 days      -> premium
+//   91–365 days     -> plus
+//   1–90 days       -> pro
+//   0 or fewer days -> free
+function derivePlanFromDays(totalDays) {
+  if (totalDays <= 0) return "free";
+  if (totalDays <= 90) return "pro";
+  if (totalDays <= 365) return "plus";
+  return "premium";
+}
+
 // Re-fetch the authoritative transaction record from Flutterwave rather
 // than trusting the webhook body's `meta`/`amount`/`status` blindly. This
 // is what actually fixed the misrouting bug — the webhook payload isn't
@@ -344,7 +359,7 @@ export async function POST(req) {
           );
         }
 
-        const { plan, days, label } = planData;
+        const { days, label } = planData;
 
         const client = await pool.connect();
         try {
@@ -372,26 +387,39 @@ export async function POST(req) {
              VALUES ($1, 'debit', $2, 'success', 'Subscription payment', $3)`,
             [userId, amount, reference],
           );
+
+          // Roll over remaining time, THEN derive the plan tier from the
+          // TOTAL days left (not from whatever plan was just purchased) —
+          // e.g. buying Pro while 400 days of Plus/Premium are still
+          // remaining should land on Premium, not silently downgrade to Pro.
+          const existingRes = await client.query(
+            `SELECT subscription_end FROM users WHERE id = $1 FOR UPDATE`,
+            [userId],
+          );
+          const now = new Date();
+          const currentEnd = existingRes.rows[0]?.subscription_end;
+          const startFrom = currentEnd && new Date(currentEnd) > now ? new Date(currentEnd) : now;
+          const end = new Date(startFrom);
+          end.setDate(end.getDate() + days);
+
+          const totalDaysRemaining = Math.ceil((end - now) / (1000 * 60 * 60 * 24));
+          const finalPlan = derivePlanFromDays(totalDaysRemaining);
+
           await client.query(
             `UPDATE users
              SET
                plan = $1,
                subscription_status = 'active',
                subscription_start = NOW(),
-               subscription_end =
-                 CASE
-                   WHEN subscription_end > NOW()
-                   THEN subscription_end + ($2 * interval '1 day')
-                   ELSE NOW() + ($2 * interval '1 day')
-                 END,
+               subscription_end = $2,
                paystack_reference = $3
              WHERE id = $4`,
-            [plan, days, reference, userId],
+            [finalPlan, end, reference, userId],
           );
 
           await client.query("COMMIT");
 
-          sendSellerWelcomeEmail(label, user.email, plan)
+          sendSellerWelcomeEmail(label, user.email, finalPlan)
             .then(() => console.log("📧 Email sent"))
             .catch((err) => console.error("❌ Email failed:", err));
 

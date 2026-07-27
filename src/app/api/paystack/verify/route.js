@@ -2,12 +2,31 @@
 // CHANGED: Paystack transaction/verify/{reference} -> Flutterwave
 // GET /v3/transactions/verify_by_reference?tx_ref=... (Flutterwave lets you
 // verify by your own tx_ref directly, no need to look up their internal id first).
+//
+// CHANGED (v2): plan is no longer set to whatever was just purchased.
+// Rollover now works both ways — total remaining days (existing + newly
+// bought) determines the plan TIER, so buying "Pro" while 400 days of
+// Plus/Premium are still active correctly stays Premium instead of
+// downgrading. See derivePlanFromDays() below.
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../../auth/[...nextauth]/route";
 import { encode, decode } from "next-auth/jwt";
 import { cookies } from "next/headers";
 import pool from "../../../../lib/db";
+
+// Derives the plan TIER from total days remaining (after rollover), rather
+// than from whichever plan was just purchased.
+//   > 365 days      -> premium
+//   91–365 days     -> plus
+//   1–90 days       -> pro
+//   0 or fewer days -> free
+function derivePlanFromDays(totalDays) {
+  if (totalDays <= 0) return "free";
+  if (totalDays <= 90) return "pro";
+  if (totalDays <= 365) return "plus";
+  return "premium";
+}
 
 export async function GET(req) {
   const session = await getServerSession(authOptions);
@@ -70,6 +89,9 @@ export async function GET(req) {
   const end = new Date(startFrom);
   end.setDate(end.getDate() + days);
 
+  const totalDaysRemaining = Math.ceil((end - now) / (1000 * 60 * 60 * 24));
+  const finalPlan = derivePlanFromDays(totalDaysRemaining);
+
   // Update DB
   const result = await pool.query(
     `UPDATE users
@@ -79,7 +101,7 @@ export async function GET(req) {
          subscription_end = $3
      WHERE id = $4
      RETURNING plan, subscription_status, subscription_start, subscription_end`,
-    [plan, startFrom, end, session.user.id],
+    [finalPlan, startFrom, end, session.user.id],
   );
 
   const updated = result.rows[0];
