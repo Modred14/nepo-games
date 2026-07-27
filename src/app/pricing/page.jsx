@@ -1,12 +1,3 @@
-// ROUTE: src/app/pricing/page.jsx
-// CHANGED: derivePlan() used to GUESS the plan name from the day-count
-// between subscription_start and subscription_end (<=30 -> pro, <=90 ->
-// plus, etc). That breaks the moment someone renews or upgrades, since the
-// total span no longer cleanly matches one plan's original duration.
-// /api/user/me already returns the real `plan` column straight from the
-// database (via the JWT reissued in /api/paystack/verify) — now using that
-// directly instead of re-deriving it from dates. Still guards against a
-// stale "active" status the expiry cron job hasn't caught yet.
 "use client";
 
 import Loader from "@/components/Loader";
@@ -76,7 +67,7 @@ export default function PricingPage() {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const res = await fetch("/api/user/me", { cache: "no-store" });
+        const res = await fetch("/api/user/me");
         if (res.status === 401) {
           setUser(null);
           const currentPath = window.location.pathname + window.location.search;
