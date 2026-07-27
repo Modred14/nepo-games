@@ -1,8 +1,57 @@
+// ORIGINAL ROUTE: src/app/api/paystack/webhook/route.js
+// CHANGED (v2 — bugfix): Paystack webhook (event-per-type, HMAC-SHA512
+// signature) -> Flutterwave webhook (single "charge.completed" /
+// "transfer.completed" event, branched by data.status; signature is a
+// direct string compare of the "verif-hash" header against your
+// FLW_SECRET_HASH env var — Flutterwave does NOT use HMAC here, you just
+// set an arbitrary secret string in the dashboard and they echo it back
+// verbatim).
+//
+// ⚠️ BUGFIX in this version: the original routing logic guessed "is this an
+// unprompted virtual-account deposit?" from `payment_type === "bank_transfer"
+// && !meta.purpose`. In production, a real wallet-funding charge
+// (tx_ref "wallet_76_...") paid via the bank-transfer option on Flutterwave's
+// OWN checkout page got misrouted into the "unrecognized deposit" branch,
+// silently failing to credit the wallet — because Flutterwave apparently
+// doesn't always echo `meta` back the same way for bank_transfer charges.
+//
+// Fix: routing is now based on the tx_ref PREFIX instead (sub_, wallet_,
+// tx_, tournament_ — all of which WE generate, so this is deterministic and
+// can't be dropped by Flutterwave). And for any charge whose tx_ref matches
+// one of our own prefixes, we now re-verify the transaction via Flutterwave's
+// API (verify_by_reference) instead of trusting the webhook body's `meta`
+// directly — so even if `meta` is ever missing/malformed on the webhook
+// payload again, we still get the authoritative data straight from
+// Flutterwave rather than silently misfiring.
+//
+// DB table names (paystack_webhook_events, paystack_unmatched_credits) were
+// left AS-IS to avoid a migration — they're just internal table names now,
+// not tied to Paystack specifically. Rename via migration later if you want.
 import { NextResponse } from "next/server";
 import crypto from "crypto";
 import pool from "@/lib/db";
 import { sendSellerWelcomeEmail } from "@/lib/emails/sendSellerWelcome";
 import { sendAdminAlert } from "@/lib/emails/sendAdminAlert";
+
+const OWN_TX_REF_PREFIXES = ["sub_", "wallet_", "tx_", "tournament_"];
+
+function isOwnInitiatedTxRef(reference) {
+  return !!reference && OWN_TX_REF_PREFIXES.some((p) => reference.startsWith(p));
+}
+
+// Re-fetch the authoritative transaction record from Flutterwave rather
+// than trusting the webhook body's `meta`/`amount`/`status` blindly. This
+// is what actually fixed the misrouting bug — the webhook payload isn't
+// always fully reliable, but the verify endpoint is the source of truth.
+async function verifyByReference(reference) {
+  const res = await fetch(
+    `https://api.flutterwave.com/v3/transactions/verify_by_reference?tx_ref=${encodeURIComponent(reference)}`,
+    { headers: { Authorization: `Bearer ${process.env.FLW_SECRET_KEY}` } },
+  );
+  const json = await res.json();
+  if (json.status !== "success") return null;
+  return json.data;
+}
 
 async function markProcessed(client, eventType, reference) {
   const res = await client.query(
@@ -17,9 +66,15 @@ async function markProcessed(client, eventType, reference) {
 
 export async function POST(req) {
   console.log("🔥 FLUTTERWAVE WEBHOOK HIT");
+
   const rawBody = await req.text();
+
   try {
     const signature = req.headers.get("verif-hash");
+
+    // Flutterwave: direct string compare against your configured secret
+    // hash, NOT an HMAC digest. Still use timingSafeEqual to avoid leaking
+    // timing information byte-by-byte.
     const expected = process.env.FLW_SECRET_HASH || "";
     const signatureBuffer = Buffer.from(signature || "", "utf8");
     const expectedBuffer = Buffer.from(expected, "utf8");
@@ -27,7 +82,7 @@ export async function POST(req) {
       expected.length > 0 &&
       signatureBuffer.length === expectedBuffer.length &&
       crypto.timingSafeEqual(signatureBuffer, expectedBuffer);
-           
+
     if (!isValidSignature) {
       console.error("❌ Invalid Flutterwave signature");
       return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
@@ -47,15 +102,20 @@ export async function POST(req) {
     // ─────────────────────────────────────────────
     // charge.completed — Virtual Account (bank transfer) funding
     // ─────────────────────────────────────────────
+    // FIXED: this used to guess based on `payment_type === "bank_transfer"
+    // && !meta.purpose`, which misfired on real wallet/subscription/
+    // marketplace charges paid via the bank-transfer option (meta wasn't
+    // reliably echoed back for that payment method). Now we check the
+    // tx_ref prefix instead — deterministic, since we set every tx_ref
+    // ourselves for anything we initiate.
     if (
       event?.event === "charge.completed" &&
       data?.payment_type === "bank_transfer" &&
-      !data?.meta?.purpose
+      !isOwnInitiatedTxRef(reference)
     ) {
-      // No purpose in meta means this wasn't initiated by our own
-      // /wallet/initialize, /initialize, /buy/initialize routes — it's an
-      // inbound transfer straight into a customer's dedicated virtual
-      // account, handled completely separately below.
+      // Doesn't match any of our own tx_ref prefixes — this is a genuine
+      // unprompted inbound transfer straight into a customer's dedicated
+      // virtual account, handled completely separately below.
       return handleVirtualAccountCharge(data, reference);
     }
 
@@ -63,12 +123,22 @@ export async function POST(req) {
     // charge.completed
     // ─────────────────────────────────────────────
     if (event?.event === "charge.completed") {
-      const metadata = data?.meta || {};
+      // Don't trust the webhook body's `meta`/`amount`/`status` blindly —
+      // re-verify against Flutterwave's API. This is what actually fixes
+      // the misrouting bug: even if `meta` is dropped/malformed on the
+      // webhook payload (as happened with bank-transfer-paid checkouts),
+      // the verify endpoint still returns the authoritative record.
+      const verified = isOwnInitiatedTxRef(reference)
+        ? await verifyByReference(reference)
+        : null;
+      const source = verified || data;
+
+      const metadata = source?.meta || {};
       const userId = metadata?.userId;
       const purpose = metadata?.purpose;
-      const amount = Number(data.amount); // Flutterwave amount is already in naira
+      const amount = Number(source.amount); // Flutterwave amount is already in naira
       const sellerAmount = amount;
-      const isSuccessful = data?.status === "successful";
+      const isSuccessful = (verified ? verified.status : data?.status) === "successful";
 
       if (!reference || !userId || !purpose) {
         console.error("❌ Missing critical data:", data);
@@ -151,7 +221,7 @@ export async function POST(req) {
                payment_provider_response = $1,
                updated_at = NOW()
              WHERE id = $2`,
-            [JSON.stringify(data), transactionId],
+            [JSON.stringify(source), transactionId],
           );
 
           await client.query(
@@ -647,7 +717,11 @@ async function handleVirtualAccountCharge(data, reference) {
     return NextResponse.json({ status: "virtual account wallet credited" });
   } catch (err) {
     await client.query("ROLLBACK");
+    // Log enough to manually reconcile from logs alone if this crashes —
+    // this is exactly what was missing when the varchar(20) column-size
+    // bug hit in production and the customer/amount weren't in the log line.
     console.error("❌ Virtual account webhook error:", err);
+    console.error("❌ Context — reference:", reference, "amount:", amount, "customerEmail:", customerEmail);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   } finally {
     client.release();
