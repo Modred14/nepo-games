@@ -1,3 +1,9 @@
+// ROUTE: src/app/payment-success/Paymentsuccess.jsx
+// CHANGED: was reading searchParams.get("reference") — that's Paystack's
+// auto-appended callback param. Flutterwave appends ?status=...&tx_ref=...
+// &transaction_id=... instead, so "reference" was always null and this page
+// showed "Verification failed" without ever calling /verify, even though
+// the webhook had already processed the payment correctly server-side.
 "use client";
 
 import { useEffect, useState } from "react";
@@ -7,13 +13,22 @@ import Link from "next/link";
 
 export default function PaymentSuccess() {
   const searchParams = useSearchParams();
-  const reference = searchParams.get("reference");
+  const reference = searchParams.get("tx_ref");
+  const flwStatus = searchParams.get("status");
   const [status, setStatus] = useState("loading");
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
     const verifyPayment = async () => {
       if (!reference) {
+        setStatus("error");
+        setTimeout(() => setVisible(true), 50);
+        return;
+      }
+      // Flutterwave includes its own status in the redirect (successful |
+      // failed | cancelled) — no point calling /verify at all if the user
+      // cancelled or the charge failed outright.
+      if (flwStatus && flwStatus !== "successful") {
         setStatus("error");
         setTimeout(() => setVisible(true), 50);
         return;
