@@ -1,5 +1,14 @@
+// ROUTE: src/app/api/user/me/route.js
+// CHANGED: added `dynamic = "force-dynamic"` and a Cache-Control header.
+// Without this, this GET route could be served from a cached response
+// (browser or edge), so right after a subscription upgrade — where
+// /api/paystack/verify reissues the session cookie with the new plan — the
+// pricing page could still show the OLD plan until the cache expired,
+// even though the cookie itself was already correct.
 import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
+
+export const dynamic = "force-dynamic";
 
 /**
  * GET /api/user/me
@@ -19,7 +28,9 @@ export async function GET() {
     }
 
     // user already has all fields from the JWT — no DB call needed
-    return NextResponse.json(user);
+    return NextResponse.json(user, {
+      headers: { "Cache-Control": "no-store" },
+    });
   } catch (err) {
     console.error("GET /api/user/me error:", err);
     return NextResponse.json(
