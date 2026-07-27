@@ -46,23 +46,15 @@ const plans = [
     button: "Upgrade to Premium",
   },
 ];
-function derivePlan(subscription_start, subscription_end, subscription_status) {
-  if (!subscription_start || !subscription_end || subscription_status !== "active") {
+
+function derivePlan(plan, subscription_end, subscription_status) {
+  if (!plan || !subscription_end || subscription_status !== "active") {
     return "free";
   }
 
-  // Check if subscription has expired
   if (new Date(subscription_end) < new Date()) return "free";
 
-  const start = new Date(subscription_start);
-  const end = new Date(subscription_end);
-  const days = Math.round((end - start) / (1000 * 60 * 60 * 24));
-
-  if (days <= 30) return "pro";
-  if (days <= 90) return "plus";
-  if (days <= 365) return "premium";
-
-  return "free";
+  return plan;
 }
 
 export default function PricingPage() {
@@ -102,7 +94,7 @@ export default function PricingPage() {
   }, []);
 
   const currentPlan = derivePlan(
-    user?.subscription_start,
+    user?.plan,
     user?.subscription_end,
     user?.subscription_status,
   );
@@ -304,12 +296,12 @@ export default function PricingPage() {
 
                   {/* CTA */}
                   <button
-                    disabled={isCurrent}
+                    disabled={isCurrent || (isFree && currentPlan !== "free")}
                     className={`pricing-btn mt-6 w-full rounded-xl py-2.5 text-sm font-semibold ${
                       isCurrent
                         ? "bg-green-500 text-white cursor-not-allowed opacity-80"
                         : isFree
-                          ? "bg-gray-900 text-white hover:bg-gray-800"
+                          ? "bg-gray-900 text-white hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-gray-900"
                           : "bg-blue-600 text-white hover:bg-blue-500"
                     }`}
                     onClick={() => handleUpgrade(plan.name.toLowerCase())}
