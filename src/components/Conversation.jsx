@@ -924,12 +924,12 @@ export default function Conversation({ gameId, receiverId }) {
                 </div>
                 <div className="space-y-2">
                   <p className="text-sm font-semibold">Choose Payment Method</p>
-                  <button
+                  {/* <button
                     onClick={() => setPaymentMethod("paystack")}
                     className={`w-full py-2 rounded border ${paymentMethod === "paystack" ? "bg-blue-100 border-blue-500" : ""}`}
                   >
                     Pay with Card / Bank (Flutterwave)
-                  </button>
+                  </button> */}
                   <button
                     onClick={() => setPaymentMethod("wallet")}
                     className={`w-full py-2 rounded border ${paymentMethod === "wallet" ? "bg-blue-100 border-blue-500" : ""}`}
