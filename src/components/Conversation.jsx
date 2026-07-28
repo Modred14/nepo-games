@@ -922,24 +922,25 @@ export default function Conversation({ gameId, receiverId }) {
                   Make sure you confirm all details before payment. Refunds are
                   only possible via dispute system.
                 </div>
-                <div className="space-y-2">
+                {/* <div className="space-y-2">
                   <p className="text-sm font-semibold">Choose Payment Method</p>
-                  {/* <button
+                  <button
                     onClick={() => setPaymentMethod("paystack")}
                     className={`w-full py-2 rounded border ${paymentMethod === "paystack" ? "bg-blue-100 border-blue-500" : ""}`}
                   >
                     Pay with Card / Bank (Flutterwave)
-                  </button> */}
+                  </button>
                   <button
-                    onClick={() => setPaymentMethod("wallet")}
+                    onClick={() =>setPaymentMethod("wallet") }
                     className={`w-full py-2 rounded border ${paymentMethod === "wallet" ? "bg-blue-100 border-blue-500" : ""}`}
                   >
                     Pay with Account Balance
                   </button>
-                </div>
+                </div> */}
                 <div className="flex gap-2">
                   <button
                     onClick={() => {
+                      setPaymentMethod("wallet")
                       setBuyModal(false);
                       setPayError("");
                       setPaymentMethod("");

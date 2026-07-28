@@ -1,10 +1,19 @@
-// ORIGINAL ROUTE: src/app/api/paystack/buy/initialize/route.js
-// CHANGED: only the card/bank checkout branch below (previously "PAYSTACK
-// PAYMENT") now calls Flutterwave's /v3/payments instead of Paystack's
-// transaction/initialize. The `paymentMethod === "paystack"` string check
-// was deliberately left AS-IS (not renamed to "flutterwave") so the
-// frontend, DB columns, and check-constraints referencing this value don't
-// also need to change — it's now just an internal label for "pay by
+// ROUTE: src/app/api/paystack/buy/initialize/route.js
+// CHANGED (this pass): in the card/bank checkout branch, added a temporary
+// console.log of the raw Flutterwave /v3/payments response (to diagnose the
+// "Cannot GET /" checkout error — the redirect URL returned was missing its
+// trailing /flwlnk-... id), plus a guard that now checks flwData.data.link
+// actually looks like a real hosted-pay link before returning it as
+// authorization_url. If it doesn't, we roll back and return a clean 500
+// instead of handing the frontend a broken redirect. Remove the console.log
+// once the raw response has been inspected and the root cause confirmed.
+//
+// PRIOR CHANGE: only the card/bank checkout branch below (previously
+// "PAYSTACK PAYMENT") now calls Flutterwave's /v3/payments instead of
+// Paystack's transaction/initialize. The `paymentMethod === "paystack"`
+// string check was deliberately left AS-IS (not renamed to "flutterwave")
+// so the frontend, DB columns, and check-constraints referencing this value
+// don't also need to change — it's now just an internal label for "pay by
 // card/bank checkout" rather than literally meaning "via Paystack".
 import pool from "@/lib/db";
 import { requireUser } from "@/lib/auth";
@@ -123,6 +132,12 @@ export async function POST(req) {
       // WALLET PAYMENT — unchanged, no external provider involved
       // ─────────────────────────────────────────────
       if (paymentMethod === "wallet") {
+        // NOTE: `FOR UPDATE` cannot be combined with an aggregate (SUM) in
+        // the same SELECT — Postgres errors with "FOR UPDATE is not allowed
+        // with aggregate functions" because it can't determine which row(s)
+        // to lock once they're collapsed into one aggregate value. Fix:
+        // lock the raw rows first in a subquery, then aggregate the
+        // already-locked rows in the outer query.
         const balanceResult = await client.query(
           `SELECT
              COALESCE(SUM(
@@ -131,9 +146,12 @@ export async function POST(req) {
                  WHEN type = 'debit'  THEN -amount
                END
              ), 0) AS balance
-           FROM users_transactions
-           WHERE user_id = $1 AND status = 'success'
-           FOR UPDATE`,
+           FROM (
+             SELECT amount, type
+             FROM users_transactions
+             WHERE user_id = $1 AND status = 'success'
+             FOR UPDATE
+           ) locked_rows`,
           [user.id],
         );
 
@@ -268,7 +286,31 @@ export async function POST(req) {
 
         const flwData = await flwRes.json();
 
+        // TEMP DEBUG: log the raw Flutterwave response so we can see exactly
+        // what came back (e.g. status "success" but a malformed/incomplete
+        // data.link) when diagnosing the "Cannot GET /" checkout issue.
+        // Remove once confirmed fixed.
+        console.log("Flutterwave /v3/payments raw response:", flwRes.status, JSON.stringify(flwData));
+
         if (flwData.status !== "success") {
+          await client.query("ROLLBACK");
+          return Response.json(
+            { error: "Payment init failed" },
+            { status: 500 },
+          );
+        }
+
+        // Guard: Flutterwave can report status "success" at the top level
+        // while data.link is missing or malformed (e.g. missing the
+        // "/flwlnk-..." suffix, causing the checkout host to 404 with
+        // "Cannot GET /"). Catch that here instead of handing the frontend
+        // a broken redirect URL.
+        const paymentLink = flwData?.data?.link;
+        if (!paymentLink || !/^https:\/\/[^/]+\/v3\/hosted\/pay\/.+/.test(paymentLink)) {
+          console.error(
+            "Flutterwave returned success but no usable payment link:",
+            JSON.stringify(flwData),
+          );
           await client.query("ROLLBACK");
           return Response.json(
             { error: "Payment init failed" },
@@ -284,7 +326,7 @@ export async function POST(req) {
         await client.query("COMMIT");
 
         return Response.json({
-          authorization_url: flwData.data.link,
+          authorization_url: paymentLink,
           transactionId: transaction.id,
         });
       }
