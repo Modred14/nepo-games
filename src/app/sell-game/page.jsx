@@ -115,9 +115,11 @@ export default function SellGame() {
   };
 
   const isLocked = step === "submitting";
+  const allPhotosReady = images.length === 5 && images.every((img) => !img.uploading);
 
   const handleClick = (e) => {
     e.preventDefault();
+    if (!allPhotosReady) return;
     if (step === "idle") {
       setStep("confirming");
       setTimer(10);
@@ -652,6 +654,13 @@ export default function SellGame() {
         }
 
         .submit-btn:disabled {
+          background: #CBD5E1 !important;
+          box-shadow: none !important;
+          cursor: not-allowed;
+          opacity: 1;
+        }
+
+        .submit-btn:disabled:hover {
           transform: none !important;
         }
 
@@ -692,6 +701,13 @@ export default function SellGame() {
           font-size: 12px;
           color: #94A3B8;
           font-weight: 500;
+        }
+
+        .photos-needed-note {
+          text-align: center;
+          font-size: 12.5px;
+          color: #94A3B8;
+          margin-top: 10px;
         }
 
         .success-card {
@@ -978,7 +994,7 @@ export default function SellGame() {
               <div className="cta-section">
                 <button
                   type="submit"
-                  disabled={step === "confirming" || step === "submitting"}
+                  disabled={!allPhotosReady || step === "confirming" || step === "submitting"}
                   className={`submit-btn ${step}`}
                 >
                   {step === "idle" && (
@@ -986,7 +1002,7 @@ export default function SellGame() {
                       <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
                         <path d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                       </svg>
-                      List My Account
+                      {allPhotosReady ? "List My Account" : `Upload ${5 - images.length} more photo${5 - images.length === 1 ? "" : "s"}`}
                     </>
                   )}
                   {step === "confirming" && (
@@ -1015,6 +1031,14 @@ export default function SellGame() {
                   )}
                 </button>
 
+                {!allPhotosReady && step === "idle" && (
+                  <p className="photos-needed-note">
+                    {images.some((img) => img.uploading)
+                      ? "Waiting for photos to finish uploading…"
+                      : `Add ${5 - images.length} more screenshot${5 - images.length === 1 ? "" : "s"} to continue`}
+                  </p>
+                )}
+
                 <div className="trust-row">
                   <span className="trust-item">
                     <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M8 1L2 3.5v5C2 12 5 14.5 8 15c3-0.5 6-3 6-6.5v-5L8 1z" stroke="#94A3B8" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/></svg>
@@ -1024,10 +1048,6 @@ export default function SellGame() {
                     <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="#94A3B8" strokeWidth="1.3"/><path d="M5.5 8l2 2 3-3" stroke="#94A3B8" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/></svg>
                     No Upfront Fees
                   </span>
-                  {/* <span className="trust-item">
-                    <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M8 2a3 3 0 100 6 3 3 0 000-6zm-5 10a5 5 0 0110 0H3z" fill="#94A3B8"/></svg>
-                    Verified Buyers Only
-                  </span> */}
                 </div>
               </div>
 
