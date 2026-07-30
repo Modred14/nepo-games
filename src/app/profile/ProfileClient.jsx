@@ -7,6 +7,7 @@ import {
   Eye,
   EyeOff,
   Upload,
+  Store,
   Lock,
   User,
   Shield,
@@ -97,10 +98,13 @@ export default function AccountSettingsPage() {
           { label: "Security", tab: "password", icon: <Lock size={12} /> },
           { label: "Linked", tab: "linked", icon: <LinkIcon size={12} /> },
           { label: "Privacy", tab: "data", icon: <Shield size={12} /> },
+          { label: "Marketplace", tab: "market", icon: <Store size={12} />},
         ].map(({ label, tab, icon }) => (
           <button
             key={tab}
-            onClick={() => changeTab(tab)}
+            onClick={() =>
+              tab === "market" ? router.push("/marketplace") : changeTab(tab)
+            }
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-medium whitespace-nowrap
         transition-all duration-200 flex-shrink-0 border
         ${
@@ -153,13 +157,14 @@ export default function AccountSettingsPage() {
             onClick={() => changeTab("data")}
             disabled={globalLoading}
           />
-          {/* <TabButton
-            icon={<Bell size={16} />}
-            label="Notifications"
-            active={activeTab === "notifications"}
-            onClick={() => setActiveTab("notifications")}
+          <TabButton
+            icon={<Store size={16} />}
+            label="Marketplace"
+            onClick={() => {
+              router.push("/marketplace");
+            }}
             disabled={globalLoading}
-          /> */}
+          />
         </div>
 
         {/* Content */}
@@ -182,7 +187,6 @@ export default function AccountSettingsPage() {
           )}
           {activeTab === "linked" && <LInkedTab />}
           {activeTab === "data" && <DataTab />}
-          {/* {activeTab === "notifications" && <NotificationTab />} */}
         </div>
       </div>
     </div>
@@ -897,7 +901,9 @@ function AccountTab({ user }) {
 
   const currentTransactions = transactions.slice(start, end);
 
-  useEffect(() => { setLoadingWithdraw(false); }, []);
+  useEffect(() => {
+    setLoadingWithdraw(false);
+  }, []);
 
   useEffect(() => {
     if (accountNumber.length !== 10 || !bankCode) return;
@@ -911,7 +917,10 @@ function AccountTab({ user }) {
           body: JSON.stringify({ accountNumber, bankCode }),
         });
         const data = await res.json();
-        if (!res.ok) { setAccountName(""); return; }
+        if (!res.ok) {
+          setAccountName("");
+          return;
+        }
         setAccountName(data.accountName);
       } catch (err) {
         console.error(err);
@@ -926,7 +935,10 @@ function AccountTab({ user }) {
   const fetchAccount = async () => {
     try {
       const res = await fetch("/api/user/account");
-      if (!res.ok) { console.error("Failed to load account"); return; }
+      if (!res.ok) {
+        console.error("Failed to load account");
+        return;
+      }
       const data = await res.json();
       setBalance(Number(data.balance || 0));
       setTransactions(data.transactions || []);
@@ -938,12 +950,17 @@ function AccountTab({ user }) {
     }
   };
 
-  useEffect(() => { fetchAccount(); }, []);
+  useEffect(() => {
+    fetchAccount();
+  }, []);
 
   const fetchVirtualAccount = async () => {
     try {
       const res = await fetch("/api/user/virtual-account");
-      if (!res.ok) { setLoadingVA(false); return; }
+      if (!res.ok) {
+        setLoadingVA(false);
+        return;
+      }
       const data = await res.json();
       setVirtualAccount(data.virtualAccount || null);
     } catch (err) {
@@ -953,7 +970,9 @@ function AccountTab({ user }) {
     }
   };
 
-  useEffect(() => { fetchVirtualAccount(); }, []);
+  useEffect(() => {
+    fetchVirtualAccount();
+  }, []);
 
   const handleActivateVirtualAccount = async () => {
     setVaError("");
@@ -983,7 +1002,9 @@ function AccountTab({ user }) {
         }
         if (data.error === "dva_unavailable") {
           setVaUnavailable(true);
-          setVaError(data.message || "Bank transfer funding isn't available yet.");
+          setVaError(
+            data.message || "Bank transfer funding isn't available yet.",
+          );
           return;
         }
         setVaError(data.error || "Something went wrong. Please try again.");
@@ -1012,18 +1033,25 @@ function AccountTab({ user }) {
 
   const triggerAnimation = () => {
     setShowLine(false);
-    requestAnimationFrame(() => { setShowLine(true); });
+    requestAnimationFrame(() => {
+      setShowLine(true);
+    });
   };
 
   const searchParams = useSearchParams();
   useEffect(() => {
     const tab = searchParams.get("tab");
-    if (tab) { triggerAnimation(); }
+    if (tab) {
+      triggerAnimation();
+    }
   }, [searchParams]);
 
   const handleAddMoney = async () => {
     const value = Number(amount);
-    if (!value || value < 100) { setError("Amount must be greater than ₦100.00"); return; }
+    if (!value || value < 100) {
+      setError("Amount must be greater than ₦100.00");
+      return;
+    }
     try {
       setLoadingPay(true);
       const res = await fetch("/api/paystack/wallet/initialize", {
@@ -1032,7 +1060,11 @@ function AccountTab({ user }) {
         body: JSON.stringify({ amount: Number(amount), purpose: "wallet" }),
       });
       const data = await res.json();
-      if (!res.ok) { console.error(data.error); setLoadingPay(false); return; }
+      if (!res.ok) {
+        console.error(data.error);
+        setLoadingPay(false);
+        return;
+      }
       window.location.href = data.url;
     } catch (err) {
       console.error("Payment init failed:", err);
@@ -1041,7 +1073,10 @@ function AccountTab({ user }) {
   };
 
   const formatMoney = (value) =>
-    new Intl.NumberFormat("en-NG", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
+    new Intl.NumberFormat("en-NG", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(value);
 
   useEffect(() => {
     // CHANGED: was a direct client-side call to Paystack's public /bank
@@ -1059,24 +1094,46 @@ function AccountTab({ user }) {
 
   const handleWithdraw = async () => {
     const value = Number(withdrawAmount);
-    if (!value || value <= 0) { setWithdrawError("Enter a valid amount"); return; }
-    if (!withdrawPin || withdrawPin.length !== 4) { setWithdrawError("Enter valid PIN"); return; }
-    if (value < 100) { setWithdrawError("Minimum withdrawal is ₦100.00"); return; }
-    if (value > balance) { setWithdrawError("Insufficient balance"); return; }
+    if (!value || value <= 0) {
+      setWithdrawError("Enter a valid amount");
+      return;
+    }
+    if (!withdrawPin || withdrawPin.length !== 4) {
+      setWithdrawError("Enter valid PIN");
+      return;
+    }
+    if (value < 100) {
+      setWithdrawError("Minimum withdrawal is ₦100.00");
+      return;
+    }
+    if (value > balance) {
+      setWithdrawError("Insufficient balance");
+      return;
+    }
     try {
       setLoadingWithdraw(true);
       const res = await fetch("/api/user/withdraw", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount: value, accountNumber, bankCode, accountName, pin: withdrawPin }),
+        body: JSON.stringify({
+          amount: value,
+          accountNumber,
+          bankCode,
+          accountName,
+          pin: withdrawPin,
+        }),
       });
       const data = await res.json();
-      if (!res.ok) { setWithdrawError(data.error || "Withdrawal failed"); setLoadingWithdraw(false); return; }
+      if (!res.ok) {
+        setWithdrawError(data.error || "Withdrawal failed");
+        setLoadingWithdraw(false);
+        return;
+      }
       setShowWithdrawModal(false);
       setWithdrawAmount("");
       setWithdrawError("");
       fetchAccount();
-      setShowPinConfirm(false)
+      setShowPinConfirm(false);
     } catch (err) {
       console.error(err);
       setWithdrawError("Network error");
@@ -1091,7 +1148,9 @@ function AccountTab({ user }) {
     setSavedBanks(data.banks || []);
   };
 
-  useEffect(() => { fetchBanks(); }, []);
+  useEffect(() => {
+    fetchBanks();
+  }, []);
 
   const maskAccountNumber = (acc) => {
     if (!acc || acc.length < 7) return acc;
@@ -1101,7 +1160,8 @@ function AccountTab({ user }) {
     return `${first}${stars}${last}`;
   };
 
-  const getFirstTwoNames = (fullName) => fullName.split(" ").slice(0, 2).join(" ");
+  const getFirstTwoNames = (fullName) =>
+    fullName.split(" ").slice(0, 2).join(" ");
   const getFirstName = (fullName) => fullName.split(" ").slice(0, 3).join(" ");
 
   if (loading) return <AccountTabSkeleton />;
@@ -1570,41 +1630,85 @@ function AccountTab({ user }) {
 
       {/* ── PIN Confirm Overlay ───────────────────────────────────── */}
       {showPinConfirm && (
-        <div className="at-overlay" style={{
-          position: "fixed", inset: 0, zIndex: 9999,
-          display: "flex", alignItems: "center", justifyContent: "center",
-          background: "rgba(15,23,42,0.55)", backdropFilter: "blur(6px)",
-        }}>
+        <div
+          className="at-overlay"
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 9999,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "rgba(15,23,42,0.55)",
+            backdropFilter: "blur(6px)",
+          }}
+        >
           {user?.pin_set ? (
-            <div className="at-modal" style={{
-              width: "92%", maxWidth: 360,
-              background: "#fff",
-              borderRadius: 20,
-              padding: "28px 24px",
-              boxShadow: "0 20px 60px rgba(0,0,0,0.18), 0 0 0 1px rgba(0,0,0,0.06)",
-            }}>
+            <div
+              className="at-modal"
+              style={{
+                width: "92%",
+                maxWidth: 360,
+                background: "#fff",
+                borderRadius: 20,
+                padding: "28px 24px",
+                boxShadow:
+                  "0 20px 60px rgba(0,0,0,0.18), 0 0 0 1px rgba(0,0,0,0.06)",
+              }}
+            >
               <div style={{ textAlign: "center", marginBottom: 4 }}>
-                <div style={{
-                  width: 48, height: 48, borderRadius: "50%",
-                  background: "#eff6ff", margin: "0 auto 12px",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                }}>
-                  <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="#2563eb" strokeWidth="2">
-                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                <div
+                  style={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: "50%",
+                    background: "#eff6ff",
+                    margin: "0 auto 12px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <svg
+                    width="22"
+                    height="22"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="#2563eb"
+                    strokeWidth="2"
+                  >
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
                   </svg>
                 </div>
-                <p style={{ fontSize: 16, fontWeight: 700, color: "#0f172a", margin: 0 }}>Confirm your PIN</p>
-                <p style={{ fontSize: 13, color: "#64748b", marginTop: 4 }}>Enter your 4-digit transaction PIN</p>
+                <p
+                  style={{
+                    fontSize: 16,
+                    fontWeight: 700,
+                    color: "#0f172a",
+                    margin: 0,
+                  }}
+                >
+                  Confirm your PIN
+                </p>
+                <p style={{ fontSize: 13, color: "#64748b", marginTop: 4 }}>
+                  Enter your 4-digit transaction PIN
+                </p>
               </div>
 
               {withdrawError && (
-                <div style={{
-                  background: "#fef2f2", border: "1px solid #fecaca",
-                  borderRadius: 8, padding: "8px 12px",
-                  fontSize: 12, color: "#dc2626", textAlign: "center",
-                  marginTop: 12,
-                }}>
+                <div
+                  style={{
+                    background: "#fef2f2",
+                    border: "1px solid #fecaca",
+                    borderRadius: 8,
+                    padding: "8px 12px",
+                    fontSize: 12,
+                    color: "#dc2626",
+                    textAlign: "center",
+                    marginTop: 12,
+                  }}
+                >
                   {withdrawError}
                 </div>
               )}
@@ -1614,46 +1718,101 @@ function AccountTab({ user }) {
               </div>
 
               <div style={{ display: "flex", gap: 10, marginTop: 22 }}>
-                <button className="at-modal-btn-ghost"
-                  onClick={() => { setShowPinConfirm(false); setWithdrawPin(""); }}>
+                <button
+                  className="at-modal-btn-ghost"
+                  onClick={() => {
+                    setShowPinConfirm(false);
+                    setWithdrawPin("");
+                  }}
+                >
                   Cancel
                 </button>
-                <button className="at-modal-btn-primary"
+                <button
+                  className="at-modal-btn-primary"
                   onClick={handleWithdraw}
-                  disabled={loadingWithdraw}>
-                  {loadingWithdraw ? <><span className="at-spin" /> Processing…</> : "Confirm withdrawal"}
+                  disabled={loadingWithdraw}
+                >
+                  {loadingWithdraw ? (
+                    <>
+                      <span className="at-spin" /> Processing…
+                    </>
+                  ) : (
+                    "Confirm withdrawal"
+                  )}
                 </button>
               </div>
             </div>
           ) : (
-            <div className="at-modal" style={{
-              width: "92%", maxWidth: 340,
-              background: "#fff",
-              borderRadius: 20,
-              padding: "28px 24px",
-              boxShadow: "0 20px 60px rgba(0,0,0,0.18)",
-              textAlign: "center",
-            }}>
-              <div style={{
-                width: 48, height: 48, borderRadius: "50%",
-                background: "#fff7ed", margin: "0 auto 14px",
-                display: "flex", alignItems: "center", justifyContent: "center",
-              }}>
-                <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="#ea580c" strokeWidth="2">
-                  <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+            <div
+              className="at-modal"
+              style={{
+                width: "92%",
+                maxWidth: 340,
+                background: "#fff",
+                borderRadius: 20,
+                padding: "28px 24px",
+                boxShadow: "0 20px 60px rgba(0,0,0,0.18)",
+                textAlign: "center",
+              }}
+            >
+              <div
+                style={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: "50%",
+                  background: "#fff7ed",
+                  margin: "0 auto 14px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <svg
+                  width="22"
+                  height="22"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="#ea580c"
+                  strokeWidth="2"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" y1="8" x2="12" y2="12" />
+                  <line x1="12" y1="16" x2="12.01" y2="16" />
                 </svg>
               </div>
-              <p style={{ fontSize: 16, fontWeight: 700, color: "#0f172a", margin: 0 }}>PIN not set</p>
-              <p style={{ fontSize: 13, color: "#64748b", marginTop: 6, marginBottom: 18 }}>
+              <p
+                style={{
+                  fontSize: 16,
+                  fontWeight: 700,
+                  color: "#0f172a",
+                  margin: 0,
+                }}
+              >
+                PIN not set
+              </p>
+              <p
+                style={{
+                  fontSize: 13,
+                  color: "#64748b",
+                  marginTop: 6,
+                  marginBottom: 18,
+                }}
+              >
                 You need a transaction PIN before withdrawing funds.
               </p>
               <Link href="/profile?tab=password">
-                <button style={{
-                  background: "#dc2626", color: "#fff",
-                  border: "none", borderRadius: 10,
-                  padding: "10px 24px", fontSize: 13, fontWeight: 600,
-                  cursor: "pointer",
-                }}>
+                <button
+                  style={{
+                    background: "#dc2626",
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: 10,
+                    padding: "10px 24px",
+                    fontSize: 13,
+                    fontWeight: 600,
+                    cursor: "pointer",
+                  }}
+                >
                   Set up PIN
                 </button>
               </Link>
@@ -1664,43 +1823,108 @@ function AccountTab({ user }) {
 
       {/* ── Fund Wallet Modal ─────────────────────────────────────── */}
       {showModal && (
-        <div className="at-overlay" style={{
-          position: "fixed", inset: 0, zIndex: 50,
-          display: "flex", alignItems: "center", justifyContent: "center",
-          background: "rgba(15,23,42,0.55)", backdropFilter: "blur(6px)",
-        }}>
-          <div className="at-modal border border-gray-200/10" style={{
-            background: "#fff", width: "92%", maxWidth: 380,
-            borderRadius: 20, padding: "28px 24px",
-            boxShadow: "0 20px 60px rgba(0,0,0,0.18)",
-          }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
-              <div style={{
-                width: 42, height: 42, borderRadius: 12,
-                background: "#eff6ff",
-                display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-              }}>
-                <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="#2563eb" strokeWidth="2">
-                  <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>
+        <div
+          className="at-overlay"
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 50,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "rgba(15,23,42,0.55)",
+            backdropFilter: "blur(6px)",
+          }}
+        >
+          <div
+            className="at-modal border border-gray-200/10"
+            style={{
+              background: "#fff",
+              width: "92%",
+              maxWidth: 380,
+              borderRadius: 20,
+              padding: "28px 24px",
+              boxShadow: "0 20px 60px rgba(0,0,0,0.18)",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 12,
+                marginBottom: 20,
+              }}
+            >
+              <div
+                style={{
+                  width: 42,
+                  height: 42,
+                  borderRadius: 12,
+                  background: "#eff6ff",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexShrink: 0,
+                }}
+              >
+                <svg
+                  width="20"
+                  height="20"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="#2563eb"
+                  strokeWidth="2"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" y1="8" x2="12" y2="16" />
+                  <line x1="8" y1="12" x2="16" y2="12" />
                 </svg>
               </div>
               <div>
-                <p style={{ fontSize: 16, fontWeight: 700, color: "#0f172a", margin: 0 }}>Fund wallet</p>
-                <p className="text-gray-700" style={{ fontSize: 12.5, fontWeight: 600, marginTop: 2 }}>Minimum deposit ₦100</p>
+                <p
+                  style={{
+                    fontSize: 16,
+                    fontWeight: 700,
+                    color: "#0f172a",
+                    margin: 0,
+                  }}
+                >
+                  Fund wallet
+                </p>
+                <p
+                  className="text-gray-700"
+                  style={{ fontSize: 12.5, fontWeight: 600, marginTop: 2 }}
+                >
+                  Minimum deposit ₦100
+                </p>
               </div>
             </div>
 
             {error && (
-              <div style={{
-                background: "#fef2f2", border: "1px solid #fecaca",
-                borderRadius: 8, padding: "8px 12px",
-                fontSize: 12, color: "#dc2626", marginBottom: 12,
-              }}>
+              <div
+                style={{
+                  background: "#fef2f2",
+                  border: "1px solid #fecaca",
+                  borderRadius: 8,
+                  padding: "8px 12px",
+                  fontSize: 12,
+                  color: "#dc2626",
+                  marginBottom: 12,
+                }}
+              >
                 {error}
               </div>
             )}
 
-            <label className="font-bold" style={{ fontSize: 11.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+            <label
+              className="font-bold"
+              style={{
+                fontSize: 11.5,
+                fontWeight: 700,
+                textTransform: "uppercase",
+                letterSpacing: "0.06em",
+              }}
+            >
               Amount (₦)
             </label>
             <input
@@ -1709,15 +1933,37 @@ function AccountTab({ user }) {
               onChange={(e) => setAmount(e.target.value)}
               placeholder="0.00"
               className="at-input"
-              style={{ marginTop: 6, marginBottom: 20, fontSize: 18, fontWeight: 600 }}
+              style={{
+                marginTop: 6,
+                marginBottom: 20,
+                fontSize: 18,
+                fontWeight: 600,
+              }}
             />
 
             <div style={{ display: "flex", gap: 10 }}>
-              <button className="at-modal-btn-ghost" onClick={() => { setShowModal(false); setAmount(""); setError(""); }}>
+              <button
+                className="at-modal-btn-ghost"
+                onClick={() => {
+                  setShowModal(false);
+                  setAmount("");
+                  setError("");
+                }}
+              >
                 Cancel
               </button>
-              <button className="at-modal-btn-primary" onClick={handleAddMoney} disabled={loadingPay}>
-                {loadingPay ? <><span className="at-spin" /> Processing…</> : "Continue to pay"}
+              <button
+                className="at-modal-btn-primary"
+                onClick={handleAddMoney}
+                disabled={loadingPay}
+              >
+                {loadingPay ? (
+                  <>
+                    <span className="at-spin" /> Processing…
+                  </>
+                ) : (
+                  "Continue to pay"
+                )}
               </button>
             </div>
           </div>
@@ -1726,29 +1972,69 @@ function AccountTab({ user }) {
 
       {/* ── Account Details Modal (bank transfer funding) ───────────── */}
       {showVaModal && virtualAccount && (
-        <div className="at-overlay" style={{
-          position: "fixed", inset: 0, zIndex: 50,
-          display: "flex", alignItems: "center", justifyContent: "center",
-          background: "rgba(15,23,42,0.55)", backdropFilter: "blur(6px)",
-          padding: 16,
-        }}>
-          <div className="at-modal" style={{
-            background: "#fff", width: "100%", maxWidth: 400,
-            borderRadius: 22, padding: "22px 20px 24px",
-            boxShadow: "0 20px 60px rgba(0,0,0,0.18)",
-          }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+        <div
+          className="at-overlay"
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 50,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "rgba(15,23,42,0.55)",
+            backdropFilter: "blur(6px)",
+            padding: 16,
+          }}
+        >
+          <div
+            className="at-modal"
+            style={{
+              background: "#fff",
+              width: "100%",
+              maxWidth: 400,
+              borderRadius: 22,
+              padding: "22px 20px 24px",
+              boxShadow: "0 20px 60px rgba(0,0,0,0.18)",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginBottom: 16,
+              }}
+            >
               <div>
-                <p style={{ fontSize: 15.5, fontWeight: 700, color: "#0f172a", margin: 0 }}>Account details</p>
-                <p style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>Transfer here anytime to fund your wallet</p>
+                <p
+                  style={{
+                    fontSize: 15.5,
+                    fontWeight: 700,
+                    color: "#0f172a",
+                    margin: 0,
+                  }}
+                >
+                  Account details
+                </p>
+                <p style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>
+                  Transfer here anytime to fund your wallet
+                </p>
               </div>
               <button
                 onClick={() => setShowVaModal(false)}
                 aria-label="Close"
                 style={{
-                  width: 30, height: 30, borderRadius: 9, flexShrink: 0,
-                  border: "none", background: "#f1f5f9", color: "#64748b",
-                  display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer",
+                  width: 30,
+                  height: 30,
+                  borderRadius: 9,
+                  flexShrink: 0,
+                  border: "none",
+                  background: "#f1f5f9",
+                  color: "#64748b",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  cursor: "pointer",
                 }}
               >
                 <X size={15} />
@@ -1759,15 +2045,53 @@ function AccountTab({ user }) {
               <div className="at-va-card-top">
                 <div className="at-va-chip">
                   <svg width="26" height="20" viewBox="0 0 26 20" fill="none">
-                    <rect x="0.5" y="0.5" width="25" height="19" rx="3.5" fill="url(#at-chip-grad)" stroke="rgba(255,255,255,0.35)"/>
-                    <line x1="8.5" y1="0.5" x2="8.5" y2="19.5" stroke="rgba(255,255,255,0.3)"/>
-                    <line x1="17.5" y1="0.5" x2="17.5" y2="19.5" stroke="rgba(255,255,255,0.3)"/>
-                    <line x1="0.5" y1="7" x2="25.5" y2="7" stroke="rgba(255,255,255,0.3)"/>
-                    <line x1="0.5" y1="13" x2="25.5" y2="13" stroke="rgba(255,255,255,0.3)"/>
+                    <rect
+                      x="0.5"
+                      y="0.5"
+                      width="25"
+                      height="19"
+                      rx="3.5"
+                      fill="url(#at-chip-grad)"
+                      stroke="rgba(255,255,255,0.35)"
+                    />
+                    <line
+                      x1="8.5"
+                      y1="0.5"
+                      x2="8.5"
+                      y2="19.5"
+                      stroke="rgba(255,255,255,0.3)"
+                    />
+                    <line
+                      x1="17.5"
+                      y1="0.5"
+                      x2="17.5"
+                      y2="19.5"
+                      stroke="rgba(255,255,255,0.3)"
+                    />
+                    <line
+                      x1="0.5"
+                      y1="7"
+                      x2="25.5"
+                      y2="7"
+                      stroke="rgba(255,255,255,0.3)"
+                    />
+                    <line
+                      x1="0.5"
+                      y1="13"
+                      x2="25.5"
+                      y2="13"
+                      stroke="rgba(255,255,255,0.3)"
+                    />
                     <defs>
-                      <linearGradient id="at-chip-grad" x1="0" y1="0" x2="26" y2="20">
-                        <stop stopColor="#fde68a"/>
-                        <stop offset="1" stopColor="#d4a94a"/>
+                      <linearGradient
+                        id="at-chip-grad"
+                        x1="0"
+                        y1="0"
+                        x2="26"
+                        y2="20"
+                      >
+                        <stop stopColor="#fde68a" />
+                        <stop offset="1" stopColor="#d4a94a" />
                       </linearGradient>
                     </defs>
                   </svg>
@@ -1780,19 +2104,46 @@ function AccountTab({ user }) {
 
               <div className="at-va-number-row">
                 <div className="at-va-number">
-                  {virtualAccount.account_number.match(/.{1,10}/g).map((chunk, i) => (
-                    <span key={i} className="at-va-group">{chunk}</span>
-                  ))}
+                  {virtualAccount.account_number
+                    .match(/.{1,10}/g)
+                    .map((chunk, i) => (
+                      <span key={i} className="at-va-group">
+                        {chunk}
+                      </span>
+                    ))}
                 </div>
-                <button onClick={handleCopyVirtualAccount} className="at-va-copy" aria-label="Copy account number">
+                <button
+                  onClick={handleCopyVirtualAccount}
+                  className="at-va-copy"
+                  aria-label="Copy account number"
+                >
                   {copiedVA ? (
                     <>
-                      <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                      <svg
+                        width="13"
+                        height="13"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                      >
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
                       Copied
                     </>
                   ) : (
                     <>
-                      <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                      <svg
+                        width="13"
+                        height="13"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      >
+                        <rect x="9" y="9" width="13" height="13" rx="2" />
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                      </svg>
                       Copy
                     </>
                   )}
@@ -1811,11 +2162,22 @@ function AccountTab({ user }) {
               </div>
             </div>
 
-            <p style={{ fontSize: 12, color: "#94a3b8", marginTop: 14, textAlign: "center" }}>
+            <p
+              style={{
+                fontSize: 12,
+                color: "#94a3b8",
+                marginTop: 14,
+                textAlign: "center",
+              }}
+            >
               Transfers land in your wallet automatically — no need to confirm.
             </p>
 
-            <button className="at-modal-btn-primary" style={{ width: "100%", marginTop: 16 }} onClick={() => setShowVaModal(false)}>
+            <button
+              className="at-modal-btn-primary"
+              style={{ width: "100%", marginTop: 16 }}
+              onClick={() => setShowVaModal(false)}
+            >
               Done
             </button>
           </div>
@@ -1824,58 +2186,162 @@ function AccountTab({ user }) {
 
       {/* ── Withdraw Modal ────────────────────────────────────────── */}
       {showWithdrawModal && (
-        <div className="at-overlay" style={{
-          position: "fixed", inset: 0, zIndex: 50,
-          display: "flex", alignItems: "center", justifyContent: "center",
-          background: "rgba(15,23,42,0.55)", backdropFilter: "blur(6px)",
-        }}>
-          <div className="at-modal" style={{
-            background: "#fff", width: "92%", maxWidth: 400,
-            borderRadius: 20, padding: "28px 24px",
-            boxShadow: "0 20px 60px rgba(0,0,0,0.18)",
-            maxHeight: "90vh", overflowY: "auto",
-          }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
-              <div style={{
-                width: 42, height: 42, borderRadius: 12,
-                background: "#f0fdf4",
-                display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-              }}>
-                <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="#16a34a" strokeWidth="2">
-                  <polyline points="17 11 12 6 7 11"/><line x1="12" y1="6" x2="12" y2="18"/>
-                  <path d="M4 18h16"/>
+        <div
+          className="at-overlay"
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 50,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "rgba(15,23,42,0.55)",
+            backdropFilter: "blur(6px)",
+          }}
+        >
+          <div
+            className="at-modal"
+            style={{
+              background: "#fff",
+              width: "92%",
+              maxWidth: 400,
+              borderRadius: 20,
+              padding: "28px 24px",
+              boxShadow: "0 20px 60px rgba(0,0,0,0.18)",
+              maxHeight: "90vh",
+              overflowY: "auto",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 12,
+                marginBottom: 20,
+              }}
+            >
+              <div
+                style={{
+                  width: 42,
+                  height: 42,
+                  borderRadius: 12,
+                  background: "#f0fdf4",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexShrink: 0,
+                }}
+              >
+                <svg
+                  width="20"
+                  height="20"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="#16a34a"
+                  strokeWidth="2"
+                >
+                  <polyline points="17 11 12 6 7 11" />
+                  <line x1="12" y1="6" x2="12" y2="18" />
+                  <path d="M4 18h16" />
                 </svg>
               </div>
               <div>
-                <p style={{ fontSize: 16, fontWeight: 700, color: "#0f172a", margin: 0 }}>Withdraw funds</p>
-                <p style={{ fontSize: 12.5, color: "#64748b", marginTop: 2 }}>Transfer to your bank account</p>
+                <p
+                  style={{
+                    fontSize: 16,
+                    fontWeight: 700,
+                    color: "#0f172a",
+                    margin: 0,
+                  }}
+                >
+                  Withdraw funds
+                </p>
+                <p style={{ fontSize: 12.5, color: "#64748b", marginTop: 2 }}>
+                  Transfer to your bank account
+                </p>
               </div>
             </div>
 
             {withdrawError && (
-              <div style={{
-                background: "#fef2f2", border: "1px solid #fecaca",
-                borderRadius: 8, padding: "8px 12px",
-                fontSize: 12, color: "#dc2626", marginBottom: 14,
-              }}>
+              <div
+                style={{
+                  background: "#fef2f2",
+                  border: "1px solid #fecaca",
+                  borderRadius: 8,
+                  padding: "8px 12px",
+                  fontSize: 12,
+                  color: "#dc2626",
+                  marginBottom: 14,
+                }}
+              >
                 {withdrawError}
               </div>
             )}
 
             {savedBanks.length > 0 && userPlan !== "free" && (
               <div style={{ marginBottom: 16 }}>
-                <p style={{ fontSize: 11, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>
+                <p
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 600,
+                    color: "#94a3b8",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.06em",
+                    marginBottom: 8,
+                  }}
+                >
                   Recent accounts
                 </p>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(110px, 1fr))", gap: 8 }}>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns:
+                      "repeat(auto-fill, minmax(110px, 1fr))",
+                    gap: 8,
+                  }}
+                >
                   {savedBanks.map((b, i) => (
-                    <div key={i} className="at-saved-bank"
-                      onClick={() => { setAccountNumber(b.account_number); setAccountName(b.account_name); setBankCode(b.bank_code); }}>
-                      <p style={{ fontSize: 11.5, fontWeight: 600, color: "#0f172a", margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                    <div
+                      key={i}
+                      className="at-saved-bank"
+                      onClick={() => {
+                        setAccountNumber(b.account_number);
+                        setAccountName(b.account_name);
+                        setBankCode(b.bank_code);
+                      }}
+                    >
+                      <p
+                        style={{
+                          fontSize: 11.5,
+                          fontWeight: 600,
+                          color: "#0f172a",
+                          margin: 0,
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                        }}
+                      >
                         {getFirstTwoNames(b.account_name)}
                       </p>
-                      <p style={{ fontSize: 11, color: "#64748b", margin: "2px 0 0" }}>{maskAccountNumber(b.account_number)}</p>
-                      <p style={{ fontSize: 11, color: "#94a3b8", margin: "1px 0 0", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                      <p
+                        style={{
+                          fontSize: 11,
+                          color: "#64748b",
+                          margin: "2px 0 0",
+                        }}
+                      >
+                        {maskAccountNumber(b.account_number)}
+                      </p>
+                      <p
+                        style={{
+                          fontSize: 11,
+                          color: "#94a3b8",
+                          margin: "1px 0 0",
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                        }}
+                      >
                         {getFirstName(b.bank_name)}
                       </p>
                     </div>
@@ -1886,10 +2352,20 @@ function AccountTab({ user }) {
 
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               <div>
-                <label style={{ fontSize: 11.5, fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                <label
+                  style={{
+                    fontSize: 11.5,
+                    fontWeight: 600,
+                    color: "#64748b",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.06em",
+                  }}
+                >
                   Amount (₦)
                 </label>
-                <input type="number" value={withdrawAmount}
+                <input
+                  type="number"
+                  value={withdrawAmount}
                   onChange={(e) => setWithdrawAmount(e.target.value)}
                   placeholder="0.00"
                   className="at-input"
@@ -1897,50 +2373,109 @@ function AccountTab({ user }) {
                 />
               </div>
               <div>
-                <label style={{ fontSize: 11.5, fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                <label
+                  style={{
+                    fontSize: 11.5,
+                    fontWeight: 600,
+                    color: "#64748b",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.06em",
+                  }}
+                >
                   Account number
                 </label>
-                <input type="number" value={accountNumber}
+                <input
+                  type="number"
+                  value={accountNumber}
                   onChange={(e) => setAccountNumber(e.target.value)}
                   placeholder="0123456789"
-                  className="at-input" style={{ marginTop: 5 }}
+                  className="at-input"
+                  style={{ marginTop: 5 }}
                 />
               </div>
               <div>
-                <label style={{ fontSize: 11.5, fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                <label
+                  style={{
+                    fontSize: 11.5,
+                    fontWeight: 600,
+                    color: "#64748b",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.06em",
+                  }}
+                >
                   Bank
                 </label>
-                <select value={bankCode} onChange={(e) => setBankCode(e.target.value)}
-                  className="at-select" style={{ marginTop: 5 }}>
+                <select
+                  value={bankCode}
+                  onChange={(e) => setBankCode(e.target.value)}
+                  className="at-select"
+                  style={{ marginTop: 5 }}
+                >
                   <option value="">Select bank</option>
-                  {banks.map((b) => <option key={b.code} value={b.code}>{b.name}</option>)}
+                  {banks.map((b) => (
+                    <option key={b.code} value={b.code}>
+                      {b.name}
+                    </option>
+                  ))}
                 </select>
               </div>
               <div>
-                <label style={{ fontSize: 11.5, fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                <label
+                  style={{
+                    fontSize: 11.5,
+                    fontWeight: 600,
+                    color: "#64748b",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.06em",
+                  }}
+                >
                   Account name
                 </label>
-                <input type="text" value={accountName}
-                  placeholder={gettingAccountName && accountNumber.length === 10 && bankCode ? "Verifying…" : "Auto-filled after verification"}
+                <input
+                  type="text"
+                  value={accountName}
+                  placeholder={
+                    gettingAccountName &&
+                    accountNumber.length === 10 &&
+                    bankCode
+                      ? "Verifying…"
+                      : "Auto-filled after verification"
+                  }
                   disabled
-                  className="at-input" style={{ marginTop: 5 }}
+                  className="at-input"
+                  style={{ marginTop: 5 }}
                 />
               </div>
             </div>
 
             <div style={{ display: "flex", gap: 10, marginTop: 22 }}>
-              <button className="at-modal-btn-ghost" onClick={() => {
-                fetchAccount(); setShowWithdrawModal(false);
-                setAccountNumber(""); setAccountName(""); setGettingAccountName(true);
-                setBankCode(""); setWithdrawAmount(""); fetchBanks(); setWithdrawError("");
-              }}>
+              <button
+                className="at-modal-btn-ghost"
+                onClick={() => {
+                  fetchAccount();
+                  setShowWithdrawModal(false);
+                  setAccountNumber("");
+                  setAccountName("");
+                  setGettingAccountName(true);
+                  setBankCode("");
+                  setWithdrawAmount("");
+                  fetchBanks();
+                  setWithdrawError("");
+                }}
+              >
                 Cancel
               </button>
-              <button className="at-modal-btn-primary" onClick={() => {
-                setWithdrawError("");
-                if (!withdrawAmount || !accountNumber || !bankCode) { setWithdrawError("Complete all fields"); return; }
-                setShowPinConfirm(true);
-              }}>
+              <button
+                className="at-modal-btn-primary"
+                onClick={() => {
+                  setWithdrawError("");
+                  if (!withdrawAmount || !accountNumber || !bankCode) {
+                    setWithdrawError("Complete all fields");
+                    return;
+                  }
+                  setShowPinConfirm(true);
+                }}
+              >
                 Withdraw
               </button>
             </div>
@@ -1950,55 +2485,123 @@ function AccountTab({ user }) {
 
       {/* ── Main Content ──────────────────────────────────────────── */}
       <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-
         {/* Balance card */}
-        <div className="at-card at-balance-card" style={{ borderRadius: 20, padding: "24px 22px 22px" }}>
-          <p style={{ fontSize: 12, fontWeight: 500, color: "rgba(255,255,255,0.65)", margin: 0, letterSpacing: "0.04em", textTransform: "uppercase" }}>
+        <div
+          className="at-card at-balance-card"
+          style={{ borderRadius: 20, padding: "24px 22px 22px" }}
+        >
+          <p
+            style={{
+              fontSize: 12,
+              fontWeight: 500,
+              color: "rgba(255,255,255,0.65)",
+              margin: 0,
+              letterSpacing: "0.04em",
+              textTransform: "uppercase",
+            }}
+          >
             Available balance
           </p>
-          <h2 style={{
-            fontSize: "clamp(28px, 6vw, 38px)",
-            fontWeight: 700,
-            color: "#fff",
-            margin: "6px 0 20px",
-            letterSpacing: "-0.02em",
-            lineHeight: 1.1,
-          }}>
+          <h2
+            style={{
+              fontSize: "clamp(28px, 6vw, 38px)",
+              fontWeight: 700,
+              color: "#fff",
+              margin: "6px 0 20px",
+              letterSpacing: "-0.02em",
+              lineHeight: 1.1,
+            }}
+          >
             ₦ {formatMoney(balance)}
           </h2>
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
             <button className="at-btn-add" onClick={() => setShowModal(true)}>
               + Add money
             </button>
-            <button className="at-btn-withdraw" onClick={() => setShowWithdrawModal(true)}>
+            <button
+              className="at-btn-withdraw"
+              onClick={() => setShowWithdrawModal(true)}
+            >
               Withdraw
             </button>
           </div>
 
           {/* Bank transfer funding — compact strip, opens the full card in a modal */}
           {!loadingVA && !vaUnavailable && virtualAccount && (
-            <button className="at-va-strip" onClick={() => setShowVaModal(true)}>
+            <button
+              className="at-va-strip"
+              onClick={() => setShowVaModal(true)}
+            >
               <span className="at-va-strip-chip">
                 <svg width="18" height="14" viewBox="0 0 26 20" fill="none">
-                  <rect x="0.5" y="0.5" width="25" height="19" rx="3.5" fill="url(#at-chip-grad-strip)" stroke="rgba(255,255,255,0.35)"/>
-                  <line x1="8.5" y1="0.5" x2="8.5" y2="19.5" stroke="rgba(255,255,255,0.3)"/>
-                  <line x1="17.5" y1="0.5" x2="17.5" y2="19.5" stroke="rgba(255,255,255,0.3)"/>
-                  <line x1="0.5" y1="7" x2="25.5" y2="7" stroke="rgba(255,255,255,0.3)"/>
-                  <line x1="0.5" y1="13" x2="25.5" y2="13" stroke="rgba(255,255,255,0.3)"/>
+                  <rect
+                    x="0.5"
+                    y="0.5"
+                    width="25"
+                    height="19"
+                    rx="3.5"
+                    fill="url(#at-chip-grad-strip)"
+                    stroke="rgba(255,255,255,0.35)"
+                  />
+                  <line
+                    x1="8.5"
+                    y1="0.5"
+                    x2="8.5"
+                    y2="19.5"
+                    stroke="rgba(255,255,255,0.3)"
+                  />
+                  <line
+                    x1="17.5"
+                    y1="0.5"
+                    x2="17.5"
+                    y2="19.5"
+                    stroke="rgba(255,255,255,0.3)"
+                  />
+                  <line
+                    x1="0.5"
+                    y1="7"
+                    x2="25.5"
+                    y2="7"
+                    stroke="rgba(255,255,255,0.3)"
+                  />
+                  <line
+                    x1="0.5"
+                    y1="13"
+                    x2="25.5"
+                    y2="13"
+                    stroke="rgba(255,255,255,0.3)"
+                  />
                   <defs>
-                    <linearGradient id="at-chip-grad-strip" x1="0" y1="0" x2="26" y2="20">
-                      <stop stopColor="#fde68a"/>
-                      <stop offset="1" stopColor="#d4a94a"/>
+                    <linearGradient
+                      id="at-chip-grad-strip"
+                      x1="0"
+                      y1="0"
+                      x2="26"
+                      y2="20"
+                    >
+                      <stop stopColor="#fde68a" />
+                      <stop offset="1" stopColor="#d4a94a" />
                     </linearGradient>
                   </defs>
                 </svg>
               </span>
               <span className="at-va-strip-text">
                 <span className="at-va-strip-label">Fund by transfer</span>
-                <span className="at-va-strip-number">{virtualAccount.account_number}</span>
+                <span className="at-va-strip-number">
+                  {virtualAccount.account_number}
+                </span>
               </span>
               <span className="at-va-strip-arrow">
-                <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2"><polyline points="9 18 15 12 9 6"/></svg>
+                <svg
+                  width="16"
+                  height="16"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth="2.2"
+                >
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
               </span>
             </button>
           )}
@@ -2006,28 +2609,55 @@ function AccountTab({ user }) {
 
         {/* Bank transfer activation prompt — only shown before an account exists */}
         {!loadingVA && !vaUnavailable && !virtualAccount && (
-          <div className="at-card" style={{ borderRadius: 20, padding: "20px 22px" }}>
-            <p style={{ fontSize: 12, fontWeight: 700, color: "#0f172a", margin: 0, letterSpacing: "0.02em", textTransform: "uppercase" }}>
+          <div
+            className="at-card"
+            style={{ borderRadius: 20, padding: "20px 22px" }}
+          >
+            <p
+              style={{
+                fontSize: 12,
+                fontWeight: 700,
+                color: "#0f172a",
+                margin: 0,
+                letterSpacing: "0.02em",
+                textTransform: "uppercase",
+              }}
+            >
               Bank transfer funding
             </p>
             <div style={{ marginTop: 10 }}>
               <p style={{ fontSize: 12.5, color: "#64748b", margin: 0 }}>
-                Get a personal bank account number for funding your wallet by transfer.
+                Get a personal bank account number for funding your wallet by
+                transfer.
               </p>
 
               {vaError && (
-                <div style={{
-                  background: "#fef2f2", border: "1px solid #fecaca",
-                  borderRadius: 8, padding: "8px 12px",
-                  fontSize: 12, color: "#dc2626", marginTop: 10,
-                }}>
+                <div
+                  style={{
+                    background: "#fef2f2",
+                    border: "1px solid #fecaca",
+                    borderRadius: 8,
+                    padding: "8px 12px",
+                    fontSize: 12,
+                    color: "#dc2626",
+                    marginTop: 10,
+                  }}
+                >
                   {vaError}
                 </div>
               )}
 
               {vaNeedsPhone && (
                 <div style={{ marginTop: 10 }}>
-                  <label style={{ fontSize: 11.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "#64748b" }}>
+                  <label
+                    style={{
+                      fontSize: 11.5,
+                      fontWeight: 700,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.06em",
+                      color: "#64748b",
+                    }}
+                  >
                     Phone number
                   </label>
                   <input
@@ -2046,7 +2676,15 @@ function AccountTab({ user }) {
                   pattern as the phone field above. */}
               {vaNeedsBvn && (
                 <div style={{ marginTop: 10 }}>
-                  <label style={{ fontSize: 11.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "#64748b" }}>
+                  <label
+                    style={{
+                      fontSize: 11.5,
+                      fontWeight: 700,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.06em",
+                      color: "#64748b",
+                    }}
+                  >
                     BVN (Bank Verification Number)
                   </label>
                   <input
@@ -2057,10 +2695,14 @@ function AccountTab({ user }) {
                     style={{ marginTop: 5 }}
                     placeholder="12345678901"
                     value={vaBvn}
-                    onChange={(e) => setVaBvn(e.target.value.replace(/[^0-9]/g, ""))}
+                    onChange={(e) =>
+                      setVaBvn(e.target.value.replace(/[^0-9]/g, ""))
+                    }
                   />
                   <p style={{ fontSize: 11, color: "#94a3b8", marginTop: 4 }}>
-                    Required by our payment provider to verify your bank details. Dial *565*0# on your registered line to retrieve it.
+                    Required by our payment provider to verify your bank
+                    details. Dial *565*0# on your registered line to retrieve
+                    it.
                   </p>
                 </div>
               )}
@@ -2075,98 +2717,256 @@ function AccountTab({ user }) {
                 }
                 onClick={handleActivateVirtualAccount}
               >
-                {creatingVA ? <><span className="at-spin" /> Setting up…</> : "Activate bank transfer"}
+                {creatingVA ? (
+                  <>
+                    <span className="at-spin" /> Setting up…
+                  </>
+                ) : (
+                  "Activate bank transfer"
+                )}
               </button>
             </div>
           </div>
         )}
 
         {/* Stat cards */}
-        <div className="at-card" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 12 }}>
+        <div
+          className="at-card"
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))",
+            gap: 12,
+          }}
+        >
           <div className="at-stat">
-            <p style={{ fontSize: 11.5, fontWeight: 500, color: "#64748b", margin: 0, letterSpacing: "0.02em" }}>Total earned</p>
-            <p style={{ fontSize: 15, fontWeight: 700, color: "#0f172a", marginTop: 6, letterSpacing: "-0.01em" }}>
-              ₦ {formatMoney(
-                transactions.filter(t => t.type === "credit" && t.status === "success")
-                  .reduce((s, t) => s + Number(t.amount || 0), 0)
+            <p
+              style={{
+                fontSize: 11.5,
+                fontWeight: 500,
+                color: "#64748b",
+                margin: 0,
+                letterSpacing: "0.02em",
+              }}
+            >
+              Total earned
+            </p>
+            <p
+              style={{
+                fontSize: 15,
+                fontWeight: 700,
+                color: "#0f172a",
+                marginTop: 6,
+                letterSpacing: "-0.01em",
+              }}
+            >
+              ₦{" "}
+              {formatMoney(
+                transactions
+                  .filter((t) => t.type === "credit" && t.status === "success")
+                  .reduce((s, t) => s + Number(t.amount || 0), 0),
               )}
             </p>
           </div>
           <div className="at-stat">
-            <p style={{ fontSize: 11.5, fontWeight: 500, color: "#64748b", margin: 0, letterSpacing: "0.02em" }}>Total withdrawn</p>
-            <p style={{ fontSize: 15, fontWeight: 700, color: "#0f172a", marginTop: 6, letterSpacing: "-0.01em" }}>
-              ₦ {formatMoney(
-                transactions.filter(t => t.type === "debit" && t.status === "success")
-                  .reduce((s, t) => s + Number(t.amount || 0), 0)
+            <p
+              style={{
+                fontSize: 11.5,
+                fontWeight: 500,
+                color: "#64748b",
+                margin: 0,
+                letterSpacing: "0.02em",
+              }}
+            >
+              Total withdrawn
+            </p>
+            <p
+              style={{
+                fontSize: 15,
+                fontWeight: 700,
+                color: "#0f172a",
+                marginTop: 6,
+                letterSpacing: "-0.01em",
+              }}
+            >
+              ₦{" "}
+              {formatMoney(
+                transactions
+                  .filter((t) => t.type === "debit" && t.status === "success")
+                  .reduce((s, t) => s + Number(t.amount || 0), 0),
               )}
             </p>
           </div>
           <div className="at-stat">
-            <p style={{ fontSize: 11.5, fontWeight: 500, color: "#64748b", margin: 0, letterSpacing: "0.02em" }}>Transactions</p>
-            <p style={{ fontSize: 15, fontWeight: 700, color: "#0f172a", marginTop: 6 }}>{transactions.length}</p>
+            <p
+              style={{
+                fontSize: 11.5,
+                fontWeight: 500,
+                color: "#64748b",
+                margin: 0,
+                letterSpacing: "0.02em",
+              }}
+            >
+              Transactions
+            </p>
+            <p
+              style={{
+                fontSize: 15,
+                fontWeight: 700,
+                color: "#0f172a",
+                marginTop: 6,
+              }}
+            >
+              {transactions.length}
+            </p>
           </div>
         </div>
 
         {/* Transaction history */}
         <div className="at-card at-history">
-          <div style={{
-            display: "flex", justifyContent: "space-between", alignItems: "center",
-            padding: "18px 20px 14px",
-            borderBottom: transactions.length > 0 ? "1px solid #f1f5f9" : "none",
-          }}>
-            <p style={{ fontSize: 14, fontWeight: 700, color: "#0f172a", margin: 0 }}>Transaction history</p>
-            <button className="at-view-more"
-              onClick={() => setPage(p => p < Math.ceil(transactions.length / ITEMS_PER_PAGE) ? p + 1 : p)}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              padding: "18px 20px 14px",
+              borderBottom:
+                transactions.length > 0 ? "1px solid #f1f5f9" : "none",
+            }}
+          >
+            <p
+              style={{
+                fontSize: 14,
+                fontWeight: 700,
+                color: "#0f172a",
+                margin: 0,
+              }}
+            >
+              Transaction history
+            </p>
+            <button
+              className="at-view-more"
+              onClick={() =>
+                setPage((p) =>
+                  p < Math.ceil(transactions.length / ITEMS_PER_PAGE)
+                    ? p + 1
+                    : p,
+                )
+              }
+            >
               View more →
             </button>
           </div>
 
           {transactions.length === 0 ? (
             <div style={{ padding: "48px 20px", textAlign: "center" }}>
-              <div style={{
-                width: 52, height: 52, borderRadius: "50%",
-                background: "#f8fafc", margin: "0 auto 14px",
-                display: "flex", alignItems: "center", justifyContent: "center",
-              }}>
-                <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="#cbd5e1" strokeWidth="1.5">
-                  <rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/>
+              <div
+                style={{
+                  width: 52,
+                  height: 52,
+                  borderRadius: "50%",
+                  background: "#f8fafc",
+                  margin: "0 auto 14px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <svg
+                  width="24"
+                  height="24"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="#cbd5e1"
+                  strokeWidth="1.5"
+                >
+                  <rect x="2" y="5" width="20" height="14" rx="2" />
+                  <line x1="2" y1="10" x2="22" y2="10" />
                 </svg>
               </div>
-              <p style={{ fontSize: 14, fontWeight: 600, color: "#64748b", margin: 0 }}>No transactions yet</p>
-              <p style={{ fontSize: 12.5, color: "#94a3b8", marginTop: 4 }}>Fund your wallet to get started</p>
+              <p
+                style={{
+                  fontSize: 14,
+                  fontWeight: 600,
+                  color: "#64748b",
+                  margin: 0,
+                }}
+              >
+                No transactions yet
+              </p>
+              <p style={{ fontSize: 12.5, color: "#94a3b8", marginTop: 4 }}>
+                Fund your wallet to get started
+              </p>
             </div>
           ) : (
             <div style={{ padding: "0 20px" }}>
-              {currentTransactions.map((tx) => <TransactionItem key={tx.id} tx={tx} />)}
+              {currentTransactions.map((tx) => (
+                <TransactionItem key={tx.id} tx={tx} />
+              ))}
 
-              <div style={{
-                display: "flex", alignItems: "center", justifyContent: "space-between",
-                padding: "14px 0 16px",
-                borderTop: "1px solid #f1f5f9",
-                marginTop: 4,
-              }}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  padding: "14px 0 16px",
+                  borderTop: "1px solid #f1f5f9",
+                  marginTop: 4,
+                }}
+              >
                 <p style={{ fontSize: 12, color: "#94a3b8", margin: 0 }}>
-                  Page <span style={{ fontWeight: 600, color: "#475569" }}>{page}</span>{" "}
+                  Page{" "}
+                  <span style={{ fontWeight: 600, color: "#475569" }}>
+                    {page}
+                  </span>{" "}
                   of{" "}
                   <span style={{ fontWeight: 600, color: "#475569" }}>
-                    {Math.max(1, Math.ceil(transactions.length / ITEMS_PER_PAGE))}
+                    {Math.max(
+                      1,
+                      Math.ceil(transactions.length / ITEMS_PER_PAGE),
+                    )}
                   </span>
                 </p>
                 <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                  <button className="at-page-btn"
-                    onClick={() => setPage(p => Math.max(p - 1, 1))}
+                  <button
+                    className="at-page-btn"
+                    onClick={() => setPage((p) => Math.max(p - 1, 1))}
                     disabled={page === 1}
-                    aria-label="Previous page">‹</button>
-                  <span style={{
-                    minWidth: 28, height: 30,
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    fontSize: 13, fontWeight: 700, color: "#2563eb",
-                    background: "#eff6ff", borderRadius: 8,
-                  }}>{page}</span>
-                  <button className="at-page-btn"
-                    onClick={() => setPage(p => p < Math.ceil(transactions.length / ITEMS_PER_PAGE) ? p + 1 : p)}
-                    disabled={page >= Math.ceil(transactions.length / ITEMS_PER_PAGE)}
-                    aria-label="Next page">›</button>
+                    aria-label="Previous page"
+                  >
+                    ‹
+                  </button>
+                  <span
+                    style={{
+                      minWidth: 28,
+                      height: 30,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: 13,
+                      fontWeight: 700,
+                      color: "#2563eb",
+                      background: "#eff6ff",
+                      borderRadius: 8,
+                    }}
+                  >
+                    {page}
+                  </span>
+                  <button
+                    className="at-page-btn"
+                    onClick={() =>
+                      setPage((p) =>
+                        p < Math.ceil(transactions.length / ITEMS_PER_PAGE)
+                          ? p + 1
+                          : p,
+                      )
+                    }
+                    disabled={
+                      page >= Math.ceil(transactions.length / ITEMS_PER_PAGE)
+                    }
+                    aria-label="Next page"
+                  >
+                    ›
+                  </button>
                 </div>
               </div>
             </div>
@@ -2181,57 +2981,115 @@ function AccountTab({ user }) {
 function TransactionItem({ tx }) {
   const isCredit = tx.type === "credit";
   const formatMoney = (value) =>
-    new Intl.NumberFormat("en-NG", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
+    new Intl.NumberFormat("en-NG", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(value);
 
-  const statusColor = tx.status === "success" ? "#16a34a" : tx.status === "pending" ? "#d97706" : "#dc2626";
-  const statusBg   = tx.status === "success" ? "#f0fdf4" : tx.status === "pending" ? "#fffbeb" : "#fef2f2";
-  const statusBorder = tx.status === "success" ? "#bbf7d0" : tx.status === "pending" ? "#fde68a" : "#fecaca";
+  const statusColor =
+    tx.status === "success"
+      ? "#16a34a"
+      : tx.status === "pending"
+        ? "#d97706"
+        : "#dc2626";
+  const statusBg =
+    tx.status === "success"
+      ? "#f0fdf4"
+      : tx.status === "pending"
+        ? "#fffbeb"
+        : "#fef2f2";
+  const statusBorder =
+    tx.status === "success"
+      ? "#bbf7d0"
+      : tx.status === "pending"
+        ? "#fde68a"
+        : "#fecaca";
 
   return (
     <div className="at-tx-row">
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <div className="at-tx-icon" style={{
-          background: isCredit ? "#f0fdf4" : "#fef2f2",
-        }}>
+        <div
+          className="at-tx-icon"
+          style={{
+            background: isCredit ? "#f0fdf4" : "#fef2f2",
+          }}
+        >
           {isCredit ? (
-            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#16a34a" strokeWidth="2.2">
-              <line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/>
+            <svg
+              width="16"
+              height="16"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="#16a34a"
+              strokeWidth="2.2"
+            >
+              <line x1="12" y1="19" x2="12" y2="5" />
+              <polyline points="5 12 12 5 19 12" />
             </svg>
           ) : (
-            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#dc2626" strokeWidth="2.2">
-              <line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/>
+            <svg
+              width="16"
+              height="16"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="#dc2626"
+              strokeWidth="2.2"
+            >
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <polyline points="19 12 12 19 5 12" />
             </svg>
           )}
         </div>
         <div>
-          <p style={{ fontSize: 13.5, fontWeight: 600, color: "#0f172a", margin: 0, lineHeight: 1.3 }}>
+          <p
+            style={{
+              fontSize: 13.5,
+              fontWeight: 600,
+              color: "#0f172a",
+              margin: 0,
+              lineHeight: 1.3,
+            }}
+          >
             {tx.description}
           </p>
           <p style={{ fontSize: 11.5, color: "#94a3b8", margin: "3px 0 0" }}>
             {new Date(tx.created_at).toLocaleString("en-NG", {
-              day: "numeric", month: "short", year: "numeric",
-              hour: "2-digit", minute: "2-digit",
+              day: "numeric",
+              month: "short",
+              year: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
             })}
           </p>
         </div>
       </div>
 
       <div style={{ textAlign: "right", flexShrink: 0 }}>
-        <p style={{
-          fontSize: 14, fontWeight: 700, margin: 0,
-          color: isCredit ? "#16a34a" : "#dc2626",
-          letterSpacing: "-0.01em",
-        }}>
+        <p
+          style={{
+            fontSize: 14,
+            fontWeight: 700,
+            margin: 0,
+            color: isCredit ? "#16a34a" : "#dc2626",
+            letterSpacing: "-0.01em",
+          }}
+        >
           {isCredit ? "+" : "−"}₦{formatMoney(Number(tx.amount || 0))}
         </p>
-        <span style={{
-          display: "inline-block", marginTop: 3,
-          fontSize: 10.5, fontWeight: 600,
-          color: statusColor, background: statusBg,
-          border: `1px solid ${statusBorder}`,
-          borderRadius: 20, padding: "2px 7px",
-          letterSpacing: "0.02em",
-        }}>
+        <span
+          style={{
+            display: "inline-block",
+            marginTop: 3,
+            fontSize: 10.5,
+            fontWeight: 600,
+            color: statusColor,
+            background: statusBg,
+            border: `1px solid ${statusBorder}`,
+            borderRadius: 20,
+            padding: "2px 7px",
+            letterSpacing: "0.02em",
+          }}
+        >
           {tx.status}
         </span>
       </div>
@@ -2258,22 +3116,71 @@ function AccountTabSkeleton() {
       `}</style>
       <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
         {/* Balance card */}
-        <div style={{
-          background: "linear-gradient(135deg, #1a56db, #1e3a8a)",
-          borderRadius: 20, padding: "24px 22px 22px",
-        }}>
-          <div style={{ ...sk, height: 12, width: 120, background: "rgba(255,255,255,0.15)", marginBottom: 10 }} />
-          <div style={{ ...sk, height: 40, width: 180, background: "rgba(255,255,255,0.15)", marginBottom: 24 }} />
+        <div
+          style={{
+            background: "linear-gradient(135deg, #1a56db, #1e3a8a)",
+            borderRadius: 20,
+            padding: "24px 22px 22px",
+          }}
+        >
+          <div
+            style={{
+              ...sk,
+              height: 12,
+              width: 120,
+              background: "rgba(255,255,255,0.15)",
+              marginBottom: 10,
+            }}
+          />
+          <div
+            style={{
+              ...sk,
+              height: 40,
+              width: 180,
+              background: "rgba(255,255,255,0.15)",
+              marginBottom: 24,
+            }}
+          />
           <div style={{ display: "flex", gap: 10 }}>
-            <div style={{ ...sk, height: 38, width: 110, borderRadius: 10, background: "rgba(255,255,255,0.15)" }} />
-            <div style={{ ...sk, height: 38, width: 100, borderRadius: 10, background: "rgba(255,255,255,0.12)" }} />
+            <div
+              style={{
+                ...sk,
+                height: 38,
+                width: 110,
+                borderRadius: 10,
+                background: "rgba(255,255,255,0.15)",
+              }}
+            />
+            <div
+              style={{
+                ...sk,
+                height: 38,
+                width: 100,
+                borderRadius: 10,
+                background: "rgba(255,255,255,0.12)",
+              }}
+            />
           </div>
         </div>
 
         {/* Stat cards */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 12 }}>
-          {[0,1,2].map(i => (
-            <div key={i} style={{ background: "#fff", border: "1px solid #f1f5f9", borderRadius: 14, padding: "14px 16px" }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))",
+            gap: 12,
+          }}
+        >
+          {[0, 1, 2].map((i) => (
+            <div
+              key={i}
+              style={{
+                background: "#fff",
+                border: "1px solid #f1f5f9",
+                borderRadius: 14,
+                padding: "14px 16px",
+              }}
+            >
               <div style={{ ...sk, height: 11, width: 70, marginBottom: 10 }} />
               <div style={{ ...sk, height: 18, width: 100 }} />
             </div>
@@ -2281,29 +3188,79 @@ function AccountTabSkeleton() {
         </div>
 
         {/* History */}
-        <div style={{ background: "#fff", border: "1px solid #f1f5f9", borderRadius: 16, overflow: "hidden" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "18px 20px 14px", borderBottom: "1px solid #f1f5f9" }}>
+        <div
+          style={{
+            background: "#fff",
+            border: "1px solid #f1f5f9",
+            borderRadius: 16,
+            overflow: "hidden",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              padding: "18px 20px 14px",
+              borderBottom: "1px solid #f1f5f9",
+            }}
+          >
             <div style={{ ...sk, height: 14, width: 140 }} />
             <div style={{ ...sk, height: 12, width: 70 }} />
           </div>
           <div style={{ padding: "0 20px" }}>
-            {[0,1,2,3,4].map(i => (
-              <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "13px 0", borderBottom: "1px solid #f8fafc" }}>
-                <div style={{ ...sk, width: 38, height: 38, borderRadius: "50%", flexShrink: 0 }} />
+            {[0, 1, 2, 3, 4].map((i) => (
+              <div
+                key={i}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 12,
+                  padding: "13px 0",
+                  borderBottom: "1px solid #f8fafc",
+                }}
+              >
+                <div
+                  style={{
+                    ...sk,
+                    width: 38,
+                    height: 38,
+                    borderRadius: "50%",
+                    flexShrink: 0,
+                  }}
+                />
                 <div style={{ flex: 1 }}>
-                  <div style={{ ...sk, height: 12, width: "55%", marginBottom: 7 }} />
+                  <div
+                    style={{ ...sk, height: 12, width: "55%", marginBottom: 7 }}
+                  />
                   <div style={{ ...sk, height: 10, width: "35%" }} />
                 </div>
                 <div style={{ textAlign: "right" }}>
-                  <div style={{ ...sk, height: 13, width: 70, marginBottom: 6 }} />
-                  <div style={{ ...sk, height: 16, width: 50, borderRadius: 20 }} />
+                  <div
+                    style={{ ...sk, height: 13, width: 70, marginBottom: 6 }}
+                  />
+                  <div
+                    style={{ ...sk, height: 16, width: 50, borderRadius: 20 }}
+                  />
                 </div>
               </div>
             ))}
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 0" }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                padding: "14px 0",
+              }}
+            >
               <div style={{ ...sk, height: 11, width: 60 }} />
               <div style={{ display: "flex", gap: 6 }}>
-                {[0,1,2].map(i => <div key={i} style={{ ...sk, width: 30, height: 30, borderRadius: 8 }} />)}
+                {[0, 1, 2].map((i) => (
+                  <div
+                    key={i}
+                    style={{ ...sk, width: 30, height: 30, borderRadius: 8 }}
+                  />
+                ))}
               </div>
             </div>
           </div>
