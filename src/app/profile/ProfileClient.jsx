@@ -2791,7 +2791,12 @@ function AccountTab({ user }) {
               ₦{" "}
               {formatMoney(
                 transactions
-                  .filter((t) => t.type === "debit" && t.status === "success")
+                  .filter(
+                    (t) =>
+                      t.type === "debit" &&
+                      t.status === "success" &&
+                      t.description === "Withdrawal",
+                  )
                   .reduce((s, t) => s + Number(t.amount || 0), 0),
               )}
             </p>

@@ -193,8 +193,8 @@ export async function POST(req) {
     await client.query(
       `
       INSERT INTO users_transactions
-      (user_id, type, amount, status, description, reference)
-      VALUES ($1, 'debit', $2, 'pending', 'Withdrawal', $3)
+      (user_id, type, amount, status, description, reference, affects_balance)
+      VALUES ($1, 'debit', $2, 'pending', 'Withdrawal', $3, true)
       `,
       [userId, amount, reference],
     );
