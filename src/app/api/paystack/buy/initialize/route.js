@@ -17,6 +17,7 @@
 // card/bank checkout" rather than literally meaning "via Paystack".
 import pool from "@/lib/db";
 import { requireUser } from "@/lib/auth";
+import { emitToRoom } from "@/lib/socket";
 
 export async function POST(req) {
   try {
@@ -131,6 +132,13 @@ export async function POST(req) {
       // ─────────────────────────────────────────────
       // WALLET PAYMENT — unchanged, no external provider involved
       // ─────────────────────────────────────────────
+      // FIX: all rows inserted below now explicitly set affects_balance =
+      // true. This whole branch only runs when paymentMethod === "wallet",
+      // so every row here IS real money moving in/out of someone's wallet
+      // (unlike the card/Flutterwave webhook flow, where the buyer's
+      // "Game account purchase" debit is history-only and must be marked
+      // affects_balance = false — see paystack/webhook/route.js and the
+      // balance queries in user/account, user/withdraw, and this file).
       if (paymentMethod === "wallet") {
         // NOTE: `FOR UPDATE` cannot be combined with an aggregate (SUM) in
         // the same SELECT — Postgres errors with "FOR UPDATE is not allowed
@@ -149,7 +157,7 @@ export async function POST(req) {
            FROM (
              SELECT amount, type
              FROM users_transactions
-             WHERE user_id = $1 AND status = 'success'
+             WHERE user_id = $1 AND status = 'success' AND affects_balance = true
              FOR UPDATE
            ) locked_rows`,
           [user.id],
@@ -188,28 +196,28 @@ export async function POST(req) {
 
         await client.query(
           `INSERT INTO users_transactions
-           (user_id, type, amount, status, description, reference)
-           VALUES ($1, 'debit', $2, 'success', 'Game account purchase', $3)`,
+           (user_id, type, amount, status, description, reference, affects_balance)
+           VALUES ($1, 'debit', $2, 'success', 'Game account purchase', $3, true)`,
           [user.id, amount, reference],
         );
 
         await client.query(
           `INSERT INTO users_transactions
-           (user_id, type, amount, status, description, reference)
-           VALUES ($1, 'credit', $2, 'pending', 'Game account sale', $3)`,
+           (user_id, type, amount, status, description, reference, affects_balance)
+           VALUES ($1, 'credit', $2, 'pending', 'Game account sale', $3, true)`,
           [listing.user_id, sellerAmount, reference],
         );
         await client.query(
           `INSERT INTO users_transactions
-           (user_id, type, amount, status, description, reference)
-           VALUES ($1, 'debit', $2, 'pending', 'Listing fee', $3)`,
+           (user_id, type, amount, status, description, reference, affects_balance)
+           VALUES ($1, 'debit', $2, 'pending', 'Listing fee', $3, true)`,
           [listing.user_id, platformFee, reference],
         );
 
         await client.query(
           `INSERT INTO users_transactions
-           (user_id, type, amount, status, description, reference)
-           VALUES ($1, 'credit', $2, 'pending', 'Platform fee', $3)`,
+           (user_id, type, amount, status, description, reference, affects_balance)
+           VALUES ($1, 'credit', $2, 'pending', 'Platform fee', $3, true)`,
           [1, platformFee, reference],
         );
 
@@ -223,16 +231,34 @@ export async function POST(req) {
           [listingId],
         );
 
+        let paymentMsg = null;
         if (convRes.rows.length > 0) {
-          await client.query(
+          const msgRes = await client.query(
             `INSERT INTO messages
              (conversation_id, sender_id, message, type, created_at)
-             VALUES ($1, 1, 'Buyer has made payment. Seller should kindly provide login details.', 'payment_made', NOW())`,
+             VALUES ($1, 1, 'Buyer has made payment. Seller should kindly provide login details.', 'payment_made', NOW())
+             RETURNING *`,
             [convRes.rows[0].id],
           );
+          paymentMsg = msgRes.rows[0];
         }
 
         await client.query("COMMIT");
+
+        // FIX: this message was being inserted but never broadcast, so the
+        // seller only ever saw "Buyer has made payment..." after a manual
+        // refresh instead of live in the chat like every other message
+        // (senddetails/confirm/dispute all emit — this was the one gap).
+        if (paymentMsg) {
+          await emitToRoom(
+            `room:${convRes.rows[0].id}`,
+            "new_message",
+            paymentMsg,
+          );
+        }
+        await emitToRoom(`user:${user.id}`, "sidebar_update", {});
+        await emitToRoom(`user:${listing.user_id}`, "sidebar_update", {});
+
         return Response.json({ success: true });
       }
 

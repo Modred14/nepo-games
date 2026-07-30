@@ -30,6 +30,7 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
 import pool from "@/lib/db";
+import { emitToRoom } from "@/lib/socket";
 import { sendSellerWelcomeEmail } from "@/lib/emails/sendSellerWelcome";
 import { sendAdminAlert } from "@/lib/emails/sendAdminAlert";
 
@@ -250,31 +251,41 @@ export async function POST(req) {
           //    VALUES ($1, 'credit', $2, 'success', 'Wallet funding', $3)`,
           //   [transaction.buyer_id, amount, reference],
           // );
+          // FIX (critical): this row records the card/Flutterwave payment
+          // for the buyer's own transaction HISTORY — it is not money that
+          // ever sat in or left their in-app wallet. It was previously
+          // summed into their wallet balance like any other debit, which
+          // silently (and incorrectly) reduced — sometimes below zero —
+          // a buyer's real, spendable wallet balance every time they paid
+          // by card instead of by wallet. affects_balance = false keeps it
+          // visible in transaction history without touching the balance.
+          // See balance queries in user/account/route.js,
+          // user/withdraw/route.js, and paystack/buy/initialize/route.js.
           await client.query(
             `INSERT INTO users_transactions
-             (user_id, type, amount, status, description, reference)
-             VALUES ($1, 'debit', $2, 'success', 'Game account purchase', $3)`,
+             (user_id, type, amount, status, description, reference, affects_balance)
+             VALUES ($1, 'debit', $2, 'success', 'Game account purchase', $3, false)`,
             [transaction.buyer_id, amount, reference],
           );
 
           await client.query(
             `INSERT INTO users_transactions
-             (user_id, type, amount, status, description, reference)
-             VALUES ($1, 'credit', $2, 'pending', 'Game account purchase', $3)`,
+             (user_id, type, amount, status, description, reference, affects_balance)
+             VALUES ($1, 'credit', $2, 'pending', 'Game account purchase', $3, true)`,
             [transaction.seller_id, sellerAmount, reference],
           );
 
           const platformFee = amount * 0.05;
           await client.query(
             `INSERT INTO users_transactions
-             (user_id, type, amount, status, description, reference)
-             VALUES ($1, 'debit', $2, 'pending', 'Listing fee', $3)`,
+             (user_id, type, amount, status, description, reference, affects_balance)
+             VALUES ($1, 'debit', $2, 'pending', 'Listing fee', $3, true)`,
             [transaction.seller_id, platformFee, reference],
           );
           await client.query(
             `INSERT INTO users_transactions
-             (user_id, type, amount, status, description, reference)
-             VALUES ($1, 'credit', $2, 'pending', 'Platform fee', $3)`,
+             (user_id, type, amount, status, description, reference, affects_balance)
+             VALUES ($1, 'credit', $2, 'pending', 'Platform fee', $3, true)`,
             [1, platformFee, reference],
           );
 
@@ -282,13 +293,16 @@ export async function POST(req) {
             `SELECT id FROM conversations WHERE listing_id = $1 LIMIT 1`,
             [listingId],
           );
+          let paymentMsg = null;
           if (convRes.rows.length > 0) {
-            await client.query(
+            const msgRes = await client.query(
               `INSERT INTO messages
                (conversation_id, sender_id, message, type, created_at)
-               VALUES ($1, 1, 'Buyer has made payment. Seller should kindly provide login details.', 'payment_made', NOW())`,
+               VALUES ($1, 1, 'Buyer has made payment. Seller should kindly provide login details.', 'payment_made', NOW())
+               RETURNING *`,
               [convRes.rows[0].id],
             );
+            paymentMsg = msgRes.rows[0];
           } else {
             console.warn(
               "⚠️ No conversation found for listing, skipping system message:",
@@ -298,6 +312,22 @@ export async function POST(req) {
 
           await client.query("COMMIT");
           console.log("✅ Marketplace payment processed:", transactionId);
+
+          // FIX: this message was being inserted but never broadcast, so
+          // the seller only saw "Buyer has made payment..." after a manual
+          // refresh instead of live like every other message in the app
+          // (senddetails/confirm/dispute all emit — this webhook was the
+          // one path that didn't).
+          if (paymentMsg) {
+            await emitToRoom(
+              `room:${convRes.rows[0].id}`,
+              "new_message",
+              paymentMsg,
+            );
+          }
+          await emitToRoom(`user:${transaction.buyer_id}`, "sidebar_update", {});
+          await emitToRoom(`user:${transaction.seller_id}`, "sidebar_update", {});
+
           return NextResponse.json({ status: "marketplace payment processed" });
         } catch (err) {
           await client.query("ROLLBACK");
@@ -324,8 +354,8 @@ export async function POST(req) {
           const creditAmount = requestedAmount > 0 ? requestedAmount : amount;
 
           await client.query(
-            `INSERT INTO users_transactions (user_id, type, amount, status, description, reference)
-             VALUES ($1, 'credit', $2, 'success', 'Wallet funding', $3)`,
+            `INSERT INTO users_transactions (user_id, type, amount, status, description, reference, affects_balance)
+             VALUES ($1, 'credit', $2, 'success', 'Wallet funding', $3, true)`,
             [userId, creditAmount, reference],
           );
 
@@ -382,9 +412,13 @@ export async function POST(req) {
           //    VALUES ($1, 'credit', $2, 'success', 'Subscription payment', $3)`,
           //   [userId, amount, reference],
           // );
+          // FIX: subscriptions are always paid by card/Flutterwave — there is
+          // no wallet path for this purpose — so this debit row is pure
+          // transaction history and must not reduce the user's wallet
+          // balance. Same category of bug as the marketplace fix above.
           await client.query(
-            `INSERT INTO users_transactions (user_id, type, amount, status, description, reference)
-             VALUES ($1, 'debit', $2, 'success', 'Subscription payment', $3)`,
+            `INSERT INTO users_transactions (user_id, type, amount, status, description, reference, affects_balance)
+             VALUES ($1, 'debit', $2, 'success', 'Subscription payment', $3, false)`,
             [userId, amount, reference],
           );
 
@@ -484,16 +518,17 @@ export async function POST(req) {
             [tournament_id],
           );
 
-          // await client.query(
-          //   `INSERT INTO users_transactions
-          //    (user_id, type, amount, status, description, reference)
-          //    VALUES ($1, 'credit', $2, 'success', 'Tournament registration', $3)`,
-          //   [userId, amount, reference],
-          // );
+          // FIX: this used to insert BOTH a 'credit' and a 'debit' row for
+          // the same user/amount/reference (a leftover credit-then-debit
+          // pair that canceled out in the balance sum, same root issue as
+          // the marketplace/subscription fixes above). Tournament entry is
+          // always paid by card/Flutterwave — there's no wallet path — so
+          // this should only ever be a history-only debit, same as
+          // subscription payments.
           await client.query(
             `INSERT INTO users_transactions
-             (user_id, type, amount, status, description, reference)
-             VALUES ($1, 'debit', $2, 'success', 'Tournament registration', $3)`,
+             (user_id, type, amount, status, description, reference, affects_balance)
+             VALUES ($1, 'debit', $2, 'success', 'Tournament registration', $3, false)`,
             [userId, amount, reference],
           );
 
@@ -735,8 +770,8 @@ async function handleVirtualAccountCharge(data, reference) {
     }
 
     await client.query(
-      `INSERT INTO users_transactions (user_id, type, amount, status, description, reference)
-       VALUES ($1, 'credit', $2, 'success', 'Bank transfer funding', $3)`,
+      `INSERT INTO users_transactions (user_id, type, amount, status, description, reference, affects_balance)
+       VALUES ($1, 'credit', $2, 'success', 'Bank transfer funding', $3, true)`,
       [virtualAccount.user_id, amount, reference],
     );
 

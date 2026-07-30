@@ -141,8 +141,8 @@ export async function POST(req) {
 
       // Refund the buyer to their wallet balance.
       await client.query(
-        `INSERT INTO users_transactions (user_id, type, amount, status, description, reference)
-         VALUES ($1, 'credit', $2, 'success', 'Dispute refund', $3)`,
+        `INSERT INTO users_transactions (user_id, type, amount, status, description, reference, affects_balance)
+         VALUES ($1, 'credit', $2, 'success', 'Dispute refund', $3, true)`,
         [login.buyer_id, login.amount, `refund_${login.payment_reference}`],
       );
 

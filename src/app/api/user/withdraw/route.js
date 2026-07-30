@@ -131,6 +131,7 @@ export async function POST(req) {
       ), 0) AS balance
       FROM users_transactions
       WHERE user_id = $1
+        AND affects_balance = true
       `,
       [userId],
     );

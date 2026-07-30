@@ -51,6 +51,16 @@ export async function GET() {
     const transactions = txResult.rows;
 
     // 3. Compute balance (TRUTH SOURCE)
+    // FIX (critical): this used to sum EVERY 'debit' row for the user,
+    // including 'Game account purchase'/'Subscription payment'/'Tournament
+    // registration' debit rows that get inserted purely as a HISTORY
+    // record when someone pays by card/Flutterwave — money that was never
+    // actually taken from their in-app wallet. That silently reduced
+    // (sometimes negatively) a buyer's real, spendable balance any time
+    // they paid by card instead of wallet. `affects_balance` (see
+    // migration note in this route's git history / PR) is set false on
+    // exactly those history-only rows at insert time, so only rows that
+    // represent real money in/out of the wallet count here.
     const balanceResult = await pool.query(
       `
       SELECT 
@@ -63,6 +73,7 @@ export async function GET() {
         ), 0) AS balance
       FROM users_transactions
       WHERE user_id = $1
+        AND affects_balance = true
       `,
       [userId]
     );
