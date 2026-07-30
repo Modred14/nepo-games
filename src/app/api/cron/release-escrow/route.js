@@ -15,8 +15,14 @@ export async function GET(req) {
     const now = new Date();
 
     // 1. Find expired login deliveries that were never confirmed and never released
-    //    Checking BOTH confirmed = FALSE and released_to_seller IS NULL
-    //    prevents double-release if buyer already confirmed manually
+    // FIX (critical): this previously only checked `released_to_seller IS NULL`.
+    // released_to_seller is a plain boolean column set to TRUE on release (both
+    // here and in confirm/route.js) — if it's declared NOT NULL DEFAULT FALSE
+    // (rather than a nullable tri-state column), every real row has the value
+    // FALSE, never NULL, so that condition could never match anything and this
+    // cron would silently release $0 forever. Checking BOTH IS NULL and = FALSE
+    // covers either schema shape and still prevents double-release once a row
+    // has been confirmed manually or released once (both set it to TRUE).
     const res = await client.query(
       `
       SELECT 
@@ -30,7 +36,7 @@ export async function GET(req) {
       JOIN transactions t ON t.listing_id = ld.listing_id
       WHERE ld.expires_at <= $1
         AND ld.confirmed = FALSE
-        AND ld.released_to_seller IS NULL
+        AND (ld.released_to_seller IS NULL OR ld.released_to_seller = FALSE)
         AND ld.disputed = FALSE
       `,
       [now],
@@ -52,7 +58,7 @@ export async function GET(req) {
           JOIN transactions t ON t.listing_id = ld.listing_id
           WHERE ld.id = $1
             AND ld.confirmed = FALSE
-            AND ld.released_to_seller IS NULL
+            AND (ld.released_to_seller IS NULL OR ld.released_to_seller = FALSE)
             AND ld.disputed = FALSE
           FOR UPDATE
           `,
