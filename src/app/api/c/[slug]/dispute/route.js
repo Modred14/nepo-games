@@ -30,12 +30,12 @@ export async function POST(req, { params }) {
         t.payment_reference,
         t.escrow_status,
         buyer.email   AS buyer_email,
-        buyer.name    AS buyer_name,
+        TRIM(CONCAT(buyer.first_name, ' ', buyer.surname))   AS buyer_name,
         seller.email  AS seller_email,
-        seller.name   AS seller_name,
+        TRIM(CONCAT(seller.first_name, ' ', seller.surname)) AS seller_name,
         l.title       AS game_title,
         l.price       AS game_price,
-        l.game_type   AS game_type
+        l.platform    AS game_type
       FROM login_deliveries ld
       JOIN transactions t       ON t.listing_id = ld.listing_id
       JOIN users buyer          ON buyer.id = t.buyer_id

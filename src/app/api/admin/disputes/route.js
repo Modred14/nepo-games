@@ -26,10 +26,10 @@ export async function GET() {
          t.transaction_status,
          buyer.id          AS buyer_id,
          buyer.email       AS buyer_email,
-         buyer.name        AS buyer_name,
+         TRIM(CONCAT(buyer.first_name, ' ', buyer.surname))   AS buyer_name,
          seller.id         AS seller_id,
          seller.email      AS seller_email,
-         seller.name       AS seller_name,
+         TRIM(CONCAT(seller.first_name, ' ', seller.surname)) AS seller_name,
          l.title           AS game_title
        FROM login_deliveries ld
        JOIN transactions t  ON t.listing_id = ld.listing_id
