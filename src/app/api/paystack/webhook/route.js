@@ -484,12 +484,12 @@ export async function POST(req) {
             [tournament_id],
           );
 
-          await client.query(
-            `INSERT INTO users_transactions
-             (user_id, type, amount, status, description, reference)
-             VALUES ($1, 'credit', $2, 'success', 'Tournament registration', $3)`,
-            [userId, amount, reference],
-          );
+          // await client.query(
+          //   `INSERT INTO users_transactions
+          //    (user_id, type, amount, status, description, reference)
+          //    VALUES ($1, 'credit', $2, 'success', 'Tournament registration', $3)`,
+          //   [userId, amount, reference],
+          // );
           await client.query(
             `INSERT INTO users_transactions
              (user_id, type, amount, status, description, reference)

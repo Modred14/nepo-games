@@ -942,25 +942,25 @@ export default function Conversation({ gameId, receiverId }) {
                   Make sure you confirm all details before payment. Refunds are
                   only possible via dispute system.
                 </div>
-                {/* <div className="space-y-2">
+                <div className="space-y-2">
                   <p className="text-sm font-semibold">Choose Payment Method</p>
+                  <button
+                    onClick={() => setPaymentMethod("wallet")}
+                    className={`w-full py-2 rounded border ${paymentMethod === "wallet" ? "bg-blue-100 border-blue-500" : ""}`}
+                  >
+                    Pay with Account Balance
+                  </button>{" "}
                   <button
                     onClick={() => setPaymentMethod("paystack")}
                     className={`w-full py-2 rounded border ${paymentMethod === "paystack" ? "bg-blue-100 border-blue-500" : ""}`}
                   >
                     Pay with Card / Bank (Flutterwave)
                   </button>
-                  <button
-                    onClick={() =>setPaymentMethod("wallet") }
-                    className={`w-full py-2 rounded border ${paymentMethod === "wallet" ? "bg-blue-100 border-blue-500" : ""}`}
-                  >
-                    Pay with Account Balance
-                  </button>
-                </div> */}
+                </div>
                 <div className="flex gap-2">
                   <button
                     onClick={() => {
-                      setPaymentMethod("wallet")
+                      setPaymentMethod("wallet");
                       setBuyModal(false);
                       setPayError("");
                       setPaymentMethod("");
@@ -1367,8 +1367,8 @@ export default function Conversation({ gameId, receiverId }) {
                           </strong>
                         </li>
                         <li>
-                          <strong>Use only Nepogames payment method</strong>{" "}
-                          for all transactions
+                          <strong>Use only Nepogames payment method</strong> for
+                          all transactions
                         </li>
                         <li>
                           <strong>
