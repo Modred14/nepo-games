@@ -1,5 +1,6 @@
 // src/app/api/cron/release-escrow/route.js
 import pool from "@/lib/db";
+import { emitToRoom } from "@/lib/socket";
 
 const SYSTEM_USER_ID = 1;
 
@@ -121,12 +122,13 @@ export async function GET(req) {
         );
 
         // 6. System message — mirrors manual confirm
-        await client.query(
+        const systemMsg = await client.query(
           `
           INSERT INTO messages
             (conversation_id, sender_id, message, type, created_at)
           VALUES
             ($1, $2, $3, $4, NOW())
+          RETURNING *
           `,
           [
             item.conversation_id,
@@ -138,6 +140,26 @@ export async function GET(req) {
 
         await client.query("COMMIT");
         released++;
+
+        // 7. Emit to Render socket server — FIX: this was previously missing
+        // entirely, so the auto-release message never showed up live for the
+        // buyer/seller; it only existed in the DB until their next page load.
+        // Wrapped separately so a socket hiccup can't affect the release,
+        // which has already committed by this point.
+        try {
+          await emitToRoom(
+            `room:${item.conversation_id}`,
+            "new_message",
+            systemMsg.rows[0],
+          );
+          await emitToRoom(`user:${item.buyer_id}`, "sidebar_update", {});
+          await emitToRoom(`user:${login.seller_id}`, "sidebar_update", {});
+        } catch (notifyErr) {
+          console.error(
+            `CRON RELEASE: socket emit failed for delivery ${item.id} (release still recorded):`,
+            notifyErr,
+          );
+        }
       } catch (itemErr) {
         await client.query("ROLLBACK");
         console.error(`CRON RELEASE ERROR for delivery ${item.id}:`, itemErr);
