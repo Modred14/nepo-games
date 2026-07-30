@@ -107,6 +107,8 @@ export default function Conversation({ gameId, receiverId }) {
   const messagesCacheRef = useRef(new Map());
   const hasPrefetchedRef = useRef(false);
   const socketRef = useRef(null);
+  const hasConnectedOnceRef = useRef(false);
+  const lastReconnectFetchRef = useRef(0);
 
   const chatIdRef = useRef(null);
   const userRef = useRef(null);
@@ -359,6 +361,24 @@ export default function Conversation({ gameId, receiverId }) {
       if (userRef.current?.id) {
         authJoin(socket);
       }
+
+      // ✅ Reconciliation on RECONNECT only (not the initial connect — the
+      // mount effect below already does a fetchAndSet for that). Any
+      // new_message/sidebar_update events broadcast while we were
+      // disconnected (dropped wifi, laptop sleep, tab backgrounded, etc.)
+      // would otherwise be silently missed and the sidebar would go stale
+      // until some unrelated event happened to trigger a refetch.
+      //
+      // Throttled to guard the DB: a flaky connection reconnecting
+      // rapidly won't fire more than one fetchAndSet per 10s window.
+      if (hasConnectedOnceRef.current) {
+        const now = Date.now();
+        if (now - lastReconnectFetchRef.current > 10000) {
+          lastReconnectFetchRef.current = now;
+          fetchAndSet();
+        }
+      }
+      hasConnectedOnceRef.current = true;
     });
 
     socket.on("connect_error", (err) => {
