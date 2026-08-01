@@ -1,3 +1,4 @@
+// src/components/Conversation.jsx
 // ROUTE: src/components/Conversation.jsx
 // CHANGED: button text only — was "Pay with Paystack", now reflects the
 // Flutterwave backend. The paymentMethod === "paystack" value itself was
@@ -158,11 +159,38 @@ export default function Conversation({ gameId, receiverId }) {
     unreadcount: 0,
   };
 
+  // FIX: a conversation row (and therefore an entry in `conversations`) only
+  // exists once the first message has been sent. Landing here straight from
+  // "Buy now" on a listing, there's nothing to find yet, so the header used
+  // to render with no name/email/photo until that first message created the
+  // row. `roleData` (fetched on mount from /api/c/[gameId]/role) already
+  // resolves the other party + listing info independent of whether a
+  // conversation exists, so use it as a stand-in until the real one shows up.
+  const pendingChat = useMemo(() => {
+    if (!roleData?.otherUser) return null;
+    return {
+      id: null,
+      listing_id: gameId,
+      gamedetails: roleData.listing?.gamedetails,
+      username: roleData.otherUser.username,
+      email: roleData.otherUser.email,
+      profile_image: roleData.otherUser.profile_image,
+      plan: roleData.otherUser.plan,
+      receiver_id: roleData.otherUser.id,
+      price: roleData.listing?.price,
+      status: roleData.listing?.status,
+      processing_by: roleData.listing?.processing_by,
+      lastmessage: "",
+      lastmessagetime: null,
+      unreadcount: 0,
+    };
+  }, [roleData, gameId]);
+
   const activeChat = isSystemChat
     ? NEPO_CHAT
     : conversations.find(
         (chat) => String(chat.listing_id) === String(currentChatId),
-      );
+      ) || pendingChat;
 
   // ─── Update sidebar instantly from a message — no network request ────────
   const updateSidebarFromMessage = useCallback((message) => {
@@ -269,7 +297,9 @@ export default function Conversation({ gameId, receiverId }) {
     if (!gameId) return;
     const loadRole = async () => {
       try {
-        const res = await fetch(`/api/c/${gameId}/role`);
+        const res = await fetch(
+          `/api/c/${gameId}/role${receiverId ? `?receiver_id=${receiverId}` : ""}`,
+        );
         const data = await res.json();
         setRoleData(data);
       } catch (err) {

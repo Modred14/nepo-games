@@ -1,3 +1,4 @@
+// src/app/api/c/[slug]/role/route.js
 import pool from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import { getCached, setCached } from "@/lib/cache";
@@ -19,6 +20,9 @@ export async function GET(req, { params }) {
     }
 
     const current_user_id = Number(currentUser.id);
+
+    const { searchParams } = new URL(req.url);
+    const receiverIdParam = searchParams.get("receiver_id");
 
     // ─────────────────────────────────────────────────────────────────────────
     // Cache the listing's seller_id — it never changes after posting
@@ -44,6 +48,32 @@ export async function GET(req, { params }) {
     const isSeller = current_user_id === seller_id;
     const role = isSeller ? "seller" : "buyer";
     const otherRole = isSeller ? "buyer" : "seller";
+     const otherId = isSeller
+      ? receiverIdParam
+        ? Number(receiverIdParam)
+        : null
+      : seller_id;
+
+    const [otherUserRes, listingRes] = await Promise.all([
+      otherId
+        ? pool.query(
+            `SELECT id, username, email, profile_image, plan FROM users WHERE id = $1 LIMIT 1`,
+            [otherId],
+          )
+        : Promise.resolve({ rows: [] }),
+      pool.query(
+        `SELECT
+           price,
+           status,
+           processing_by,
+           COALESCE(title || ' (' || COALESCE(platform, '') || ')', title, 'Unknown Game') AS gamedetails
+         FROM listings WHERE id = $1 LIMIT 1`,
+        [listing_id],
+      ),
+    ]);
+
+    const otherUser = otherUserRes.rows[0] || null;
+    const listingInfo = listingRes.rows[0] || null;
 
     return Response.json({
       listing_id,
@@ -53,6 +83,8 @@ export async function GET(req, { params }) {
       role,
       otherRole,
       isSeller,
+      otherUser,
+      listing: listingInfo,
     });
   } catch (err) {
     console.error("ROLE API ERROR:", err);
