@@ -2762,23 +2762,31 @@ function AccountTab({ user }) {
             >
               ₦{" "}
               {formatMoney(
-                transactions
-                  .filter((t) => t.type === "credit" && t.status === "success")
-                  .reduce((s, t) => s + Number(t.amount || 0), 0) -
-                  // FIX: the "credit" transaction for a sale is recorded at
-                  // the full sale price, with the platform fee recorded
-                  // separately as its own "debit" ("Listing fee") row. Only
-                  // summing credits was showing sellers a "Total earned"
-                  // that was above what they actually received — net the
-                  // platform fee out here so it matches their real earnings.
+                Math.max(
+                  0,
                   transactions
                     .filter(
-                      (t) =>
-                        t.type === "debit" &&
-                        t.status === "success" &&
-                        t.description === "Listing fee",
+                      (t) => t.type === "credit" && t.status === "success",
                     )
-                    .reduce((s, t) => s + Number(t.amount || 0), 0),
+                    .reduce((s, t) => s + Number(t.amount || 0), 0) -
+                    // FIX: the "credit" transaction for a sale is recorded
+                    // at the full sale price, with the platform fee
+                    // recorded separately as its own "debit" ("Listing
+                    // fee") row. Only summing credits was showing sellers
+                    // a "Total earned" that was above what they actually
+                    // received — net the platform fee out here so it
+                    // matches their real earnings. Math.max(0, …) is a
+                    // defensive floor in case a fee row is ever settled
+                    // without its matching credit.
+                    transactions
+                      .filter(
+                        (t) =>
+                          t.type === "debit" &&
+                          t.status === "success" &&
+                          t.description === "Listing fee",
+                      )
+                      .reduce((s, t) => s + Number(t.amount || 0), 0),
+                ),
               )}
             </p>
           </div>
