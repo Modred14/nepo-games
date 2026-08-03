@@ -14,11 +14,21 @@
 // concept. This route's own pre-transfer validation (PIN check, balance
 // check, pending-row-created-before-calling-the-provider) is what actually
 // carries that safety property forward, and is unchanged below.
+// UPDATED: the actual call to Flutterwave's /v3/transfers is now proxied
+// through nepo-games-server-main's /transfer endpoint (see
+// src/lib/flutterwaveTransfer.js) instead of being made directly from here.
+// Flutterwave requires the calling IP to be whitelisted, and Netlify
+// Functions don't have a static outbound IP, so this route can never pass
+// whitelisting on its own. Render can be given a static outbound IP, so
+// that's where the outbound call to Flutterwave now happens. Everything
+// else in this route (session check, PIN check, balance check, pending-row
+// insert) is unchanged.
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../../auth/[...nextauth]/route";
 import pool from "@/lib/db";
 import bcrypt from "bcrypt";
+import { requestFlutterwaveTransfer } from "@/lib/flutterwaveTransfer";
 
 export async function POST(req) {
   const client = await pool.connect();
@@ -201,28 +211,21 @@ export async function POST(req) {
 
     await client.query("COMMIT");
 
-    // 5. CALL FLUTTERWAVE (outside DB transaction)
+    // 5. CALL FLUTTERWAVE (outside DB transaction) — via the Render proxy,
+    // since Flutterwave's transfer endpoint requires a whitelisted IP and
+    // Netlify's outbound IP isn't static.
     try {
-      const flwRes = await fetch("https://api.flutterwave.com/v3/transfers", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${process.env.FLW_SECRET_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          account_bank: bankCode,
-          account_number: accountNumber,
-          // Flutterwave amount is in naira, not kobo.
-          amount,
-          currency: "NGN",
-          narration: "Wallet withdrawal",
-          reference,
-        }),
+      const { ok: flwOk, data: flwData } = await requestFlutterwaveTransfer({
+        account_bank: bankCode,
+        account_number: accountNumber,
+        // Flutterwave amount is in naira, not kobo.
+        amount,
+        currency: "NGN",
+        narration: "Wallet withdrawal",
+        reference,
       });
 
-      const flwData = await flwRes.json();
-
-      if (!flwRes.ok || flwData.status !== "success") {
+      if (!flwOk || flwData.status !== "success") {
         await pool.query(
           `UPDATE users_transactions SET status = 'failed' WHERE reference = $1`,
           [reference],
