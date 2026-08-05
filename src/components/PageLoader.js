@@ -27,6 +27,7 @@ export default function PageLoader({ children }) {
       document.body.style.overflow = "";
     };
   }, []);
+  
   return (
     <>
       {!loaded && (
