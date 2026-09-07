@@ -15,7 +15,6 @@ import {
   Filter,
 } from "lucide-react";
 
-// ─── tiny relative time ───────────────────────────────────────────────────────
 function timeAgo(dateStr) {
   const diff = (Date.now() - new Date(dateStr)) / 1000;
   if (diff < 60) return "just now";
@@ -84,7 +83,7 @@ function Bubble({ msg }) {
   );
 }
 
-// ─── SESSION LIST ITEM ────────────────────────────────────────────────────────
+
 function SessionItem({ s, active, onClick }) {
   return (
     <button
@@ -177,7 +176,7 @@ function SessionItem({ s, active, onClick }) {
   );
 }
 
-// ─── MAIN DASHBOARD ───────────────────────────────────────────────────────────
+
 export default function SupportDashboard() {
   const [sessions, setSessions] = useState([]);
   const [activeId, setActiveId] = useState(null);
@@ -232,7 +231,7 @@ export default function SupportDashboard() {
       setEnding(false);
     }
   };
-  // ── fetch sessions ────────────────────────────────────────────────────────
+ 
   const fetchSessions = useCallback(async (silent = false) => {
     if (!silent) setLoadingSessions(true);
     try {
@@ -252,7 +251,7 @@ export default function SupportDashboard() {
     return () => clearInterval(interval);
   }, [fetchSessions]);
 
-  // ── fetch messages for active session ────────────────────────────────────
+ 
   const fetchMessages = useCallback(async (sid) => {
     if (!initRef.current) {
       setLoadingMessages(true);
@@ -281,7 +280,7 @@ export default function SupportDashboard() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // ── take over ─────────────────────────────────────────────────────────────
+
   const handleTakeover = async () => {
     if (!activeId) return;
     setTakingOver(true);
@@ -301,7 +300,6 @@ export default function SupportDashboard() {
     }
   };
 
-  // ── send agent reply ──────────────────────────────────────────────────────
   const handleSend = async () => {
     const text = reply.trim();
     if (!text || !activeId || sending) return;
@@ -452,7 +450,7 @@ export default function SupportDashboard() {
        .dash-input-row {
   background:#fff; border-top:1px solid rgba(122,122,254,.12);
   padding:12px 16px; display:flex; gap:10px; align-items:flex-end; flex-shrink:0;
-  position: relative;   /* 👈 add this */
+  position: relative;   
 }
         .dash-textarea {
           flex:1; border:1px solid rgba(122,122,254,.22);
@@ -495,7 +493,7 @@ export default function SupportDashboard() {
       `}</style>
 
       <div className="dash-root">
-        {/* topbar */}
+        
         <div className="dash-topbar">
           <div className="dash-logo">
             <div className="dash-logo-mark">
@@ -529,7 +527,7 @@ export default function SupportDashboard() {
         </div>
 
         <div className="dash-body">
-          {/* session list */}
+          
           <div className="dash-sidebar">
             <div className="dash-sidebar-head">
               <div className="dash-sidebar-title">Active Chats</div>
@@ -584,7 +582,7 @@ export default function SupportDashboard() {
             </div>
           </div>
 
-          {/* chat panel */}
+
           <div className="dash-chat">
             {!activeId ? (
               <div className="dash-no-chat">
@@ -602,7 +600,7 @@ export default function SupportDashboard() {
               </div>
             ) : (
               <>
-                {/* chat header */}
+           
                 <div className="dash-chat-head">
                   <div
                     style={{
@@ -695,7 +693,7 @@ export default function SupportDashboard() {
                   )}
                 </div>
 
-                {/* messages */}
+             
                 <div className="dash-messages">
                   {loadingMessages ? (
                     <div

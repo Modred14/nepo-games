@@ -1,5 +1,3 @@
-// ROUTE: src/app/about/page.js
-// CHANGED: two lines of marketing copy only — "via Paystack" -> "via Flutterwave".
 "use client";
 
 import Link from "next/link";
@@ -903,7 +901,6 @@ export default function AboutPage() {
       `}</style>
 
       <div className="about-root">
-        {/* HERO */}
         <section className="hero">
           <div>
             <p className="hero-eyebrow">Our story</p>
@@ -935,13 +932,9 @@ export default function AboutPage() {
             </div>
           </div>
         </section>
-
-        {/* COUNTDOWN */}
         <LaunchCountdown />
 
         <div className="divider" />
-
-        {/* THE PROBLEM */}
         <section className="section">
           <p className="section-eyebrow reveal">The problem we saw</p>
           <div className="problem-grid">
@@ -990,7 +983,6 @@ export default function AboutPage() {
 
         <div className="divider" />
 
-        {/* SOLUTION */}
         <div className="solution-bg">
           <div className="solution-inner">
             <p className="section-eyebrow reveal">How we fixed it</p>
@@ -1050,8 +1042,6 @@ export default function AboutPage() {
             </div>
           </div>
         </div>
-
-        {/* HOW IT WORKS */}
         <section className="section">
           <p className="section-eyebrow reveal">How it works</p>
           <h2 className="section-title reveal reveal-delay-1">
@@ -1098,8 +1088,6 @@ export default function AboutPage() {
         </section>
 
         <div className="divider" />
-
-        {/* FOUNDERS */}
         <section className="section">
           <p className="section-eyebrow reveal">The people behind it</p>
           <h2 className="section-title reveal reveal-delay-1">
@@ -1181,8 +1169,6 @@ export default function AboutPage() {
             </div>
           </div>
         </section>
-
-        {/* MISSION BANNER */}
         <section className="section" style={{ paddingTop: 0 }}>
           <div className="mission-banner reveal">
             <p className="mission-quote">
@@ -1192,8 +1178,6 @@ export default function AboutPage() {
             <p className="mission-sub">— Favour Omirin, CEO of Nepogames</p>
           </div>
         </section>
-
-        {/* WHY TRUST */}
         <section className="section" style={{ paddingTop: 0 }}>
           <p className="section-eyebrow reveal">Why choose Nepogames</p>
           <h2 className="section-title reveal reveal-delay-1">
@@ -1248,8 +1232,6 @@ export default function AboutPage() {
         </section>
 
         <div className="divider" />
-
-        {/* CTA */}
         <section className="cta-section">
           <h2 className="cta-title reveal">
             Ready to trade

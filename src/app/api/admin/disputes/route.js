@@ -1,11 +1,6 @@
-// src/app/api/admin/disputes/route.js
+
 import pool from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
-
-// FIX (critical): there was previously no way to see, let alone resolve,
-// open disputes — dispute/route.js only froze escrow and sent an email
-// alert. This lists every currently-frozen/disputed transaction so an
-// admin can act on it via POST /api/admin/disputes/resolve.
 export async function GET() {
   try {
     const admin = await requireAdmin();

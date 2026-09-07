@@ -1,14 +1,7 @@
-// src/app/admin/disputes/page.jsx
+
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-
-// FIX (critical): this page is the missing piece that made the dispute
-// system actually usable — previously a dispute could be raised and
-// escrow frozen, but there was no UI (and no API) to resolve it, so money
-// sat stuck until someone manually edited the database. This lists every
-// open dispute and lets support release funds to the seller or refund the
-// buyer, via /api/admin/disputes and /api/admin/disputes/resolve.
 export default function AdminDisputesPage() {
   const [disputes, setDisputes] = useState([]);
   const [loading, setLoading] = useState(true);
