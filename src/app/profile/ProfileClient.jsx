@@ -2609,7 +2609,7 @@ function AccountTab({ user }) {
         </div>
 
         {/* Bank transfer activation prompt — only shown before an account exists */}
-        {!loadingVA && !vaUnavailable && !virtualAccount && (
+        {/* {!loadingVA && !vaUnavailable && !virtualAccount && (
           <div
             className="at-card"
             style={{ borderRadius: 20, padding: "20px 22px" }}
@@ -2672,9 +2672,7 @@ function AccountTab({ user }) {
                 </div>
               )}
 
-              {/* NEW: Flutterwave rejects virtual account creation without a
-                  BVN. Only shown once the API tells us it's needed, same
-                  pattern as the phone field above. */}
+             
               {vaNeedsBvn && (
                 <div style={{ marginTop: 10 }}>
                   <label
@@ -2728,7 +2726,7 @@ function AccountTab({ user }) {
               </button>
             </div>
           </div>
-        )}
+        )} */}
 
         {/* Stat cards */}
         <div
