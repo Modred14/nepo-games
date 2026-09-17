@@ -27,6 +27,18 @@ import { useSearchParams } from "next/navigation";
 import Loader from "@/components/Loader";
 import Link from "next/link";
 
+// WITHDRAWAL FEE (new): mirrors calculateWithdrawalFee() in
+// src/app/api/user/withdraw/route.js — used ONLY to show the user a
+// preview of the fee/net amount before they confirm. The server's own
+// copy is the authoritative one; if these two ever drift, the server's
+// number is what actually applies, this is just UI.
+function calculateWithdrawalFeePreview(amount) {
+  if (!Number.isFinite(amount) || amount <= 0) return 0;
+  if (amount <= 5000) return 50;
+  if (amount <= 50000) return 100;
+  return 150;
+}
+
 export default function AccountSettingsPage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("profile");
@@ -2380,6 +2392,27 @@ function AccountTab({ user }) {
                   className="at-input"
                   style={{ marginTop: 5, fontSize: 16, fontWeight: 600 }}
                 />
+                {/* WITHDRAWAL FEE (new): preview so the user isn't
+                    surprised by how much actually lands in their bank
+                    account vs. what's debited from their wallet. */}
+                {Number(withdrawAmount) > 0 && (
+                  <p
+                    style={{
+                      fontSize: 12,
+                      color: "#64748b",
+                      margin: "6px 0 0",
+                    }}
+                  >
+                    Fee: ₦{calculateWithdrawalFeePreview(Number(withdrawAmount)).toLocaleString()}
+                    {" · "}
+                    You'll receive: ₦
+                    {Math.max(
+                      Number(withdrawAmount) -
+                        calculateWithdrawalFeePreview(Number(withdrawAmount)),
+                      0,
+                    ).toLocaleString()}
+                  </p>
+                )}
               </div>
               <div>
                 <label
@@ -2488,6 +2521,18 @@ function AccountTab({ user }) {
                   if (!Number.isInteger(Number(withdrawAmount))) {
                     setWithdrawError(
                       "Enter a whole naira amount (no kobo/decimals)",
+                    );
+                    return;
+                  }
+                  // WITHDRAWAL FEE (new): mirrors the server's netAmount
+                  // check — matches calculateWithdrawalFee() in
+                  // withdraw/route.js.
+                  if (
+                    Number(withdrawAmount) <=
+                    calculateWithdrawalFeePreview(Number(withdrawAmount))
+                  ) {
+                    setWithdrawError(
+                      "Withdrawal amount is too small to cover the transfer fee",
                     );
                     return;
                   }

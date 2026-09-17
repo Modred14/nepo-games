@@ -217,6 +217,33 @@ export async function POST(req) {
       );
     }
 
+    // WITHDRAWAL FEE (new): flat, tiered fee, deducted from the amount
+    // actually sent to Flutterwave — NOT from what's debited off the
+    // user's wallet. The wallet is still debited the full requested
+    // amount (matches the platform's decision to keep that behavior
+    // unchanged); the fee is recorded as a separate ledger row (see the
+    // INSERT below) rather than silently disappearing, mirroring the
+    // existing 'Listing fee'/'Platform fee' pattern used for marketplace
+    // purchases elsewhere in this codebase (see e.g.
+    // src/app/api/paystack/webhook/route.js) — same shared `reference`,
+    // same `user_id = 1` platform account convention.
+    //
+    // Tiers are deliberately set above Flutterwave's own cost (₦10.75 /
+    // ₦26.88 / ₦53.75 incl. VAT per their published pricing as of this
+    // writing) so the platform isn't operating at a loss on the fee
+    // itself; adjust calculateWithdrawalFee() if Flutterwave's pricing
+    // or the platform's desired margin changes.
+    const fee = calculateWithdrawalFee(amount);
+    const netAmount = amount - fee;
+
+    if (netAmount <= 0) {
+      await client.query("ROLLBACK");
+      return NextResponse.json(
+        { error: "Withdrawal amount is too small to cover the transfer fee" },
+        { status: 400 },
+      );
+    }
+
     // 3. Create reference
     const reference = `WD_${Date.now()}_${userId}`;
 
@@ -319,6 +346,28 @@ export async function POST(req) {
       );
     }
 
+    // WITHDRAWAL FEE (new): record the fee as its own ledger row, credited
+    // to the platform account (user_id = 1 — same convention used for
+    // 'Platform fee' rows on marketplace purchases elsewhere in this
+    // codebase). Deliberately shares the withdrawal's own `reference`
+    // (not a suffixed variant) so every status transition this withdrawal
+    // goes through — success/failed/unknown, whether via the webhook, the
+    // ambiguous-failure handling below, or the reconciliation
+    // sweep/admin-recheck endpoint — updates this row too automatically,
+    // without needing separate logic to keep the two in sync. This only
+    // works because the status-update statements in this file (and the
+    // webhook handler) key off `reference`, not `id` — the server-side
+    // reconciliation loop and the admin recheck endpoint were updated to
+    // do the same for this exact reason.
+    await client.query(
+      `
+      INSERT INTO users_transactions
+      (user_id, type, amount, status, description, reference, affects_balance)
+      VALUES (1, 'credit', $1, 'pending', 'Withdrawal fee', $2, true)
+      `,
+      [fee, reference],
+    );
+
     await client.query("COMMIT");
 
     // 5. CALL FLUTTERWAVE (outside DB transaction) — via the Render proxy,
@@ -332,8 +381,11 @@ export async function POST(req) {
       } = await requestFlutterwaveTransfer({
         account_bank: bankCode,
         account_number: accountNumber,
+        // WITHDRAWAL FEE: send the NET amount (after the platform fee),
+        // not the full amount debited from the user's wallet — the fee
+        // itself is recorded separately above, not sent to Flutterwave.
         // Flutterwave amount is in naira, not kobo.
-        amount,
+        amount: netAmount,
         currency: "NGN",
         narration: "Wallet withdrawal",
         reference,
@@ -356,6 +408,9 @@ export async function POST(req) {
             success: true,
             message: "Withdrawal initiated",
             reference,
+            amount,
+            fee,
+            netAmount,
           });
         }
 
@@ -384,7 +439,7 @@ export async function POST(req) {
         );
         sendAdminAlert(
           "Withdrawal status could not be confirmed with Flutterwave — needs manual reconciliation",
-          { reference, userId, amount, accountNumber, bankCode },
+          { reference, userId, amount, fee, netAmount, accountNumber, bankCode },
         ).catch((err) => console.error("❌ Admin alert email failed:", err));
 
         return NextResponse.json({
@@ -392,6 +447,9 @@ export async function POST(req) {
           message:
             "Withdrawal is being processed. We'll confirm once it completes.",
           reference,
+          amount,
+          fee,
+          netAmount,
         });
       }
 
@@ -415,7 +473,7 @@ export async function POST(req) {
       if (Number(flwData?.data?.requires_approval) === 1) {
         sendAdminAlert(
           "Withdrawal requires manual approval in the Flutterwave dashboard",
-          { reference, userId, amount, accountNumber, bankCode },
+          { reference, userId, amount, fee, netAmount, accountNumber, bankCode },
         ).catch((err) => console.error("❌ Admin alert email failed:", err));
       }
 
@@ -423,6 +481,9 @@ export async function POST(req) {
         success: true,
         message: "Withdrawal initiated",
         reference,
+        amount,
+        fee,
+        netAmount,
       });
     } catch (transferErr) {
       // FIX (D.1): a thrown error this far out is itself an ambiguous
@@ -450,7 +511,7 @@ export async function POST(req) {
         );
         sendAdminAlert(
           "Withdrawal status could not be confirmed with Flutterwave — needs manual reconciliation",
-          { reference, userId, amount, accountNumber, bankCode },
+          { reference, userId, amount, fee, netAmount, accountNumber, bankCode },
         ).catch((err) => console.error("❌ Admin alert email failed:", err));
       }
 
@@ -459,6 +520,9 @@ export async function POST(req) {
         message:
           "Withdrawal is being processed. We'll confirm once it completes.",
         reference,
+        amount,
+        fee,
+        netAmount,
       });
     }
   } catch (err) {
@@ -476,6 +540,18 @@ export async function POST(req) {
   } finally {
     client.release();
   }
+}
+
+// WITHDRAWAL FEE (new): flat, tiered fee charged to the user, deducted
+// from the amount sent to Flutterwave (see the withdraw handler above).
+// Tiers set above Flutterwave's own published transfer cost (incl. VAT)
+// so the platform keeps a margin rather than absorbing or breaking even
+// on the fee: Flutterwave charges ₦10.75 / ₦26.88 / ₦53.75 for the same
+// three tiers as of this writing (flutterwave.com/ng/pricing).
+function calculateWithdrawalFee(amount) {
+  if (amount <= 5000) return 50;
+  if (amount <= 50000) return 100;
+  return 150;
 }
 
 // FIX (D.1): shared helper for both the "ambiguous proxy response" and
