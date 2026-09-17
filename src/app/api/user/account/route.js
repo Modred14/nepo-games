@@ -1,3 +1,13 @@
+// ROUTE: src/app/api/user/account/route.js
+// FIX (audit item D.3): the balance formula here previously only
+// subtracted 'success' debits, while src/app/api/user/withdraw/route.js's
+// own balance check also subtracts 'pending' (and now 'unknown', see
+// D.1) debits. That meant a user with an in-flight withdrawal saw their
+// OLD, higher balance on this page while the actual withdrawable amount
+// (enforced server-side in withdraw/route.js) was already lower — a
+// confusing/incorrect number shown for the user's own money, even though
+// it wasn't an exploitable security gap (withdraw/route.js's own check
+// was always the authoritative one). The two formulas are now identical.
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../../auth/[...nextauth]/route";
@@ -67,7 +77,7 @@ export async function GET() {
         COALESCE(SUM(
           CASE 
             WHEN type = 'credit' AND status = 'success' THEN amount
-            WHEN type = 'debit' AND status = 'success' THEN -amount
+            WHEN type = 'debit' AND status IN ('success', 'pending', 'unknown') THEN -amount
             ELSE 0
           END
         ), 0) AS balance

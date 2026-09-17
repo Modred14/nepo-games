@@ -27,12 +27,28 @@
 // DB table names (paystack_webhook_events, paystack_unmatched_credits) were
 // left AS-IS to avoid a migration — they're just internal table names now,
 // not tied to Paystack specifically. Rename via migration later if you want.
+//
+// AUDIT FIX (D.2, high): the transfer.completed handler used to update
+// users_transactions straight off the webhook POST body's `data.status`.
+// Signature verification (verif-hash) confirms the request came from
+// Flutterwave, but not that the payload is complete/current — the
+// charge.completed handler already learned this lesson (see the
+// verifyByReference() re-fetch above) and transfer.completed is now given
+// the same treatment: after signature check, we re-fetch the transfer
+// from Flutterwave via GET /v3/transfers/{id} (through the whitelisted-IP
+// Render proxy — see checkFlutterwaveTransferStatus in
+// src/lib/flutterwaveTransfer.js, since this endpoint is also covered by
+// Flutterwave's mandatory IP whitelist) and use THAT as the source of
+// truth instead of the raw webhook body. This also now resolves rows
+// left in the 'unknown' state by withdraw/route.js's D.1 fix, not just
+// 'pending' ones.
 import { NextResponse } from "next/server";
 import crypto from "crypto";
 import pool from "@/lib/db";
 import { emitToRoom } from "@/lib/socket";
 import { sendSellerWelcomeEmail } from "@/lib/emails/sendSellerWelcome";
 import { sendAdminAlert } from "@/lib/emails/sendAdminAlert";
+import { checkFlutterwaveTransferStatus } from "@/lib/flutterwaveTransfer";
 
 const OWN_TX_REF_PREFIXES = ["sub_", "wallet_", "tx_", "tournament_"];
 
@@ -555,34 +571,66 @@ export async function POST(req) {
     // transfer.completed
     // ─────────────────────────────────────────────
     if (event.event === "transfer.completed") {
-      const status = data?.status; // "SUCCESSFUL" | "FAILED"
+      const transferId = data?.id;
 
-      if (status === "SUCCESSFUL") {
-        const existing = await pool.query(
-          "SELECT id, status FROM users_transactions WHERE reference = $1",
-          [reference],
+      const existing = await pool.query(
+        "SELECT id, status FROM users_transactions WHERE reference = $1",
+        [reference],
+      );
+
+      if (existing.rows.length > 0 && existing.rows[0].status === "success") {
+        console.log("⚠️ Duplicate transfer.completed webhook ignored:", reference);
+        return NextResponse.json({ status: "already processed" });
+      }
+
+      // FIX (D.2): don't trust data.status straight off the webhook body
+      // — re-fetch the transfer from Flutterwave and use that as the
+      // source of truth, same principle as verifyByReference() above for
+      // charges.
+      const verification = await checkFlutterwaveTransferStatus(
+        transferId ? { id: transferId } : { reference },
+      );
+
+      if (verification.ambiguous) {
+        // Couldn't reach Flutterwave to confirm right now. Don't guess —
+        // leave the row as-is (it's already 'pending'/'unknown' and
+        // still correctly held against the user's balance either way)
+        // and let a later webhook retry or a reconciliation pass settle
+        // it. Returning a non-2xx here also causes Flutterwave to retry
+        // the webhook per their own retry policy.
+        console.error(
+          "⚠️ Could not verify transfer.completed against Flutterwave, will retry:",
+          reference,
         );
+        return NextResponse.json(
+          { error: "Could not verify transfer status" },
+          { status: 503 },
+        );
+      }
 
-        if (existing.rows.length > 0 && existing.rows[0].status === "success") {
-          console.log("⚠️ Duplicate transfer.completed webhook ignored:", reference);
-          return NextResponse.json({ status: "already processed" });
-        }
+      const verifiedStatus = verification.found
+        ? String(verification.data?.status || "").toUpperCase()
+        : "FAILED"; // Flutterwave has no record of it at all — treat as failed.
 
+      if (verifiedStatus === "SUCCESSFUL") {
         await pool.query(
           `UPDATE users_transactions SET status = 'success' WHERE reference = $1`,
           [reference],
         );
-
         return NextResponse.json({ status: "withdrawal success updated" });
       }
 
-      if (status === "FAILED") {
+      if (verifiedStatus === "FAILED") {
         await pool.query(
           `UPDATE users_transactions SET status = 'failed' WHERE reference = $1`,
           [reference],
         );
         return NextResponse.json({ status: "withdrawal failed updated" });
       }
+
+      // Verified but still NEW/PENDING on Flutterwave's side — nothing to
+      // update yet, wait for a later webhook.
+      return NextResponse.json({ status: "withdrawal still pending" });
     }
 
     return NextResponse.json({ status: "ok" });

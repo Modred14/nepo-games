@@ -1,4 +1,4 @@
-// ORIGINAL ROUTE: src/app/api/user/withdraw/route.js
+// ROUTE: src/app/api/user/withdraw/route.js
 // CHANGED: Paystack transferrecipient + /transfer -> Flutterwave /v3/transfers
 //
 // SIMPLIFICATION: Flutterwave's /v3/transfers takes account_bank +
@@ -20,15 +20,54 @@
 // Flutterwave requires the calling IP to be whitelisted, and Netlify
 // Functions don't have a static outbound IP, so this route can never pass
 // whitelisting on its own. Render can be given a static outbound IP, so
-// that's where the outbound call to Flutterwave now happens. Everything
-// else in this route (session check, PIN check, balance check, pending-row
-// insert) is unchanged.
+// that's where the outbound call to Flutterwave now happens.
+//
+// AUDIT FIXES applied in this version:
+//
+// D.1 (critical, double-payout risk): previously, ANY error from the
+// Flutterwave call — including a plain network timeout where we have no
+// idea whether Flutterwave actually received and queued the transfer —
+// was treated identically to a clean rejection: marked 'failed', which
+// frees the user's balance to retry. If Flutterwave had, in fact, already
+// queued/executed the original transfer, the user could end up paid out
+// twice for one withdrawal. Now, an ambiguous outcome is never marked
+// 'failed' directly — we reconcile against Flutterwave's own transfer
+// records first (checkFlutterwaveTransferStatus), and only fall back to a
+// non-balance-freeing 'unknown' status requiring manual/background
+// reconciliation if Flutterwave's answer is itself unavailable.
+//
+// D.4 (amount type mismatch): Flutterwave's own API reference types the
+// transfer `amount` field as an integer (int32). This route now rejects
+// non-integer withdrawal amounts server-side instead of forwarding
+// whatever decimal value the client sent.
+//
+// D.5 (silent stuck transfers): Flutterwave can come back with
+// `requires_approval: 1` on the queued transfer, meaning it won't proceed
+// until someone manually approves it from the Flutterwave dashboard — no
+// webhook will ever arrive on its own. This is now detected and an admin
+// alert is sent so it doesn't sit invisibly forever.
+//
+// D.6 (defense in depth): the pending-transaction insert now uses
+// ON CONFLICT DO NOTHING against a unique constraint on `reference` (see
+// the migration in db/migrations/002_unique_withdrawal_reference.sql). In
+// practice the per-user row lock below already makes a reference collision
+// vanishingly unlikely, but this closes the gap at the DB level too.
+//
+// D.7 (record accuracy, not a fund-diversion risk — Flutterwave's transfer
+// call never reads account_name, only account_bank/account_number): the
+// account name is now re-resolved from Flutterwave at withdrawal time
+// instead of trusting whatever string the client submitted, so
+// `user_banks.account_name` stays accurate.
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../../auth/[...nextauth]/route";
 import pool from "@/lib/db";
 import bcrypt from "bcrypt";
-import { requestFlutterwaveTransfer } from "@/lib/flutterwaveTransfer";
+import {
+  requestFlutterwaveTransfer,
+  checkFlutterwaveTransferStatus,
+} from "@/lib/flutterwaveTransfer";
+import { sendAdminAlert } from "@/lib/emails/sendAdminAlert";
 
 export async function POST(req) {
   const client = await pool.connect();
@@ -41,7 +80,7 @@ export async function POST(req) {
     }
 
     const body = await req.json();
-    const { accountNumber, bankCode, accountName, pin } = body;
+    const { accountNumber, bankCode, pin } = body;
 
     const amount = Number(body.amount);
 
@@ -49,9 +88,26 @@ export async function POST(req) {
       return NextResponse.json({ error: "Invalid amount" }, { status: 400 });
     }
 
+    // FIX (D.4): Flutterwave documents the transfer `amount` field as an
+    // integer. Reject decimal/kobo amounts here instead of silently
+    // forwarding them and finding out how Flutterwave handles it.
+    if (!Number.isInteger(amount)) {
+      return NextResponse.json(
+        { error: "Withdrawal amount must be a whole number of naira (no kobo)." },
+        { status: 400 },
+      );
+    }
+
     if (amount < 100) {
       return NextResponse.json(
         { error: "Minimum withdrawal is ₦100.00" },
+        { status: 400 },
+      );
+    }
+
+    if (!accountNumber || !bankCode) {
+      return NextResponse.json(
+        { error: "Bank account and bank are required" },
         { status: 400 },
       );
     }
@@ -130,12 +186,17 @@ export async function POST(req) {
       [userId],
     );
 
+    // FIX (D.3, matching src/app/api/user/account/route.js): both
+    // 'pending' AND 'unknown' (see D.1) debits must be counted as
+    // already-committed against the balance, or a user could withdraw
+    // against money that's actually tied up in an in-flight/ambiguous
+    // transfer.
     const balanceRes = await client.query(
       `
       SELECT COALESCE(SUM(
         CASE 
           WHEN type = 'credit' AND status = 'success' THEN amount
-          WHEN type = 'debit' AND status IN ('success', 'pending') THEN -amount
+          WHEN type = 'debit' AND status IN ('success', 'pending', 'unknown') THEN -amount
           ELSE 0
         END
       ), 0) AS balance
@@ -177,13 +238,36 @@ export async function POST(req) {
     const bankName =
       banksData.data.find((b) => b.code === bankCode)?.name || "Unknown Bank";
 
-    if (!accountName) {
+    // FIX (D.7): don't trust the client-submitted accountName. Re-resolve
+    // it from Flutterwave right here so what we store in user_banks is
+    // accurate. (This has no bearing on where the money actually goes —
+    // the /v3/transfers call below only ever uses account_bank/
+    // account_number — it's purely about record accuracy.)
+    const resolveRes = await fetch(
+      "https://api.flutterwave.com/v3/accounts/resolve",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${process.env.FLW_SECRET_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          account_number: accountNumber,
+          account_bank: bankCode,
+        }),
+      },
+    );
+    const resolveData = await resolveRes.json();
+
+    if (!resolveRes.ok || resolveData.status !== "success") {
       await client.query("ROLLBACK");
       return NextResponse.json(
-        { error: "Account name not resolved yet" },
+        { error: resolveData.message || "Unable to verify bank account" },
         { status: 400 },
       );
     }
+
+    const accountName = resolveData.data.account_name;
 
     await client.query(
       `
@@ -200,14 +284,31 @@ export async function POST(req) {
     );
 
     // 4. Insert pending transaction FIRST
-    await client.query(
+    // FIX (D.6): ON CONFLICT DO NOTHING against a unique constraint on
+    // `reference` (see db/migrations/002_unique_withdrawal_reference.sql)
+    // as a defense-in-depth backstop, on top of the per-user row lock
+    // that already makes a real collision effectively impossible.
+    const insertRes = await client.query(
       `
       INSERT INTO users_transactions
       (user_id, type, amount, status, description, reference, affects_balance)
       VALUES ($1, 'debit', $2, 'pending', 'Withdrawal', $3, true)
+      ON CONFLICT (reference) DO NOTHING
+      RETURNING id
       `,
       [userId, amount, reference],
     );
+
+    if (insertRes.rows.length === 0) {
+      // Reference collision (should be practically impossible given the
+      // row lock, but if it ever happens, fail closed rather than risk a
+      // second Flutterwave call against a reused reference).
+      await client.query("ROLLBACK");
+      return NextResponse.json(
+        { error: "Could not start withdrawal, please try again" },
+        { status: 409 },
+      );
+    }
 
     await client.query("COMMIT");
 
@@ -215,7 +316,11 @@ export async function POST(req) {
     // since Flutterwave's transfer endpoint requires a whitelisted IP and
     // Netlify's outbound IP isn't static.
     try {
-      const { ok: flwOk, data: flwData } = await requestFlutterwaveTransfer({
+      const {
+        ok: flwOk,
+        ambiguous,
+        data: flwData,
+      } = await requestFlutterwaveTransfer({
         account_bank: bankCode,
         account_number: accountNumber,
         // Flutterwave amount is in naira, not kobo.
@@ -224,6 +329,62 @@ export async function POST(req) {
         narration: "Wallet withdrawal",
         reference,
       });
+
+      // FIX (D.1, critical): an ambiguous outcome (we don't know if
+      // Flutterwave actually received/queued the transfer) must NEVER be
+      // treated as a clean failure — that would free the user's balance
+      // to retry while the original transfer might already be in flight
+      // or complete, risking a double payout. Reconcile first.
+      if (ambiguous) {
+        const status = await resolveAmbiguousTransfer(reference);
+
+        if (status === "success" || status === "pending") {
+          // Flutterwave confirms it does have this transfer (queued or
+          // already successful) — leave the row as-is (pending) so the
+          // transfer.completed webhook (or the next reconciliation pass)
+          // can finalize it normally. DO NOT free the balance.
+          return NextResponse.json({
+            success: true,
+            message: "Withdrawal initiated",
+            reference,
+          });
+        }
+
+        if (status === "failed") {
+          // Flutterwave confirms no transfer exists / it failed — safe
+          // to release the balance for a retry.
+          await pool.query(
+            `UPDATE users_transactions SET status = 'failed' WHERE reference = $1`,
+            [reference],
+          );
+          return NextResponse.json(
+            { error: "Transfer failed, please try again" },
+            { status: 400 },
+          );
+        }
+
+        // status === "unknown": couldn't get a definitive answer from
+        // Flutterwave either. Mark the row 'unknown' — still counted
+        // against the user's balance (see the CASE statements above and
+        // in account/route.js) so it can't be double-spent — and alert
+        // an admin so this gets a human/background reconciliation pass
+        // instead of sitting silently.
+        await pool.query(
+          `UPDATE users_transactions SET status = 'unknown' WHERE reference = $1`,
+          [reference],
+        );
+        sendAdminAlert(
+          "Withdrawal status could not be confirmed with Flutterwave — needs manual reconciliation",
+          { reference, userId, amount, accountNumber, bankCode },
+        ).catch((err) => console.error("❌ Admin alert email failed:", err));
+
+        return NextResponse.json({
+          success: true,
+          message:
+            "Withdrawal is being processed. We'll confirm once it completes.",
+          reference,
+        });
+      }
 
       if (!flwOk || flwData.status !== "success") {
         await pool.query(
@@ -237,21 +398,59 @@ export async function POST(req) {
         );
       }
 
+      // FIX (D.5): a transfer can come back "queued" but flagged
+      // requires_approval — meaning it won't move further until someone
+      // manually approves it in the Flutterwave dashboard, and no
+      // webhook will fire until that happens. Surface this instead of
+      // letting it sit invisibly in 'pending' forever.
+      if (Number(flwData?.data?.requires_approval) === 1) {
+        sendAdminAlert(
+          "Withdrawal requires manual approval in the Flutterwave dashboard",
+          { reference, userId, amount, accountNumber, bankCode },
+        ).catch((err) => console.error("❌ Admin alert email failed:", err));
+      }
+
       return NextResponse.json({
         success: true,
         message: "Withdrawal initiated",
         reference,
       });
     } catch (transferErr) {
+      // FIX (D.1): a thrown error this far out is itself an ambiguous
+      // outcome (see requestFlutterwaveTransfer — it shouldn't normally
+      // throw anymore, but fail safe rather than assume failure).
       console.error("Flutterwave transfer call failed:", transferErr);
-      await pool.query(
-        `UPDATE users_transactions SET status = 'failed' WHERE reference = $1`,
-        [reference],
-      );
-      return NextResponse.json(
-        { error: "Transfer failed, please try again" },
-        { status: 500 },
-      );
+
+      const status = await resolveAmbiguousTransfer(reference);
+
+      if (status === "failed") {
+        await pool.query(
+          `UPDATE users_transactions SET status = 'failed' WHERE reference = $1`,
+          [reference],
+        );
+        return NextResponse.json(
+          { error: "Transfer failed, please try again" },
+          { status: 500 },
+        );
+      }
+
+      if (status === "unknown") {
+        await pool.query(
+          `UPDATE users_transactions SET status = 'unknown' WHERE reference = $1`,
+          [reference],
+        );
+        sendAdminAlert(
+          "Withdrawal status could not be confirmed with Flutterwave — needs manual reconciliation",
+          { reference, userId, amount, accountNumber, bankCode },
+        ).catch((err) => console.error("❌ Admin alert email failed:", err));
+      }
+
+      return NextResponse.json({
+        success: true,
+        message:
+          "Withdrawal is being processed. We'll confirm once it completes.",
+        reference,
+      });
     }
   } catch (err) {
     try {
@@ -268,4 +467,27 @@ export async function POST(req) {
   } finally {
     client.release();
   }
+}
+
+// FIX (D.1): shared helper for both the "ambiguous proxy response" and
+// "the whole call threw" cases. Asks Flutterwave directly (via the
+// whitelisted-IP proxy) what it actually knows about this reference, and
+// returns one of:
+//   "success" — Flutterwave has a SUCCESSFUL transfer for this reference
+//   "pending" — Flutterwave has it queued/processing (NEW/PENDING)
+//   "failed"  — Flutterwave has no record of it, or it's FAILED there
+//   "unknown" — couldn't get a definitive answer at all; needs a human
+async function resolveAmbiguousTransfer(reference) {
+  const result = await checkFlutterwaveTransferStatus({ reference });
+
+  if (result.ambiguous) return "unknown";
+
+  if (!result.found) return "failed";
+
+  const flwStatus = String(result.data?.status || "").toUpperCase();
+
+  if (flwStatus === "SUCCESSFUL") return "success";
+  if (flwStatus === "FAILED") return "failed";
+  // NEW / PENDING / anything else Flutterwave hasn't resolved yet.
+  return "pending";
 }

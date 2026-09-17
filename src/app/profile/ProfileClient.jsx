@@ -1099,6 +1099,12 @@ function AccountTab({ user }) {
       setWithdrawError("Enter a valid amount");
       return;
     }
+    // FIX (D.4): backstop in case this handler is ever reached without
+    // going through the "Withdraw" button check above.
+    if (!Number.isInteger(value)) {
+      setWithdrawError("Enter a whole naira amount (no kobo/decimals)");
+      return;
+    }
     if (!withdrawPin || withdrawPin.length !== 4) {
       setWithdrawError("Enter valid PIN");
       return;
@@ -2366,9 +2372,11 @@ function AccountTab({ user }) {
                 </label>
                 <input
                   type="number"
+                  step="1"
+                  min="100"
                   value={withdrawAmount}
                   onChange={(e) => setWithdrawAmount(e.target.value)}
-                  placeholder="0.00"
+                  placeholder="0"
                   className="at-input"
                   style={{ marginTop: 5, fontSize: 16, fontWeight: 600 }}
                 />
@@ -2472,6 +2480,15 @@ function AccountTab({ user }) {
                   setWithdrawError("");
                   if (!withdrawAmount || !accountNumber || !bankCode) {
                     setWithdrawError("Complete all fields");
+                    return;
+                  }
+                  // FIX (D.4): Flutterwave's transfer amount field is an
+                  // integer — reject kobo/decimal amounts here instead of
+                  // only finding out from the server after the PIN step.
+                  if (!Number.isInteger(Number(withdrawAmount))) {
+                    setWithdrawError(
+                      "Enter a whole naira amount (no kobo/decimals)",
+                    );
                     return;
                   }
                   setShowPinConfirm(true);
