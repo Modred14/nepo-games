@@ -1,4 +1,10 @@
-// ROUTE: src/app/api/admin/withdrawals/[id]/recheck/route.js  (NEW)
+// ROUTE: src/app/api/admin/withdrawals/[id]/recheck/route.js
+//
+// ADMIN DASHBOARD PHASE 1: now writes an admin_audit_log entry whenever
+// a recheck actually changes the withdrawal's status. Per the site
+// owner's decision, this endpoint ONLY rechecks Flutterwave's own
+// status — it never creates a new transfer — so it's safe to log/expose
+// without the double-payout risk a real "retry" would carry.
 //
 // Manual counterpart to the automatic reconciliation loop running on
 // nepo-games-server-main (see that repo's index.js). Lets an admin force
@@ -13,6 +19,7 @@
 import pool from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
 import { checkFlutterwaveTransferStatus } from "@/lib/flutterwaveTransfer";
+import { logAdminAction } from "@/lib/adminAudit";
 
 export async function POST(req, { params }) {
   try {
@@ -67,6 +74,16 @@ export async function POST(req, { params }) {
         newStatus,
         tx.reference,
       ]);
+
+      logAdminAction({
+        admin,
+        action: "withdrawal.recheck",
+        resourceType: "withdrawal",
+        resourceId: tx.id,
+        previousValue: { status: tx.status },
+        newValue: { status: newStatus, flutterwaveStatus: flwStatus },
+        req,
+      });
     }
 
     return Response.json({

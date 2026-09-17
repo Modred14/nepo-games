@@ -1,4 +1,9 @@
-
+// ROUTE: src/app/admin/disputes/page.jsx
+//
+// ADMIN DASHBOARD PHASE 1: resolving a dispute now prompts for an
+// optional reason, sent through to /api/admin/disputes/resolve and
+// recorded in admin_audit_log — closes the gap where resolutions
+// happened correctly but nothing recorded who did it or why.
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -34,12 +39,21 @@ export default function AdminDisputesPage() {
 
     if (!window.confirm(confirmMsg)) return;
 
+    // ADMIN DASHBOARD PHASE 1: optional reason, recorded in the audit
+    // log. window.prompt() returning null (Cancel) is treated as "no
+    // reason given", not as aborting the resolution — the admin already
+    // confirmed via window.confirm above.
+    const reason = window.prompt(
+      "Optional: add a reason for this resolution (recorded in the audit log)",
+      "",
+    );
+
     setBusyId(conversationId);
     try {
       const res = await fetch("/api/admin/disputes/resolve", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ conversationId, resolution }),
+        body: JSON.stringify({ conversationId, resolution, reason: reason || null }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || "Failed to resolve dispute");

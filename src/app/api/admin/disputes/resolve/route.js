@@ -1,6 +1,15 @@
+// ROUTE: src/app/api/admin/disputes/resolve/route.js
+//
+// ADMIN DASHBOARD PHASE 1: now writes an admin_audit_log entry on every
+// resolution (see src/lib/adminAudit.js) — this was the exact gap
+// flagged in the audit: dispute resolutions already worked correctly
+// (proper row locking, escrow/fee reversal), but nothing recorded WHICH
+// admin resolved a dispute or WHY. Also now accepts an optional `reason`
+// field from the request body for that purpose.
 import pool from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
 import { emitToRoom } from "@/lib/socket";
+import { logAdminAction } from "@/lib/adminAudit";
 
 const SYSTEM_USER_ID = 1;
 export async function POST(req) {
@@ -12,7 +21,7 @@ export async function POST(req) {
       return Response.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const { conversationId, resolution } = await req.json();
+    const { conversationId, resolution, reason } = await req.json();
 
     if (!conversationId || !["release_seller", "refund_buyer"].includes(resolution)) {
       return Response.json(
@@ -132,6 +141,28 @@ export async function POST(req) {
     );
 
     await client.query("COMMIT");
+
+    // ADMIN DASHBOARD PHASE 1: audit log entry — WHO resolved this
+    // dispute, WHAT changed, and WHY (if a reason was given). Written
+    // after COMMIT so a logging failure (see logAdminAction — it never
+    // throws) can't roll back a resolution that already succeeded.
+    logAdminAction({
+      admin,
+      action: `dispute.resolve.${resolution}`,
+      resourceType: "transaction",
+      resourceId: login.transaction_id,
+      previousValue: {
+        escrow_status: login.escrow_status,
+        disputed: login.disputed,
+      },
+      newValue: {
+        escrow_status: resolution === "release_seller" ? "released" : "refunded",
+        disputed: false,
+      },
+      reason: reason || null,
+      req,
+    });
+
     try {
       await emitToRoom(`room:${conversationId}`, "new_message", msgRes.rows[0]);
       await emitToRoom(`user:${login.buyer_id}`, "sidebar_update", {});
