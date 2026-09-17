@@ -284,16 +284,25 @@ export async function POST(req) {
     );
 
     // 4. Insert pending transaction FIRST
-    // FIX (D.6): ON CONFLICT DO NOTHING against a unique constraint on
-    // `reference` (see db/migrations/002_unique_withdrawal_reference.sql)
-    // as a defense-in-depth backstop, on top of the per-user row lock
-    // that already makes a real collision effectively impossible.
+    // FIX (D.6): ON CONFLICT DO NOTHING against a partial unique index
+    // scoped to withdrawal rows only (see
+    // db/migrations/002_unique_withdrawal_reference.sql) as a
+    // defense-in-depth backstop, on top of the per-user row lock that
+    // already makes a real collision effectively impossible. This is
+    // scoped to withdrawals specifically (not a table-wide constraint on
+    // `reference`) because other transaction types in this table
+    // deliberately reuse one `reference` across several rows (e.g. a
+    // marketplace purchase's buyer-debit/seller-credit/fee rows all
+    // share one reference) — the WHERE clause here must match the
+    // migration's index predicate exactly for Postgres to use it as the
+    // conflict arbiter.
     const insertRes = await client.query(
       `
       INSERT INTO users_transactions
       (user_id, type, amount, status, description, reference, affects_balance)
       VALUES ($1, 'debit', $2, 'pending', 'Withdrawal', $3, true)
-      ON CONFLICT (reference) DO NOTHING
+      ON CONFLICT (reference) WHERE type = 'debit' AND description = 'Withdrawal'
+      DO NOTHING
       RETURNING id
       `,
       [userId, amount, reference],

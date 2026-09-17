@@ -4,19 +4,38 @@
 -- generates `reference = WD_${Date.now()}_${userId}` and, combined with a
 -- SELECT ... FOR UPDATE row lock on the user during the whole withdrawal
 -- transaction, a real collision is already effectively impossible. This
--- migration closes the gap at the database level too, and backs the new
--- `ON CONFLICT (reference) DO NOTHING` in the withdrawal insert (which
--- would silently no-op instead of enforcing anything without this
--- constraint in place).
+-- migration closes the gap at the database level too, and backs the
+-- `ON CONFLICT (...) DO NOTHING` in the withdrawal insert (which would
+-- silently no-op instead of enforcing anything without this in place).
+--
+-- CORRECTED after diagnose-duplicate-references.js turned up existing
+-- duplicate `reference` values: this table intentionally reuses ONE
+-- `reference` across several rows for marketplace purchase transactions
+-- (buyer debit + seller credit + listing fee + platform fee, all sharing
+-- one reference so they can be traced back to a single purchase event).
+-- A table-wide UNIQUE(reference) constraint is incompatible with that
+-- design and would break every marketplace purchase insert.
+--
+-- What withdrawals actually need is uniqueness only among withdrawal
+-- rows specifically — every withdrawal insert (see withdraw/route.js)
+-- always has type = 'debit' AND description = 'Withdrawal'. A PARTIAL
+-- unique index scopes the constraint to just those rows and leaves every
+-- other transaction type (including the multi-row marketplace pattern
+-- above) completely unaffected.
 --
 -- No repo-tracked schema/migration files existed prior to this audit —
 -- this table lives only in the live database — so run this by hand
--- against your Postgres instance (or wire it into whatever migration
--- runner you use) before deploying the updated withdraw/route.js.
+-- against your Postgres instance (via `npm run db:migrate`, or wire it
+-- into whatever migration runner you use) before deploying the updated
+-- withdraw/route.js.
 --
--- Safe to run on an existing table: will fail loudly (not silently) if
--- duplicate references already exist, which is itself worth knowing
--- about before adding the constraint.
+-- Before running: use `npm run db:diagnose-duplicates` to confirm there
+-- are no duplicate `reference` values specifically among withdrawal rows
+-- (type='debit' AND description='Withdrawal'). If there are, DO NOT run
+-- this migration until those are investigated — that would indicate a
+-- genuine duplicate payout (audit item D.1), not a false alarm like the
+-- marketplace rows above.
 
-ALTER TABLE users_transactions
-  ADD CONSTRAINT users_transactions_reference_key UNIQUE (reference);
+CREATE UNIQUE INDEX users_transactions_withdrawal_reference_key
+  ON users_transactions (reference)
+  WHERE type = 'debit' AND description = 'Withdrawal';
