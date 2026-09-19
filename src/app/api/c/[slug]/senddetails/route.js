@@ -1,10 +1,15 @@
 // src/app/api/c/[slug]/senddetails/route.js
+// ADMIN DASHBOARD PHASE 4: the escrow confirmation window (previously a
+// hardcoded module constant) now comes from platform_settings via
+// getSetting("escrow_window_minutes") — see src/lib/settings.js and
+// db/migrations/006_platform_settings.sql. Seeded to 30 minutes, same as
+// before, so this changes nothing until an admin edits it.
 import pool from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import { emitToRoom } from "@/lib/socket";
+import { getSetting } from "@/lib/settings";
 
 const SYSTEM_USER_ID = 1;
-const DELIVERY_WINDOW_MS = 30 * 60 * 1000; // 30 minutes
 
 export async function POST(req, { params }) {
   const client = await pool.connect();
@@ -99,7 +104,8 @@ export async function POST(req, { params }) {
     // unused, separately-buggy sibling route, which has never run
     // successfully against production). Verify it during testing — if it
     // does exist, feel free to add it back in.
-    const expiresAt = new Date(Date.now() + DELIVERY_WINDOW_MS);
+    const escrowWindowMinutes = await getSetting("escrow_window_minutes");
+    const expiresAt = new Date(Date.now() + Number(escrowWindowMinutes) * 60 * 1000);
 
     const result = await client.query(
       `
@@ -123,7 +129,7 @@ export async function POST(req, { params }) {
       [
         conversationId,
         SYSTEM_USER_ID,
-        "Login details submitted. Buyer now has 30 minutes to confirm the login details after checking them.",
+        `Login details submitted. Buyer now has ${escrowWindowMinutes} minutes to confirm the login details after checking them.`,
         "confirm",
       ],
     );

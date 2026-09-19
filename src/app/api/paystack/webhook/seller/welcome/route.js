@@ -1,5 +1,5 @@
-import pool from "../../../../lib/db";
-import { resend } from "../../../../lib/resend";
+import pool from "../../../../../../lib/db";
+import { resend } from "../../../../../../lib/resend";
 
 export async function POST(req) {
   try {

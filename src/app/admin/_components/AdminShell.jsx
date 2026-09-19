@@ -24,10 +24,13 @@ import { useSession, signOut } from "next-auth/react";
 import {
   LayoutDashboard,
   Users,
+  Receipt,
   Banknote,
   ShieldAlert,
   MessagesSquare,
   ScrollText,
+  Gamepad2,
+  Settings,
   Menu,
   X,
   LogOut,
@@ -36,10 +39,13 @@ import {
 const NAV_ITEMS = [
   { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin/users", label: "Users", icon: Users },
+  { href: "/admin/listings", label: "Listings", icon: Gamepad2 },
+  { href: "/admin/transactions", label: "Transactions", icon: Receipt },
   { href: "/admin/withdrawals", label: "Withdrawals", icon: Banknote },
   { href: "/admin/disputes", label: "Disputes", icon: ShieldAlert },
   { href: "/admin/support", label: "Support", icon: MessagesSquare },
   { href: "/admin/audit-logs", label: "Audit log", icon: ScrollText },
+  { href: "/admin/settings", label: "Settings", icon: Settings },
 ];
 
 export default function AdminShell({ children }) {

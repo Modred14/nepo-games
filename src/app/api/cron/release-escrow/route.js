@@ -1,4 +1,11 @@
 // src/app/api/cron/release-escrow/route.js
+// ROUTE: src/app/api/cron/release-escrow/route.js
+//
+// ADMIN DASHBOARD PHASE 3: both queries below now also require
+// t.frozen = FALSE — a transaction an admin has frozen (see
+// src/app/api/admin/transactions/[id]/freeze/route.js) must not be
+// auto-released just because its delivery window expired. Without this,
+// "freeze" would only be a cosmetic label, not an actual safeguard.
 import pool from "@/lib/db";
 import { emitToRoom } from "@/lib/socket";
 
@@ -39,6 +46,7 @@ export async function GET(req) {
         AND ld.confirmed = FALSE
         AND (ld.released_to_seller IS NULL OR ld.released_to_seller = FALSE)
         AND ld.disputed = FALSE
+        AND t.frozen = FALSE
       `,
       [now],
     );
@@ -61,6 +69,7 @@ export async function GET(req) {
             AND ld.confirmed = FALSE
             AND (ld.released_to_seller IS NULL OR ld.released_to_seller = FALSE)
             AND ld.disputed = FALSE
+            AND t.frozen = FALSE
           FOR UPDATE
           `,
           [item.id],

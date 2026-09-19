@@ -1,4 +1,9 @@
 // ROUTE: src/app/api/paystack/buy/initialize/route.js
+// ADMIN DASHBOARD PHASE 4: the platform fee (previously hardcoded as
+// `amount * 0.05`) now comes from platform_settings via getSetting()
+// (see src/lib/settings.js and db/migrations/006_platform_settings.sql),
+// seeded to the same 5% so this changes nothing until an admin edits it
+// from /admin/settings.
 // CHANGED (this pass): in the card/bank checkout branch, added a temporary
 // console.log of the raw Flutterwave /v3/payments response (to diagnose the
 // "Cannot GET /" checkout error — the redirect URL returned was missing its
@@ -18,6 +23,7 @@
 import pool from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import { emitToRoom } from "@/lib/socket";
+import { getSetting } from "@/lib/settings";
 
 export async function POST(req) {
   try {
@@ -64,7 +70,17 @@ export async function POST(req) {
         );
       }
 
-      if (listing.status !== "active") {
+      // ADMIN DASHBOARD PHASE 4: a listing an admin has hidden, rejected,
+      // or soft-deleted must not be purchasable even if its `status`
+      // still happens to read 'active' — moderation_status/deleted_at
+      // are independent of the checkout-flow status field (see
+      // db/migrations/007_listing_moderation.sql for why they're kept
+      // separate rather than overloading `status`).
+      if (
+        listing.status !== "active" ||
+        listing.moderation_status !== "approved" ||
+        listing.deleted_at
+      ) {
         await client.query("ROLLBACK");
         return Response.json(
           { error: "Listing not available" },
@@ -118,7 +134,8 @@ export async function POST(req) {
       }
 
       const amount = Number(listing.price);
-      const platformFee = amount * 0.05;
+      const sellerFeePercent = await getSetting("seller_fee_percent");
+      const platformFee = amount * (Number(sellerFeePercent) / 100);
       const sellerAmount = amount;
 
       if (!Number.isFinite(amount) || amount <= 0) {

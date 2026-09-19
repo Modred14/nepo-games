@@ -1,4 +1,12 @@
 // src/app/api/c/[slug]/confirm/route.js
+// ROUTE: src/app/api/c/[slug]/confirm/route.js
+//
+// ADMIN DASHBOARD PHASE 3: a buyer can no longer confirm/release a
+// transaction an admin has frozen (see
+// src/app/api/admin/transactions/[id]/freeze/route.js) — see check #4a
+// below. Without this, freezing would only stop the automatic cron
+// release, not a buyer manually clicking confirm, which would make
+// "freeze" an incomplete safeguard.
 import pool from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import { emitToRoom } from "@/lib/socket";
@@ -28,7 +36,8 @@ export async function POST(req, { params }) {
         t.buyer_id, 
         t.seller_id, 
         t.payment_reference, 
-        t.escrow_status
+        t.escrow_status,
+        t.frozen
       FROM login_deliveries ld
       JOIN transactions t ON t.listing_id = ld.listing_id
       WHERE ld.conversation_id = $1
@@ -71,6 +80,15 @@ export async function POST(req, { params }) {
       await client.query("ROLLBACK");
       return Response.json(
         { error: "Cannot confirm a disputed delivery" },
+        { status: 409 },
+      );
+    }
+
+    // 4a. Frozen by an admin?
+    if (login.frozen === true) {
+      await client.query("ROLLBACK");
+      return Response.json(
+        { error: "This transaction is under review and can't be confirmed right now. Contact support." },
         { status: 409 },
       );
     }

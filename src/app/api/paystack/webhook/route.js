@@ -49,6 +49,7 @@ import { emitToRoom } from "@/lib/socket";
 import { sendSellerWelcomeEmail } from "@/lib/emails/sendSellerWelcome";
 import { sendAdminAlert } from "@/lib/emails/sendAdminAlert";
 import { checkFlutterwaveTransferStatus } from "@/lib/flutterwaveTransfer";
+import { getSetting } from "@/lib/settings";
 
 const OWN_TX_REF_PREFIXES = ["sub_", "wallet_", "tx_", "tournament_"];
 
@@ -291,7 +292,11 @@ export async function POST(req) {
             [transaction.seller_id, sellerAmount, reference],
           );
 
-          const platformFee = amount * 0.05;
+          // ADMIN DASHBOARD PHASE 4: was hardcoded `amount * 0.05` — now
+          // reads from platform_settings, same as the wallet-payment path
+          // in buy/initialize/route.js. See src/lib/settings.js.
+          const sellerFeePercent = await getSetting("seller_fee_percent");
+          const platformFee = amount * (Number(sellerFeePercent) / 100);
           await client.query(
             `INSERT INTO users_transactions
              (user_id, type, amount, status, description, reference, affects_balance)

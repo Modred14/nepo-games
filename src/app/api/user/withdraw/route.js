@@ -68,6 +68,7 @@ import {
   checkFlutterwaveTransferStatus,
 } from "@/lib/flutterwaveTransfer";
 import { sendAdminAlert } from "@/lib/emails/sendAdminAlert";
+import { getSetting } from "@/lib/settings";
 
 export async function POST(req) {
   const client = await pool.connect();
@@ -98,9 +99,13 @@ export async function POST(req) {
       );
     }
 
-    if (amount < 100) {
+    // ADMIN DASHBOARD PHASE 4: was hardcoded `< 100` — now reads from
+    // platform_settings (see src/lib/settings.js), seeded to the same
+    // ₦100 minimum.
+    const minimumWithdrawal = Number(await getSetting("minimum_withdrawal_naira"));
+    if (amount < minimumWithdrawal) {
       return NextResponse.json(
-        { error: "Minimum withdrawal is ₦100.00" },
+        { error: `Minimum withdrawal is ₦${minimumWithdrawal.toLocaleString()}.00` },
         { status: 400 },
       );
     }
@@ -217,7 +222,7 @@ export async function POST(req) {
       );
     }
 
-    // WITHDRAWAL FEE (new): flat, tiered fee, deducted from the amount
+    // WITHDRAWAL FEE: flat, tiered fee, deducted from the amount
     // actually sent to Flutterwave — NOT from what's debited off the
     // user's wallet. The wallet is still debited the full requested
     // amount (matches the platform's decision to keep that behavior
@@ -228,12 +233,14 @@ export async function POST(req) {
     // src/app/api/paystack/webhook/route.js) — same shared `reference`,
     // same `user_id = 1` platform account convention.
     //
-    // Tiers are deliberately set above Flutterwave's own cost (₦10.75 /
-    // ₦26.88 / ₦53.75 incl. VAT per their published pricing as of this
-    // writing) so the platform isn't operating at a loss on the fee
-    // itself; adjust calculateWithdrawalFee() if Flutterwave's pricing
-    // or the platform's desired margin changes.
-    const fee = calculateWithdrawalFee(amount);
+    // ADMIN DASHBOARD PHASE 4: tiers now come from platform_settings
+    // (see src/lib/settings.js) instead of being hardcoded — seeded to
+    // the same ₦50/₦100/₦150 tiers, deliberately set above Flutterwave's
+    // own cost (₦10.75 / ₦26.88 / ₦53.75 incl. VAT per their published
+    // pricing as of this writing) so the platform isn't operating at a
+    // loss on the fee itself. An admin editing these from /admin/settings
+    // should keep that margin in mind.
+    const fee = await calculateWithdrawalFee(amount);
     const netAmount = amount - fee;
 
     if (netAmount <= 0) {
@@ -542,16 +549,20 @@ export async function POST(req) {
   }
 }
 
-// WITHDRAWAL FEE (new): flat, tiered fee charged to the user, deducted
+// WITHDRAWAL FEE: flat, tiered fee charged to the user, deducted
 // from the amount sent to Flutterwave (see the withdraw handler above).
-// Tiers set above Flutterwave's own published transfer cost (incl. VAT)
-// so the platform keeps a margin rather than absorbing or breaking even
-// on the fee: Flutterwave charges ₦10.75 / ₦26.88 / ₦53.75 for the same
-// three tiers as of this writing (flutterwave.com/ng/pricing).
-function calculateWithdrawalFee(amount) {
-  if (amount <= 5000) return 50;
-  if (amount <= 50000) return 100;
-  return 150;
+// ADMIN DASHBOARD PHASE 4: tiers now read from platform_settings
+// (getSetting("withdrawal_fee_tiers")) instead of being hardcoded —
+// fails open to the same ₦50/₦100/₦150 tiers (set above Flutterwave's
+// own published transfer cost incl. VAT: ₦10.75 / ₦26.88 / ₦53.75 for
+// the same three bands as of this writing) if the settings table isn't
+// reachable, so a settings-table outage degrades to the previous
+// hardcoded behavior rather than breaking withdrawals.
+async function calculateWithdrawalFee(amount) {
+  const tiers = await getSetting("withdrawal_fee_tiers");
+  if (amount <= Number(tiers.tier1_max)) return Number(tiers.tier1_fee);
+  if (amount <= Number(tiers.tier2_max)) return Number(tiers.tier2_fee);
+  return Number(tiers.tier3_fee);
 }
 
 // FIX (D.1): shared helper for both the "ambiguous proxy response" and

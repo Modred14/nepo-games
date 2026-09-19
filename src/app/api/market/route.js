@@ -1,3 +1,6 @@
+// ROUTE: src/app/api/market/route.js
+// ADMIN DASHBOARD PHASE 4: also excludes listings an admin has hidden or
+// rejected (moderation_status) — see db/migrations/007_listing_moderation.sql.
 import pool from "../../../lib/db";
 import { getCached, setCached } from "../../../lib/cache";
 
@@ -20,6 +23,7 @@ export async function GET(req) {
   JOIN users u ON l.user_id = u.id
   WHERE l.deleted_at IS NULL
   AND l.status = 'active'
+  AND l.moderation_status = 'approved'
   ORDER BY l.created_at DESC
 `);
 
