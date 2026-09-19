@@ -3,11 +3,42 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "../app/api/auth/[...nextauth]/route";
 import pool from "./db";
 
+// ADMIN DASHBOARD PHASE 2: now also enforces users.account_status
+// (see db/migrations/004_user_account_status_and_last_login.sql).
+// Deliberately checked HERE rather than only at login time: this
+// codebase already documents (see the note on the jwt() callback in
+// [...nextauth]/route.js) that role/plan/etc. can be stale in the JWT
+// for up to 7 days. Suspending someone should not have to wait up to a
+// week to take effect. requireUser() is called from ~40 routes across
+// the app, so checking here — one cheap, primary-key-indexed lookup —
+// is what actually makes suspend/ban work on a user's very next request,
+// not just their next login.
+//
+// Fails OPEN on the lookup itself (not on the suspension check) — if
+// account_status can't be read for any reason (e.g. this migration
+// hasn't been run yet in a given environment), this behaves exactly as
+// it did before this change: nobody gets logged out over infrastructure
+// trouble, and a genuinely suspended/banned user still gets caught the
+// next time the query succeeds.
 export async function requireUser() {
   const session = await getServerSession(authOptions);
- 
+
   if (!session?.user?.id) return null;
- 
+
+  try {
+    const result = await pool.query(
+      `SELECT account_status FROM users WHERE id = $1`,
+      [session.user.id],
+    );
+    const status = result.rows[0]?.account_status;
+    if (status === "suspended" || status === "banned") return null;
+  } catch (err) {
+    console.error(
+      "requireUser: account_status lookup failed, failing open:",
+      err.message,
+    );
+  }
+
   return session.user;
 }
 

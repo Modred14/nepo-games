@@ -1,11 +1,13 @@
-// ROUTE: src/app/admin/audit-logs/page.jsx  (NEW)
+// ROUTE: src/app/admin/audit-logs/page.jsx
 //
-// ADMIN DASHBOARD PHASE 1: read-only feed of admin_audit_log entries.
-// Deliberately no edit/delete affordance anywhere on this page — the log
-// is meant to be immutable to normal admins (Section 16 of the spec).
+// DESIGN PASS: rebuilt on AdminShell + the shared design system. No
+// edit/delete affordance anywhere on this page, on purpose — the log is
+// immutable to normal admins.
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import AdminShell from "../_components/AdminShell";
+import { ScrollText } from "lucide-react";
 
 function formatValue(v) {
   if (v == null) return "—";
@@ -15,6 +17,13 @@ function formatValue(v) {
     return String(v);
   }
 }
+
+const TABS = [
+  { key: "", label: "All" },
+  { key: "transaction", label: "Transactions / Disputes" },
+  { key: "withdrawal", label: "Withdrawals" },
+  { key: "user", label: "Users" },
+];
 
 export default function AdminAuditLogsPage() {
   const [logs, setLogs] = useState([]);
@@ -43,82 +52,81 @@ export default function AdminAuditLogsPage() {
   }, [resourceType, fetchLogs]);
 
   return (
-    <div style={{ padding: 32, maxWidth: 1100, margin: "0 auto", fontFamily: "sans-serif" }}>
-      <h1 style={{ fontSize: 22, fontWeight: 600, marginBottom: 4 }}>Audit log</h1>
-      <p style={{ color: "#666", marginBottom: 20, fontSize: 14 }}>
-        Every sensitive admin action — dispute resolutions, withdrawal rechecks, and
-        anything added in later phases — is recorded here and can't be edited or deleted
-        from this dashboard.
+    <AdminShell>
+      <h1 className="adm-h1">Audit log</h1>
+      <p className="adm-sub">
+        Every sensitive admin action is recorded here and can't be edited or deleted from
+        this dashboard.
       </p>
 
-      <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
-        {[
-          { key: "", label: "All" },
-          { key: "transaction", label: "Transactions/Disputes" },
-          { key: "withdrawal", label: "Withdrawals" },
-        ].map((tab) => (
+      <div className="adm-tabs">
+        {TABS.map((tab) => (
           <button
             key={tab.label}
+            className={`adm-tab ${resourceType === tab.key ? "adm-tab--active" : ""}`}
             onClick={() => setResourceType(tab.key)}
-            style={{
-              padding: "6px 14px",
-              borderRadius: 999,
-              border: "1px solid #e5e5e5",
-              background: resourceType === tab.key ? "#111" : "#fff",
-              color: resourceType === tab.key ? "#fff" : "#333",
-              fontSize: 13,
-              fontWeight: 600,
-              cursor: "pointer",
-            }}
           >
             {tab.label}
           </button>
         ))}
       </div>
 
-      {loading && <p>Loading...</p>}
-      {error && <p style={{ color: "#b91c1c" }}>{error}</p>}
-      {!loading && !error && logs.length === 0 && (
-        <p style={{ color: "#666" }}>No audit log entries yet.</p>
+      {error && (
+        <div className="adm-card" style={{ padding: 16, color: "var(--adm-danger)", marginBottom: 20 }}>
+          {error}
+        </div>
       )}
 
-      {!loading && !error && logs.length > 0 && (
-        <div style={{ overflowX: "auto" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
-            <thead>
-              <tr style={{ textAlign: "left", borderBottom: "2px solid #e5e5e5" }}>
-                <th style={{ padding: "8px 6px" }}>Admin</th>
-                <th style={{ padding: "8px 6px" }}>Action</th>
-                <th style={{ padding: "8px 6px" }}>Resource</th>
-                <th style={{ padding: "8px 6px" }}>Change</th>
-                <th style={{ padding: "8px 6px" }}>Reason</th>
-                <th style={{ padding: "8px 6px" }}>When</th>
+      <div className="adm-table-wrap">
+        <table className="adm-table">
+          <thead>
+            <tr>
+              <th>Admin</th>
+              <th>Action</th>
+              <th>Resource</th>
+              <th>Change</th>
+              <th>Reason</th>
+              <th>When</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading &&
+              Array.from({ length: 5 }).map((_, i) => (
+                <tr key={i}>
+                  <td colSpan={6}>
+                    <div className="adm-skeleton-row" style={{ border: "none" }} />
+                  </td>
+                </tr>
+              ))}
+            {!loading && logs.length === 0 && (
+              <tr>
+                <td colSpan={6}>
+                  <div className="adm-empty">
+                    <ScrollText size={22} style={{ marginBottom: 8, opacity: 0.4 }} />
+                    <div>No audit log entries yet.</div>
+                  </div>
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {logs.map((l) => (
-                <tr key={l.id} style={{ borderBottom: "1px solid #f0f0f0" }}>
-                  <td style={{ padding: "8px 6px" }}>{l.admin_email || `#${l.admin_id}`}</td>
-                  <td style={{ padding: "8px 6px", fontFamily: "monospace", fontSize: 12 }}>
-                    {l.action}
-                  </td>
-                  <td style={{ padding: "8px 6px" }}>
-                    {l.resource_type ? `${l.resource_type} #${l.resource_id}` : "—"}
-                  </td>
-                  <td style={{ padding: "8px 6px", fontSize: 11, color: "#666", maxWidth: 260 }}>
+            )}
+            {!loading &&
+              logs.map((l) => (
+                <tr key={l.id}>
+                  <td>{l.admin_email || `#${l.admin_id}`}</td>
+                  <td style={{ fontFamily: "monospace", fontSize: 12 }}>{l.action}</td>
+                  <td>{l.resource_type ? `${l.resource_type} #${l.resource_id}` : "—"}</td>
+                  <td style={{ fontSize: 11.5, color: "var(--adm-ink-500)", maxWidth: 260 }}>
                     <div>from: {formatValue(l.previous_value)}</div>
                     <div>to: {formatValue(l.new_value)}</div>
                   </td>
-                  <td style={{ padding: "8px 6px", color: "#666" }}>{l.reason || "—"}</td>
-                  <td style={{ padding: "8px 6px", color: "#888", fontSize: 12 }}>
+                  <td style={{ color: "var(--adm-ink-500)" }}>{l.reason || "—"}</td>
+                  <td style={{ color: "var(--adm-ink-500)", fontSize: 12 }}>
                     {new Date(l.created_at).toLocaleString()}
                   </td>
                 </tr>
               ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </div>
+          </tbody>
+        </table>
+      </div>
+    </AdminShell>
   );
 }

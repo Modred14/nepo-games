@@ -1,4 +1,4 @@
-// src/app/login/LoginClient.js
+// ROUTE: src/app/login/LoginClient.js
 "use client";
 
 import { useSearchParams } from "next/navigation";
@@ -32,6 +32,9 @@ export default function LoginClient() {
   const signupSuccess = params.get("signupSuccess");
   const oauthError = params.get("oauthError");
   const oauthErr = params.get("error") === "OAuthCallback";
+  // ADMIN DASHBOARD PHASE 2: set by the Google sign-in callback in
+  // [...nextauth]/route.js when an account is suspended/banned.
+  const suspended = params.get("suspended");
 
   useEffect(() => {
     if ((verified || signupSuccess) && msg) {
@@ -60,6 +63,14 @@ export default function LoginClient() {
       setErrorTrigger((prev) => prev + 1); // ← you were missing this
     }
   }, [oauthError, msg]);
+  useEffect(() => {
+    // ADMIN DASHBOARD PHASE 2
+    if (suspended && msg) {
+      setMessage(msg);
+      setErrorOpen(true);
+      setErrorTrigger((prev) => prev + 1);
+    }
+  }, [suspended, msg]);
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem("nepo-user"));
 
@@ -130,6 +141,12 @@ export default function LoginClient() {
           setMessage(
             "This account was created with Google. Please sign in with Google instead.",
           );
+        } else if (res.error.includes("ACCOUNT_BANNED")) {
+          setMessage(
+            "Your account has been banned. Contact support if you believe this is a mistake.",
+          );
+        } else if (res.error.includes("ACCOUNT_SUSPENDED")) {
+          setMessage("Your account has been suspended. Contact support for details.");
         } else {
           setMessage("Network error. Please try again.");
         }

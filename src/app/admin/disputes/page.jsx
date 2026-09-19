@@ -1,12 +1,15 @@
 // ROUTE: src/app/admin/disputes/page.jsx
 //
-// ADMIN DASHBOARD PHASE 1: resolving a dispute now prompts for an
-// optional reason, sent through to /api/admin/disputes/resolve and
-// recorded in admin_audit_log — closes the gap where resolutions
-// happened correctly but nothing recorded who did it or why.
+// DESIGN PASS: now wrapped in AdminShell and using the shared design
+// system (adm-* classes from AdminShell.jsx) instead of one-off inline
+// styles, for consistency with the rest of the dashboard. Functionality
+// (resolve flow, audit-log reason prompt from Phase 1) is unchanged.
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import AdminShell from "../_components/AdminShell";
+import { ShieldAlert } from "lucide-react";
+
 export default function AdminDisputesPage() {
   const [disputes, setDisputes] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -39,10 +42,6 @@ export default function AdminDisputesPage() {
 
     if (!window.confirm(confirmMsg)) return;
 
-    // ADMIN DASHBOARD PHASE 1: optional reason, recorded in the audit
-    // log. window.prompt() returning null (Cancel) is treated as "no
-    // reason given", not as aborting the resolution — the admin already
-    // confirmed via window.confirm above.
     const reason = window.prompt(
       "Optional: add a reason for this resolution (recorded in the audit log)",
       "",
@@ -58,9 +57,7 @@ export default function AdminDisputesPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || "Failed to resolve dispute");
 
-      setDisputes((prev) =>
-        prev.filter((d) => d.conversation_id !== conversationId),
-      );
+      setDisputes((prev) => prev.filter((d) => d.conversation_id !== conversationId));
     } catch (err) {
       alert(err.message);
     } finally {
@@ -69,87 +66,116 @@ export default function AdminDisputesPage() {
   };
 
   return (
-    <div style={{ padding: 32, maxWidth: 960, margin: "0 auto", fontFamily: "sans-serif" }}>
-      <h1 style={{ fontSize: 22, fontWeight: 600, marginBottom: 4 }}>Open disputes</h1>
-      <p style={{ color: "#666", marginBottom: 24, fontSize: 14 }}>
-        Escrow is frozen on each of these until you release funds to the seller or refund the buyer.
+    <AdminShell>
+      <h1 className="adm-h1">Disputes</h1>
+      <p className="adm-sub">
+        Escrow is frozen on each of these until you release funds to the seller or refund
+        the buyer.
       </p>
 
-      {loading && <p>Loading...</p>}
-      {error && <p style={{ color: "#b91c1c" }}>{error}</p>}
-      {!loading && !error && disputes.length === 0 && (
-        <p style={{ color: "#666" }}>No open disputes right now.</p>
+      {error && (
+        <div className="adm-card" style={{ padding: 16, color: "var(--adm-danger)", marginBottom: 20 }}>
+          {error}
+        </div>
       )}
 
-      {disputes.map((d) => (
-        <div
-          key={d.conversation_id}
-          style={{
-            border: "1px solid #e5e5e5",
-            borderRadius: 10,
-            padding: 20,
-            marginBottom: 16,
-          }}
-        >
-          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12 }}>
-            <div>
-              <p style={{ fontWeight: 600, fontSize: 15, margin: 0 }}>{d.game_title}</p>
-              <p style={{ fontSize: 13, color: "#666", margin: "2px 0 0" }}>
-                ₦{Number(d.amount).toLocaleString()} · Ref: {d.payment_reference} · {d.payment_method}
-              </p>
-            </div>
-            <span style={{ fontSize: 12, color: "#b91c1c", fontWeight: 600 }}>FROZEN</span>
-          </div>
+      {loading && (
+        <div className="adm-card" style={{ padding: 0, overflow: "hidden" }}>
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="adm-skeleton-row" style={{ border: "none" }} />
+          ))}
+        </div>
+      )}
 
-          <div style={{ display: "flex", gap: 24, marginBottom: 16, fontSize: 13 }}>
-            <div>
-              <p style={{ margin: 0, color: "#999", textTransform: "uppercase", fontSize: 11 }}>Buyer</p>
-              <p style={{ margin: "2px 0 0" }}>{d.buyer_name} — {d.buyer_email}</p>
-            </div>
-            <div>
-              <p style={{ margin: 0, color: "#999", textTransform: "uppercase", fontSize: 11 }}>Seller</p>
-              <p style={{ margin: "2px 0 0" }}>{d.seller_name} — {d.seller_email}</p>
-            </div>
-          </div>
-
-          <div style={{ display: "flex", gap: 10 }}>
-            <button
-              onClick={() => resolve(d.conversation_id, "release_seller")}
-              disabled={busyId === d.conversation_id}
-              style={{
-                padding: "8px 14px",
-                borderRadius: 8,
-                border: "none",
-                background: "#16a34a",
-                color: "#fff",
-                fontSize: 13,
-                fontWeight: 600,
-                cursor: "pointer",
-                opacity: busyId === d.conversation_id ? 0.6 : 1,
-              }}
-            >
-              Release to seller
-            </button>
-            <button
-              onClick={() => resolve(d.conversation_id, "refund_buyer")}
-              disabled={busyId === d.conversation_id}
-              style={{
-                padding: "8px 14px",
-                borderRadius: 8,
-                border: "1px solid #d1d5db",
-                background: "#fff",
-                color: "#111",
-                fontSize: 13,
-                fontWeight: 600,
-                cursor: "pointer",
-                opacity: busyId === d.conversation_id ? 0.6 : 1,
-              }}
-            >
-              Refund buyer
-            </button>
+      {!loading && !error && disputes.length === 0 && (
+        <div className="adm-card">
+          <div className="adm-empty">
+            <ShieldAlert size={22} style={{ marginBottom: 8, opacity: 0.4 }} />
+            <div>No open disputes right now.</div>
           </div>
         </div>
-      ))}
-    </div>
+      )}
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        {disputes.map((d) => (
+          <div key={d.conversation_id} className="adm-card" style={{ padding: 20 }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "flex-start",
+                marginBottom: 14,
+                gap: 12,
+                flexWrap: "wrap",
+              }}
+            >
+              <div>
+                <p style={{ fontWeight: 700, fontSize: 15, margin: 0, color: "var(--adm-ink-900)" }}>
+                  {d.game_title}
+                </p>
+                <p style={{ fontSize: 13, color: "var(--adm-ink-500)", margin: "4px 0 0" }}>
+                  ₦{Number(d.amount).toLocaleString()} · Ref: {d.payment_reference} · {d.payment_method}
+                </p>
+              </div>
+              <span className="adm-badge adm-badge--danger">Frozen</span>
+            </div>
+
+            <div style={{ display: "flex", gap: 28, marginBottom: 18, fontSize: 13, flexWrap: "wrap" }}>
+              <div>
+                <p
+                  style={{
+                    margin: 0,
+                    color: "var(--adm-ink-400)",
+                    textTransform: "uppercase",
+                    fontSize: 10.5,
+                    fontWeight: 700,
+                    letterSpacing: "0.04em",
+                  }}
+                >
+                  Buyer
+                </p>
+                <p style={{ margin: "3px 0 0", color: "var(--adm-ink-900)" }}>
+                  {d.buyer_name} — {d.buyer_email}
+                </p>
+              </div>
+              <div>
+                <p
+                  style={{
+                    margin: 0,
+                    color: "var(--adm-ink-400)",
+                    textTransform: "uppercase",
+                    fontSize: 10.5,
+                    fontWeight: 700,
+                    letterSpacing: "0.04em",
+                  }}
+                >
+                  Seller
+                </p>
+                <p style={{ margin: "3px 0 0", color: "var(--adm-ink-900)" }}>
+                  {d.seller_name} — {d.seller_email}
+                </p>
+              </div>
+            </div>
+
+            <div style={{ display: "flex", gap: 10 }}>
+              <button
+                className="adm-btn adm-btn--success"
+                onClick={() => resolve(d.conversation_id, "release_seller")}
+                disabled={busyId === d.conversation_id}
+              >
+                Release to seller
+              </button>
+              <button
+                className="adm-btn adm-btn--ghost"
+                onClick={() => resolve(d.conversation_id, "refund_buyer")}
+                disabled={busyId === d.conversation_id}
+              >
+                Refund buyer
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </AdminShell>
   );
 }

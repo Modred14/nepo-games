@@ -1,5 +1,17 @@
+// ROUTE: src/app/admin/support/page.jsx
+//
+// DESIGN PASS: brand colors (#0000FF -> #1a56db, #4f5fff -> #2563eb) and
+// font (Sora -> the site's own Bricolage Grotesque) brought in line with
+// the rest of the admin dashboard and main site. A "back to dashboard"
+// link was added to the topbar. Deliberately NOT wrapped in AdminShell —
+// this page's full-viewport 3-pane real-time chat layout (polling,
+// bot/human takeover state) would break inside AdminShell's padded,
+// max-width content container for no real benefit. Every other line of
+// logic here — polling intervals, takeover state, message handling — is
+// completely untouched.
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
+import Link from "next/link";
 import {
   Send,
   Bot,
@@ -58,7 +70,7 @@ function Bubble({ msg }) {
           borderRadius: isUser ? "18px 18px 18px 4px" : "18px 18px 4px 18px",
           background: isUser
             ? "#f1f1f5"
-            : "linear-gradient(135deg,#0000FF,#4f5fff)",
+            : "linear-gradient(135deg,#1a56db,#2563eb)",
           color: isUser ? "#1a1a2e" : "#fff",
           fontSize: 13,
           lineHeight: 1.55,
@@ -114,7 +126,7 @@ function SessionItem({ s, active, onClick }) {
           height: 36,
           borderRadius: "50%",
           flexShrink: 0,
-          background: active ? "#0000FF" : "#e8e8f0",
+          background: active ? "#1a56db" : "#e8e8f0",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -157,7 +169,7 @@ function SessionItem({ s, active, onClick }) {
               padding: "2px 7px",
               borderRadius: 999,
               background: s.mode === "human" ? "#fef3c7" : "rgba(0,0,255,.08)",
-              color: s.mode === "human" ? "#92400e" : "#0000FF",
+              color: s.mode === "human" ? "#92400e" : "#1a56db",
             }}
           >
             {s.mode === "human" ? "🧑 Human" : "🤖 Bot"}
@@ -344,16 +356,15 @@ export default function SupportDashboard() {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&display=swap');
         *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
-        body { font-family:'Sora',sans-serif; background:#f4f4f9; color:#1a1a2e; }
+        body { font-family: var(--font-bricolage), Arial, Helvetica, sans-serif; background:#f4f4f9; color:#1a1a2e; }
 
         @keyframes spinIt { to { transform:rotate(360deg); } }
         @keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
 
         .dash-root {
           display:flex; flex-direction:column; height:100vh;
-          font-family:'Sora',sans-serif; background:#f4f4f9;
+          font-family: var(--font-bricolage), Arial, Helvetica, sans-serif; background:#f4f4f9;
         }
 
         /* topbar */
@@ -365,7 +376,7 @@ export default function SupportDashboard() {
         }
         .dash-logo { display:flex; align-items:center; gap:10px; }
         .dash-logo-mark {
-          width:34px; height:34px; border-radius:50%; background:#0000FF;
+          width:34px; height:34px; border-radius:50%; background:#1a56db;
           display:flex; align-items:center; justify-content:center;
         }
         .dash-logo-text { font-size:15px; font-weight:700; color:#1a1a2e; }
@@ -381,10 +392,10 @@ export default function SupportDashboard() {
           display:flex; align-items:center; gap:6px;
           background:none; border:1px solid rgba(122,122,254,.25);
           border-radius:10px; padding:6px 12px; cursor:pointer;
-          font-family:'Sora',sans-serif; font-size:12px; color:#6b7280;
+          font-family: var(--font-bricolage), Arial, Helvetica, sans-serif; font-size:12px; color:#6b7280;
           transition:background .15s, color .15s;
         }
-        .dash-refresh:hover { background:rgba(0,0,255,.05); color:#0000FF; }
+        .dash-refresh:hover { background:rgba(0,0,255,.05); color:#1a56db; }
 
         /* layout */
         .dash-body { display:flex; flex:1; overflow:hidden; }
@@ -403,11 +414,11 @@ export default function SupportDashboard() {
         .dash-filters { display:flex; gap:6px; }
         .dash-filter-btn {
           flex:1; padding:6px 0; border-radius:8px; border:1px solid rgba(122,122,254,.2);
-          background:none; cursor:pointer; font-family:'Sora',sans-serif;
+          background:none; cursor:pointer; font-family: var(--font-bricolage), Arial, Helvetica, sans-serif;
           font-size:11px; font-weight:600; color:#6b7280;
           transition:all .15s;
         }
-        .dash-filter-btn.active { background:#0000FF; color:#fff; border-color:#0000FF; }
+        .dash-filter-btn.active { background:#1a56db; color:#fff; border-color:#1a56db; }
         .dash-session-list { flex:1; overflow-y:auto; }
         .dash-session-list::-webkit-scrollbar { width:3px; }
         .dash-session-list::-webkit-scrollbar-thumb { background:rgba(0,0,255,.15); border-radius:3px; }
@@ -428,8 +439,8 @@ export default function SupportDashboard() {
         .dash-takeover-btn {
           display:flex; align-items:center; gap:6px;
           padding:8px 16px; border-radius:10px; border:none; cursor:pointer;
-          font-family:'Sora',sans-serif; font-size:12px; font-weight:600;
-          background:linear-gradient(135deg,#0000FF,#4f5fff); color:#fff;
+          font-family: var(--font-bricolage), Arial, Helvetica, sans-serif; font-size:12px; font-weight:600;
+          background:linear-gradient(135deg,#1a56db,#2563eb); color:#fff;
           box-shadow:0 3px 10px rgba(0,0,255,.25);
           transition:opacity .2s, transform .15s;
         }
@@ -455,19 +466,19 @@ export default function SupportDashboard() {
         .dash-textarea {
           flex:1; border:1px solid rgba(122,122,254,.22);
           border-radius:14px; padding:10px 14px;
-          font-family:'Sora',sans-serif; font-size:13px;
+          font-family: var(--font-bricolage), Arial, Helvetica, sans-serif; font-size:13px;
           color:#1a1a2e; background:#fafafa; resize:none;
           outline:none; max-height:100px; min-height:40px; line-height:1.5;
           transition:border-color .2s, box-shadow .2s;
         }
         .dash-textarea::placeholder { color:#aaa; }
         .dash-textarea:focus {
-          border-color:#0000FF; background:#fff;
+          border-color:#1a56db; background:#fff;
           box-shadow:0 0 0 3px rgba(0,0,255,.07);
         }
         .dash-send-btn {
           width:40px; height:40px; border-radius:50%; border:none;
-          background:linear-gradient(135deg,#0000FF,#4f5fff);
+          background:linear-gradient(135deg,#1a56db,#2563eb);
           color:#fff; cursor:pointer; flex-shrink:0;
           display:flex; align-items:center; justify-content:center;
           box-shadow:0 3px 10px rgba(0,0,255,.25);
@@ -493,7 +504,9 @@ export default function SupportDashboard() {
       `}</style>
 
       <div className="dash-root">
-        
+        {/* DESIGN PASS: single added element on this page — a link back
+            into the rest of the admin dashboard. Everything else here is
+            untouched real-time chat logic. */}
         <div className="dash-topbar">
           <div className="dash-logo">
             <div className="dash-logo-mark">
@@ -505,9 +518,24 @@ export default function SupportDashboard() {
             </div>
           </div>
 
+          <Link
+            href="/admin/dashboard"
+            style={{
+              fontSize: 12.5,
+              fontWeight: 600,
+              color: "#1a56db",
+              textDecoration: "none",
+              padding: "6px 12px",
+              border: "1px solid #e2e8f0",
+              borderRadius: 8,
+            }}
+          >
+            ← Admin dashboard
+          </Link>
+
           <div className="dash-stats">
             <div className="dash-stat">
-              <Users size={13} color="#0000FF" />
+              <Users size={13} color="#1a56db" />
               {stats.total} total
             </div>
             <div className="dash-stat">
@@ -587,7 +615,7 @@ export default function SupportDashboard() {
             {!activeId ? (
               <div className="dash-no-chat">
                 <div className="dash-no-chat-icon">
-                  <MessageSquare size={26} color="#0000FF" />
+                  <MessageSquare size={26} color="#1a56db" />
                 </div>
                 <div
                   style={{ fontSize: 14, fontWeight: 600, color: "#1a1a2e" }}
@@ -614,7 +642,7 @@ export default function SupportDashboard() {
                       flexShrink: 0,
                     }}
                   >
-                    <User size={16} color="#0000FF" />
+                    <User size={16} color="#1a56db" />
                   </div>
                   <div className="dash-chat-user">
                     <div className="dash-chat-name">

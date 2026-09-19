@@ -1,4 +1,10 @@
-// src/app/api/auth/[...nextauth]/route.js
+// ROUTE: src/app/api/auth/[...nextauth]/route.js
+//
+// ADMIN DASHBOARD PHASE 2: both login paths (credentials below, Google
+// further down) now check users.account_status and block
+// suspended/banned accounts with a specific error, and both record
+// last_login_at on success — see
+// db/migrations/004_user_account_status_and_last_login.sql.
 import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import crypto from "crypto";
@@ -32,6 +38,7 @@ async function fetchFullUserProfile(email) {
       pin_set,
       provider,
       role,
+      account_status,
       email_verified,       
       verification_token,    
       verification_expires
@@ -81,6 +88,19 @@ export const authOptions = {
 
           if (!isValid) {
             throw new Error("INVALID_CREDENTIALS");
+          }
+
+          // ADMIN DASHBOARD PHASE 2: check AFTER password validation
+          // (so a wrong-password attempt against a suspended account
+          // still gets the ordinary "invalid credentials" response, not
+          // a signal that the account exists and is suspended), but
+          // BEFORE the email-verification check — a suspended/banned
+          // account shouldn't be nudged to go verify their email.
+          if (user.account_status === "banned") {
+            throw new Error("ACCOUNT_BANNED");
+          }
+          if (user.account_status === "suspended") {
+            throw new Error("ACCOUNT_SUSPENDED");
           }
 
           if (!user.email_verified) {
@@ -224,6 +244,17 @@ If you didn't create an account, ignore this email.`,
             throw new Error("EMAIL_NOT_VERIFIED");
           }
 
+          // ADMIN DASHBOARD PHASE 2: record last_login_at — backs the
+          // "active users" dashboard metric (logged in within 30 days).
+          // Fire-and-forget-ish: awaited, but a failure here logs and
+          // does not block the actual login, since this is bookkeeping,
+          // not an authorization decision.
+          pool
+            .query(`UPDATE users SET last_login_at = NOW() WHERE id = $1`, [user.id])
+            .catch((err) =>
+              console.error("Failed to update last_login_at (credentials):", err.message),
+            );
+
           return {
             id: user.id,
             email: user.email,
@@ -322,7 +353,29 @@ If you didn't create an account, ignore this email.`,
           if (dbUser.provider === "credentials") {
             return "/login?msg=Email already registered. Please login with email/password.&oauthError=true";
           }
+
+          // ADMIN DASHBOARD PHASE 2: same enforcement as the credentials
+          // path above — a suspended/banned account can't sign in via
+          // Google either. Uses the same query-string message pattern
+          // already established on the line just above for the
+          // provider-mismatch case, so LoginClient.js's existing message
+          // display just works without needing new handling there.
+          if (dbUser.account_status === "banned") {
+            return "/login?msg=Your account has been banned. Contact support if you believe this is a mistake.&suspended=true";
+          }
+          if (dbUser.account_status === "suspended") {
+            return "/login?msg=Your account has been suspended. Contact support for details.&suspended=true";
+          }
         }
+
+        // ADMIN DASHBOARD PHASE 2: record last_login_at for the
+        // "active users" dashboard metric. Awaited but non-blocking on
+        // failure, same as the credentials path.
+        pool
+          .query(`UPDATE users SET last_login_at = NOW() WHERE id = $1`, [dbUser.id])
+          .catch((err) =>
+            console.error("Failed to update last_login_at (google):", err.message),
+          );
 
         user.id = dbUser.id;
         user.email = dbUser.email;
