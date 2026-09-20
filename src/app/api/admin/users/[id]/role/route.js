@@ -61,13 +61,29 @@ export async function POST(req, { params }) {
     // If promoting to admin, give them a Phase-1 `admins` row too (default
     // 'admin' tier — never auto-granted 'super_admin') so they show up
     // consistently everywhere the admins table is read, immediately
-    // rather than lazily on their first admin-route hit.
+    // rather than lazily on their first admin-route hit. If they had a
+    // row already (e.g. previously demoted, now re-promoted), clear any
+    // disabled_at rather than leaving them marked disabled while active.
+    //
+    // ADMIN DASHBOARD PHASE 6: on demotion, mark the admins row disabled
+    // (disabled_at = NOW()) instead of leaving it untouched — this is
+    // the actual access revocation (users.role is what requireAdmin()
+    // gates on), but keeping the admins-table record in sync means
+    // /admin/admins never shows a demoted user as if they were still an
+    // active admin.
     if (role === "admin") {
       await pool.query(
-        `INSERT INTO admins (user_id, admin_role, created_by)
-         VALUES ($1, 'admin', $2)
-         ON CONFLICT (user_id) DO NOTHING`,
+        `
+        INSERT INTO admins (user_id, admin_role, created_by)
+        VALUES ($1, 'admin', $2)
+        ON CONFLICT (user_id) DO UPDATE SET disabled_at = NULL
+        `,
         [id, admin.id],
+      );
+    } else {
+      await pool.query(
+        `UPDATE admins SET disabled_at = NOW() WHERE user_id = $1 AND disabled_at IS NULL`,
+        [id],
       );
     }
 

@@ -1,3 +1,16 @@
+// ROUTE: src/app/game/[slug]/page.jsx
+// ADMIN DASHBOARD PHASE 4 FOLLOW-UP: this is the real public listing
+// page — src/app/api/games/[slug]/route.js looks similar but turned out
+// to be unused dead code (verified via a full-codebase search for any
+// caller; this page does its own direct DB query instead). It was
+// missing the moderation_status/deleted_at filter that
+// src/app/api/market/route.js and paystack/buy/initialize/route.js
+// already got in the listing-moderation work — a hidden/rejected/
+// deleted listing was still fully viewable at its direct URL even
+// though it couldn't be found via search or bought. Purchase was never
+// actually at risk (buy/initialize/route.js already blocks it), but the
+// page itself should 404 the same way it already does for a genuinely
+// nonexistent slug.
 import pool from "../../../lib/db";
 import GameClient from "./GameClient";
 import { getSimilarGames } from "./getSimilarGames";
@@ -31,6 +44,8 @@ async function getGame(slug) {
     ) r ON r.seller_id = users.id
     WHERE listings.slug = $1
     AND listings.status = 'active'
+    AND listings.moderation_status = 'approved'
+    AND listings.deleted_at IS NULL
     `,
     [slug],
   );

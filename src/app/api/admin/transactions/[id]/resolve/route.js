@@ -23,6 +23,7 @@ import pool from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
 import { emitToRoom } from "@/lib/socket";
 import { logAdminAction } from "@/lib/adminAudit";
+import { checkRateLimit } from "@/lib/rateLimit";
 
 const SYSTEM_USER_ID = 1;
 const HELD_STATUSES = ["held", "holding", "frozen"];
@@ -34,6 +35,18 @@ export async function POST(req, { params }) {
     const admin = await requireAdmin();
     if (!admin) {
       return Response.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    // Max 10 release/refund actions per admin per 5 minutes — a real
+    // investigation moving money on several transactions in a row is
+    // still well within this; a stuck script or a compromised session
+    // firing this repeatedly is not.
+    const rl = await checkRateLimit(`tx-resolve:${admin.id}`, { limit: 10, windowSeconds: 300 });
+    if (!rl.allowed) {
+      return Response.json(
+        { error: "Too many resolve actions in a short time. Wait a few minutes and try again." },
+        { status: 429 },
+      );
     }
 
     const { id } = await params;

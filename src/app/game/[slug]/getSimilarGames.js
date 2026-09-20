@@ -1,3 +1,8 @@
+// ROUTE: src/app/game/[slug]/getSimilarGames.js
+// ADMIN DASHBOARD PHASE 4 FOLLOW-UP: same fix as page.jsx in this same
+// folder — a hidden/rejected/deleted listing could still surface as a
+// "similar game" recommendation on someone else's listing page. All
+// three fallback queries updated.
 import pool from "../../../lib/db";
 
 export async function getSimilarGames(currentGame) {
@@ -14,6 +19,8 @@ export async function getSimilarGames(currentGame) {
     JOIN users ON listings.user_id = users.id
     WHERE listings.id != $1
       AND listings.status = 'active'
+      AND listings.moderation_status = 'approved'
+      AND listings.deleted_at IS NULL
     AND listings.price BETWEEN $2 AND $3
     ORDER BY RANDOM()
     LIMIT 2
@@ -30,6 +37,8 @@ export async function getSimilarGames(currentGame) {
       JOIN users ON listings.user_id = users.id
       WHERE listings.id != $1
         AND listings.status = 'active'
+        AND listings.moderation_status = 'approved'
+        AND listings.deleted_at IS NULL
    AND users.subscription_status = 'active'
 AND users.subscription_end > NOW()
       ORDER BY RANDOM()
@@ -48,6 +57,8 @@ AND users.subscription_end > NOW()
       JOIN users ON listings.user_id = users.id
       WHERE listings.id != $1
         AND listings.status = 'active'
+        AND listings.moderation_status = 'approved'
+        AND listings.deleted_at IS NULL
       ORDER BY RANDOM()
       LIMIT 2
       `,
