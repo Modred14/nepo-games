@@ -4,6 +4,7 @@ import { uploadImage } from "../../../lib/uploadImage";
 import crypto from "crypto";
 import { requireUser } from "@/lib/auth";
 import sharp from "sharp";
+import { getSetting } from "@/lib/settings";
 
 // Tune these to taste
 const MAX_WIDTH = 1600;   // resize down if larger
@@ -26,6 +27,28 @@ export async function POST(req) {
 
     const user = await requireUser();
     if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
+
+    // ADMIN DASHBOARD (general settings): checked as early as possible —
+    // before touching the (potentially large) uploaded images — so a
+    // disabled/maintenance state fails fast rather than after doing
+    // real work that gets thrown away.
+    const [maintenanceMode, newListingsEnabled] = await Promise.all([
+      getSetting("maintenance_mode"),
+      getSetting("new_listings_enabled"),
+    ]);
+    if (maintenanceMode) {
+      return Response.json(
+        { error: "New listings are temporarily unavailable — the marketplace is under maintenance." },
+        { status: 503 },
+      );
+    }
+    if (!newListingsEnabled) {
+      return Response.json(
+        { error: "New listings are temporarily disabled. Please check back later." },
+        { status: 503 },
+      );
+    }
+
     const user_id = user.id;
     const title = formData.get("title");
     const description = formData.get("description");
@@ -54,8 +77,16 @@ export async function POST(req) {
     // validation at all — a garbage, zero, or negative price could reach
     // the DB. Validate it here, before the costly image upload work below,
     // and cap it at a sane upper bound to guard against typos/overflow.
+    //
+    // ADMIN DASHBOARD (general settings): min/max now come from
+    // platform_settings instead of a hardcoded MAX_LISTING_PRICE —
+    // fails open to the same ₦100 floor / ₦50,000,000 ceiling that
+    // existed before if the settings table is unreachable.
     const numericPrice = Number(price);
-    const MAX_LISTING_PRICE = 50_000_000; // ₦10,000,000 sanity cap
+    const [minListingPrice, maxListingPrice] = await Promise.all([
+      getSetting("min_listing_price"),
+      getSetting("max_listing_price"),
+    ]);
 
     if (!Number.isFinite(numericPrice) || numericPrice <= 0) {
       console.error("[ERROR] Invalid price", { price });
@@ -65,11 +96,21 @@ export async function POST(req) {
       );
     }
 
-    if (numericPrice > MAX_LISTING_PRICE) {
+    if (numericPrice < Number(minListingPrice)) {
+      return Response.json(
+        {
+          error: `Price must be at least ₦${Number(minListingPrice).toLocaleString()}`,
+          step: "validation",
+        },
+        { status: 400 },
+      );
+    }
+
+    if (numericPrice > Number(maxListingPrice)) {
       console.error("[ERROR] Price exceeds sane maximum", { price });
       return Response.json(
         {
-          error: `Price cannot exceed ₦${MAX_LISTING_PRICE.toLocaleString()}`,
+          error: `Price cannot exceed ₦${Number(maxListingPrice).toLocaleString()}`,
           step: "validation",
         },
         { status: 400 },

@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import AdminShell from "../../_components/AdminShell";
 import { ArrowLeft } from "lucide-react";
+import { requestReauth } from "../../_components/reauth";
 
 function naira(n) {
   return `₦${Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -39,7 +40,7 @@ export default function AdminTransactionDetailPage() {
     fetchData();
   }, [fetchData]);
 
-  const doAction = async (path, body, confirmMsg, requireReason) => {
+  const doAction = async (path, body, confirmMsg, requireReason, reauthAction) => {
     if (!window.confirm(confirmMsg)) return;
     let reason = null;
     if (requireReason) {
@@ -52,11 +53,24 @@ export default function AdminTransactionDetailPage() {
       reason = window.prompt("Optional: add a reason (recorded in the audit log)", "");
     }
 
+    // ADMIN DASHBOARD: actual re-authentication for release/refund — see
+    // src/app/admin/_components/reauth.js. Distinct from the reason
+    // prompt above: this proves it's still really you, not just a
+    // confirmation click.
+    let reauthToken = null;
+    if (reauthAction) {
+      reauthToken = await requestReauth(reauthAction);
+      if (!reauthToken) return;
+    }
+
     setBusy(true);
     try {
       const res = await fetch(`/api/admin/transactions/${id}/${path}`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(reauthToken ? { "x-reauth-token": reauthToken } : {}),
+        },
         body: JSON.stringify({ ...body, reason }),
       });
       const json = await res.json();
@@ -164,7 +178,7 @@ export default function AdminTransactionDetailPage() {
                 className="adm-btn adm-btn--success"
                 disabled={busy}
                 onClick={() =>
-                  doAction("resolve", { resolution: "release_seller" }, "Release this transaction's escrow to the seller?", true)
+                  doAction("resolve", { resolution: "release_seller" }, "Release this transaction's escrow to the seller?", true, "transaction.resolve")
                 }
               >
                 Release to seller
@@ -173,7 +187,7 @@ export default function AdminTransactionDetailPage() {
                 className="adm-btn adm-btn--danger"
                 disabled={busy}
                 onClick={() =>
-                  doAction("resolve", { resolution: "refund_buyer" }, "Refund this transaction's escrow to the buyer's wallet?", true)
+                  doAction("resolve", { resolution: "refund_buyer" }, "Refund this transaction's escrow to the buyer's wallet?", true, "transaction.resolve")
                 }
               >
                 Refund buyer

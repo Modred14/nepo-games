@@ -9,6 +9,7 @@
 import { useState, useEffect, useCallback } from "react";
 import AdminShell from "../_components/AdminShell";
 import { Search, UserCog } from "lucide-react";
+import { requestReauth } from "../_components/reauth";
 
 export default function AdminAdminsPage() {
   const [admins, setAdmins] = useState([]);
@@ -109,11 +110,24 @@ export default function AdminAdminsPage() {
     if (!window.confirm(`Make ${email} a ${adminRole.replace("_", " ")}?`)) return;
     const reason = window.prompt("Optional: add a reason (recorded in the audit log)", "");
 
+    // ADMIN DASHBOARD: re-authentication specifically for granting
+    // super_admin — the actual privilege-escalation direction. Demoting
+    // doesn't need this (see the matching server-side check in
+    // src/app/api/admin/admins/[userId]/tier/route.js).
+    let reauthToken = null;
+    if (adminRole === "super_admin") {
+      reauthToken = await requestReauth("admin.tier.super_admin");
+      if (!reauthToken) return;
+    }
+
     setBusy(true);
     try {
       const res = await fetch(`/api/admin/admins/${userId}/tier`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(reauthToken ? { "x-reauth-token": reauthToken } : {}),
+        },
         body: JSON.stringify({ adminRole, reason: reason || null }),
       });
       const data = await res.json();

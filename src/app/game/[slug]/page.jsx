@@ -15,6 +15,7 @@ import pool from "../../../lib/db";
 import GameClient from "./GameClient";
 import { getSimilarGames } from "./getSimilarGames";
 import GameNotFound from "./notfound";
+import { getSetting } from "../../../lib/settings";
 
 
 async function getGame(slug) {
@@ -101,6 +102,21 @@ export async function generateMetadata({ params }) {
 }
 export default async function GamePage({ params }) {
   const { slug } = await params;
+
+  // ADMIN DASHBOARD (general settings): distinct from "not found" —
+  // showing GameNotFound during maintenance would be misleading (the
+  // listing exists, the marketplace just isn't serving it right now).
+  const maintenanceMode = await getSetting("maintenance_mode");
+  if (maintenanceMode) {
+    return (
+      <div style={{ padding: 48, textAlign: "center" }}>
+        <h1 style={{ fontSize: 20, fontWeight: 700 }}>Temporarily under maintenance</h1>
+        <p style={{ color: "#64748b", marginTop: 8 }}>
+          We're making some improvements. Please check back shortly.
+        </p>
+      </div>
+    );
+  }
 
   const game = await getGame(slug);
 

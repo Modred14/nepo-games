@@ -20,6 +20,23 @@ export const SETTING_DEFAULTS = {
   escrow_window_minutes: 30,
   minimum_withdrawal_naira: 100,
   withdrawal_fee_tiers: { tier1_max: 5000, tier1_fee: 50, tier2_max: 50000, tier2_fee: 100, tier3_fee: 150 },
+  // General/marketplace settings — see db/migrations/009_general_settings.sql.
+  // maintenance_mode/marketplace_enabled are checked in the actual
+  // Node-runtime route handlers that matter (market/route.js,
+  // paystack/buy/initialize/route.js, listings/route.js) rather than in
+  // root middleware.js, which runs on the Edge runtime by default and
+  // cannot reliably use the `pg` Postgres client — a maintenance-mode
+  // check that failed there could lock the whole site (including
+  // /admin) behind a broken Edge function. Checking it in a handful of
+  // specific Node-runtime routes instead is slightly less "site-wide"
+  // but can never lock anyone out of /admin to turn it back off.
+  maintenance_mode: false,
+  marketplace_enabled: true,
+  new_listings_enabled: true,
+  min_listing_price: 100,
+  max_listing_price: 50000000,
+  site_name: "Nepo Games",
+  support_email: "",
 };
 
 export async function getSetting(key) {

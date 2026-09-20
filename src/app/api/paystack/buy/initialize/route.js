@@ -32,6 +32,19 @@ export async function POST(req) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // ADMIN DASHBOARD (general settings): block new purchases during
+    // maintenance. Deliberately does NOT touch already-in-progress
+    // escrow/delivery flows (confirm, senddetails, cron release) — an
+    // admin flipping this on mid-transaction shouldn't strand a buyer
+    // who's already paid; it only stops NEW checkouts from starting.
+    const maintenanceMode = await getSetting("maintenance_mode");
+    if (maintenanceMode) {
+      return Response.json(
+        { error: "Purchases are temporarily unavailable — the marketplace is under maintenance." },
+        { status: 503 },
+      );
+    }
+
     const { listingId, receiverId, paymentMethod } = await req.json();
 
     if (!receiverId || isNaN(Number(receiverId))) {

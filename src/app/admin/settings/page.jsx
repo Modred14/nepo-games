@@ -113,6 +113,85 @@ export default function AdminSettingsPage() {
           {saving === "withdrawal_fee_tiers" ? "Saving..." : "Save tiers"}
         </button>
       </div>
+
+      <h2 style={{ fontSize: 13, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em", color: "var(--adm-ink-500)", margin: "28px 0 12px" }}>
+        General &amp; marketplace
+      </h2>
+
+      {draft.maintenance_mode && (
+        <div
+          className="adm-card"
+          style={{ padding: "12px 16px", marginBottom: 16, background: "var(--adm-danger-bg)", borderColor: "var(--adm-danger-line)", color: "var(--adm-danger)", fontSize: 13, fontWeight: 600 }}
+        >
+          Maintenance mode is ON — new purchases, new listings, and public listing pages are currently blocked for everyone. The admin dashboard is unaffected.
+        </div>
+      )}
+
+      <ToggleRow
+        label="Maintenance mode"
+        hint="Blocks new purchases, new listing creation, and public listing pages site-wide. Does not affect withdrawals, escrow confirmation on existing orders, or this dashboard."
+        checked={draft.maintenance_mode}
+        onChange={(v) => setDraft((d) => ({ ...d, maintenance_mode: v }))}
+        onSave={() => save("maintenance_mode")}
+        saving={saving === "maintenance_mode"}
+        danger
+      />
+
+      <ToggleRow
+        label="Marketplace browsing enabled"
+        hint="When off, the market/search page returns no listings. Individual listing pages and purchases still check their own settings separately."
+        checked={draft.marketplace_enabled}
+        onChange={(v) => setDraft((d) => ({ ...d, marketplace_enabled: v }))}
+        onSave={() => save("marketplace_enabled")}
+        saving={saving === "marketplace_enabled"}
+      />
+
+      <ToggleRow
+        label="New listings enabled"
+        hint="When off, sellers can't create new listings. Existing listings are unaffected."
+        checked={draft.new_listings_enabled}
+        onChange={(v) => setDraft((d) => ({ ...d, new_listings_enabled: v }))}
+        onSave={() => save("new_listings_enabled")}
+        saving={saving === "new_listings_enabled"}
+      />
+
+      <div className="adm-card" style={{ padding: 20, marginBottom: 16 }}>
+        <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 4 }}>Listing price bounds</div>
+        <div style={{ fontSize: 12.5, color: "var(--adm-ink-500)", marginBottom: 14 }}>
+          Enforced when a seller creates a new listing. Existing listings outside this range are
+          not affected retroactively.
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12, marginBottom: 14 }}>
+          <TierField label="Minimum price (₦)" value={draft.min_listing_price} onChange={(v) => setDraft((d) => ({ ...d, min_listing_price: v }))} />
+          <TierField label="Maximum price (₦)" value={draft.max_listing_price} onChange={(v) => setDraft((d) => ({ ...d, max_listing_price: v }))} />
+        </div>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button className="adm-btn adm-btn--primary" disabled={saving === "min_listing_price"} onClick={() => save("min_listing_price")}>
+            {saving === "min_listing_price" ? "Saving..." : "Save minimum"}
+          </button>
+          <button className="adm-btn adm-btn--primary" disabled={saving === "max_listing_price"} onClick={() => save("max_listing_price")}>
+            {saving === "max_listing_price" ? "Saving..." : "Save maximum"}
+          </button>
+        </div>
+      </div>
+
+      <TextRow
+        label="Site name"
+        hint="Stored for future use across the dashboard/emails — not yet wired into any page display."
+        value={draft.site_name}
+        onChange={(v) => setDraft((d) => ({ ...d, site_name: v }))}
+        onSave={() => save("site_name")}
+        saving={saving === "site_name"}
+      />
+
+      <TextRow
+        label="Support email"
+        hint="Stored for future use — not yet wired into any page display."
+        value={draft.support_email}
+        onChange={(v) => setDraft((d) => ({ ...d, support_email: v }))}
+        onSave={() => save("support_email")}
+        saving={saving === "support_email"}
+      />
     </AdminShell>
   );
 }
@@ -147,6 +226,65 @@ function TierField({ label, value, onChange }) {
     <div>
       <label style={{ fontSize: 11.5, color: "var(--adm-ink-500)", display: "block", marginBottom: 4 }}>{label}</label>
       <input className="adm-input" type="number" value={value ?? ""} onChange={(e) => onChange(e.target.value)} />
+    </div>
+  );
+}
+
+function ToggleRow({ label, hint, checked, onChange, onSave, saving, danger }) {
+  return (
+    <div
+      className="adm-card"
+      style={{
+        padding: 20,
+        marginBottom: 16,
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        gap: 20,
+        flexWrap: "wrap",
+        ...(danger && checked ? { borderColor: "var(--adm-danger-line)" } : {}),
+      }}
+    >
+      <div style={{ maxWidth: 460 }}>
+        <div style={{ fontWeight: 600, fontSize: 14 }}>{label}</div>
+        <div style={{ fontSize: 12.5, color: "var(--adm-ink-500)", marginTop: 2 }}>{hint}</div>
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, cursor: "pointer" }}>
+          <input type="checkbox" checked={Boolean(checked)} onChange={(e) => onChange(e.target.checked)} />
+          {checked ? "On" : "Off"}
+        </label>
+        <button
+          className={`adm-btn ${danger && checked ? "adm-btn--danger" : "adm-btn--primary"}`}
+          disabled={saving}
+          onClick={onSave}
+        >
+          {saving ? "Saving..." : "Save"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function TextRow({ label, hint, value, onChange, onSave, saving }) {
+  return (
+    <div className="adm-card" style={{ padding: 20, marginBottom: 16, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 20, flexWrap: "wrap" }}>
+      <div style={{ maxWidth: 460 }}>
+        <div style={{ fontWeight: 600, fontSize: 14 }}>{label}</div>
+        <div style={{ fontSize: 12.5, color: "var(--adm-ink-500)", marginTop: 2 }}>{hint}</div>
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <input
+          className="adm-input"
+          style={{ width: 220 }}
+          type="text"
+          value={value ?? ""}
+          onChange={(e) => onChange(e.target.value)}
+        />
+        <button className="adm-btn adm-btn--primary" disabled={saving} onClick={onSave}>
+          {saving ? "Saving..." : "Save"}
+        </button>
+      </div>
     </div>
   );
 }

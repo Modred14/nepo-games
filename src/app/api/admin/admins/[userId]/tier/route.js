@@ -11,6 +11,7 @@ import pool from "@/lib/db";
 import { requireSuperAdmin } from "@/lib/auth";
 import { logAdminAction } from "@/lib/adminAudit";
 import { checkRateLimit } from "@/lib/rateLimit";
+import { verifyReauthToken } from "@/lib/reauth";
 
 const VALID_TIERS = ["admin", "super_admin"];
 
@@ -38,6 +39,21 @@ export async function POST(req, { params }) {
 
     if (Number(userId) === Number(admin.id)) {
       return Response.json({ error: "You cannot change your own tier" }, { status: 400 });
+    }
+
+    // ADMIN DASHBOARD: re-auth required specifically for GRANTING
+    // super_admin — that's the actual privilege-escalation direction.
+    // Demoting a super_admin down to admin reduces privilege, so it
+    // doesn't need the same bar (and requiring it there would just be
+    // friction with no security benefit).
+    if (
+      adminRole === "super_admin" &&
+      !verifyReauthToken(req, { adminId: admin.id, action: "admin.tier.super_admin" })
+    ) {
+      return Response.json(
+        { error: "Re-authentication required or expired. Please confirm your password/PIN and try again." },
+        { status: 401 },
+      );
     }
 
     const existing = await pool.query(

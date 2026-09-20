@@ -1,11 +1,32 @@
 // ROUTE: src/app/api/market/route.js
 // ADMIN DASHBOARD PHASE 4: also excludes listings an admin has hidden or
 // rejected (moderation_status) — see db/migrations/007_listing_moderation.sql.
+// ADMIN DASHBOARD (general settings): checks maintenance_mode/
+// marketplace_enabled BEFORE the cache lookup — otherwise flipping
+// either off from /admin/settings wouldn't take effect until the
+// existing 30s cache entry expired, which defeats the point of an
+// emergency "shut off the marketplace" switch.
 import pool from "../../../lib/db";
 import { getCached, setCached } from "../../../lib/cache";
+import { getSetting } from "../../../lib/settings";
 
 export async function GET(req) {
   try {
+    const [maintenanceMode, marketplaceEnabled] = await Promise.all([
+      getSetting("maintenance_mode"),
+      getSetting("marketplace_enabled"),
+    ]);
+
+    if (maintenanceMode || !marketplaceEnabled) {
+      return Response.json({
+        message: maintenanceMode
+          ? "The marketplace is temporarily down for maintenance."
+          : "The marketplace is currently unavailable.",
+        games: [],
+        marketplaceUnavailable: true,
+      });
+    }
+
     const cacheKey = "market:listings";
     const cached = await getCached(cacheKey);
     if (cached)

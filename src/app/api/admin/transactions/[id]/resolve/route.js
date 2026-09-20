@@ -24,6 +24,7 @@ import { requireAdmin } from "@/lib/auth";
 import { emitToRoom } from "@/lib/socket";
 import { logAdminAction } from "@/lib/adminAudit";
 import { checkRateLimit } from "@/lib/rateLimit";
+import { verifyReauthToken } from "@/lib/reauth";
 
 const SYSTEM_USER_ID = 1;
 const HELD_STATUSES = ["held", "holding", "frozen"];
@@ -46,6 +47,18 @@ export async function POST(req, { params }) {
       return Response.json(
         { error: "Too many resolve actions in a short time. Wait a few minutes and try again." },
         { status: 429 },
+      );
+    }
+
+    // ADMIN DASHBOARD: actual re-authentication, not just confirmation —
+    // this moves real money, so a plain window.confirm() isn't enough
+    // (see src/lib/reauth.js). The client must have already called
+    // POST /api/admin/reauth with action "transaction.resolve" and
+    // include the returned token here.
+    if (!verifyReauthToken(req, { adminId: admin.id, action: "transaction.resolve" })) {
+      return Response.json(
+        { error: "Re-authentication required or expired. Please confirm your password/PIN and try again." },
+        { status: 401 },
       );
     }
 
