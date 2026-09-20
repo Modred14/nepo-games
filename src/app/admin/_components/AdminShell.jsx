@@ -19,7 +19,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSession, signOut } from "next-auth/react";
 import {
   LayoutDashboard,
@@ -28,6 +28,7 @@ import {
   Banknote,
   ShieldAlert,
   MessagesSquare,
+  Bell,
   ScrollText,
   Gamepad2,
   Settings,
@@ -58,6 +59,32 @@ export default function AdminShell({ children }) {
   const pathname = usePathname();
   const { data: session } = useSession();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [notifItems, setNotifItems] = useState([]);
+  const [totalUrgent, setTotalUrgent] = useState(0);
+
+  // Notification center: live aggregation, not a stored feed — see
+  // src/app/api/admin/notifications/route.js. Polled every 60s while
+  // any admin page is open so the badge count stays roughly current
+  // without needing a websocket for something this low-frequency.
+  const fetchNotifications = useCallback(async () => {
+    try {
+      const res = await fetch("/api/admin/notifications");
+      if (!res.ok) return;
+      const data = await res.json();
+      setNotifItems(data.items || []);
+      setTotalUrgent(data.totalUrgent || 0);
+    } catch {
+      // Silent — a failed notification fetch shouldn't show an error
+      // banner on every single admin page; the bell just won't update.
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 60000);
+    return () => clearInterval(interval);
+  }, [fetchNotifications]);
 
   const initials =
     (session?.user?.first_name?.[0] || "") + (session?.user?.surname?.[0] || "") ||
@@ -113,6 +140,51 @@ export default function AdminShell({ children }) {
             {mobileOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
           <div className="adm-topbar__spacer" />
+
+          <div style={{ position: "relative" }}>
+            <button
+              className="adm-topbar__bellBtn"
+              onClick={() => setNotifOpen((v) => !v)}
+              aria-label="Notifications"
+            >
+              <Bell size={18} />
+              {totalUrgent > 0 && (
+                <span className="adm-topbar__bellBadge">{totalUrgent > 99 ? "99+" : totalUrgent}</span>
+              )}
+            </button>
+
+            {notifOpen && (
+              <>
+                <div className="adm-notif__scrim" onClick={() => setNotifOpen(false)} />
+                <div className="adm-notif__dropdown">
+                  <div className="adm-notif__header">Needs your attention</div>
+                  {notifItems.length === 0 && (
+                    <div className="adm-notif__empty">Nothing needs attention right now.</div>
+                  )}
+                  {notifItems.map((item) => (
+                    <Link
+                      key={item.key}
+                      href={item.href}
+                      className="adm-notif__item"
+                      onClick={() => setNotifOpen(false)}
+                    >
+                      <span
+                        className={`adm-notif__dot adm-notif__dot--${item.severity}`}
+                        aria-hidden="true"
+                      />
+                      <div>
+                        <div className="adm-notif__itemLabel">
+                          {item.count} {item.label}
+                        </div>
+                        <div className="adm-notif__itemDesc">{item.description}</div>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+
           <div className="adm-topbar__admin">
             <span className="adm-avatar">{initials}</span>
             <div className="adm-topbar__adminMeta">
@@ -276,6 +348,106 @@ export default function AdminShell({ children }) {
         .adm-topbar__spacer {
           flex: 1;
         }
+
+        .adm-topbar__bellBtn {
+          position: relative;
+          border: none;
+          background: transparent;
+          cursor: pointer;
+          color: var(--adm-ink-700);
+          padding: 7px;
+          border-radius: var(--adm-radius-sm);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .adm-topbar__bellBtn:hover {
+          background: var(--adm-line-soft);
+        }
+        .adm-topbar__bellBadge {
+          position: absolute;
+          top: 2px;
+          right: 2px;
+          background: var(--adm-danger);
+          color: #fff;
+          font-size: 10px;
+          font-weight: 700;
+          line-height: 1;
+          padding: 2px 4px;
+          border-radius: 999px;
+          min-width: 15px;
+          text-align: center;
+        }
+
+        .adm-notif__scrim {
+          position: fixed;
+          inset: 0;
+          z-index: 15;
+        }
+        .adm-notif__dropdown {
+          position: absolute;
+          right: 0;
+          top: calc(100% + 8px);
+          width: 320px;
+          max-height: 420px;
+          overflow-y: auto;
+          background: var(--adm-surface);
+          border: 1px solid var(--adm-line);
+          border-radius: var(--adm-radius-md);
+          box-shadow: var(--adm-shadow-hover);
+          z-index: 16;
+        }
+        .adm-notif__header {
+          padding: 12px 16px;
+          font-size: 12px;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.04em;
+          color: var(--adm-ink-500);
+          border-bottom: 1px solid var(--adm-line-soft);
+        }
+        .adm-notif__empty {
+          padding: 24px 16px;
+          text-align: center;
+          font-size: 12.5px;
+          color: var(--adm-ink-500);
+        }
+        .adm-notif__item {
+          display: flex;
+          gap: 10px;
+          align-items: flex-start;
+          padding: 12px 16px;
+          text-decoration: none;
+          border-bottom: 1px solid var(--adm-line-soft);
+          transition: background 0.12s;
+        }
+        .adm-notif__item:last-child {
+          border-bottom: none;
+        }
+        .adm-notif__item:hover {
+          background: var(--adm-line-soft);
+        }
+        .adm-notif__dot {
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+          margin-top: 5px;
+          flex-shrink: 0;
+        }
+        .adm-notif__dot--high { background: var(--adm-danger); }
+        .adm-notif__dot--medium { background: var(--adm-warning); }
+        .adm-notif__dot--low { background: var(--adm-ink-400); }
+        .adm-notif__itemLabel {
+          font-size: 13px;
+          font-weight: 600;
+          color: var(--adm-ink-900);
+        }
+        .adm-notif__itemDesc {
+          font-size: 11.5px;
+          color: var(--adm-ink-500);
+          margin-top: 2px;
+        }
+
         .adm-topbar__admin {
           display: flex;
           align-items: center;

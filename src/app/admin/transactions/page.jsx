@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import AdminShell from "../_components/AdminShell";
 import { Search, Receipt } from "lucide-react";
@@ -21,23 +22,29 @@ function naira(n) {
 }
 
 export default function AdminTransactionsPage() {
+  const searchParams = useSearchParams();
   const [transactions, setTransactions] = useState([]);
   const [total, setTotal] = useState(0);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
-  const [flaggedOnly, setFlaggedOnly] = useState(false);
+  // Read initial state from the URL so links from the notification
+  // center (?flagged=true or ?frozen=true) actually land pre-filtered,
+  // instead of silently opening on the unfiltered "All" view.
+  const [flaggedOnly, setFlaggedOnly] = useState(searchParams.get("flagged") === "true");
+  const [frozenOnly, setFrozenOnly] = useState(searchParams.get("frozen") === "true");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [page, setPage] = useState(0);
   const pageSize = 25;
 
-  const fetchTx = useCallback(async (s, st, flagged, p) => {
+  const fetchTx = useCallback(async (s, st, flagged, frozen, p) => {
     setLoading(true);
     try {
       const qs = new URLSearchParams({ limit: String(pageSize), offset: String(p * pageSize) });
       if (s) qs.set("search", s);
       if (st) qs.set("status", st);
       if (flagged) qs.set("flagged", "true");
+      if (frozen) qs.set("frozen", "true");
 
       const res = await fetch(`/api/admin/transactions?${qs}`);
       const data = await res.json();
@@ -53,11 +60,11 @@ export default function AdminTransactionsPage() {
   }, []);
 
   useEffect(() => {
-    const t = setTimeout(() => fetchTx(search, status, flaggedOnly, page), 250);
+    const t = setTimeout(() => fetchTx(search, status, flaggedOnly, frozenOnly, page), 250);
     return () => clearTimeout(t);
-  }, [search, status, flaggedOnly, page, fetchTx]);
+  }, [search, status, flaggedOnly, frozenOnly, page, fetchTx]);
 
-  useEffect(() => setPage(0), [search, status, flaggedOnly]);
+  useEffect(() => setPage(0), [search, status, flaggedOnly, frozenOnly]);
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
@@ -90,6 +97,10 @@ export default function AdminTransactionsPage() {
         <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, color: "var(--adm-ink-700)" }}>
           <input type="checkbox" checked={flaggedOnly} onChange={(e) => setFlaggedOnly(e.target.checked)} />
           Flagged for review only
+        </label>
+        <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, color: "var(--adm-ink-700)" }}>
+          <input type="checkbox" checked={frozenOnly} onChange={(e) => setFrozenOnly(e.target.checked)} />
+          Frozen only
         </label>
       </div>
 

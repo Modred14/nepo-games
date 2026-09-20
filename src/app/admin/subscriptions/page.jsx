@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import AdminShell from "../_components/AdminShell";
 import { Search, CreditCard } from "lucide-react";
@@ -9,11 +10,12 @@ import { Search, CreditCard } from "lucide-react";
 const PLAN_BADGE = { pro: "adm-badge--blue", plus: "adm-badge--success", premium: "adm-badge--warning" };
 
 export default function AdminSubscriptionsPage() {
+  const searchParams = useSearchParams();
   const [subscribers, setSubscribers] = useState([]);
   const [total, setTotal] = useState(0);
   const [search, setSearch] = useState("");
   const [plan, setPlan] = useState("");
-  const [expiringOnly, setExpiringOnly] = useState(false);
+  const [expiringOnly, setExpiringOnly] = useState(searchParams.get("expiringOnly") === "true");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [page, setPage] = useState(0);

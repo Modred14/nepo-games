@@ -7,6 +7,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useSearchParams } from "next/navigation";
 import AdminShell from "../_components/AdminShell";
 import { Banknote } from "lucide-react";
 
@@ -32,7 +33,11 @@ function naira(n) {
 export default function AdminWithdrawalsPage() {
   const [withdrawals, setWithdrawals] = useState([]);
   const [counts, setCounts] = useState({});
-  const [statusFilter, setStatusFilter] = useState(null);
+  const searchParams = useSearchParams();
+  const initialStatus = searchParams.get("status");
+  const [statusFilter, setStatusFilter] = useState(
+    ["pending", "unknown", "success", "failed"].includes(initialStatus) ? initialStatus : null,
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [busyId, setBusyId] = useState(null);
