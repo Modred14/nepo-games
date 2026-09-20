@@ -50,6 +50,7 @@ import { sendSellerWelcomeEmail } from "@/lib/emails/sendSellerWelcome";
 import { sendAdminAlert } from "@/lib/emails/sendAdminAlert";
 import { checkFlutterwaveTransferStatus } from "@/lib/flutterwaveTransfer";
 import { getSetting } from "@/lib/settings";
+import { derivePlanFromDays } from "@/lib/subscriptions";
 
 const OWN_TX_REF_PREFIXES = ["sub_", "wallet_", "tx_", "tournament_"];
 
@@ -65,12 +66,9 @@ function isOwnInitiatedTxRef(reference) {
 //   91–365 days     -> plus
 //   1–90 days       -> pro
 //   0 or fewer days -> free
-function derivePlanFromDays(totalDays) {
-  if (totalDays <= 0) return "free";
-  if (totalDays <= 90) return "pro";
-  if (totalDays <= 365) return "plus";
-  return "premium";
-}
+// ADMIN DASHBOARD PHASE 5: moved to src/lib/subscriptions.js (imported
+// above) so admin-side subscription actions can reuse the exact same
+// rule instead of risking a second, drifting copy.
 
 // Re-fetch the authoritative transaction record from Flutterwave rather
 // than trusting the webhook body's `meta`/`amount`/`status` blindly. This

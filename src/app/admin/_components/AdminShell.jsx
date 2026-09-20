@@ -31,6 +31,9 @@ import {
   ScrollText,
   Gamepad2,
   Settings,
+  CreditCard,
+  Megaphone,
+  UserCog,
   Menu,
   X,
   LogOut,
@@ -43,8 +46,11 @@ const NAV_ITEMS = [
   { href: "/admin/transactions", label: "Transactions", icon: Receipt },
   { href: "/admin/withdrawals", label: "Withdrawals", icon: Banknote },
   { href: "/admin/disputes", label: "Disputes", icon: ShieldAlert },
+  { href: "/admin/subscriptions", label: "Subscriptions", icon: CreditCard },
+  { href: "/admin/announcements", label: "Announcements", icon: Megaphone },
   { href: "/admin/support", label: "Support", icon: MessagesSquare },
   { href: "/admin/audit-logs", label: "Audit log", icon: ScrollText },
+  { href: "/admin/admins", label: "Admins", icon: UserCog },
   { href: "/admin/settings", label: "Settings", icon: Settings },
 ];
 

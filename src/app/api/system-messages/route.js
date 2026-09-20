@@ -1,3 +1,8 @@
+// ROUTE: src/app/api/system-messages/route.js
+// ADMIN DASHBOARD PHASE 5: now filters to enabled AND currently within
+// its scheduled window (see db/migrations/008_announcement_scheduling.sql)
+// — previously every message ever created was shown to every user
+// forever, with no way to disable or schedule one.
 import pool from "../../../lib/db";
 import { requireUser } from "@/lib/auth";
 
@@ -18,6 +23,7 @@ export async function GET(req) {
         sm.id,
         sm.title,
         sm.message,
+        sm.type,
         sm.created_at,
         CASE 
           WHEN smr.user_id IS NULL THEN false
@@ -27,6 +33,9 @@ export async function GET(req) {
       LEFT JOIN system_message_reads smr
         ON smr.message_id = sm.id
         AND smr.user_id = $1
+      WHERE sm.enabled = true
+        AND (sm.starts_at IS NULL OR sm.starts_at <= NOW())
+        AND (sm.ends_at IS NULL OR sm.ends_at >= NOW())
       ORDER BY sm.created_at DESC
       `,
       [user_id],
