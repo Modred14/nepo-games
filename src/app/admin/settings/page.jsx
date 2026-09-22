@@ -84,7 +84,6 @@ export default function AdminSettingsPage() {
         onSave={() => save("escrow_window_minutes")}
         saving={saving === "escrow_window_minutes"}
       />
-      
 
       <SettingRow
         label="Minimum withdrawal"
