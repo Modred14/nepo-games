@@ -91,6 +91,27 @@ export default function AdminUserDetailPage() {
     }
   };
 
+  const toggleMessagingRestriction = async (restricted) => {
+    if (!window.confirm(restricted ? "Restrict this user from sending new messages?" : "Lift the messaging restriction?")) return;
+    const reason = window.prompt("Optional: add a reason (recorded in the audit log)", "");
+
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/admin/users/${id}/messaging-restriction`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ restricted, reason: reason || null }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json?.error || "Failed to update");
+      fetchUser();
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
   if (loading && !data) {
     return (
       <AdminShell>
@@ -139,6 +160,7 @@ export default function AdminUserDetailPage() {
             </h1>
             <Badge value={user.account_status} />
             {user.role === "admin" && <span className="adm-badge adm-badge--blue">Admin</span>}
+            {user.messaging_restricted && <span className="adm-badge adm-badge--danger">Messaging restricted</span>}
           </div>
           <p style={{ color: "var(--adm-ink-500)", fontSize: 13.5, margin: 0 }}>
             {user.email} · @{user.username}
@@ -178,6 +200,13 @@ export default function AdminUserDetailPage() {
               Ban
             </button>
           )}
+          <button
+            className="adm-btn adm-btn--ghost"
+            disabled={busy}
+            onClick={() => toggleMessagingRestriction(!user.messaging_restricted)}
+          >
+            {user.messaging_restricted ? "Lift messaging restriction" : "Restrict from messaging"}
+          </button>
         </div>
       </div>
 

@@ -181,17 +181,35 @@ export default function GameClient({ game, images, similarGames }) {
 
     setConfirmData({ reason: customReason });
   };
-  const confirmReport = () => {
+  // ADMIN DASHBOARD (chat moderation): this previously only set local UI
+  // state and showed a success message — no API was ever called, so no
+  // report was ever actually saved anywhere. Now calls the real backend
+  // (src/app/api/report/route.js). The success message still shows even
+  // if the admin's later moderation queue processes it asynchronously —
+  // the user's part is done once the report is recorded.
+  const confirmReport = async () => {
     if (!confirmData) return;
 
-    setMessage(
-      `You've reported ${game.username} for ${confirmData.reason}. We will review it.`,
-    );
+    try {
+      const res = await fetch("/api/report", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ listingId: game.id, reason: confirmData.reason }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || "Failed to submit report");
 
-    setReport(true);
-    setConfirmData(null);
-    setSelectedReason(null);
-    setCustomReason("");
+      setMessage(
+        `You've reported ${game.username} for ${confirmData.reason}. We will review it.`,
+      );
+      setReport(true);
+    } catch (err) {
+      setMessage(err.message || "Failed to submit report. Please try again.");
+    } finally {
+      setConfirmData(null);
+      setSelectedReason(null);
+      setCustomReason("");
+    }
   };
 
   const cancelConfirm = () => {

@@ -24,7 +24,7 @@ export async function GET(req, { params }) {
         id, email, username, first_name, surname, profile_image,
         role, account_status, plan, subscription_status, subscription_start,
         subscription_end, provider, is_verified, phone_verified, email_verified,
-        created_at, last_login_at
+        messaging_restricted, created_at, last_login_at
       FROM users
       WHERE id = $1
       `,

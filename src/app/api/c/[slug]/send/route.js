@@ -1,3 +1,8 @@
+// ROUTE: src/app/api/c/[slug]/send/route.js
+// ADMIN DASHBOARD (chat moderation): blocks a user an admin has
+// restricted (users.messaging_restricted) from sending new messages —
+// see db/migrations/010_reports_and_messaging_restriction.sql. Existing
+// messages/conversations are untouched; this only stops new sends.
 import pool from "../../../../../lib/db";
 import { requireUser } from "../../../../../lib/auth";
 import {
@@ -12,6 +17,17 @@ export async function POST(req) {
     const user = await requireUser();
     if (!user) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const restrictionRes = await pool.query(
+      `SELECT messaging_restricted FROM users WHERE id = $1`,
+      [user.id],
+    );
+    if (restrictionRes.rows[0]?.messaging_restricted) {
+      return Response.json(
+        { error: "Your ability to send messages has been restricted. Contact support if you believe this is a mistake." },
+        { status: 403 },
+      );
     }
 
     const user_id = user.id;
