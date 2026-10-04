@@ -6,10 +6,25 @@
 // (proper row locking, escrow/fee reversal), but nothing recorded WHICH
 // admin resolved a dispute or WHY. Also now accepts an optional `reason`
 // field from the request body for that purpose.
+//
+// CONSISTENCY FIX: this route releases/refunds real money exactly like
+// src/app/api/admin/transactions/[id]/resolve/route.js does, but had
+// neither rate limiting nor re-authentication — an inconsistency, not a
+// deliberate choice. Both are added here now, matching that route
+// exactly: 10 release/refund actions per admin per 5 minutes, and a
+// valid re-auth token required. The rate-limit key and the re-auth
+// action name ("transaction.resolve") are DELIBERATELY SHARED with the
+// transactions resolve route — both routes do the same category of
+// action (move money out of escrow), so an admin re-authenticating once
+// covers both for 5 minutes, and more importantly an admin can't dodge
+// the rate limit by alternating between "resolve a dispute" and
+// "resolve a flagged transaction" to reset a separate counter.
 import pool from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
 import { emitToRoom } from "@/lib/socket";
 import { logAdminAction } from "@/lib/adminAudit";
+import { checkRateLimit } from "@/lib/rateLimit";
+import { verifyReauthToken } from "@/lib/reauth";
 
 const SYSTEM_USER_ID = 1;
 export async function POST(req) {
@@ -19,6 +34,21 @@ export async function POST(req) {
     const admin = await requireAdmin();
     if (!admin) {
       return Response.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    const rl = await checkRateLimit(`tx-resolve:${admin.id}`, { limit: 10, windowSeconds: 300 });
+    if (!rl.allowed) {
+      return Response.json(
+        { error: "Too many resolve actions in a short time. Wait a few minutes and try again." },
+        { status: 429 },
+      );
+    }
+
+    if (!verifyReauthToken(req, { adminId: admin.id, action: "transaction.resolve" })) {
+      return Response.json(
+        { error: "Re-authentication required or expired. Please confirm your password/PIN and try again." },
+        { status: 401 },
+      );
     }
 
     const { conversationId, resolution, reason } = await req.json();

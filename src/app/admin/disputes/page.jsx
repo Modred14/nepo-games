@@ -2,13 +2,17 @@
 //
 // DESIGN PASS: now wrapped in AdminShell and using the shared design
 // system (adm-* classes from AdminShell.jsx) instead of one-off inline
-// styles, for consistency with the rest of the dashboard. Functionality
-// (resolve flow, audit-log reason prompt from Phase 1) is unchanged.
+// styles, for consistency with the rest of the dashboard.
+//
+// CONSISTENCY FIX: now requires re-authentication before resolving a
+// dispute, matching src/app/admin/transactions/[id]/page.jsx — see
+// src/app/api/admin/disputes/resolve/route.js for why.
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
 import AdminShell from "../_components/AdminShell";
 import { ShieldAlert } from "lucide-react";
+import { requestReauth } from "../_components/reauth";
 
 export default function AdminDisputesPage() {
   const [disputes, setDisputes] = useState([]);
@@ -47,11 +51,20 @@ export default function AdminDisputesPage() {
       "",
     );
 
+    // Re-authentication — same action name as the generalized
+    // transactions resolve route, so one password/PIN confirmation
+    // covers both for 5 minutes (see the route's own comments).
+    const reauthToken = await requestReauth("transaction.resolve");
+    if (!reauthToken) return;
+
     setBusyId(conversationId);
     try {
       const res = await fetch("/api/admin/disputes/resolve", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "x-reauth-token": reauthToken,
+        },
         body: JSON.stringify({ conversationId, resolution, reason: reason || null }),
       });
       const data = await res.json();

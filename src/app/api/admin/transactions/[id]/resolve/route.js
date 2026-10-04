@@ -122,12 +122,12 @@ export async function POST(req, { params }) {
         [tx.id],
       );
       await client.query(
-        `UPDATE users_transactions SET status = 'success', updated_at = NOW()
+        `UPDATE users_transactions SET status = 'success'
          WHERE user_id = $1 AND reference = $2 AND status IN ('pending', 'frozen')`,
         [tx.seller_id, tx.payment_reference],
       );
       await client.query(
-        `UPDATE users_transactions SET status = 'success', updated_at = NOW()
+        `UPDATE users_transactions SET status = 'success'
          WHERE user_id = 1 AND reference = $1 AND status IN ('pending', 'frozen')
            AND type = 'credit' AND description = 'Platform fee'`,
         [tx.payment_reference],
@@ -141,12 +141,12 @@ export async function POST(req, { params }) {
         [tx.id],
       );
       await client.query(
-        `UPDATE users_transactions SET status = 'failed', updated_at = NOW()
+        `UPDATE users_transactions SET status = 'failed'
          WHERE user_id = $1 AND reference = $2 AND status IN ('pending', 'frozen')`,
         [tx.seller_id, tx.payment_reference],
       );
       await client.query(
-        `UPDATE users_transactions SET status = 'failed', updated_at = NOW()
+        `UPDATE users_transactions SET status = 'failed'
          WHERE user_id = 1 AND reference = $1 AND status IN ('pending', 'frozen')
            AND type = 'credit' AND description = 'Platform fee'`,
         [tx.payment_reference],
