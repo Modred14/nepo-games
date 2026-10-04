@@ -1,15 +1,19 @@
+// ROUTE: src/app/api/listing/delete/route.js
 // src/app/api/listing/delete/route.js
 import pool from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import bcrypt from "bcrypt";
+import { checkRateLimit, tooManyRequests } from "@/lib/rateLimit";
 
 export async function POST(req) {
   const client = await pool.connect();
 
   try {
-    const { gameId, pin } = await req.json();
+    const body = await req.json().catch(() => ({}));
+    const gameId = Number(body.gameId);
+    const pin = typeof body.pin === "string" ? body.pin : "";
 
-    if (!gameId || !pin) {
+    if (!Number.isInteger(gameId) || gameId <= 0 || !/^\d{4}$/.test(pin)) {
       return Response.json({ error: "Missing fields" }, { status: 400 });
     }
 
@@ -19,6 +23,9 @@ export async function POST(req) {
     }
 
     const userId = user.id;
+
+    const rl = await checkRateLimit(`delete-listing:${userId}`, { limit: 10, windowSeconds: 900, failClosed: true });
+    if (!rl.allowed) return tooManyRequests();
 
     // ✅ Fetch pin_hash from DB — intentional, can't store this in JWT
     const userRes = await pool.query(
@@ -60,6 +67,24 @@ export async function POST(req) {
     // ✅ Fixed: Number() on both sides to prevent type mismatch
     if (Number(listing.user_id) !== Number(userId)) {
       return Response.json({ error: "Not your listing" }, { status: 403 });
+    }
+
+    // A listing with ANY live order (paid, awaiting delivery/confirmation, or
+    // disputed) must never be deleted — that would erase the chat/evidence
+    // while money is in escrow.
+    const liveTx = await pool.query(
+      `SELECT 1 FROM transactions
+        WHERE listing_id = $1
+          AND (payment_status = 'pending'
+               OR escrow_status IN ('holding', 'frozen'))
+        LIMIT 1`,
+      [gameId],
+    );
+    if (liveTx.rows.length > 0) {
+      return Response.json(
+        { error: "Cannot delete a listing with an order in progress" },
+        { status: 400 },
+      );
     }
 
     if (listing.status === "pending") {
@@ -112,8 +137,10 @@ export async function POST(req) {
 
     return Response.json({ success: true });
   } catch (err) {
-    await client.query("ROLLBACK");
-    console.error("DELETE LISTING ERROR:", err);
+    try {
+      await client.query("ROLLBACK");
+    } catch {}
+    console.error("DELETE LISTING ERROR:", err.message);
     return Response.json({ error: "Server error" }, { status: 500 });
   } finally {
     client.release();

@@ -1,64 +1,63 @@
-// src/app/api/reset-password/route.js
+// ROUTE: src/app/api/reset-password/route.js
 import { NextResponse } from "next/server";
 import bcrypt from "bcrypt";
+import crypto from "crypto";
 import pool from "../../../lib/db";
+import { checkRateLimit, getClientIp, tooManyRequests } from "../../../lib/rateLimit";
 
 export async function POST(req) {
   try {
-    const { token, newPassword } = await req.json();
-    // FIX: this line used to be `console.log(token, newPassword)` — it was
-    // logging the user's brand-new plaintext password (and their reset
-    // token) to the server console on every password reset. Anyone with
-    // access to logs/log aggregation could read users' passwords directly.
-    // 1. basic validation
-    if (!token || !newPassword) {
-      return NextResponse.json(
-        { error: "Missing token or password" },
-        { status: 400 },
-      );
-    }
-
-    if (newPassword.length < 6) {
-      return NextResponse.json({ error: "Password too weak" }, { status: 400 });
-    }
-
-    // 2. find user with valid token + not expired
-    const result = await pool.query(
-      `SELECT * FROM users 
-       WHERE reset_token = $1 
-       AND reset_token_expiry > NOW()`,
-      [token],
-    );
-
-    const user = result.rows[0];
-
-    if (!user) {
-      return NextResponse.json(
-        { error: "Invalid or expired reset link" },
-        { status: 400 },
-      );
-    }
-
-    // 3. hash new password
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-
-    // 4. update password + clear reset token (CRITICAL)
-    await pool.query(
-      `UPDATE users 
-       SET password_hash = $1,
-           reset_token = NULL,
-           reset_token_expiry = NULL
-       WHERE id = $2`,
-      [hashedPassword, user.id],
-    );
-
-    return NextResponse.json({
-      success: true,
-      message: "Password reset successful",
+    const rl = await checkRateLimit(`reset-ip:${getClientIp(req)}`, {
+      limit: 10,
+      windowSeconds: 900,
+      failClosed: true,
     });
-  } catch (err) {
-    console.error("Reset password error:", err);
+    if (!rl.allowed) return tooManyRequests();
 
+    const body = await req.json().catch(() => ({}));
+    const token = typeof body.token === "string" ? body.token : "";
+    const newPassword = typeof body.newPassword === "string" ? body.newPassword : "";
+
+    if (!token || !newPassword) {
+      return NextResponse.json({ error: "Missing token or password" }, { status: 400 });
+    }
+    if (!/^[a-f0-9]{64}$/.test(token)) {
+      return NextResponse.json({ error: "Invalid or expired reset link" }, { status: 400 });
+    }
+    if (newPassword.length < 8 || newPassword.length > 72) {
+      return NextResponse.json(
+        { error: "Password must be between 8 and 72 characters long." },
+        { status: 400 },
+      );
+    }
+
+    // Tokens are stored hashed (see forgot-password). Tokens issued before
+    // this change were stored in plaintext, so both forms are accepted until
+    // those 15-minute tokens have expired.
+    const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
+    const hashedPassword = await bcrypt.hash(newPassword, 12);
+
+    // Single atomic statement: the token is consumed in the same UPDATE that
+    // sets the password, so one token can never be used twice (even by two
+    // simultaneous requests).
+    const result = await pool.query(
+      `UPDATE users
+          SET password_hash = $1,
+              reset_token = NULL,
+              reset_token_expiry = NULL
+        WHERE (reset_token = $2 OR reset_token = $3)
+          AND reset_token_expiry > NOW()
+        RETURNING id`,
+      [hashedPassword, tokenHash, token],
+    );
+
+    if (result.rowCount === 0) {
+      return NextResponse.json({ error: "Invalid or expired reset link" }, { status: 400 });
+    }
+
+    return NextResponse.json({ success: true, message: "Password reset successful" });
+  } catch (err) {
+    console.error("Reset password error:", err.message);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

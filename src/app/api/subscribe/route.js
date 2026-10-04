@@ -1,5 +1,7 @@
+// ROUTE: src/app/api/subscribe/route.js
 import { NextResponse } from "next/server";
 import pool from "@/lib/db";
+import { checkRateLimit, getClientIp, tooManyRequests } from "@/lib/rateLimit";
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -38,7 +40,7 @@ export async function POST(req) {
 
     return NextResponse.json({ success: true });
   } catch (err) {
-    console.error("Subscribe error:", err);
+    console.error("Subscribe error:", err.message);
     return NextResponse.json(
       { error: "Something went wrong" },
       { status: 500 },

@@ -27,7 +27,6 @@ async function getGame(slug) {
       users.first_name,
       users.surname,
       users.username,
-      users.email,
       users.profile_image,
       users.plan,
       users.phone_verified,  
@@ -138,4 +137,4 @@ export default async function GamePage({ params }) {
       : [];
 
   return <GameClient similarGames={similarGames} game={game} images={images} />;
-}zzzzzzzzzzzzzzzAVSk56 v
+}

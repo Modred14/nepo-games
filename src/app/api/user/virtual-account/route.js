@@ -1,4 +1,4 @@
-// ORIGINAL ROUTE: src/app/api/user/virtual-account/route.js
+// ROUTE: src/app/api/user/virtual-account/route.js
 // CHANGED: Paystack customer + dedicated_account -> Flutterwave
 // POST /v3/virtual-account-numbers
 //
@@ -20,6 +20,8 @@
 import { NextResponse } from "next/server";
 import pool from "@/lib/db";
 import { requireUser } from "@/lib/auth";
+import { checkRateLimit, tooManyRequests } from "@/lib/rateLimit";
+import { encryptSecret, decryptSecret, encryptionConfigured } from "@/lib/secretBox";
 
 const FLW_BASE_URL = "https://api.flutterwave.com/v3";
 
@@ -43,6 +45,9 @@ export async function POST(req) {
   const user = await requireUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  const rl = await checkRateLimit(`va-create:${user.id}`, { limit: 5, windowSeconds: 3600, failClosed: true });
+  if (!rl.allowed) return tooManyRequests();
+
   if (!process.env.FLW_SECRET_KEY) {
     console.error("❌ FLW_SECRET_KEY is not configured");
     return NextResponse.json(
@@ -64,8 +69,8 @@ export async function POST(req) {
   let bvn = null;
   try {
     const body = await req.json();
-    phone = body?.phone || null;
-    bvn = body?.bvn || null;
+    phone = typeof body?.phone === "string" ? body.phone : null;
+    bvn = typeof body?.bvn === "string" ? body.bvn : null;
   } catch {
     // no body sent
   }
@@ -102,7 +107,13 @@ export async function POST(req) {
   }
 
   const phoneToUse = dbUser.phone_number || phone;
-  const bvnToUse = dbUser.bvn || bvn;
+  let storedBvn = null;
+  try {
+    storedBvn = dbUser.bvn ? decryptSecret(dbUser.bvn) : null;
+  } catch (e) {
+    console.error("BVN decrypt failed:", e.message);
+  }
+  const bvnToUse = storedBvn || bvn;
 
   if (!dbUser.phone_number && phone) {
     const digitsOnly = String(phone).replace(/[^0-9+]/g, "");
@@ -126,8 +137,10 @@ export async function POST(req) {
         { status: 400 },
       );
     }
+    // BVN is highly sensitive personal data: encrypted at rest.
+    const bvnToStore = encryptionConfigured() ? encryptSecret(digitsOnly) : digitsOnly;
     await pool.query(`UPDATE users SET bvn = $1 WHERE id = $2`, [
-      digitsOnly,
+      bvnToStore,
       user.id,
     ]);
   }
@@ -154,15 +167,16 @@ export async function POST(req) {
         bvn: bvnToUse,
         narration: `${firstName} ${lastName}`,
       }),
+      signal: AbortSignal.timeout(15000),
     });
-    const vaData = await vaRes.json();
+    const vaData = await vaRes.json().catch(() => ({}));
 
     if (!vaRes.ok || vaData.status !== "success") {
       const message = vaData?.message || "";
       const notEnabled =
         /not\s*enabled|not\s*available|contact\s*support/i.test(message);
 
-      console.error("❌ Flutterwave virtual account creation failed:", vaData);
+      console.error("Flutterwave virtual account creation failed:", vaRes.status, message);
 
       if (notEnabled) {
         return NextResponse.json(

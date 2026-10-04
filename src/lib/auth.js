@@ -1,3 +1,4 @@
+// ROUTE: src/lib/auth.js
 // src/lib/auth.js
 import { getServerSession } from "next-auth";
 import { authOptions } from "../app/api/auth/[...nextauth]/route";
@@ -26,15 +27,42 @@ export async function requireUser() {
   if (!session?.user?.id) return null;
 
   try {
+    // SECURITY: role/plan/verification state are re-read from the database on
+    // every authenticated request instead of trusting whatever is inside the
+    // JWT. The JWT can be up to 7 days stale (a demoted admin or a lapsed
+    // subscription would otherwise keep their old privileges), and before
+    // the jwt() callback was hardened it could also be influenced by the
+    // client through useSession().update(). The extra columns ride on the
+    // query that already runs here, so this adds no round trip.
     const result = await pool.query(
-      `SELECT account_status FROM users WHERE id = $1`,
+      `SELECT account_status, role, plan, phone_verified,
+              subscription_status, subscription_end
+         FROM users WHERE id = $1`,
       [session.user.id],
     );
-    const status = result.rows[0]?.account_status;
-    if (status === "suspended" || status === "banned") return null;
+    const row = result.rows[0];
+    if (!row) return null; // account deleted since the token was issued
+    if (row.account_status === "suspended" || row.account_status === "banned") {
+      return null;
+    }
+    return {
+      ...session.user,
+      role: row.role,
+      plan: row.plan,
+      phone_verified: row.phone_verified,
+      subscription_status: row.subscription_status,
+      subscription_end: row.subscription_end,
+      is_verified:
+        (row.subscription_status || "").toLowerCase() === "active" &&
+        !!row.subscription_end &&
+        new Date(row.subscription_end).getTime() > Date.now(),
+    };
   } catch (err) {
+    // Fails OPEN only if the lookup itself errors (e.g. a migration has not
+    // been run in this environment). Never fails open on a positive
+    // suspended/banned/deleted result above.
     console.error(
-      "requireUser: account_status lookup failed, failing open:",
+      "requireUser: account lookup failed, falling back to token:",
       err.message,
     );
   }

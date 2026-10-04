@@ -1,3 +1,4 @@
+// ROUTE: src/app/seller/page.jsx
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -303,7 +304,7 @@ function BrandPanel({ step }) {
               justifyContent: "center",
             }}
           >
-            <img src="/logo.png" className="rounded-full p-2" />
+            <img src="/logo.png" alt="Nepogames logo" className="rounded-full p-2" />
           </div>
           <span
             style={{

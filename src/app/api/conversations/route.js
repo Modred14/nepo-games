@@ -1,17 +1,18 @@
+// ROUTE: src/app/api/conversations/route.js
 import pool from "../../../lib/db";
 import { getCached, setCached, invalidateCache } from "@/lib/cache";
 import { requireUser } from "../../../lib/auth";
+import { maskEmail } from "../../../lib/html";
 
 export async function GET(req) {
   try {
     const user = await requireUser();
-    const cacheKey = `conversations:${user.id}`;
-    const cached = await getCached(cacheKey);
-    if (cached) return Response.json(cached);
-
     if (!user) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
+    const cacheKey = `conversations:${user.id}`;
+    const cached = await getCached(cacheKey);
+    if (cached) return Response.json(cached);
 
     const user_id = user.id;
     if (!user_id) {
@@ -102,8 +103,11 @@ ORDER BY m.created_at DESC NULLS LAST;
       [user_id],
     );
 
-    await setCached(cacheKey, conversations.rows, 15); // 15 second TTL
-    return Response.json(conversations.rows);
+    // PRIVACY: the counterparty's real email address is never sent to the
+    // browser (the UI only ever displayed a masked form anyway).
+    const rows = conversations.rows.map((r) => ({ ...r, email: maskEmail(r.email) }));
+    await setCached(cacheKey, rows, 15); // 15 second TTL
+    return Response.json(rows);
   } catch (err) {
     console.error(err);
     return Response.json({ error: "Server error" }, { status: 500 });

@@ -1,7 +1,14 @@
+// ROUTE: src/app/api/email-webhook/route.js
 import { Webhook } from "svix";
+import { escapeHtml } from "@/lib/html";
 
 export async function POST(request) {
-  const email = "support.nepogames@gmail.com";
+  // Staff mailbox that inbound mail is forwarded to (was hardcoded).
+  const email = process.env.SUPPORT_FORWARD_EMAIL;
+  if (!email || !process.env.RESEND_WEBHOOK_SECRET) {
+    console.error("email-webhook: SUPPORT_FORWARD_EMAIL / RESEND_WEBHOOK_SECRET not configured");
+    return Response.json({ error: "Not configured" }, { status: 500 });
+  }
   const body = await request.text();
   const headers = request.headers;
 
@@ -24,10 +31,8 @@ export async function POST(request) {
   const { from, subject, email_id, received_for } = payload.data;
 
   // Fetch the full email content from Resend
-  const emailRes = await fetch(`https://api.resend.com/emails/${email_id}`, {
-    headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
-  });
-  const emailData = await emailRes.json();
+
+  
   const htmlBody = `<p>${"(You have a new mail kindly check your resend dashboard)"}</p>`;
 
   const forwardResponse = await fetch("https://api.resend.com/emails", {
@@ -39,9 +44,9 @@ export async function POST(request) {
     body: JSON.stringify({
       from: "Nepogames Support <contact@support.nepogames.com>",
       to: [email],
-      subject: `${subject || "(no subject)"}`,
-      html: `<p><strong>From:</strong> ${from}</p>
-             <p><strong>To:</strong> ${received_for[0]}</p>
+      subject: String(subject || "(no subject)").replace(/[\r\n]+/g, " ").slice(0, 200),
+      html: `<p><strong>From:</strong> ${escapeHtml(from)}</p>
+             <p><strong>To:</strong> ${escapeHtml(received_for?.[0])}</p>
              <hr/>
              ${htmlBody}`,
       reply_to: from,

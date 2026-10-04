@@ -1,39 +1,51 @@
-// src/lib/rateLimit.js  (NEW)
+// ROUTE: src/lib/rateLimit.js
+// src/lib/rateLimit.js
 //
-// ADMIN DASHBOARD PHASE 6 (final security pass): simple sliding-window
-// rate limiter built on the existing Redis/in-memory cache
-// (src/lib/cache.js) rather than adding new infrastructure — reuses
-// whatever this environment already has (Redis if REDIS_URL is set,
-// otherwise an in-memory Map, same fallback behavior as caching).
+// Fixed-window rate limiter on top of the existing cache layer
+// (src/lib/cache.js — Redis if REDIS_URL is set, in-memory otherwise).
 //
-// Deliberately NOT applied to every admin route. The threat model for
-// most of this dashboard is different from a public-facing login form:
-// every route here is already behind requireAdmin()/requireSuperAdmin()
-// (a real authenticated admin session), so brute-force/credential-
-// stuffing isn't the risk. What IS worth limiting is a single admin
-// session doing rapid, repeated high-impact actions — by mistake, a
-// stuck retry loop in a script, or a compromised session. Applied to:
-//   - transactions/[id]/resolve (moves real money)
-//   - admins/* (privilege escalation surface)
-// Left off lower-risk, read-heavy, or already-safe-by-design routes
-// (e.g. the withdrawal recheck endpoint only ever reads status, never
-// creates a transfer, so hammering it is merely wasteful, not dangerous).
-import { getCached, setCached } from "./cache";
+// SECURITY: the previous version did a read-then-write (get, then set), so
+// parallel requests could all read the same counter and slip past the limit.
+// This version uses an atomic INCR (incrementCounter in cache.js).
+//
+// IMPORTANT: without REDIS_URL the counters live in one server process only.
+// On a multi-machine deployment each machine has its own counters, so the
+// effective limit is limit x machines. Set REDIS_URL in production.
+import { incrementCounter } from "./cache";
 
 // Returns { allowed: boolean, remaining: number }.
-export async function checkRateLimit(key, { limit = 10, windowSeconds = 60 } = {}) {
+// `failClosed: true` should be used for endpoints where an outage of the
+// limiter must not become an attack window (login, OTP, password reset).
+export async function checkRateLimit(
+  key,
+  { limit = 10, windowSeconds = 60, failClosed = false } = {},
+) {
   const cacheKey = `ratelimit:${key}`;
   try {
-    const current = (await getCached(cacheKey)) || 0;
-    if (current >= limit) {
-      return { allowed: false, remaining: 0 };
-    }
-    await setCached(cacheKey, current + 1, windowSeconds);
-    return { allowed: true, remaining: limit - current - 1 };
+    const count = await incrementCounter(cacheKey, windowSeconds);
+    if (count > limit) return { allowed: false, remaining: 0 };
+    return { allowed: true, remaining: Math.max(0, limit - count) };
   } catch (err) {
-    // Fail open — a rate-limiter outage must not block legitimate admin
-    // actions (e.g. releasing a stuck transaction during an incident).
-    console.error(`checkRateLimit(${key}) failed, allowing request:`, err.message);
-    return { allowed: true, remaining: limit };
+    console.error(`checkRateLimit(${key}) failed:`, err.message);
+    return failClosed
+      ? { allowed: false, remaining: 0 }
+      : { allowed: true, remaining: limit };
   }
+}
+
+// Best-effort client IP. Fly.io's proxy sets `fly-client-ip` (it cannot be
+// spoofed by the client); other proxies fall back to x-forwarded-for.
+export function getClientIp(req) {
+  const h = req?.headers;
+  if (!h?.get) return "unknown";
+  return (
+    h.get("fly-client-ip") ||
+    h.get("x-real-ip") ||
+    (h.get("x-forwarded-for") || "").split(",")[0].trim() ||
+    "unknown"
+  );
+}
+
+export function tooManyRequests(message = "Too many requests. Please try again later.") {
+  return Response.json({ error: message }, { status: 429 });
 }

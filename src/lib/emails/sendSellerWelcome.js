@@ -1,3 +1,4 @@
+// ROUTE: src/lib/emails/sendSellerWelcome.js
 import { resend } from "../resend";
 
 const features = [
@@ -112,7 +113,7 @@ export async function sendSellerWelcomeEmail(duration, email, plan) {
                   <table cellpadding="0" cellspacing="0" style="width:100%;background:#F0FDF4;border:1px solid #BBF7D0;border-radius:8px;">
                     <tr>
                       <td style="padding:12px 16px;font-size:13px;color:#166534;line-height:1.5;">
-                        🛡️ NepoGames ensures a <strong>safe, secure, and trusted</strong> gaming marketplace for all users.
+                        🛡️ Nepogames ensures a <strong>safe, secure, and trusted</strong> gaming marketplace for all users.
                       </td>
                     </tr>
                   </table>

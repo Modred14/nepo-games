@@ -1,3 +1,4 @@
+// ROUTE: src/app/api/user/default/route.js
 import { NextResponse } from "next/server";
 import pool from "../../../../lib/db";
 import { requireUser } from "@/lib/auth";
@@ -7,7 +8,6 @@ export async function POST(req) {
       const user = await requireUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const formData = await req.formData();
     const file = "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
     const userId = user.id
 

@@ -1,3 +1,4 @@
+// ROUTE: src/app/signup/signUpClient.jsx
 "use client";
 
 import React from "react";
@@ -109,8 +110,8 @@ export default function Login() {
       setErrorTrigger((prev) => prev + 1);
       return;
     }
-    if (password.length < 6) {
-      setMessage("Password must have atleast 6 characters.");
+    if (password.length < 8) {
+      setMessage("Password must have at least 8 characters.");
       setErrorOpen(true);
       setErrorTrigger((prev) => prev + 1);
       return;
@@ -380,7 +381,7 @@ export default function Login() {
                   Enter your Password
                 </label>
 
-                <button
+                <button aria-label="Toggle password visibility"
                   type="button"
                   disabled={loading}
                   onClick={() => setShowPassword(!showPassword)}
@@ -420,7 +421,7 @@ export default function Login() {
                   Confirm your Password
                 </label>
 
-                <button
+                <button aria-label="Toggle password visibility"
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"

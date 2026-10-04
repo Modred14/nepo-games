@@ -1,39 +1,34 @@
-// ORIGINAL ROUTE: src/app/api/paystack/initialize/route.js
-// CHANGED: Paystack transaction/initialize -> Flutterwave /v3/payments (Standard checkout)
-// NOTE: file path/folder left as "paystack" so no other imports break — only the
-// outbound integration inside this file was swapped. Rename the folder later if desired.
+// ROUTE: src/app/api/paystack/initialize/route.js
+// Subscription checkout (Flutterwave Standard). The price comes ONLY from the
+// server-side price list; the client sends just the plan name.
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "../../auth/[...nextauth]/route";
-
-const PLAN_PRICES = {
-  // NOTE: these were kobo amounts for Paystack (e.g. 290000 kobo = ₦2,900).
-  // Flutterwave's /v3/payments amount field is in the major currency unit
-  // (naira), not kobo — so these are now divided by 100 vs. the original file.
-  pro: 2900,
-  plus: 8500,
-  premium: 32000,
-};
+import { requireUser } from "@/lib/auth";
+import { PLAN_PRICES } from "@/lib/subscriptions";
+import { checkRateLimit, tooManyRequests } from "@/lib/rateLimit";
 
 export async function POST(req) {
-  const session = await getServerSession(authOptions);
-
-  if (!session) {
+  const user = await requireUser();
+  if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { plan } = await req.json();
+  const rl = await checkRateLimit(`sub-init:${user.id}`, { limit: 10, windowSeconds: 600 });
+  if (!rl.allowed) return tooManyRequests();
 
-  const amount = PLAN_PRICES[plan];
+  const body = await req.json().catch(() => ({}));
+  const plan = typeof body?.plan === "string" ? body.plan : "";
+
+  // Own-property check so "constructor"/"__proto__" can't index the table.
+  const amount = Object.prototype.hasOwnProperty.call(PLAN_PRICES, plan)
+    ? PLAN_PRICES[plan]
+    : null;
 
   if (!amount) {
     return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
   }
 
-  // Flutterwave doesn't hand back a reference the way Paystack does at
-  // initialize-time — you generate the tx_ref yourself and it round-trips
-  // back to you via the redirect and the webhook.
-  const tx_ref = `sub_${session.user.id}_${plan}_${Date.now()}`;
+  // The webhook parses this reference to decide who paid for what.
+  const tx_ref = `sub_${user.id}_${plan}_${Date.now()}`;
 
   const response = await fetch("https://api.flutterwave.com/v3/payments", {
     method: "POST",
@@ -46,28 +41,18 @@ export async function POST(req) {
       amount,
       currency: "NGN",
       redirect_url: `${process.env.NEXT_PUBLIC_BASE_URL}/payment-success`,
-      customer: {
-        email: session.user.email,
-      },
-      meta: {
-        userId: session.user.id,
-        purpose: "subscription",
-        plan,
-      },
+      customer: { email: user.email },
+      meta: { userId: user.id, purpose: "subscription", plan },
     }),
-  });
+    signal: AbortSignal.timeout(15000),
+  }).catch(() => null);
 
-  const data = await response.json();
+  const data = response ? await response.json().catch(() => null) : null;
 
-  if (data.status !== "success") {
-    console.error("❌ Flutterwave initialize failed:", data);
-    return NextResponse.json(
-      { error: data.message || "Payment init failed" },
-      { status: 500 },
-    );
+  if (!data || data.status !== "success" || !data.data?.link) {
+    console.error("Flutterwave subscription initialize failed");
+    return NextResponse.json({ error: "Payment init failed" }, { status: 502 });
   }
 
-  return NextResponse.json({
-    url: data.data.link,
-  });
+  return NextResponse.json({ url: data.data.link });
 }

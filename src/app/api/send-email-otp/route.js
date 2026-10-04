@@ -1,30 +1,49 @@
+// ROUTE: src/app/api/send-email-otp/route.js
+import crypto from "crypto";
 import pool from "../../../lib/db";
+import { requireUser } from "../../../lib/auth";
+import { escapeHtml } from "../../../lib/html";
+import { checkRateLimit, tooManyRequests } from "../../../lib/rateLimit";
 import { resend } from "../../../lib/resend";
 
+// SECURITY: crypto.randomInt instead of Math.random (predictable PRNG).
 function generateOTP() {
-  return Math.floor(100000 + Math.random() * 900000).toString();
+  return crypto.randomInt(100000, 1000000).toString();
 }
 
 export async function POST(req) {
   try {
-    const { email } = await req.json();
-
-    if (!email) {
-      return Response.json({ error: "Email is required" }, { status: 400 });
+    // SECURITY: this endpoint was fully unauthenticated and mailed a code to
+    // ANY address supplied in the body (spam / email-bombing relay under our
+    // domain). It now requires a login and only ever mails the logged-in
+    // user's own address; the `email` field in the body is ignored.
+    const sessionUser = await requireUser();
+    if (!sessionUser) {
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const user = await pool.query("SELECT id FROM users WHERE email = $1", [email]);
+    const rl = await checkRateLimit(`email-otp-send:${sessionUser.id}`, {
+      limit: 5,
+      windowSeconds: 3600,
+      failClosed: true,
+    });
+    if (!rl.allowed) return tooManyRequests();
 
-    if (user.rows.length === 0) {
-      return Response.json({ error: "No account found with this email." }, { status: 404 });
+    const found = await pool.query("SELECT id, email FROM users WHERE id = $1", [sessionUser.id]);
+    if (found.rows.length === 0) {
+      return Response.json({ error: "No account found." }, { status: 404 });
     }
+    const email = found.rows[0].email;
 
     const otp = generateOTP();
     const expires = new Date(Date.now() + 1000 * 60 * 10); // 10 minutes
 
+    // Stored hashed: a DB read must not reveal live codes. The attempt
+    // counter is reset on every new code.
+    const otpHash = crypto.createHash("sha256").update(otp).digest("hex");
     await pool.query(
-      "UPDATE users SET phone_verification_code = $1, verification_expires = $2 WHERE email = $3",
-      [otp, expires, email]
+      "UPDATE users SET phone_verification_code = $1, verification_expires = $2, otp_attempts = 0 WHERE id = $3",
+      [`email:${otpHash}`, expires, sessionUser.id]
     );
 
     await resend.emails.send({
@@ -94,7 +113,7 @@ export async function POST(req) {
                   <tr>
                     <td style="background:#FAFAF9;border-top:1px solid #E7E5E4;padding:20px 40px;">
                       <p style="margin:0 0 4px;font-size:12px;color:#78716C;line-height:1.6;">
-                        This email was sent to <strong>${email}</strong>.
+                        This email was sent to <strong>${escapeHtml(email)}</strong>.
                         Questions? Contact <a href="mailto:support@nepogames.com" style="color:#78716C;">support@nepogames.com</a>.
                       </p>
                       <p style="margin:8px 0 0;font-size:12px;color:#A8A29E;">
@@ -116,7 +135,7 @@ export async function POST(req) {
     return Response.json({ message: "OTP sent successfully" }, { status: 200 });
 
   } catch (err) {
-    console.error(err);
+    console.error("Send email OTP error:", err.message);
     return Response.json({ error: "Something went wrong." }, { status: 500 });
   }
 }

@@ -1,5 +1,7 @@
+// ROUTE: src/app/api/waitlist/route.js
 import { NextResponse } from "next/server";
 import pool from "@/lib/db";
+import { checkRateLimit, getClientIp, tooManyRequests } from "@/lib/rateLimit";
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -47,7 +49,7 @@ export async function POST(req) {
 
     return NextResponse.json({ message: "Added to waitlist." }, { status: 201 });
   } catch (err) {
-    console.error("Waitlist error:", err);
+    console.error("Waitlist error:", err.message);
     return NextResponse.json(
       { message: "Server error." },
       { status: 500 },

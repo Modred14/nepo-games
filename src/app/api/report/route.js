@@ -1,4 +1,4 @@
-// ROUTE: src/app/api/report/route.js  (NEW)
+// ROUTE: src/app/api/report/route.js
 //
 // ADMIN DASHBOARD (chat moderation): actual backend for the "Report"
 // button on src/app/game/[slug]/GameClient.jsx, which previously only
@@ -8,6 +8,7 @@
 // the listing record respectively, never trusted from the client body.
 import pool from "@/lib/db";
 import { requireUser } from "@/lib/auth";
+import { checkRateLimit, tooManyRequests } from "@/lib/rateLimit";
 
 export async function POST(req) {
   try {
@@ -43,7 +44,7 @@ export async function POST(req) {
       INSERT INTO reports (reporter_id, reported_user_id, listing_id, reason)
       VALUES ($1, $2, $3, $4)
       `,
-      [user.id, listing.user_id, listingId, reason.trim()],
+      [user.id, listing.user_id, listingId, reason],
     );
 
     return Response.json({ success: true });

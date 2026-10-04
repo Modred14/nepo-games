@@ -1,3 +1,4 @@
+// ROUTE: src/app/profile/ProfileClient.jsx
 // src/app/profile/ProfileClient.jsx
 // File: src/app/profile/ProfileClient.jsx
 "use client";
@@ -3484,7 +3485,7 @@ function PasswordTab({ user, load, setGlobalLoading, setUser }) {
   const [error, setError] = useState("");
 
   const checks = {
-    length: form.newPass.length >= 6,
+    length: form.newPass.length >= 8,
     number: /\d/.test(form.newPass),
     special: /[^A-Za-z0-9]/.test(form.newPass),
     uppercase: /[A-Z]/.test(form.newPass),
@@ -3539,7 +3540,7 @@ function PasswordTab({ user, load, setGlobalLoading, setUser }) {
     if (!form.current) return setError("Current password is required");
     if (form.newPass !== form.confirm)
       return setError("Passwords do not match");
-    if (form.newPass.length < 6) return setError("Password too short");
+    if (form.newPass.length < 8) return setError("Password must be at least 8 characters");
     if (
       !checks.length ||
       !checks.number ||
@@ -3747,7 +3748,7 @@ function PasswordTab({ user, load, setGlobalLoading, setUser }) {
 
             {/* Strength checklist */}
             <div className="mt-4 grid grid-cols-2 gap-x-6 gap-y-1.5">
-              <CheckItem valid={checks.length} text="At least 6 characters" />
+              <CheckItem valid={checks.length} text="At least 8 characters" />
               <CheckItem valid={checks.number} text="Contains a number" />
               <CheckItem
                 valid={checks.special}
@@ -3877,7 +3878,7 @@ function PasswordInput({ label, value, onChange, show, toggle, disabled }) {
           disabled={disabled}
           className="flex-1 py-2.5 text-sm text-gray-900 placeholder-gray-300 outline-none bg-transparent"
         />
-        <button
+        <button aria-label="Toggle password visibility"
           type="button"
           onClick={toggle}
           className="text-gray-400 hover:text-gray-600 transition-colors p-0.5"

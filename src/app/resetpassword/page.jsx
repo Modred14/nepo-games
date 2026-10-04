@@ -1,3 +1,4 @@
+// ROUTE: src/app/resetpassword/page.jsx
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -579,7 +580,7 @@ export default function ForgotPassword() {
                   />
                 </div>
 
-                <button
+                <button aria-label="Send message"
                   className="fp-btn fp-btn-primary"
                   onClick={handleReset}
                   disabled={loading}

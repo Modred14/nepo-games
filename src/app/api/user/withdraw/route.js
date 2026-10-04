@@ -59,8 +59,8 @@
 // instead of trusting whatever string the client submitted, so
 // `user_banks.account_name` stays accurate.
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "../../auth/[...nextauth]/route";
+import { requireUser } from "@/lib/auth";
+import { checkRateLimit, tooManyRequests } from "@/lib/rateLimit";
 import pool from "@/lib/db";
 import bcrypt from "bcrypt";
 import {
@@ -110,7 +110,10 @@ export async function POST(req) {
       );
     }
 
-    if (!accountNumber || !bankCode) {
+    if (
+      !/^\d{10}$/.test(String(accountNumber || "")) ||
+      !/^[0-9A-Za-z]{2,10}$/.test(String(bankCode || ""))
+    ) {
       return NextResponse.json(
         { error: "Bank account and bank are required" },
         { status: 400 },
@@ -127,10 +130,10 @@ export async function POST(req) {
       `
       SELECT id, plan, email, pin_hash, pin_attempts, pin_locked_until
       FROM users
-      WHERE email = $1
+      WHERE id = $1
       FOR UPDATE
       `,
-      [session.user.email],
+      [session.user.id],
     );
 
     const user = userRes.rows[0];

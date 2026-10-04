@@ -1,3 +1,4 @@
+// ROUTE: src/lib/db.js
 // File: src/lib/db.js
 import pkg from "pg";
 const { Pool } = pkg;
@@ -14,9 +15,16 @@ const { Pool } = pkg;
 // `max` value here.
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
+  // SECURITY: rejectUnauthorized:false disables TLS certificate validation, so
+  // a network attacker between the app and the database could impersonate it.
+  // Neon presents a publicly trusted certificate, so validation is ON by
+  // default. Set DB_SSL_REJECT_UNAUTHORIZED=false only as a temporary escape
+  // hatch if you point DATABASE_URL at a database with a private CA.
   ssl: {
-    rejectUnauthorized: false,
+    rejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED !== "false",
   },
+  // Stop runaway queries from holding pool connections (and row locks).
+  statement_timeout: Number(process.env.PG_STATEMENT_TIMEOUT_MS) || 30000,
   max: Number(process.env.PGPOOL_MAX) || 20,
   idleTimeoutMillis: 10000,
   connectionTimeoutMillis: 15000,

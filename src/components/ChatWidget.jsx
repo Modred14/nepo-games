@@ -1,3 +1,4 @@
+// ROUTE: src/components/ChatWidget.jsx
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
 import {
@@ -580,7 +581,7 @@ export default function ChatWidget({ isOpen, onClose }) {
             >
               {minimized ? <Maximize2 size={13} /> : <Minimize2 size={13} />}
             </button>
-            <button className="nepo-hdr-btn" onClick={onClose}>
+            <button aria-label="Close" className="nepo-hdr-btn" onClick={onClose}>
               <X size={13} />
             </button>
           </div>
@@ -693,7 +694,7 @@ export default function ChatWidget({ isOpen, onClose }) {
                   onKeyDown={handleKey}
                   disabled={loading || initializing}
                 />
-                <button
+                <button aria-label="Send message"
                   className="nepo-send"
                   onClick={sendMessage}
                   disabled={!input.trim() || loading || initializing}

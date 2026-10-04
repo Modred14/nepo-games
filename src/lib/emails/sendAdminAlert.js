@@ -1,5 +1,7 @@
+// ROUTE: src/lib/emails/sendAdminAlert.js
 // File: src/lib/emails/sendAdminAlert.js
 import { resend } from "../resend";
+import { escapeHtml } from "../html";
 
 // Fire-and-forget alert for situations where money moved but the system
 // couldn't automatically attribute it to a user (e.g. a DVA transfer for an
@@ -10,7 +12,9 @@ import { resend } from "../resend";
 // If ADMIN_ALERT_EMAIL isn't set, this just logs instead of throwing, so a
 // missing env var can never crash a webhook that otherwise succeeded.
 export async function sendAdminAlert(subject, details) {
-  const to = "favourdomirin@gmail.com";
+  // SECURITY/PRIVACY: a personal email address was hardcoded here (and was
+  // therefore public in the repository). It now comes from configuration.
+  const to = process.env.ADMIN_ALERT_EMAIL;
   if (!to) {
     console.warn("⚠️ ADMIN_ALERT_EMAIL not set — skipping admin alert:", subject);
     return;
@@ -22,8 +26,8 @@ export async function sendAdminAlert(subject, details) {
     subject: `🚨 ${subject}`,
     html: `
       <div style="font-family:monospace; white-space:pre-wrap; padding:16px;">
-        <h2 style="margin:0 0 12px;">${subject}</h2>
-        <pre style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px;">${JSON.stringify(details, null, 2)}</pre>
+        <h2 style="margin:0 0 12px;">${escapeHtml(subject)}</h2>
+        <pre style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px;">${escapeHtml(JSON.stringify(details, null, 2))}</pre>
       </div>
     `,
     text: `${subject}\n\n${JSON.stringify(details, null, 2)}`,

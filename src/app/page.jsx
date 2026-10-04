@@ -1,3 +1,4 @@
+// ROUTE: src/app/page.jsx
 "use client";
 import {
   X,
@@ -489,7 +490,7 @@ export default function Home() {
                         )}
                       </div>
                       <div className="md:hidden pr-3 flex transition-all duration-300 justify-center md:pr-0">
-                        <button onClick={() => setOpen(!open)}>
+                        <button aria-label="Close" onClick={() => setOpen(!open)}>
                           {open ? (
                             <div className="-mr-1">
                               <X size={23} className="text-blue-700" />
@@ -1970,7 +1971,7 @@ export default function Home() {
                           role: "Seller",
                         },
                         {
-                          text: "As someone who frequently buys and sells gaming accounts, NepoGames is exactly what the market needed. Clean interface, trusted users, and a secure transaction experience.",
+                          text: "As someone who frequently buys and sells gaming accounts, Nepogames is exactly what the market needed. Clean interface, trusted users, and a secure transaction experience.",
                           name: "Sarah K.",
                           role: "Gamer & Trader",
                         },
@@ -1985,7 +1986,7 @@ export default function Home() {
                           role: "Seller",
                         },
                         {
-                          text: "As someone who frequently buys and sells gaming accounts, NepoGames is exactly what the market needed. Clean interface, trusted users, and a secure transaction experience.",
+                          text: "As someone who frequently buys and sells gaming accounts, Nepogames is exactly what the market needed. Clean interface, trusted users, and a secure transaction experience.",
                           name: "Sarah K.",
                           role: "Gamer & Trader",
                         },
@@ -2015,12 +2016,12 @@ export default function Home() {
                     <div className="col-medium flex flex-col gap-1">
                       {[
                         {
-                          text: "I've tried several gaming marketplaces before, and NepoGames has one of the cleanest interfaces I've seen. It feels premium.",
+                          text: "I've tried several gaming marketplaces before, and Nepogames has one of the cleanest interfaces I've seen. It feels premium.",
                           name: "Emmanuel T.",
                           role: "Seller",
                         },
                         {
-                          text: "I sold my gaming account on NepoGames in less than 24 hours. The process was smooth, the buyer was verified, and payment was released quickly. Definitely the safest marketplace I've used.",
+                          text: "I sold my gaming account on Nepogames in less than 24 hours. The process was smooth, the buyer was verified, and payment was released quickly. Definitely the safest marketplace I've used.",
                           name: "David O.",
                           role: "Seller",
                         },
@@ -2030,12 +2031,12 @@ export default function Home() {
                           role: "Seller",
                         },
                         {
-                          text: "I've tried several gaming marketplaces before, and NepoGames has one of the cleanest interfaces I've seen. It feels premium.",
+                          text: "I've tried several gaming marketplaces before, and Nepogames has one of the cleanest interfaces I've seen. It feels premium.",
                           name: "Emmanuel T.",
                           role: "Seller",
                         },
                         {
-                          text: "I sold my gaming account on NepoGames in less than 24 hours. The process was smooth, the buyer was verified, and payment was released quickly. Definitely the safest marketplace I've used.",
+                          text: "I sold my gaming account on Nepogames in less than 24 hours. The process was smooth, the buyer was verified, and payment was released quickly. Definitely the safest marketplace I've used.",
                           name: "David O.",
                           role: "Seller",
                         },
@@ -2070,7 +2071,7 @@ export default function Home() {
                           role: "User",
                         },
                         {
-                          text: "I was skeptical about buying gaming accounts online, but NepoGames made it easy. The chat system allowed me to speak directly with the seller, and the secure payment process gave me confidence.",
+                          text: "I was skeptical about buying gaming accounts online, but Nepogames made it easy. The chat system allowed me to speak directly with the seller, and the secure payment process gave me confidence.",
                           name: "Micheal A.",
                           role: "Buyer",
                         },
@@ -2085,7 +2086,7 @@ export default function Home() {
                           role: "User",
                         },
                         {
-                          text: "I was skeptical about buying gaming accounts online, but NepoGames made it easy. The chat system allowed me to speak directly with the seller, and the secure payment process gave me confidence.",
+                          text: "I was skeptical about buying gaming accounts online, but Nepogames made it easy. The chat system allowed me to speak directly with the seller, and the secure payment process gave me confidence.",
                           name: "Micheal A.",
                           role: "Buyer",
                         },
@@ -2149,7 +2150,7 @@ export default function Home() {
                               : "border-gray-100 hover:border-gray-200"
                           }`}
                         >
-                          <button
+                          <button aria-label="Toggle"
                             onClick={() => toggleFAQ(index)}
                             className="w-full flex justify-between items-center px-6 py-5 text-left bg-white"
                           >

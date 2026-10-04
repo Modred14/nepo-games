@@ -1,4 +1,4 @@
-// src/app/api/cron/release-escrow/route.js
+// ROUTE: src/app/api/cron/release-escrow/route.js
 // ROUTE: src/app/api/cron/release-escrow/route.js
 //
 // ADMIN DASHBOARD PHASE 3: both queries below now also require
@@ -7,14 +7,23 @@
 // auto-released just because its delivery window expired. Without this,
 // "freeze" would only be a cosmetic label, not an actual safeguard.
 import pool from "@/lib/db";
+import crypto from "crypto";
 import { emitToRoom } from "@/lib/socket";
 
 const SYSTEM_USER_ID = 1;
 
 // ✅ fixed
 export async function GET(req) {
-  const authHeader = req.headers.get("authorization");
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  // SECURITY: the old check compared against `Bearer ${process.env.CRON_SECRET}`.
+  // If CRON_SECRET was not configured that string is "Bearer undefined", which
+  // any caller could send to trigger fund releases. Now the secret MUST be
+  // configured, and the comparison is constant-time.
+  const secret = process.env.CRON_SECRET;
+  const authHeader = req.headers.get("authorization") || "";
+  const expectedHeader = `Bearer ${secret}`;
+  const a = Buffer.from(authHeader);
+  const b = Buffer.from(expectedHeader);
+  if (!secret || a.length !== b.length || !crypto.timingSafeEqual(a, b)) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
   const client = await pool.connect();
@@ -41,7 +50,13 @@ export async function GET(req) {
         t.payment_reference,
         t.amount
       FROM login_deliveries ld
-      JOIN transactions t ON t.listing_id = ld.listing_id
+      JOIN conversations c ON c.id = ld.conversation_id
+      JOIN transactions t
+        ON t.listing_id = ld.listing_id
+       AND t.payment_status = 'paid'
+       AND t.escrow_status = 'holding'
+       AND ((c.sender_id = t.buyer_id AND c.receiver_id = t.seller_id)
+         OR (c.sender_id = t.seller_id AND c.receiver_id = t.buyer_id))
       WHERE ld.expires_at <= $1
         AND ld.confirmed = FALSE
         AND (ld.released_to_seller IS NULL OR ld.released_to_seller = FALSE)
@@ -64,13 +79,19 @@ export async function GET(req) {
           `
           SELECT ld.*, t.id AS transaction_id, t.seller_id, t.payment_reference
           FROM login_deliveries ld
-          JOIN transactions t ON t.listing_id = ld.listing_id
+          JOIN conversations c ON c.id = ld.conversation_id
+          JOIN transactions t
+            ON t.listing_id = ld.listing_id
+           AND t.payment_status = 'paid'
+           AND t.escrow_status = 'holding'
+           AND ((c.sender_id = t.buyer_id AND c.receiver_id = t.seller_id)
+             OR (c.sender_id = t.seller_id AND c.receiver_id = t.buyer_id))
           WHERE ld.id = $1
             AND ld.confirmed = FALSE
             AND (ld.released_to_seller IS NULL OR ld.released_to_seller = FALSE)
             AND ld.disputed = FALSE
             AND t.frozen = FALSE
-          FOR UPDATE
+          FOR UPDATE OF ld, t
           `,
           [item.id],
         );
@@ -170,15 +191,17 @@ export async function GET(req) {
           );
         }
       } catch (itemErr) {
-        await client.query("ROLLBACK");
+        try {
+          await client.query("ROLLBACK");
+        } catch {}
         console.error(`CRON RELEASE ERROR for delivery ${item.id}:`, itemErr);
         // Continue to next item — one failure shouldn't block the rest
       }
     }
 
-    return Response.json({ released });
+    return Response.json({ released, staleCheckoutsReleased: swept.rowCount });
   } catch (err) {
-    console.error("CRON FATAL ERROR:", err);
+    console.error("CRON FATAL ERROR:", err.message);
     return Response.json({ error: "cron failed" }, { status: 500 });
   } finally {
     client.release();

@@ -1,5 +1,7 @@
+// ROUTE: src/app/api/login-delivery/route.js
 import pool from "@/lib/db";
 import { requireUser } from "@/lib/auth";
+import { withDecryptedDetails } from "@/lib/secretBox";
 
 export async function GET(req, { params }) {
   try {
@@ -10,9 +12,9 @@ export async function GET(req, { params }) {
     }
 
     const { searchParams } = new URL(req.url);
-    const conversationId = searchParams.get("conversationId");
+    const conversationId = Number(searchParams.get("conversationId"));
 
-    if (!conversationId) {
+    if (!Number.isInteger(conversationId) || conversationId <= 0) {
       console.error("❌ Missing conversationId");
       return Response.json(
         { error: "Missing conversationId" },
@@ -49,11 +51,11 @@ export async function GET(req, { params }) {
 
     return Response.json({
       success: true,
-      data: result.rows,
+      data: result.rows.map(withDecryptedDetails),
     });
 
   } catch (err) {
-    console.error("GET LOGIN DETAILS ERROR:", err);
+    console.error("GET LOGIN DETAILS ERROR:", err.message);
 
     return Response.json(
       { error: "Server error" },

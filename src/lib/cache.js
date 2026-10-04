@@ -1,3 +1,4 @@
+// ROUTE: src/lib/cache.js
 /**
  * lib/cache.js
  *
@@ -34,6 +35,16 @@ function memSet(key, value, ttlSeconds) {
 
 function memDelete(key) {
   memCache.delete(key);
+}
+
+// Keeps the in-memory fallback from growing without bound (rate-limit keys
+// are created per IP/email, so an attacker could otherwise inflate it).
+function memSweep() {
+  if (memCache.size < 5000) return;
+  const now = Date.now();
+  for (const [k, v] of memCache) {
+    if (now > v.expiresAt) memCache.delete(k);
+  }
 }
 
 // ─── Redis client (lazy-initialized) ─────────────────────────────────────────
@@ -110,4 +121,34 @@ export async function invalidateCache(key) {
   } catch (err) {
     console.warn("Cache DELETE error:", err.message);
   }
+}
+
+/**
+ * Atomically increment a counter and return the new value. The TTL is set
+ * when the counter is created (fixed window). Used by the rate limiter.
+ * Redis INCR is atomic across instances; the in-memory fallback is only
+ * correct within a single process, so set REDIS_URL in production.
+ * Throws on Redis failure so callers can decide whether to fail open/closed.
+ */
+export async function incrementCounter(key, ttlSeconds = 60) {
+  const r = await getRedis();
+  if (r) {
+    const n = await r.incr(key);
+    if (n === 1) {
+      await r.expire(key, ttlSeconds);
+    } else if (n % 20 === 0) {
+      // Self-heal a counter whose EXPIRE call was lost.
+      const ttl = await r.ttl(key);
+      if (ttl === -1) await r.expire(key, ttlSeconds);
+    }
+    return n;
+  }
+  memSweep();
+  const entry = memCache.get(key);
+  if (!entry || Date.now() > entry.expiresAt) {
+    memCache.set(key, { value: 1, expiresAt: Date.now() + ttlSeconds * 1000 });
+    return 1;
+  }
+  entry.value += 1;
+  return entry.value;
 }

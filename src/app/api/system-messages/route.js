@@ -1,47 +1,35 @@
-// ROUTE: src/app/api/system-messages/route.js
-// ADMIN DASHBOARD PHASE 5: now filters to enabled AND currently within
-// its scheduled window (see db/migrations/008_announcement_scheduling.sql)
-// — previously every message ever created was shown to every user
-// forever, with no way to disable or schedule one.
-import pool from "../../../lib/db";
+// ROUTE: src/app/api/system-messages/read/route.js
+import pool from "../../../../lib/db";
 import { requireUser } from "@/lib/auth";
 
-export async function GET(req) {
+export async function POST(req) {
   try {
+    const body = await req.json().catch(() => ({}));
+    const message_id = Number(body.message_id);
+
+    if (!Number.isInteger(message_id) || message_id <= 0) {
+      return Response.json({ error: "Missing fields" }, { status: 400 });
+    }
+
     const user = await requireUser();
     if (!user) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
-    const user_id = user.id;
-    if (!user_id) {
+    const userid = user.id;
+    if (!userid) {
       return Response.json({ error: "Missing user_id" }, { status: 400 });
     }
 
-    const result = await pool.query(
+    await pool.query(
       `
-      SELECT 
-        sm.id,
-        sm.title,
-        sm.message,
-        sm.type,
-        sm.created_at,
-        CASE 
-          WHEN smr.user_id IS NULL THEN false
-          ELSE true
-        END AS is_read
-      FROM system_messages sm
-      LEFT JOIN system_message_reads smr
-        ON smr.message_id = sm.id
-        AND smr.user_id = $1
-      WHERE sm.enabled = true
-        AND (sm.starts_at IS NULL OR sm.starts_at <= NOW())
-        AND (sm.ends_at IS NULL OR sm.ends_at >= NOW())
-      ORDER BY sm.created_at DESC
+      INSERT INTO system_message_reads (user_id, message_id)
+      VALUES ($1, $2)
+      ON CONFLICT DO NOTHING
       `,
-      [user_id],
+      [userid, message_id],
     );
 
-    return Response.json(result.rows);
+    return Response.json({ success: true });
   } catch (err) {
     console.error(err);
     return Response.json({ error: "Server error" }, { status: 500 });

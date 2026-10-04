@@ -1,3 +1,4 @@
+// ROUTE: src/app/tournament/page.jsx
 "use client";
 import {
   Trophy,
@@ -222,7 +223,7 @@ function TournamentModal({ tournament: t, user, onClose }) {
 
   useEffect(() => {
     if (!user?.email || !t.leaderboard) return;
-    const alreadyIn = t.contestants?.some((c) => c.email === user.email);
+    const alreadyIn = !!t.alreadyRegistered;
     if (alreadyIn) setJoined(true);
   }, [user, t]);
   const handleJoin = async () => {
@@ -323,7 +324,7 @@ function TournamentModal({ tournament: t, user, onClose }) {
                 </div>
               </div>
             </div>
-            <button
+            <button aria-label="Close"
               onClick={onClose}
               className="w-8 h-8 rounded-full flex items-center justify-center bg-white/10 hover:bg-white/20 transition mt-1"
             >

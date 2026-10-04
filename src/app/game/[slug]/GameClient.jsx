@@ -1,3 +1,4 @@
+// ROUTE: src/app/game/[slug]/GameClient.jsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -300,7 +301,7 @@ export default function GameClient({ game, images, similarGames }) {
             <ImageSlider images={images} index={index} setIndex={setIndex} />
             <div className="text-sm  sm:text-base px-[5%] xs:px-[10%] py-4">
               {" "}
-              {user?.email === game.email ? (
+              {user?.id != null && Number(user.id) === Number(game.seller_id) ? (
                 <button
                   onClick={() => setShowDelete(true)}
                   className="w-full bg-red-600 text-white py-2 rounded-md"

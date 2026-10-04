@@ -1,3 +1,4 @@
+// ROUTE: src/app/review.jsx
 "use client";
 
 export default function Reviews() {
@@ -97,7 +98,7 @@ function Card({ review }) {
   return (
     <div className="border backdrop-blur-xl shadow-sm bg-linear-to-b from-[#9476FA] to-[#8B3FF5] rounded-2xl  border-white mr-2">
       <div className="flex items-center gap-2 px-4 pt-2 text-[#0000FF]">
-        <img src={review.img} className="h-15 w-15 rounded-full" />
+        <img src={review.img} alt={`${review.name} profile photo`} className="h-15 w-15 rounded-full" />
 
         <div>
           <p className="font-bold text-white">{review.name}</p>

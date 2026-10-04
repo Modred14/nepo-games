@@ -1,3 +1,4 @@
+/* ROUTE: src/app/globals.css */
 @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap");
 @import url("https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css");
 @import '@tabler/icons-webfont/dist/tabler-icons.min.css';
@@ -443,4 +444,21 @@ input[type="number"] {
 body {
   background: var(--background);
   color: var(--foreground);
+}
+
+/* Accessibility: a visible keyboard-focus indicator for anything that doesn't
+   define its own (components that set focus:outline-none supply a ring). */
+:where(a, button, [role="button"], summary, select, input, textarea):focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+/* Respect users who ask for less motion. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

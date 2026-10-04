@@ -1,11 +1,16 @@
+// ROUTE: src/app/api/verify/route.js
 import pool from "../../../lib/db";
+import { checkRateLimit, getClientIp, tooManyRequests } from "../../../lib/rateLimit";
 import { NextResponse } from "next/server";
 
 export async function GET(req) {
   const { searchParams } = new URL(req.url);
   const token = searchParams.get("token");
 
-  if (!token) {
+  const rl = await checkRateLimit(`verify-email:${getClientIp(req)}`, { limit: 20, windowSeconds: 600 });
+  if (!rl.allowed) return tooManyRequests();
+
+  if (!token || token.length > 200) {
     return NextResponse.json({ error: "No token provided" }, { status: 400 });
   }
 
@@ -28,7 +33,6 @@ export async function GET(req) {
 
     // ✅ If already verified, redirect immediately
     if (user.email_verified) {
-      console.log("yo");
       return NextResponse.json({
         success: true,
         redirect: `/login?verified=true&msg=${encodeURIComponent(
@@ -54,7 +58,6 @@ export async function GET(req) {
    WHERE id = $1`,
       [user.id],
     );
-    console.log("verified");
     return NextResponse.json({
       success: true,
       redirect: `/login?verified=true&msg=${encodeURIComponent(

@@ -1,8 +1,10 @@
+// ROUTE: src/app/marketplace/page.jsx
 import MarketplaceClient from "./MarketplaceClient";
 
 export const metadata = {
   title: "Marketplace",
   description: "Browse and buy verified game accounts on Nepogames.",
+  alternates: { canonical: "https://nepogames.com/marketplace" },
 };
 
 export default function Page() {

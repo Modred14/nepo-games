@@ -1,3 +1,4 @@
+// ROUTE: src/components/Conversation.jsx
 // src/components/Conversation.jsx
 // ROUTE: src/components/Conversation.jsx
 // CHANGED: button text only — was "Pay with Paystack", now reflects the
@@ -849,7 +850,7 @@ export default function Conversation({ gameId, receiverId }) {
           <div className="border border-blue-500/30 shadow-md bg-white w-full sm:w-70 lg:w-90 overflow-hidden flex flex-col h-full">
             <div className="relative px-4 py-3 flex items-center border-b border-gray-500/15 bg-blue-50/60 backdrop-blur-sm">
               <Link href="/marketplace">
-                <button className="absolute left-2 top-3 font-bold rounded-full active:scale-90 transition-transform duration-150">
+                <button aria-label="Go back" className="absolute left-2 top-3 font-bold rounded-full active:scale-90 transition-transform duration-150">
                   <ChevronLeft size={24} className="text-blue-700" />
                 </button>
               </Link>
@@ -894,6 +895,7 @@ export default function Conversation({ gameId, receiverId }) {
                         <div className="relative flex-shrink-0">
                           <img
                             src={chat.profile_image || "/profile.png"}
+                            alt=""
                             className="w-12 h-12 border rounded-full border-blue-600/50 object-cover"
                           />
                           {chat?.plan && chat.plan !== "free" && (
@@ -1259,7 +1261,7 @@ export default function Conversation({ gameId, receiverId }) {
                 <div className="w-full p-2 px-5 rounded-3xl flex justify-between bg-white/80 backdrop-blur-xl border border-blue-700/50">
                   <div className="flex gap-2 items-center">
                     {isMobile && (
-                      <button
+                      <button aria-label="Go back"
                         onClick={() => setView("list")}
                         className="-ml-4 font-bold rounded-full active:scale-90 transition-transform duration-150"
                       >
@@ -1272,6 +1274,7 @@ export default function Conversation({ gameId, receiverId }) {
                           ? "/conversation.png"
                           : activeChat?.profile_image || "/profile.png"
                       }
+                      alt=""
                       className="h-10 -ml-1 xs:ml-0 w-10 rounded-full border border-blue-600/80 object-cover"
                     />
                     {activeChat?.plan && activeChat.plan !== "free" && (
@@ -1453,7 +1456,7 @@ export default function Conversation({ gameId, receiverId }) {
                               <h2 className="text-lg font-bold text-blue-700">
                                 Login Released 🔓
                               </h2>
-                              <button
+                              <button aria-label="Close"
                                 onClick={() => {
                                   setLoginDetails(false);
                                   setCancel(true);
@@ -1657,7 +1660,7 @@ export default function Conversation({ gameId, receiverId }) {
                     className="flex-1 min-w-0 max-h-30 thin-scroll resize-none bg-transparent outline-none text-gray-700 xs:text-base text-sm"
                   />
                   {!isAdmin && (
-                    <button
+                    <button aria-label="Send message"
                       onClick={handleSend}
                       className="inline-flex min-w-0 items-center justify-center w-10 h-10 rounded-full bg-blue-600 text-white hover:bg-blue-700 active:scale-95 transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                     >

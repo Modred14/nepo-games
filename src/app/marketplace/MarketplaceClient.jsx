@@ -1,3 +1,4 @@
+// ROUTE: src/app/marketplace/MarketplaceClient.jsx
 "use client";
 
 import { useEffect, useState, useRef } from "react";
@@ -91,7 +92,7 @@ function BalanceCard() {
             Account Overview
           </span>
         </div>
-        <button
+        <button aria-label="Toggle password visibility"
           onClick={() => setVisible((v) => !v)}
           className="text-gray-400 hover:text-gray-600 transition-colors"
         >

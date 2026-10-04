@@ -14,27 +14,19 @@
     "@tabler/icons-webfont": "^3.44.0",
     "bcrypt": "^6.0.0",
     "cloudinary": "^2.9.0",
-    "crypto": "^1.0.1",
     "framer-motion": "^12.38.0",
     "ioredis": "^5.11.0",
     "jsonwebtoken": "^9.0.3",
-    "libphonenumber-js": "^1.12.41",
     "lucide-react": "^0.564.0",
-    "next": "16.1.6",
+    "next": "16.3.8",
     "next-auth": "^4.24.13",
-    "next-sitemap": "^4.2.3",
-    "nodemailer": "^7.0.13",
     "pg": "^8.19.0",
-    "psql": "^0.0.1",
-    "rc-slider": "^11.1.9",
     "react": "^18.3.1",
+    "react-compiler-runtime": "1.0.0",
     "react-dom": "^18.3.1",
-    "react-paystack": "^6.0.0",
-    "react-phone-input-2": "^2.15.1",
     "react-slider": "^2.0.6",
     "resend": "^6.9.3",
     "sharp": "^0.35.2",
-    "slider": "^1.0.4",
     "socket.io": "^4.8.3",
     "socket.io-client": "^4.8.3",
     "svix": "^1.96.1"
@@ -43,7 +35,10 @@
     "@tailwindcss/postcss": "^4",
     "babel-plugin-react-compiler": "1.0.0",
     "eslint": "^9",
-    "eslint-config-next": "16.1.6",
+    "eslint-config-next": "16.3.8",
     "tailwindcss": "^4"
+  },
+  "overrides": {
+    "nodemailer": "^10.0.14"
   }
 }

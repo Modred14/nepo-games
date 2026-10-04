@@ -1,10 +1,13 @@
+// ROUTE: src/app/api/user/set-pin/route.js
 import bcrypt from "bcrypt";
 import { requireUser } from "@/lib/auth";
 import pool from "@/lib/db";
 
 export async function POST(req) {
   try {
-    const { currentPin, newPin } = await req.json();
+    const body = await req.json().catch(() => ({}));
+    const currentPin = typeof body.currentPin === "string" ? body.currentPin : undefined;
+    const newPin = typeof body.newPin === "string" ? body.newPin : "";
     const user = await requireUser();
 
     if (!user) {
@@ -109,7 +112,7 @@ export async function POST(req) {
 
     return Response.json({ success: true });
   } catch (err) {
-    console.error(err);
+    console.error("Set PIN error:", err.message);
     return Response.json({ error: "Server error" }, { status: 500 });
   }
 }

@@ -1,23 +1,35 @@
-// ORIGINAL ROUTE: src/app/api/paystack/wallet/initialize/route.js
-// CHANGED: Paystack transaction/initialize -> Flutterwave /v3/payments
+// ROUTE: src/app/api/paystack/wallet/initialize/route.js
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "../../../auth/[...nextauth]/route";
+import { requireUser } from "@/lib/auth";
+import { checkRateLimit, tooManyRequests } from "@/lib/rateLimit";
+
+const MIN_FUNDING = 100;
+const MAX_FUNDING = 5_000_000; // naira — keeps a typo/abuse from creating absurd charges
 
 export async function POST(req) {
-  const session = await getServerSession(authOptions);
-
-  if (!session) {
+  // requireUser (not just a session check) so suspended/banned accounts
+  // cannot start new payments.
+  const user = await requireUser();
+  if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { amount } = await req.json();
+  const rl = await checkRateLimit(`wallet-init:${user.id}`, { limit: 10, windowSeconds: 600 });
+  if (!rl.allowed) return tooManyRequests();
 
-  if (!amount || amount < 100) {
-    return NextResponse.json({ error: "Invalid amount" }, { status: 400 });
+  const body = await req.json().catch(() => ({}));
+  const amount = Number(body?.amount);
+
+  // The old check (`!amount || amount < 100`) let strings, NaN and fractions
+  // through. The credited amount is whole naira, validated here.
+  if (!Number.isInteger(amount) || amount < MIN_FUNDING || amount > MAX_FUNDING) {
+    return NextResponse.json(
+      { error: `Enter a whole amount between ₦${MIN_FUNDING} and ₦${MAX_FUNDING.toLocaleString()}` },
+      { status: 400 },
+    );
   }
 
-  const tx_ref = `wallet_${session.user.id}_${Date.now()}`;
+  const tx_ref = `wallet_${user.id}_${Date.now()}`;
 
   const response = await fetch("https://api.flutterwave.com/v3/payments", {
     method: "POST",
@@ -27,36 +39,25 @@ export async function POST(req) {
     },
     body: JSON.stringify({
       tx_ref,
-      // Flutterwave amount is in naira, not kobo — no Math.round(amount * 100) here.
-      amount: Math.round(amount),
+      amount,
       currency: "NGN",
       redirect_url: `${process.env.NEXT_PUBLIC_BASE_URL}/profile?tab=account`,
-      customer: {
-        email: session.user.email,
-      },
+      customer: { email: user.email },
       meta: {
-        userId: session.user.id,
+        userId: user.id,
         purpose: "wallet",
-        // Store the exact amount the user asked to fund. If Flutterwave's
-        // fee-bearer setting has the customer covering the transaction
-        // charge, the webhook's charged_amount can come back higher than
-        // this — we don't want that extra charge credited to the wallet.
         requestedAmount: amount,
       },
     }),
-  });
+    signal: AbortSignal.timeout(15000),
+  }).catch(() => null);
 
-  const data = await response.json();
+  const data = response ? await response.json().catch(() => null) : null;
 
-  if (data.status !== "success") {
-    console.error("❌ Flutterwave wallet initialize failed:", data);
-    return NextResponse.json(
-      { error: data.message || "Payment init failed" },
-      { status: 500 },
-    );
+  if (!data || data.status !== "success" || !data.data?.link) {
+    console.error("Flutterwave wallet initialize failed");
+    return NextResponse.json({ error: "Payment init failed" }, { status: 502 });
   }
 
-  return NextResponse.json({
-    url: data.data.link,
-  });
+  return NextResponse.json({ url: data.data.link });
 }

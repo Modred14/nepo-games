@@ -1,3 +1,4 @@
+// ROUTE: src/app/contact/ContactClient.js
 "use client";
 import { useState, useRef, useEffect } from "react";
 import {
@@ -693,7 +694,7 @@ hover:text-[#0000FF]
                     )}
                   </div>
                   <div className="md:hidden pr-3 flex transition-all duration-300 justify-center md:pr-0">
-                    <button onClick={() => setOpen(!open)}>
+                    <button aria-label="Close" onClick={() => setOpen(!open)}>
                       {open ? (
                         <div className="-mr-1">
                           <X size={23} className=" text-blue-700" />
@@ -1028,7 +1029,7 @@ hover:text-[#0000FF]
               />
             </div>
 
-            <button
+            <button aria-label="Send message"
               className="submit-btn"
               onClick={handleSubmit}
               disabled={status === "loading" || status === "success"}
@@ -1191,7 +1192,7 @@ hover:text-[#0000FF]
           <div className="faq-grid w-[90%]">
             {faqs.map((faq, i) => (
               <div className="faq-item" key={i}>
-                <button
+                <button aria-label="Toggle"
                   className={`faq-q ${openFaq === i ? "open" : ""}`}
                   onClick={() => setOpenFaq(openFaq === i ? null : i)}
                 >

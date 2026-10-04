@@ -130,7 +130,6 @@ export default function LoginClient() {
       setLoading(false);
       if (res?.error) {
         setSuccessOpen(false);
-        console.log(res.error);
         if (res.error.includes("EMAIL_NOT_VERIFIED")) {
           setMessage(
             "Email not verified. Please verify your email address before logging in.",
@@ -145,13 +144,14 @@ export default function LoginClient() {
           setMessage(
             "Your account has been banned. Contact support if you believe this is a mistake.",
           );
+        } else if (res.error.includes("TOO_MANY_ATTEMPTS")) {
+          setMessage("Too many login attempts. Please wait 15 minutes and try again.");
         } else if (res.error.includes("ACCOUNT_SUSPENDED")) {
           setMessage("Your account has been suspended. Contact support for details.");
         } else {
           setMessage("Network error. Please try again.");
         }
         setErrorOpen(true);
-        console.log(res.error);
         setErrorTrigger((prev) => prev + 1);
         return;
       }
@@ -169,8 +169,14 @@ export default function LoginClient() {
             returnUrl &&
             (returnUrl.startsWith("/verify") || returnUrl.includes("/verify"));
           const safeFallback = "/marketplace";
+          // Only same-site relative paths may be used as a post-login redirect.
+          const isSafePath =
+            typeof returnUrl === "string" &&
+            returnUrl.startsWith("/") &&
+            !returnUrl.startsWith("//") &&
+            !returnUrl.includes("\\");
 
-          if (!returnUrl || isFromVerify) {
+          if (!returnUrl || isFromVerify || !isSafePath) {
             router.push(safeFallback);
           } else {
             router.push(returnUrl);
@@ -324,7 +330,7 @@ export default function LoginClient() {
                   Enter your Password
                 </label>
 
-                <button
+                <button aria-label="Toggle password visibility"
                   type="button"
                   disabled={loading}
                   onClick={() => setShowPassword(!showPassword)}

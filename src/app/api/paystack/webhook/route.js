@@ -1,47 +1,26 @@
-// ORIGINAL ROUTE: src/app/api/paystack/webhook/route.js
-// CHANGED (v2 — bugfix): Paystack webhook (event-per-type, HMAC-SHA512
-// signature) -> Flutterwave webhook (single "charge.completed" /
-// "transfer.completed" event, branched by data.status; signature is a
-// direct string compare of the "verif-hash" header against your
-// FLW_SECRET_HASH env var — Flutterwave does NOT use HMAC here, you just
-// set an arbitrary secret string in the dashboard and they echo it back
-// verbatim).
+// ROUTE: src/app/api/paystack/webhook/route.js
 //
-// ⚠️ BUGFIX in this version: the original routing logic guessed "is this an
-// unprompted virtual-account deposit?" from `payment_type === "bank_transfer"
-// && !meta.purpose`. In production, a real wallet-funding charge
-// (tx_ref "wallet_76_...") paid via the bank-transfer option on Flutterwave's
-// OWN checkout page got misrouted into the "unrecognized deposit" branch,
-// silently failing to credit the wallet — because Flutterwave apparently
-// doesn't always echo `meta` back the same way for bank_transfer charges.
+// Flutterwave webhook (the folder is still named "paystack" for historical
+// reasons; DB tables paystack_webhook_events / paystack_unmatched_credits are
+// likewise only legacy names).
 //
-// Fix: routing is now based on the tx_ref PREFIX instead (sub_, wallet_,
-// tx_, tournament_ — all of which WE generate, so this is deterministic and
-// can't be dropped by Flutterwave). And for any charge whose tx_ref matches
-// one of our own prefixes, we now re-verify the transaction via Flutterwave's
-// API (verify_by_reference) instead of trusting the webhook body's `meta`
-// directly — so even if `meta` is ever missing/malformed on the webhook
-// payload again, we still get the authoritative data straight from
-// Flutterwave rather than silently misfiring.
-//
-// DB table names (paystack_webhook_events, paystack_unmatched_credits) were
-// left AS-IS to avoid a migration — they're just internal table names now,
-// not tied to Paystack specifically. Rename via migration later if you want.
-//
-// AUDIT FIX (D.2, high): the transfer.completed handler used to update
-// users_transactions straight off the webhook POST body's `data.status`.
-// Signature verification (verif-hash) confirms the request came from
-// Flutterwave, but not that the payload is complete/current — the
-// charge.completed handler already learned this lesson (see the
-// verifyByReference() re-fetch above) and transfer.completed is now given
-// the same treatment: after signature check, we re-fetch the transfer
-// from Flutterwave via GET /v3/transfers/{id} (through the whitelisted-IP
-// Render proxy — see checkFlutterwaveTransferStatus in
-// src/lib/flutterwaveTransfer.js, since this endpoint is also covered by
-// Flutterwave's mandatory IP whitelist) and use THAT as the source of
-// truth instead of the raw webhook body. This also now resolves rows
-// left in the 'unknown' state by withdraw/route.js's D.1 fix, not just
-// 'pending' ones.
+// SECURITY MODEL (audit hardening):
+//  1. `verif-hash` header must match FLW_SECRET_HASH (constant-time compare).
+//  2. The webhook body is NEVER trusted for money decisions. Every charge is
+//     re-fetched from Flutterwave (verify_by_reference / verify by id) and the
+//     VERIFIED record is used. If Flutterwave can't be reached we answer 503
+//     so the provider retries — we do not fall back to the webhook body.
+//  3. What a payment was for is derived from OUR tx_ref (which only the server
+//     generates), not from client-influenceable metadata.
+//  4. Verified status, currency (NGN), tx_ref equality and the AMOUNT are
+//     checked against what the server expects (transactions.amount for
+//     marketplace orders, the server price list for subscriptions, ...).
+//  5. Every effect is idempotent (markProcessed inside the same DB
+//     transaction), so duplicate/replayed webhooks cannot credit twice.
+//  6. Money that arrives but cannot be applied (late payment on a cancelled
+//     order, listing no longer reserved, ...) is credited to the buyer's
+//     wallet and an admin is alerted — never silently dropped, never used to
+//     resurrect a cancelled order.
 import { NextResponse } from "next/server";
 import crypto from "crypto";
 import pool from "@/lib/db";
@@ -50,62 +29,47 @@ import { sendSellerWelcomeEmail } from "@/lib/emails/sendSellerWelcome";
 import { sendAdminAlert } from "@/lib/emails/sendAdminAlert";
 import { checkFlutterwaveTransferStatus } from "@/lib/flutterwaveTransfer";
 import { getSetting } from "@/lib/settings";
-import { derivePlanFromDays } from "@/lib/subscriptions";
+import { PLAN_PRICES, applySubscriptionPayment } from "@/lib/subscriptions";
+import {
+  verifyByReference,
+  verifyById,
+  markProcessed,
+  parseTxRef,
+  creditWalletRefund,
+} from "@/lib/flutterwaveVerify";
 
-const OWN_TX_REF_PREFIXES = ["sub_", "wallet_", "tx_", "tournament_"];
+const PLAN_LABELS = { pro: "1 month", plus: "3 months", premium: "12 months" };
 
-function isOwnInitiatedTxRef(reference) {
-  return !!reference && OWN_TX_REF_PREFIXES.some((p) => reference.startsWith(p));
+function ok(status) {
+  return NextResponse.json({ status });
 }
 
-// Derives the plan TIER from total days remaining (after rollover), rather
-// than from whichever plan was just purchased. So buying "Pro" while 400
-// days of a previous Plus/Premium purchase are still on the clock correctly
-// keeps the account at Premium, instead of downgrading it.
-//   > 365 days      -> premium
-//   91–365 days     -> plus
-//   1–90 days       -> pro
-//   0 or fewer days -> free
-// ADMIN DASHBOARD PHASE 5: moved to src/lib/subscriptions.js (imported
-// above) so admin-side subscription actions can reuse the exact same
-// rule instead of risking a second, drifting copy.
-
-// Re-fetch the authoritative transaction record from Flutterwave rather
-// than trusting the webhook body's `meta`/`amount`/`status` blindly. This
-// is what actually fixed the misrouting bug — the webhook payload isn't
-// always fully reliable, but the verify endpoint is the source of truth.
-async function verifyByReference(reference) {
-  const res = await fetch(
-    `https://api.flutterwave.com/v3/transactions/verify_by_reference?tx_ref=${encodeURIComponent(reference)}`,
-    { headers: { Authorization: `Bearer ${process.env.FLW_SECRET_KEY}` } },
+function alertAdmin(subject, details) {
+  sendAdminAlert(subject, details).catch((err) =>
+    console.error("Admin alert email failed:", err.message),
   );
-  const json = await res.json();
-  if (json.status !== "success") return null;
-  return json.data;
 }
 
-async function markProcessed(client, eventType, reference) {
+// Buyer + seller conversation for a listing (NOT just "any conversation on
+// this listing" — other prospective buyers have their own conversations).
+async function findConversation(client, listingId, buyerId, sellerId) {
   const res = await client.query(
-    `INSERT INTO paystack_webhook_events (event_type, reference)
-     VALUES ($1, $2)
-     ON CONFLICT (event_type, reference) DO NOTHING
-     RETURNING id`,
-    [eventType, reference],
+    `SELECT id FROM conversations
+      WHERE listing_id = $1
+        AND ((sender_id = $2 AND receiver_id = $3)
+          OR (sender_id = $3 AND receiver_id = $2))
+      LIMIT 1`,
+    [listingId, buyerId, sellerId],
   );
-  return res.rows.length > 0;
+  return res.rows[0]?.id ?? null;
 }
 
 export async function POST(req) {
-  console.log("🔥 FLUTTERWAVE WEBHOOK HIT");
-
   const rawBody = await req.text();
 
   try {
+    // ── 1. Authenticate the webhook ──────────────────────────────────────
     const signature = req.headers.get("verif-hash");
-
-    // Flutterwave: direct string compare against your configured secret
-    // hash, NOT an HMAC digest. Still use timingSafeEqual to avoid leaking
-    // timing information byte-by-byte.
     const expected = process.env.FLW_SECRET_HASH || "";
     const signatureBuffer = Buffer.from(signature || "", "utf8");
     const expectedBuffer = Buffer.from(expected, "utf8");
@@ -115,496 +79,113 @@ export async function POST(req) {
       crypto.timingSafeEqual(signatureBuffer, expectedBuffer);
 
     if (!isValidSignature) {
-      console.error("❌ Invalid Flutterwave signature");
+      console.error("Webhook rejected: invalid signature");
       return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
     }
 
     let event;
     try {
       event = JSON.parse(rawBody);
-    } catch (err) {
-      console.error("❌ Invalid JSON from Flutterwave:", err);
+    } catch {
       return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
     }
 
-    const data = event.data;
+    const data = event?.data;
     const reference = data?.tx_ref;
 
-    // ─────────────────────────────────────────────
-    // charge.completed — Virtual Account (bank transfer) funding
-    // ─────────────────────────────────────────────
-    // FIXED: this used to guess based on `payment_type === "bank_transfer"
-    // && !meta.purpose`, which misfired on real wallet/subscription/
-    // marketplace charges paid via the bank-transfer option (meta wasn't
-    // reliably echoed back for that payment method). Now we check the
-    // tx_ref prefix instead — deterministic, since we set every tx_ref
-    // ourselves for anything we initiate.
-    if (
-      event?.event === "charge.completed" &&
-      data?.payment_type === "bank_transfer" &&
-      !isOwnInitiatedTxRef(reference)
-    ) {
-      // Doesn't match any of our own tx_ref prefixes — this is a genuine
-      // unprompted inbound transfer straight into a customer's dedicated
-      // virtual account, handled completely separately below.
-      return handleVirtualAccountCharge(data, reference);
-    }
-
-    // ─────────────────────────────────────────────
-    // charge.completed
-    // ─────────────────────────────────────────────
+    // ── charge.completed ─────────────────────────────────────────────────
     if (event?.event === "charge.completed") {
-      // Don't trust the webhook body's `meta`/`amount`/`status` blindly —
-      // re-verify against Flutterwave's API. This is what actually fixes
-      // the misrouting bug: even if `meta` is dropped/malformed on the
-      // webhook payload (as happened with bank-transfer-paid checkouts),
-      // the verify endpoint still returns the authoritative record.
-      const verified = isOwnInitiatedTxRef(reference)
-        ? await verifyByReference(reference)
-        : null;
-      const source = verified || data;
+      const parsed = parseTxRef(reference);
 
-      const metadata = source?.meta || {};
-      const userId = metadata?.userId;
-      const purpose = metadata?.purpose;
-      const amount = Number(source.amount); // Flutterwave amount is already in naira
-      const sellerAmount = amount;
-      const isSuccessful = (verified ? verified.status : data?.status) === "successful";
-
-      if (!reference || !userId || !purpose) {
-        console.error("❌ Missing critical data:", data);
-        return NextResponse.json(
-          { error: "Missing required fields" },
-          { status: 400 },
-        );
+      // Not one of our own references: an unprompted bank transfer into a
+      // customer's dedicated virtual account.
+      if (!parsed) {
+        if (data?.payment_type === "bank_transfer") {
+          return handleVirtualAccountCharge(data, reference);
+        }
+        console.warn("charge.completed with unrecognised tx_ref ignored");
+        return ok("ignored");
       }
 
-      const userRes = await pool.query(
-        "SELECT id, email FROM users WHERE id = $1",
-        [userId],
-      );
-      const user = userRes.rows[0];
-
-      if (!user) {
-        console.error("❌ User not found:", userId);
-        return NextResponse.json({ error: "User not found" }, { status: 404 });
+      // Re-verify with Flutterwave. Never fall back to the webhook body.
+      const verification = await verifyByReference(reference);
+      if (verification.status === "error") {
+        return NextResponse.json({ error: "Could not verify payment" }, { status: 503 });
+      }
+      if (verification.status === "notfound") {
+        console.error("Webhook reference not found at Flutterwave:", reference);
+        return NextResponse.json({ error: "Payment not found" }, { status: 503 });
       }
 
-      // ── FAILED CHARGE ────────────────────────────
-      // Flutterwave doesn't send a separate "charge.failed" event — the
-      // same "charge.completed" event fires with data.status === "failed".
-      if (!isSuccessful) {
-        return handleFailedCharge(purpose, metadata, userId, amount, reference);
+      const verified = verification.data;
+
+      if (verified.tx_ref !== reference) {
+        console.error("Verified tx_ref does not match webhook reference");
+        return NextResponse.json({ error: "Reference mismatch" }, { status: 400 });
       }
 
-      // ── MARKETPLACE ──────────────────────────────
-      if (purpose === "marketplace") {
-        console.log("WEBHOOK EVENT HIT");
-        const transactionId = metadata.transaction_id;
-        const listingId = metadata.listing_id;
-
-        if (!transactionId || !listingId) {
-          console.error("❌ Missing transaction metadata");
-          return NextResponse.json(
-            { error: "Missing metadata" },
-            { status: 400 },
-          );
-        }
-
-        const client = await pool.connect();
-        try {
-          await client.query("BEGIN");
-
-          const isNew = await markProcessed(client, "charge.success.marketplace", reference);
-          if (!isNew) {
-            await client.query("ROLLBACK");
-            console.log("⚠️ Duplicate marketplace webhook ignored:", reference);
-            return NextResponse.json({ status: "already processed" });
-          }
-
-          const txRes = await client.query(
-            `SELECT * FROM transactions WHERE id = $1 FOR UPDATE`,
-            [transactionId],
-          );
-          const transaction = txRes.rows[0];
-
-          if (!transaction) {
-            await client.query("ROLLBACK");
-            console.error("❌ Transaction not found:", transactionId);
-            return NextResponse.json(
-              { error: "Transaction not found" },
-              { status: 404 },
-            );
-          }
-
-          if (transaction.payment_status === "paid") {
-            await client.query("ROLLBACK");
-            console.log("⚠️ Already processed:", transactionId);
-            return NextResponse.json({ status: "already processed" });
-          }
-
-          await client.query(
-            `UPDATE transactions
-             SET
-               payment_status = 'paid',
-               transaction_status = 'pending',
-               escrow_status = 'holding',
-               payment_provider_response = $1,
-               updated_at = NOW()
-             WHERE id = $2`,
-            [JSON.stringify(source), transactionId],
-          );
-
-          await client.query(
-            `UPDATE listings SET status = 'pending' WHERE id = $1`,
-            [listingId],
-          );
-
-          // await client.query(
-          //   `INSERT INTO users_transactions
-          //    (user_id, type, amount, status, description, reference)
-          //    VALUES ($1, 'credit', $2, 'success', 'Wallet funding', $3)`,
-          //   [transaction.buyer_id, amount, reference],
-          // );
-          // FIX (critical): this row records the card/Flutterwave payment
-          // for the buyer's own transaction HISTORY — it is not money that
-          // ever sat in or left their in-app wallet. It was previously
-          // summed into their wallet balance like any other debit, which
-          // silently (and incorrectly) reduced — sometimes below zero —
-          // a buyer's real, spendable wallet balance every time they paid
-          // by card instead of by wallet. affects_balance = false keeps it
-          // visible in transaction history without touching the balance.
-          // See balance queries in user/account/route.js,
-          // user/withdraw/route.js, and paystack/buy/initialize/route.js.
-          await client.query(
-            `INSERT INTO users_transactions
-             (user_id, type, amount, status, description, reference, affects_balance)
-             VALUES ($1, 'debit', $2, 'success', 'Game account purchase', $3, false)`,
-            [transaction.buyer_id, amount, reference],
-          );
-
-          await client.query(
-            `INSERT INTO users_transactions
-             (user_id, type, amount, status, description, reference, affects_balance)
-             VALUES ($1, 'credit', $2, 'pending', 'Game account purchase', $3, true)`,
-            [transaction.seller_id, sellerAmount, reference],
-          );
-
-          // ADMIN DASHBOARD PHASE 4: was hardcoded `amount * 0.05` — now
-          // reads from platform_settings, same as the wallet-payment path
-          // in buy/initialize/route.js. See src/lib/settings.js.
-          const sellerFeePercent = await getSetting("seller_fee_percent");
-          const platformFee = amount * (Number(sellerFeePercent) / 100);
-          await client.query(
-            `INSERT INTO users_transactions
-             (user_id, type, amount, status, description, reference, affects_balance)
-             VALUES ($1, 'debit', $2, 'pending', 'Listing fee', $3, true)`,
-            [transaction.seller_id, platformFee, reference],
-          );
-          await client.query(
-            `INSERT INTO users_transactions
-             (user_id, type, amount, status, description, reference, affects_balance)
-             VALUES ($1, 'credit', $2, 'pending', 'Platform fee', $3, true)`,
-            [1, platformFee, reference],
-          );
-
-          const convRes = await client.query(
-            `SELECT id FROM conversations WHERE listing_id = $1 LIMIT 1`,
-            [listingId],
-          );
-          let paymentMsg = null;
-          if (convRes.rows.length > 0) {
-            const msgRes = await client.query(
-              `INSERT INTO messages
-               (conversation_id, sender_id, message, type, created_at)
-               VALUES ($1, 1, 'Buyer has made payment. Seller should kindly provide login details.', 'payment_made', NOW())
-               RETURNING *`,
-              [convRes.rows[0].id],
-            );
-            paymentMsg = msgRes.rows[0];
-          } else {
-            console.warn(
-              "⚠️ No conversation found for listing, skipping system message:",
-              listingId,
-            );
-          }
-
-          await client.query("COMMIT");
-          console.log("✅ Marketplace payment processed:", transactionId);
-
-          // FIX: this message was being inserted but never broadcast, so
-          // the seller only saw "Buyer has made payment..." after a manual
-          // refresh instead of live like every other message in the app
-          // (senddetails/confirm/dispute all emit — this webhook was the
-          // one path that didn't).
-          if (paymentMsg) {
-            await emitToRoom(
-              `room:${convRes.rows[0].id}`,
-              "new_message",
-              paymentMsg,
-            );
-          }
-          await emitToRoom(`user:${transaction.buyer_id}`, "sidebar_update", {});
-          await emitToRoom(`user:${transaction.seller_id}`, "sidebar_update", {});
-
-          return NextResponse.json({ status: "marketplace payment processed" });
-        } catch (err) {
-          await client.query("ROLLBACK");
-          throw err;
-        } finally {
-          client.release();
-        }
+      const flwStatus = String(verified.status || "").toLowerCase();
+      if (flwStatus === "failed") {
+        return handleFailedCharge(parsed, reference);
+      }
+      if (flwStatus !== "successful") {
+        return ok("not final, ignored");
+      }
+      if (String(verified.currency || "").toUpperCase() !== "NGN") {
+        console.error("Rejected non-NGN payment for reference:", reference);
+        alertAdmin("Payment received in unexpected currency", {
+          reference,
+          currency: verified.currency,
+          amount: verified.amount,
+        });
+        return ok("currency rejected");
       }
 
-      // ── WALLET ───────────────────────────────────
-      if (purpose === "wallet") {
-        const client = await pool.connect();
-        try {
-          await client.query("BEGIN");
-
-          const isNew = await markProcessed(client, "charge.success.wallet", reference);
-          if (!isNew) {
-            await client.query("ROLLBACK");
-            console.log("⚠️ Duplicate webhook ignored:", reference);
-            return NextResponse.json({ status: "already processed" });
-          }
-
-          const requestedAmount = Number(metadata?.requestedAmount);
-          const creditAmount = requestedAmount > 0 ? requestedAmount : amount;
-
-          await client.query(
-            `INSERT INTO users_transactions (user_id, type, amount, status, description, reference, affects_balance)
-             VALUES ($1, 'credit', $2, 'success', 'Wallet funding', $3, true)`,
-            [userId, creditAmount, reference],
-          );
-
-          await client.query("COMMIT");
-          console.log("💰 Wallet funded:", creditAmount);
-          return NextResponse.json({ status: "wallet credited" });
-        } catch (err) {
-          await client.query("ROLLBACK");
-          throw err;
-        } finally {
-          client.release();
-        }
+      const amount = Number(verified.amount);
+      if (!Number.isFinite(amount) || amount <= 0) {
+        return NextResponse.json({ error: "Invalid amount" }, { status: 400 });
       }
 
-      // ── SUBSCRIPTION ─────────────────────────────
-      if (purpose === "subscription") {
-        // NOTE: these are now naira amounts (Flutterwave), not kobo — match
-        // the naira values used in the updated /paystack/initialize/route.js.
-        const PLAN_BY_AMOUNT = {
-          2900: { plan: "pro", days: 30, label: "1 month" },
-          8500: { plan: "plus", days: 90, label: "3 months" },
-          32000: { plan: "premium", days: 365, label: "12 months" },
-        };
-
-        const planData = PLAN_BY_AMOUNT[amount];
-        if (!planData) {
-          console.error("❌ Invalid amount:", amount);
-          return NextResponse.json(
-            { error: "Invalid amount" },
-            { status: 400 },
-          );
-        }
-
-        const { days, label } = planData;
-
-        const client = await pool.connect();
-        try {
-          await client.query("BEGIN");
-
-          const isNew = await markProcessed(client, "charge.success.subscription", reference);
-          if (!isNew) {
-            await client.query("ROLLBACK");
-            console.log("⚠️ Duplicate subscription webhook ignored:", reference);
-            return NextResponse.json({ status: "already processed" });
-          }
-
-          await client.query(
-            `INSERT INTO payments (user_id, amount, reference, status)
-             VALUES ($1, $2, $3, $4)`,
-            [userId, amount, reference, "success"],
-          );
-          // await client.query(
-          //   `INSERT INTO users_transactions (user_id, type, amount, status, description, reference)
-          //    VALUES ($1, 'credit', $2, 'success', 'Subscription payment', $3)`,
-          //   [userId, amount, reference],
-          // );
-          // FIX: subscriptions are always paid by card/Flutterwave — there is
-          // no wallet path for this purpose — so this debit row is pure
-          // transaction history and must not reduce the user's wallet
-          // balance. Same category of bug as the marketplace fix above.
-          await client.query(
-            `INSERT INTO users_transactions (user_id, type, amount, status, description, reference, affects_balance)
-             VALUES ($1, 'debit', $2, 'success', 'Subscription payment', $3, false)`,
-            [userId, amount, reference],
-          );
-
-          // Roll over remaining time, THEN derive the plan tier from the
-          // TOTAL days left (not from whatever plan was just purchased) —
-          // e.g. buying Pro while 400 days of Plus/Premium are still
-          // remaining should land on Premium, not silently downgrade to Pro.
-          const existingRes = await client.query(
-            `SELECT subscription_end FROM users WHERE id = $1 FOR UPDATE`,
-            [userId],
-          );
-          const now = new Date();
-          const currentEnd = existingRes.rows[0]?.subscription_end;
-          const startFrom = currentEnd && new Date(currentEnd) > now ? new Date(currentEnd) : now;
-          const end = new Date(startFrom);
-          end.setDate(end.getDate() + days);
-
-          const totalDaysRemaining = Math.ceil((end - now) / (1000 * 60 * 60 * 24));
-          const finalPlan = derivePlanFromDays(totalDaysRemaining);
-
-          await client.query(
-            `UPDATE users
-             SET
-               plan = $1,
-               subscription_status = 'active',
-               subscription_start = NOW(),
-               subscription_end = $2,
-               paystack_reference = $3
-             WHERE id = $4`,
-            [finalPlan, end, reference, userId],
-          );
-
-          await client.query("COMMIT");
-
-          sendSellerWelcomeEmail(label, user.email, finalPlan)
-            .then(() => console.log("📧 Email sent"))
-            .catch((err) => console.error("❌ Email failed:", err));
-
-          return NextResponse.json({ status: "subscription activated" });
-        } catch (err) {
-          await client.query("ROLLBACK");
-          throw err;
-        } finally {
-          client.release();
-        }
+      if (parsed.purpose === "marketplace") {
+        return handleMarketplacePayment(parsed, verified, reference, amount);
       }
-
-      // ── TOURNAMENT ───────────────────────────────
-      if (purpose === "tournament") {
-        console.log("🏆 TOURNAMENT WEBHOOK HIT");
-
-        const tournament_id = metadata.tournament_id;
-        const player_name = metadata.player_name;
-        const player_email = metadata.player_email;
-
-        if (!tournament_id || !player_name || !player_email) {
-          console.error("❌ Missing tournament metadata");
-          return NextResponse.json(
-            { error: "Missing metadata" },
-            { status: 400 },
-          );
-        }
-
-        const client = await pool.connect();
-        try {
-          await client.query("BEGIN");
-
-          const isNew = await markProcessed(client, "charge.success.tournament", reference);
-          if (!isNew) {
-            await client.query("ROLLBACK");
-            console.log("⚠️ Duplicate tournament webhook ignored:", reference);
-            return NextResponse.json({ status: "already processed" });
-          }
-
-          const { rows } = await client.query(
-            `SELECT slots_left FROM tournaments WHERE id = $1 FOR UPDATE`,
-            [tournament_id],
-          );
-          if (!rows[0] || rows[0].slots_left <= 0) {
-            await client.query("ROLLBACK");
-            console.error("❌ No slots left for tournament:", tournament_id);
-            return NextResponse.json(
-              { error: "No slots available" },
-              { status: 400 },
-            );
-          }
-
-          await client.query(
-            `INSERT INTO tournament_contestants
-             (tournament_id, user_id, player_name, email, payment_ref, payment_status)
-             VALUES ($1, $2, $3, $4, $5, 'confirmed')`,
-            [tournament_id, userId, player_name, player_email, reference],
-          );
-
-          await client.query(
-            `UPDATE tournaments SET slots_left = slots_left - 1 WHERE id = $1`,
-            [tournament_id],
-          );
-
-          // FIX: this used to insert BOTH a 'credit' and a 'debit' row for
-          // the same user/amount/reference (a leftover credit-then-debit
-          // pair that canceled out in the balance sum, same root issue as
-          // the marketplace/subscription fixes above). Tournament entry is
-          // always paid by card/Flutterwave — there's no wallet path — so
-          // this should only ever be a history-only debit, same as
-          // subscription payments.
-          await client.query(
-            `INSERT INTO users_transactions
-             (user_id, type, amount, status, description, reference, affects_balance)
-             VALUES ($1, 'debit', $2, 'success', 'Tournament registration', $3, false)`,
-            [userId, amount, reference],
-          );
-
-          await client.query("COMMIT");
-          console.log(
-            "✅ Tournament registration confirmed:",
-            userId,
-            tournament_id,
-          );
-          return NextResponse.json({
-            status: "tournament registration confirmed",
-          });
-        } catch (err) {
-          await client.query("ROLLBACK");
-          console.error("❌ TOURNAMENT DB ERROR:", err.message, err.stack);
-          throw err;
-        } finally {
-          client.release();
-        }
+      if (parsed.purpose === "wallet") {
+        return handleWalletPayment(parsed, verified, reference, amount);
       }
+      if (parsed.purpose === "subscription") {
+        return handleSubscriptionPayment(parsed, reference, amount);
+      }
+      if (parsed.purpose === "tournament") {
+        return handleTournamentPayment(parsed, reference, amount);
+      }
+      return ok("ignored");
     }
 
-    // ─────────────────────────────────────────────
-    // transfer.completed
-    // ─────────────────────────────────────────────
-    if (event.event === "transfer.completed") {
+    // ── transfer.completed (withdrawal outcome) ──────────────────────────
+    if (event?.event === "transfer.completed") {
       const transferId = data?.id;
+      const transferRef = data?.reference;
+
+      // Only our own withdrawals.
+      if (typeof transferRef !== "string" || !transferRef.startsWith("WD_")) {
+        return ok("ignored");
+      }
 
       const existing = await pool.query(
         "SELECT id, status FROM users_transactions WHERE reference = $1",
-        [reference],
+        [transferRef],
       );
-
       if (existing.rows.length > 0 && existing.rows[0].status === "success") {
-        console.log("⚠️ Duplicate transfer.completed webhook ignored:", reference);
-        return NextResponse.json({ status: "already processed" });
+        return ok("already processed");
       }
 
-      // FIX (D.2): don't trust data.status straight off the webhook body
-      // — re-fetch the transfer from Flutterwave and use that as the
-      // source of truth, same principle as verifyByReference() above for
-      // charges.
+      // Re-fetch the transfer from Flutterwave (via the whitelisted-IP
+      // service) instead of trusting data.status in the webhook body.
       const verification = await checkFlutterwaveTransferStatus(
-        transferId ? { id: transferId } : { reference },
+        transferId ? { id: transferId } : { reference: transferRef },
       );
 
       if (verification.ambiguous) {
-        // Couldn't reach Flutterwave to confirm right now. Don't guess —
-        // leave the row as-is (it's already 'pending'/'unknown' and
-        // still correctly held against the user's balance either way)
-        // and let a later webhook retry or a reconciliation pass settle
-        // it. Returning a non-2xx here also causes Flutterwave to retry
-        // the webhook per their own retry policy.
-        console.error(
-          "⚠️ Could not verify transfer.completed against Flutterwave, will retry:",
-          reference,
-        );
         return NextResponse.json(
           { error: "Could not verify transfer status" },
           { status: 503 },
@@ -613,158 +194,496 @@ export async function POST(req) {
 
       const verifiedStatus = verification.found
         ? String(verification.data?.status || "").toUpperCase()
-        : "FAILED"; // Flutterwave has no record of it at all — treat as failed.
+        : "FAILED";
 
       if (verifiedStatus === "SUCCESSFUL") {
         await pool.query(
-          `UPDATE users_transactions SET status = 'success' WHERE reference = $1`,
-          [reference],
+          `UPDATE users_transactions SET status = 'success'
+            WHERE reference = $1 AND status IN ('pending', 'unknown')`,
+          [transferRef],
         );
-        return NextResponse.json({ status: "withdrawal success updated" });
+        return ok("withdrawal success updated");
       }
-
       if (verifiedStatus === "FAILED") {
         await pool.query(
-          `UPDATE users_transactions SET status = 'failed' WHERE reference = $1`,
-          [reference],
+          `UPDATE users_transactions SET status = 'failed'
+            WHERE reference = $1 AND status IN ('pending', 'unknown')`,
+          [transferRef],
         );
-        return NextResponse.json({ status: "withdrawal failed updated" });
+        return ok("withdrawal failed updated");
       }
-
-      // Verified but still NEW/PENDING on Flutterwave's side — nothing to
-      // update yet, wait for a later webhook.
-      return NextResponse.json({ status: "withdrawal still pending" });
+      return ok("withdrawal still pending");
     }
 
-    return NextResponse.json({ status: "ok" });
+    return ok("ok");
   } catch (err) {
-    console.error("🔥 WEBHOOK CRASH:", err);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    console.error("WEBHOOK ERROR:", err.message);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
 
-// ─────────────────────────────────────────────
-// charge.completed with status "failed" — replaces Paystack's separate
-// "charge.failed" event, since Flutterwave folds both outcomes into
-// "charge.completed" and distinguishes via data.status.
-// ─────────────────────────────────────────────
-async function handleFailedCharge(purpose, metadata, userId, amount, reference) {
-  if (purpose === "marketplace") {
-    const transactionId = metadata.transaction_id;
-    const listingId = metadata.listing_id;
+// ─────────────────────────────────────────────────────────────────────────
+// Marketplace order paid
+// ─────────────────────────────────────────────────────────────────────────
+async function handleMarketplacePayment(parsed, verified, reference, amount) {
+  const client = await pool.connect();
+  let notify = null;
+  try {
+    await client.query("BEGIN");
 
-    if (!transactionId || !listingId) {
-      console.error("❌ Missing transaction metadata on failed charge");
-      return NextResponse.json({ error: "Missing metadata" }, { status: 400 });
+    const isNew = await markProcessed(client, "charge.success.marketplace", reference);
+    if (!isNew) {
+      await client.query("ROLLBACK");
+      return ok("already processed");
     }
 
-    const txRes = await pool.query(
-      `SELECT * FROM transactions WHERE id = $1`,
-      [transactionId],
+    const txRes = await client.query(
+      `SELECT * FROM transactions WHERE id = $1 FOR UPDATE`,
+      [parsed.transactionId],
     );
     const transaction = txRes.rows[0];
 
-    if (!transaction) {
-      console.error("❌ Transaction not found on failed charge:", transactionId);
-      return NextResponse.json({ error: "Transaction not found" }, { status: 404 });
+    // Money arrived for an order we cannot find / that does not belong to this
+    // payment: park it for manual reconciliation instead of guessing.
+    if (!transaction || transaction.payment_reference !== reference) {
+      await client.query(
+        `INSERT INTO paystack_unmatched_credits (reference, account_number, amount, raw_payload)
+         VALUES ($1, $2, $3, $4)
+         ON CONFLICT (reference) DO NOTHING`,
+        [reference, "marketplace-unmatched", amount, JSON.stringify(verified)],
+      );
+      await client.query("COMMIT");
+      alertAdmin("Marketplace payment could not be matched to an order", {
+        reference,
+        amount,
+        transactionId: parsed.transactionId,
+      });
+      return ok("unmatched, flagged");
     }
 
     if (transaction.payment_status === "paid") {
-      console.log(
-        "⚠️ charge.completed(failed) received but transaction already paid, ignoring:",
-        transactionId,
-      );
-      return NextResponse.json({ status: "already processed" });
+      await client.query("ROLLBACK");
+      return ok("already processed");
     }
 
-    await pool.query(
-      `UPDATE listings SET status = 'active', processing_by = NULL WHERE id = $1`,
-      [listingId],
+    const listingRes = await client.query(
+      `SELECT * FROM listings WHERE id = $1 FOR UPDATE`,
+      [transaction.listing_id],
     );
-    await pool.query(
+    const listing = listingRes.rows[0];
+
+    const expectedAmount = Number(transaction.amount);
+    const orderStillValid =
+      transaction.payment_status === "pending" &&
+      transaction.transaction_status === "initiated" &&
+      listing &&
+      listing.status === "processing" &&
+      Number(listing.processing_by) === Number(transaction.buyer_id) &&
+      !listing.deleted_at &&
+      amount + 0.001 >= expectedAmount;
+
+    if (!orderStillValid) {
+      // Late payment on a cancelled/expired order, wrong amount, or the
+      // listing is no longer reserved for this buyer. Do NOT mark the order
+      // paid. Return the money to the buyer's wallet and tell an admin.
+      await creditWalletRefund(
+        client,
+        transaction.buyer_id,
+        amount,
+        reference,
+        "Refund: payment received for an order that is no longer available",
+      );
+      await client.query("COMMIT");
+      alertAdmin("Marketplace payment refunded to wallet (order no longer valid)", {
+        reference,
+        amount,
+        expectedAmount,
+        transactionId: transaction.id,
+        transaction_status: transaction.transaction_status,
+        payment_status: transaction.payment_status,
+      });
+      await emitToRoom(`user:${transaction.buyer_id}`, "sidebar_update", {});
+      return ok("refunded to wallet");
+    }
+
+    await client.query(
       `UPDATE transactions
-       SET
-         payment_status = 'failed',
-         transaction_status = 'cancelled',
-         payment_provider_response = $1,
-         updated_at = NOW()
-       WHERE id = $2`,
-      [JSON.stringify(metadata), transactionId],
+          SET payment_status = 'paid',
+              transaction_status = 'pending',
+              escrow_status = 'holding',
+              payment_provider_response = $1,
+              updated_at = NOW()
+        WHERE id = $2`,
+      [JSON.stringify(verified), transaction.id],
     );
 
-    console.log("❌ Marketplace payment failed, listing restored:", listingId);
-    return NextResponse.json({
-      status: "marketplace payment failed, listing restored",
-    });
-  }
+    await client.query(`UPDATE listings SET status = 'pending' WHERE id = $1`, [
+      transaction.listing_id,
+    ]);
 
-  if (purpose === "wallet") {
-    console.log("❌ Wallet funding failed for user:", userId, "amount:", amount);
-    return NextResponse.json({
-      status: "wallet charge failed, nothing to rollback",
-    });
-  }
-
-  if (purpose === "subscription") {
-    const existing = await pool.query(
-      "SELECT id FROM users_transactions WHERE reference = $1",
-      [reference],
+    // History-only row for the buyer (card payment never touched the wallet).
+    await client.query(
+      `INSERT INTO users_transactions
+         (user_id, type, amount, status, description, reference, affects_balance)
+       VALUES ($1, 'debit', $2, 'success', 'Game account purchase', $3, false)`,
+      [transaction.buyer_id, expectedAmount, reference],
     );
-    if (existing.rows.length > 0) {
-      await pool.query(
-        `UPDATE users_transactions SET status = 'failed' WHERE reference = $1`,
-        [reference],
+
+    await client.query(
+      `INSERT INTO users_transactions
+         (user_id, type, amount, status, description, reference, affects_balance)
+       VALUES ($1, 'credit', $2, 'pending', 'Game account purchase', $3, true)`,
+      [transaction.seller_id, expectedAmount, reference],
+    );
+
+    const sellerFeePercent = await getSetting("seller_fee_percent");
+    const platformFee = Math.round(expectedAmount * Number(sellerFeePercent)) / 100;
+    await client.query(
+      `INSERT INTO users_transactions
+         (user_id, type, amount, status, description, reference, affects_balance)
+       VALUES ($1, 'debit', $2, 'pending', 'Listing fee', $3, true)`,
+      [transaction.seller_id, platformFee, reference],
+    );
+    await client.query(
+      `INSERT INTO users_transactions
+         (user_id, type, amount, status, description, reference, affects_balance)
+       VALUES (1, 'credit', $1, 'pending', 'Platform fee', $2, true)`,
+      [platformFee, reference],
+    );
+
+    const conversationId = await findConversation(
+      client,
+      transaction.listing_id,
+      transaction.buyer_id,
+      transaction.seller_id,
+    );
+    let paymentMsg = null;
+    if (conversationId) {
+      const msgRes = await client.query(
+        `INSERT INTO messages (conversation_id, sender_id, message, type, created_at)
+         VALUES ($1, 1, 'Buyer has made payment. Seller should kindly provide login details.', 'payment_made', NOW())
+         RETURNING *`,
+        [conversationId],
       );
+      paymentMsg = msgRes.rows[0];
     }
 
-    await pool.query(
-      `UPDATE users
-       SET subscription_status = CASE
-         WHEN subscription_end > NOW() THEN 'active'
-         ELSE 'inactive'
-       END
-       WHERE id = $1`,
-      [userId],
-    );
-
-    console.log("❌ Subscription payment failed for user:", userId);
-    return NextResponse.json({ status: "subscription charge failed" });
+    await client.query("COMMIT");
+    notify = { paymentMsg, conversationId, transaction };
+  } catch (err) {
+    try {
+      await client.query("ROLLBACK");
+    } catch {}
+    throw err;
+  } finally {
+    client.release();
   }
 
-  if (purpose === "tournament") {
-    console.log(
-      "❌ Tournament payment failed for user:",
-      userId,
-      "tournament:",
-      metadata.tournament_id,
-    );
-    return NextResponse.json({
-      status: "tournament charge failed, nothing to rollback",
-    });
+  if (notify) {
+    if (notify.paymentMsg) {
+      await emitToRoom(`room:${notify.conversationId}`, "new_message", notify.paymentMsg);
+    }
+    await emitToRoom(`user:${notify.transaction.buyer_id}`, "sidebar_update", {});
+    await emitToRoom(`user:${notify.transaction.seller_id}`, "sidebar_update", {});
   }
-
-  console.log("❌ Charge failed for unknown purpose:", purpose);
-  return NextResponse.json({ status: "charge failed logged" });
+  return ok("marketplace payment processed");
 }
 
-// ─────────────────────────────────────────────
-// Virtual Account (bank transfer) crediting
-// ─────────────────────────────────────────────
-// ⚠️ See the file-level note at the top — confirm this matching logic
-// against a real Flutterwave sandbox virtual-account transfer before relying
-// on it live. We match on data.customer.email since Flutterwave virtual
-// accounts are created per-customer (unlike Paystack's per-account-number
-// lookup), falling back to nothing/flagging for manual reconciliation if
-// that customer isn't recognised.
-async function handleVirtualAccountCharge(data, reference) {
-  const customerEmail = data?.customer?.email;
-  const amount = Number(data?.amount || 0);
+// ─────────────────────────────────────────────────────────────────────────
+// Wallet funding
+// ─────────────────────────────────────────────────────────────────────────
+async function handleWalletPayment(parsed, verified, reference, amount) {
+  // The user comes from our own tx_ref; cross-check the metadata if present.
+  const metaUserId = verified?.meta?.userId;
+  if (metaUserId != null && Number(metaUserId) !== parsed.userId) {
+    console.error("Wallet payment: tx_ref user does not match metadata user");
+    return NextResponse.json({ error: "User mismatch" }, { status: 400 });
+  }
 
-  if (!reference || !customerEmail || !amount) {
-    console.error("❌ Virtual account charge missing required fields:", data);
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+
+    const userRes = await client.query(`SELECT id FROM users WHERE id = $1`, [
+      parsed.userId,
+    ]);
+    if (!userRes.rows[0]) {
+      await client.query("ROLLBACK");
+      alertAdmin("Wallet payment for unknown user", { reference, amount });
+      return ok("unknown user, flagged");
+    }
+
+    const isNew = await markProcessed(client, "charge.success.wallet", reference);
+    if (!isNew) {
+      await client.query("ROLLBACK");
+      return ok("already processed");
+    }
+
+    // Credit what was ACTUALLY charged (verified), never more than the
+    // amount the user asked to add.
+    const requested = Number(verified?.meta?.requestedAmount);
+    const creditAmount =
+      Number.isFinite(requested) && requested > 0 ? Math.min(requested, amount) : amount;
+
+    await client.query(
+      `INSERT INTO users_transactions
+         (user_id, type, amount, status, description, reference, affects_balance)
+       VALUES ($1, 'credit', $2, 'success', 'Wallet funding', $3, true)`,
+      [parsed.userId, creditAmount, reference],
+    );
+
+    await client.query("COMMIT");
+    return ok("wallet credited");
+  } catch (err) {
+    try {
+      await client.query("ROLLBACK");
+    } catch {}
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Subscription
+// ─────────────────────────────────────────────────────────────────────────
+async function handleSubscriptionPayment(parsed, reference, amount) {
+  const expected = PLAN_PRICES[parsed.plan];
+  if (!expected || Math.round(amount) !== expected) {
+    console.error("Subscription payment amount mismatch for", reference);
+    alertAdmin("Subscription payment amount mismatch — not activated", {
+      reference,
+      plan: parsed.plan,
+      expected,
+      received: amount,
+    });
+    return ok("amount mismatch, flagged");
+  }
+
+  const client = await pool.connect();
+  let email = null;
+  let finalPlan = null;
+  try {
+    await client.query("BEGIN");
+
+    const userRes = await client.query(`SELECT id, email FROM users WHERE id = $1`, [
+      parsed.userId,
+    ]);
+    const user = userRes.rows[0];
+    if (!user) {
+      await client.query("ROLLBACK");
+      alertAdmin("Subscription payment for unknown user", { reference, amount });
+      return ok("unknown user, flagged");
+    }
+
+    const result = await applySubscriptionPayment(client, {
+      userId: parsed.userId,
+      plan: parsed.plan,
+      reference,
+      amount: expected,
+      markProcessed,
+    });
+    if (!result.applied) {
+      await client.query("ROLLBACK");
+      return ok("already processed");
+    }
+
+    await client.query("COMMIT");
+    email = user.email;
+    finalPlan = result.finalPlan;
+  } catch (err) {
+    try {
+      await client.query("ROLLBACK");
+    } catch {}
+    throw err;
+  } finally {
+    client.release();
+  }
+
+  sendSellerWelcomeEmail(PLAN_LABELS[parsed.plan], email, finalPlan).catch((err) =>
+    console.error("Seller welcome email failed:", err.message),
+  );
+  return ok("subscription activated");
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Tournament entry
+// ─────────────────────────────────────────────────────────────────────────
+async function handleTournamentPayment(parsed, reference, amount) {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+
+    const isNew = await markProcessed(client, "charge.success.tournament", reference);
+    if (!isNew) {
+      await client.query("ROLLBACK");
+      return ok("already processed");
+    }
+
+    const userRes = await client.query(`SELECT id, username, email FROM users WHERE id = $1`, [
+      parsed.userId,
+    ]);
+    const user = userRes.rows[0];
+    if (!user) {
+      await client.query("ROLLBACK");
+      alertAdmin("Tournament payment for unknown user", { reference, amount });
+      return ok("unknown user, flagged");
+    }
+
+    const tRes = await client.query(
+      `SELECT id, slots_left, entry_fee FROM tournaments WHERE id = $1 FOR UPDATE`,
+      [parsed.tournamentId],
+    );
+    const tournament = tRes.rows[0];
+    const fee = tournament
+      ? parseInt(String(tournament.entry_fee).replace(/[^0-9]/g, ""), 10) || 0
+      : 0;
+
+    const dup = tournament
+      ? await client.query(
+          `SELECT 1 FROM tournament_contestants WHERE tournament_id = $1 AND user_id = $2`,
+          [parsed.tournamentId, parsed.userId],
+        )
+      : { rows: [] };
+
+    const cannotRegister =
+      !tournament ||
+      tournament.slots_left <= 0 ||
+      dup.rows.length > 0 ||
+      fee <= 0 ||
+      amount + 0.001 < fee;
+
+    if (cannotRegister) {
+      // Paid, but registration is impossible (full, duplicate, bad amount):
+      // return the money to the wallet rather than keeping it.
+      await creditWalletRefund(
+        client,
+        parsed.userId,
+        amount,
+        reference,
+        "Refund: tournament registration could not be completed",
+      );
+      await client.query("COMMIT");
+      alertAdmin("Tournament payment refunded to wallet", {
+        reference,
+        tournamentId: parsed.tournamentId,
+        amount,
+      });
+      return ok("refunded to wallet");
+    }
+
+    await client.query(
+      `INSERT INTO tournament_contestants
+         (tournament_id, user_id, player_name, email, payment_ref, payment_status)
+       VALUES ($1, $2, $3, $4, $5, 'confirmed')`,
+      [parsed.tournamentId, parsed.userId, user.username, user.email, reference],
+    );
+    await client.query(
+      `UPDATE tournaments SET slots_left = slots_left - 1 WHERE id = $1`,
+      [parsed.tournamentId],
+    );
+    await client.query(
+      `INSERT INTO users_transactions
+         (user_id, type, amount, status, description, reference, affects_balance)
+       VALUES ($1, 'debit', $2, 'success', 'Tournament registration', $3, false)`,
+      [parsed.userId, amount, reference],
+    );
+
+    await client.query("COMMIT");
+    return ok("tournament registration confirmed");
+  } catch (err) {
+    try {
+      await client.query("ROLLBACK");
+    } catch {}
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Verified FAILED charge
+// ─────────────────────────────────────────────────────────────────────────
+async function handleFailedCharge(parsed, reference) {
+  if (parsed.purpose !== "marketplace") {
+    return ok(`${parsed.purpose} charge failed, nothing to roll back`);
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const txRes = await client.query(`SELECT * FROM transactions WHERE id = $1 FOR UPDATE`, [
+      parsed.transactionId,
+    ]);
+    const tx = txRes.rows[0];
+
+    // Only an order that is still waiting on THIS payment may be failed.
+    if (
+      !tx ||
+      tx.payment_reference !== reference ||
+      tx.payment_status !== "pending" ||
+      tx.transaction_status !== "initiated"
+    ) {
+      await client.query("ROLLBACK");
+      return ok("no action needed");
+    }
+
+    await client.query(
+      `UPDATE transactions
+          SET payment_status = 'failed', transaction_status = 'cancelled', updated_at = NOW()
+        WHERE id = $1`,
+      [tx.id],
+    );
+    // Release the listing only if it is still reserved for THIS buyer.
+    await client.query(
+      `UPDATE listings SET status = 'active', processing_by = NULL
+        WHERE id = $1 AND status = 'processing' AND processing_by = $2`,
+      [tx.listing_id, tx.buyer_id],
+    );
+    await client.query("COMMIT");
+    return ok("marketplace payment failed, listing restored");
+  } catch (err) {
+    try {
+      await client.query("ROLLBACK");
+    } catch {}
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Unprompted bank transfer into a customer's dedicated virtual account
+// ─────────────────────────────────────────────────────────────────────────
+async function handleVirtualAccountCharge(data, reference) {
+  if (!reference || !data?.id) {
+    return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+  }
+  if (String(data.status || "").toLowerCase() !== "successful") {
+    return ok("not successful, ignored");
+  }
+
+  // The webhook body is not enough — confirm the credit with Flutterwave.
+  const verification = await verifyById(data.id);
+  if (verification.status === "error") {
+    return NextResponse.json({ error: "Could not verify payment" }, { status: 503 });
+  }
+  if (verification.status === "notfound") {
+    console.error("Virtual account charge not found at Flutterwave:", reference);
+    return ok("not found, ignored");
+  }
+  const verified = verification.data;
+  if (
+    String(verified.status || "").toLowerCase() !== "successful" ||
+    String(verified.currency || "").toUpperCase() !== "NGN" ||
+    verified.tx_ref !== reference
+  ) {
+    return ok("verification mismatch, ignored");
+  }
+
+  const customerEmail = verified?.customer?.email;
+  const amount = Number(verified?.amount || 0);
+  if (!customerEmail || !Number.isFinite(amount) || amount <= 0) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
   }
 
@@ -772,26 +691,18 @@ async function handleVirtualAccountCharge(data, reference) {
   try {
     await client.query("BEGIN");
 
-    const dedupe = await client.query(
-      `INSERT INTO paystack_webhook_events (event_type, reference)
-       VALUES ('charge.success.dva', $1)
-       ON CONFLICT (event_type, reference) DO NOTHING
-       RETURNING id`,
-      [reference],
-    );
-
-    if (dedupe.rows.length === 0) {
+    const isNew = await markProcessed(client, "charge.success.dva", reference);
+    if (!isNew) {
       await client.query("ROLLBACK");
-      console.log("⚠️ Duplicate virtual account webhook ignored:", reference);
-      return NextResponse.json({ status: "already processed" });
+      return ok("already processed");
     }
 
     const vaRes = await client.query(
       `SELECT uva.user_id
-       FROM user_virtual_accounts uva
-       JOIN users u ON u.id = uva.user_id
-       WHERE u.email = $1 AND uva.active = true
-       FOR UPDATE`,
+         FROM user_virtual_accounts uva
+         JOIN users u ON u.id = uva.user_id
+        WHERE u.email = $1 AND uva.active = true
+        FOR UPDATE`,
       [customerEmail],
     );
     const virtualAccount = vaRes.rows[0];
@@ -801,41 +712,31 @@ async function handleVirtualAccountCharge(data, reference) {
         `INSERT INTO paystack_unmatched_credits (reference, account_number, amount, raw_payload)
          VALUES ($1, $2, $3, $4)
          ON CONFLICT (reference) DO NOTHING`,
-        [reference, customerEmail, amount, JSON.stringify(data)],
+        [reference, customerEmail, amount, JSON.stringify(verified)],
       );
       await client.query("COMMIT");
-      console.error(
-        "🚨 Virtual account charge for unrecognised customer, flagged for reconciliation:",
-        customerEmail,
-        "ref:",
-        reference,
-      );
-
-      sendAdminAlert("Unrecognised virtual account credit — needs manual reconciliation", {
+      alertAdmin("Unrecognised virtual account credit — needs manual reconciliation", {
         reference,
         customerEmail,
         amount,
-      }).catch((err) => console.error("❌ Admin alert email failed:", err));
-
-      return NextResponse.json({ status: "unrecognised account, flagged" });
+      });
+      return ok("unrecognised account, flagged");
     }
 
     await client.query(
-      `INSERT INTO users_transactions (user_id, type, amount, status, description, reference, affects_balance)
+      `INSERT INTO users_transactions
+         (user_id, type, amount, status, description, reference, affects_balance)
        VALUES ($1, 'credit', $2, 'success', 'Bank transfer funding', $3, true)`,
       [virtualAccount.user_id, amount, reference],
     );
 
     await client.query("COMMIT");
-    console.log("💰 Virtual account wallet funded:", virtualAccount.user_id, amount);
-    return NextResponse.json({ status: "virtual account wallet credited" });
+    return ok("virtual account wallet credited");
   } catch (err) {
-    await client.query("ROLLBACK");
-    // Log enough to manually reconcile from logs alone if this crashes —
-    // this is exactly what was missing when the varchar(20) column-size
-    // bug hit in production and the customer/amount weren't in the log line.
-    console.error("❌ Virtual account webhook error:", err);
-    console.error("❌ Context — reference:", reference, "amount:", amount, "customerEmail:", customerEmail);
+    try {
+      await client.query("ROLLBACK");
+    } catch {}
+    console.error("Virtual account webhook error:", err.message, { reference, amount });
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   } finally {
     client.release();

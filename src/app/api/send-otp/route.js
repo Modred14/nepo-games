@@ -1,7 +1,9 @@
+// ROUTE: src/app/api/send-otp/route.js
 // src/app/api/send-otp/route.js
 import crypto from "crypto";
 import pool from "@/lib/db";
 import { requireUser } from "@/lib/auth";
+import { checkRateLimit, tooManyRequests } from "@/lib/rateLimit";
 
 // FIX (critical): this file previously used `export default function
 // handler(req, res)` with `req.body` / `res.status()` — the Pages Router
@@ -25,11 +27,21 @@ export async function POST(req) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { phone } = await req.json();
+    const body = await req.json().catch(() => ({}));
+    const phone = typeof body.phone === "string" ? body.phone.trim() : "";
 
-    if (!phone) {
-      return Response.json({ error: "Phone is required" }, { status: 400 });
+    // E.164 only (e.g. +2348012345678).
+    if (!/^\+[1-9]\d{7,14}$/.test(phone)) {
+      return Response.json({ error: "Enter a valid phone number" }, { status: 400 });
     }
+
+    // SMS costs money and can be abused to spam third parties: tight limits
+    // per account, plus a per-number cap.
+    const [byUser, byPhone] = await Promise.all([
+      checkRateLimit(`sms-otp-user:${user.id}`, { limit: 5, windowSeconds: 3600, failClosed: true }),
+      checkRateLimit(`sms-otp-phone:${phone}`, { limit: 3, windowSeconds: 3600, failClosed: true }),
+    ]);
+    if (!byUser.allowed || !byPhone.allowed) return tooManyRequests();
 
     const existingUser = await pool.query(
       "SELECT id FROM users WHERE phone_number = $1 AND id != $2 LIMIT 1",
@@ -55,7 +67,7 @@ export async function POST(req) {
     // verify a completely different one.
     await pool.query(
       `UPDATE users
-       SET phone_verification_code = $1, verification_expires = $2
+       SET phone_verification_code = $1, verification_expires = $2, otp_attempts = 0
        WHERE id = $3`,
       [`${otp}:${phone}`, expires, user.id],
     );
@@ -67,7 +79,7 @@ export async function POST(req) {
       },
       body: JSON.stringify({
         to: phone,
-        from: "Modred",
+        from: process.env.TERMII_SENDER_ID || "Modred",
         sms: `Your verification code is ${otp}. It expires in 5 minutes.`,
         type: "plain",
         channel: "generic",
@@ -76,7 +88,7 @@ export async function POST(req) {
     });
 
     if (!smsRes.ok) {
-      console.error("Termii SMS send failed:", smsRes.status, await smsRes.text());
+      console.error("Termii SMS send failed:", smsRes.status);
       return Response.json({ error: "Failed to send OTP" }, { status: 502 });
     }
 

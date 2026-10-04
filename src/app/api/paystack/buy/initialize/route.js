@@ -1,29 +1,25 @@
 // ROUTE: src/app/api/paystack/buy/initialize/route.js
-// ADMIN DASHBOARD PHASE 4: the platform fee (previously hardcoded as
-// `amount * 0.05`) now comes from platform_settings via getSetting()
-// (see src/lib/settings.js and db/migrations/006_platform_settings.sql),
-// seeded to the same 5% so this changes nothing until an admin edits it
-// from /admin/settings.
-// CHANGED (this pass): in the card/bank checkout branch, added a temporary
-// console.log of the raw Flutterwave /v3/payments response (to diagnose the
-// "Cannot GET /" checkout error — the redirect URL returned was missing its
-// trailing /flwlnk-... id), plus a guard that now checks flwData.data.link
-// actually looks like a real hosted-pay link before returning it as
-// authorization_url. If it doesn't, we roll back and return a clean 500
-// instead of handing the frontend a broken redirect. Remove the console.log
-// once the raw response has been inspected and the root cause confirmed.
 //
-// PRIOR CHANGE: only the card/bank checkout branch below (previously
-// "PAYSTACK PAYMENT") now calls Flutterwave's /v3/payments instead of
-// Paystack's transaction/initialize. The `paymentMethod === "paystack"`
-// string check was deliberately left AS-IS (not renamed to "flutterwave")
-// so the frontend, DB columns, and check-constraints referencing this value
-// don't also need to change — it's now just an internal label for "pay by
-// card/bank checkout" rather than literally meaning "via Paystack".
+// Starts a purchase. SECURITY (audit hardening):
+//  - Price, seller, fee and listing state are all read from the database
+//    inside a row-locked transaction; the client only names the listing.
+//  - listingId / receiverId / paymentMethod are validated.
+//  - Wallet purchases lock the BUYER'S USER ROW before reading the balance so
+//    two parallel purchases (or a purchase racing a withdrawal) cannot both
+//    spend the same naira.
+//  - A card checkout reserves the listing, but a reservation now EXPIRES
+//    (STALE_CHECKOUT_MINUTES) and a user can hold only a few at once, so an
+//    attacker cannot lock the whole marketplace by starting checkouts and
+//    never paying.
+//  - The raw payment-provider response is no longer logged.
 import pool from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import { emitToRoom } from "@/lib/socket";
 import { getSetting } from "@/lib/settings";
+import { checkRateLimit, tooManyRequests } from "@/lib/rateLimit";
+
+const STALE_CHECKOUT_MINUTES = 60; // unpaid card checkouts older than this release the listing
+const MAX_OPEN_CHECKOUTS_PER_USER = 3;
 
 export async function POST(req) {
   try {
@@ -45,10 +41,22 @@ export async function POST(req) {
       );
     }
 
-    const { listingId, receiverId, paymentMethod } = await req.json();
+    const rl = await checkRateLimit(`buy-init:${user.id}`, { limit: 10, windowSeconds: 60 });
+    if (!rl.allowed) return tooManyRequests();
 
-    if (!receiverId || isNaN(Number(receiverId))) {
+    const body = await req.json().catch(() => ({}));
+    const { paymentMethod } = body;
+    const listingId = Number(body.listingId);
+    const receiverId = Number(body.receiverId);
+
+    if (!Number.isInteger(listingId) || listingId <= 0) {
+      return Response.json({ error: "Invalid listingId" }, { status: 400 });
+    }
+    if (!Number.isInteger(receiverId) || receiverId <= 0) {
       return Response.json({ error: "Invalid receiverId" }, { status: 400 });
+    }
+    if (paymentMethod !== "wallet" && paymentMethod !== "paystack") {
+      return Response.json({ error: "Invalid payment method" }, { status: 400 });
     }
 
     const client = await pool.connect();
@@ -101,11 +109,13 @@ export async function POST(req) {
         );
       }
 
+      // This buyer's own unfinished attempts on this listing.
       const existing = await client.query(
         `SELECT * FROM transactions
-         WHERE listing_id = $1
-         AND buyer_id = $2
-         AND payment_status IN ('pending', 'paid')`,
+          WHERE listing_id = $1
+            AND buyer_id = $2
+            AND payment_status IN ('pending', 'paid')
+          FOR UPDATE`,
         [listingId, user.id],
       );
 
@@ -114,18 +124,23 @@ export async function POST(req) {
           (tx) => tx.transaction_status === "initiated",
         );
 
-        if (stale) {
+        if (stale && existing.rows.length === 1) {
+          // Abandoned checkout by the same buyer: supersede it. If its card
+          // payment completes late, the webhook refunds it to the wallet
+          // (it never resurrects a cancelled order).
           await client.query(
             `UPDATE transactions
-             SET transaction_status = 'cancelled', payment_status = 'failed'
-             WHERE id = $1`,
+                SET transaction_status = 'cancelled', payment_status = 'failed', updated_at = NOW()
+              WHERE id = $1`,
             [stale.id],
           );
           await client.query(
-            `UPDATE listings SET status = 'active', processing_by = NULL WHERE id = $1`,
-            [listingId],
+            `UPDATE listings SET status = 'active', processing_by = NULL
+              WHERE id = $1 AND status = 'processing' AND processing_by = $2`,
+            [listingId, user.id],
           );
           listing.status = "active";
+          listing.processing_by = null;
         } else {
           await client.query("ROLLBACK");
           return Response.json(
@@ -135,20 +150,62 @@ export async function POST(req) {
         }
       }
 
+      // Someone else is mid-checkout on this listing. Their reservation only
+      // holds for STALE_CHECKOUT_MINUTES; after that it is released so a
+      // buyer who walked away cannot block the listing forever.
       if (
         listing.status === "processing" &&
-        listing.processing_by !== user.id
+        Number(listing.processing_by) !== Number(user.id)
       ) {
-        await client.query("ROLLBACK");
-        return Response.json(
-          { error: "Listing not available" },
-          { status: 400 },
+        const holder = await client.query(
+          `SELECT id FROM transactions
+            WHERE listing_id = $1
+              AND buyer_id = $2
+              AND payment_status = 'pending'
+              AND transaction_status = 'initiated'
+              AND created_at < NOW() - ($3 || ' minutes')::interval
+            FOR UPDATE`,
+          [listingId, listing.processing_by, String(STALE_CHECKOUT_MINUTES)],
         );
+        if (holder.rows.length === 0) {
+          await client.query("ROLLBACK");
+          return Response.json({ error: "Listing not available" }, { status: 400 });
+        }
+        await client.query(
+          `UPDATE transactions
+              SET transaction_status = 'cancelled', payment_status = 'failed', updated_at = NOW()
+            WHERE id = ANY($1::bigint[])`,
+          [holder.rows.map((r) => r.id)],
+        );
+        await client.query(
+          `UPDATE listings SET status = 'active', processing_by = NULL WHERE id = $1`,
+          [listingId],
+        );
+        listing.status = "active";
+        listing.processing_by = null;
+      }
+
+      // Limit how many listings one account can reserve at once.
+      if (paymentMethod === "paystack") {
+        const open = await client.query(
+          `SELECT COUNT(*)::int AS n FROM transactions
+            WHERE buyer_id = $1
+              AND payment_status = 'pending'
+              AND transaction_status = 'initiated'`,
+          [user.id],
+        );
+        if (open.rows[0].n >= MAX_OPEN_CHECKOUTS_PER_USER) {
+          await client.query("ROLLBACK");
+          return Response.json(
+            { error: "You have too many unfinished checkouts. Complete or cancel one first." },
+            { status: 429 },
+          );
+        }
       }
 
       const amount = Number(listing.price);
       const sellerFeePercent = await getSetting("seller_fee_percent");
-      const platformFee = amount * (Number(sellerFeePercent) / 100);
+      const platformFee = Math.round(amount * Number(sellerFeePercent)) / 100;
       const sellerAmount = amount;
 
       if (!Number.isFinite(amount) || amount <= 0) {
@@ -170,6 +227,12 @@ export async function POST(req) {
       // affects_balance = false — see paystack/webhook/route.js and the
       // balance queries in user/account, user/withdraw, and this file).
       if (paymentMethod === "wallet") {
+        // Serialise ALL wallet-affecting operations for this user (withdraw
+        // locks the same row). Locking only the ledger rows does not stop a
+        // concurrent transaction from INSERTING a new debit, which previously
+        // allowed a double-spend.
+        await client.query(`SELECT id FROM users WHERE id = $1 FOR UPDATE`, [user.id]);
+
         // NOTE: `FOR UPDATE` cannot be combined with an aggregate (SUM) in
         // the same SELECT — Postgres errors with "FOR UPDATE is not allowed
         // with aggregate functions" because it can't determine which row(s)
@@ -257,8 +320,11 @@ export async function POST(req) {
         );
 
         const convRes = await client.query(
-          `SELECT id FROM conversations WHERE listing_id = $1 LIMIT 1`,
-          [listingId],
+          `SELECT id FROM conversations
+            WHERE listing_id = $1
+              AND ((sender_id = $2 AND receiver_id = $3) OR (sender_id = $3 AND receiver_id = $2))
+            LIMIT 1`,
+          [listingId, user.id, listing.user_id],
         );
 
         let paymentMsg = null;
@@ -338,15 +404,10 @@ export async function POST(req) {
               receiverId,
             },
           }),
+          signal: AbortSignal.timeout(15000),
         });
 
-        const flwData = await flwRes.json();
-
-        // TEMP DEBUG: log the raw Flutterwave response so we can see exactly
-        // what came back (e.g. status "success" but a malformed/incomplete
-        // data.link) when diagnosing the "Cannot GET /" checkout issue.
-        // Remove once confirmed fixed.
-        console.log("Flutterwave /v3/payments raw response:", flwRes.status, JSON.stringify(flwData));
+        const flwData = await flwRes.json().catch(() => ({}));
 
         if (flwData.status !== "success") {
           await client.query("ROLLBACK");
@@ -363,10 +424,7 @@ export async function POST(req) {
         // a broken redirect URL.
         const paymentLink = flwData?.data?.link;
         if (!paymentLink || !/^https:\/\/[^/]+\/v3\/hosted\/pay\/.+/.test(paymentLink)) {
-          console.error(
-            "Flutterwave returned success but no usable payment link:",
-            JSON.stringify(flwData),
-          );
+          console.error("Flutterwave returned success but no usable payment link");
           await client.query("ROLLBACK");
           return Response.json(
             { error: "Payment init failed" },

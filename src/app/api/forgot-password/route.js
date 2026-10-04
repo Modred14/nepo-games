@@ -1,10 +1,13 @@
+// ROUTE: src/app/api/forgot-password/route.js
 // src/app/api/forgot-password/route.js
 import { NextResponse } from "next/server";
 import crypto from "crypto";
 import pool from "../../../lib/db";
 import { Resend } from "resend";
+import { escapeHtml } from "../../../lib/html";
+import { checkRateLimit, getClientIp, tooManyRequests } from "../../../lib/rateLimit";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = new Resend(process.env.RESEND_API_KEY || "re_missing_key");
 
 export async function POST(req) {
   try {
@@ -27,6 +30,9 @@ if (!user) {
 
     // generate token
     const token = crypto.randomBytes(32).toString("hex");
+    // Only a SHA-256 hash is stored, so a database leak cannot be turned into
+    // working password-reset links.
+    const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
     const expiry = new Date(Date.now() + 15 * 60 * 1000).toISOString(); // 15 min
 
     // FIX: this used to be `console.log(token, expiry)` — logging the raw
@@ -38,13 +44,13 @@ if (!user) {
       `UPDATE users 
        SET reset_token = $1, reset_token_expiry = $2
        WHERE email = $3`,
-      [token, expiry, email],
+      [tokenHash, expiry, user.email],
     );
     const resetLink = `${process.env.NEXT_PUBLIC_BASE_URL}/reset/${token}`;
 
 await resend.emails.send({
   from: "Nepogames <no-reply@support.nepogames.com>",
-  to: email,
+  to: user.email,
   subject: "Reset your password",
   html: `
     <!DOCTYPE html>
@@ -121,7 +127,7 @@ await resend.emails.send({
               <tr>
                 <td style="background:#FAFAF9;border-top:1px solid #E7E5E4;padding:20px 40px;">
                   <p style="margin:0 0 4px;font-size:12px;color:#78716C;line-height:1.6;">
-                    This email was sent to <strong>${email}</strong>.
+                    This email was sent to <strong>${escapeHtml(user.email)}</strong>.
                     If you have trouble, contact <a href="mailto:support@nepogames.com" style="color:#78716C;">support@nepogames.com</a>.
                   </p>
                   <p style="margin:8px 0 0;font-size:12px;color:#A8A29E;">
@@ -139,12 +145,14 @@ await resend.emails.send({
   `,
 });
 
+    // Identical to the "no such account" response — don't reveal which
+    // addresses are registered.
     return NextResponse.json({
       success: true,
-      message: "Reset email sent",
+      message: "If that email exists, a reset link was sent.",
     });
   } catch (err) {
-    console.error(err);
+    console.error("Forgot password error:", err.message);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

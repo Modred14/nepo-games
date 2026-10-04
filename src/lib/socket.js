@@ -1,16 +1,13 @@
+// ROUTE: src/lib/socket.js
+// src/lib/socket.js
+// Pushes a real-time event to the external socket service.
+// Never throws: a failed notification must not undo a committed DB change.
 export async function emitToRoom(room, event, data) {
   const socketServerUrl = process.env.SOCKET_SERVER_URL;
-
-  console.log("[emitToRoom] called:", { room, event, socketServerUrl });
-
-  if (!socketServerUrl) {
-    console.error("[emitToRoom] ERROR: SOCKET_SERVER_URL is not set!");
-    return;
-  }
-
   const secret = process.env.SOCKET_SECRET;
-  if (!secret) {
-    console.error("[emitToRoom] ERROR: SOCKET_SECRET is not set!");
+
+  if (!socketServerUrl || !secret) {
+    console.error("[emitToRoom] SOCKET_SERVER_URL / SOCKET_SECRET not configured");
     return;
   }
 
@@ -22,15 +19,14 @@ export async function emitToRoom(room, event, data) {
         "x-secret": secret,
       },
       body: JSON.stringify({ room, event, data }),
+      signal: AbortSignal.timeout(8000),
     });
 
-    const text = await res.text();
     if (!res.ok) {
-      console.error("[emitToRoom] Emit failed:", res.status, text);
-    } else {
-      console.log("[emitToRoom] Emit success:", res.status, room, event);
+      // Status only — never log the payload (it can contain chat content).
+      console.error("[emitToRoom] emit failed:", res.status, event);
     }
   } catch (err) {
-    console.error("[emitToRoom] Fetch threw an error:", err.message);
+    console.error("[emitToRoom] request failed:", err.message);
   }
 }

@@ -1,3 +1,4 @@
+// ROUTE: src/app/layout.js
 import { Bricolage_Grotesque } from "next/font/google";
 import "./globals.css";
 import Providers from "./Provider";
@@ -36,8 +37,12 @@ export const metadata = {
     type: "website",
     images: [{ url: "/og-image.png", width: 1200, height: 630 }],
   },
-  alternates: {
-    canonical: "https://nepogames.com",
+  // NOTE: no site-wide canonical here — a root canonical is inherited by every
+  // page that doesn't override it, which would tell search engines that all
+  // pages are duplicates of the homepage. Pages set their own canonical.
+  icons: {
+    icon: "/icon.png",
+    apple: "/nepo-logo.png",
   },
 
   twitter: {
@@ -55,9 +60,7 @@ export const metadata = {
 export const viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
-  
+  // Pinch-zoom is intentionally NOT disabled (WCAG 1.4.4 Resize Text).
 };
 
 export default function RootLayout({ children }) {

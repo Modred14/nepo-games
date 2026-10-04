@@ -1,3 +1,4 @@
+// ROUTE: src/app/api/expire-check/route.js
 import pool from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 
@@ -8,12 +9,12 @@ export async function POST(req, { params }) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { deliveryId } = await req.json();
+    
 
     const { searchParams } = new URL(req.url);
-    const conversationId = searchParams.get("conversationId");
+    const conversationId = Number(searchParams.get("conversationId"));
 
-    if (!conversationId) {
+    if (!Number.isInteger(conversationId) || conversationId <= 0) {
       console.error("❌ Missing conversationId");
       return Response.json(
         { error: "Missing conversationId" },

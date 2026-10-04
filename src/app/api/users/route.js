@@ -1,8 +1,14 @@
+// ROUTE: src/app/api/users/route.js
 // src/app/api/users/route.js
 import pool from "../../../lib/db";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
 import { resend } from "../../../lib/resend";
+import { escapeHtml } from "../../../lib/html";
+import { checkRateLimit, getClientIp, tooManyRequests } from "../../../lib/rateLimit";
+
+const EMAIL_RE = /^[^\s@]{1,64}@[^\s@]+\.[^\s@]{2,}$/;
+const USERNAME_RE = /^[A-Za-z0-9_.-]{3,30}$/;
 
 export async function POST(req) {
   try {
@@ -10,22 +16,40 @@ export async function POST(req) {
     const defaultAvatar =
       "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
     const expires = new Date(Date.now() + 1000 * 60 * 60);
-    const { first_name, surname, username, email, password } = await req.json();
+    const rl = await checkRateLimit(`signup:${getClientIp(req)}`, {
+      limit: 5,
+      windowSeconds: 3600,
+      failClosed: true,
+    });
+    if (!rl.allowed) return tooManyRequests("Too many sign-up attempts. Please try again later.");
 
-    // FIX: signup previously accepted any password at all (even 1 character)
-    // while reset-password enforced a 6-char minimum — inconsistent, and a
-    // weak-password hole on the most important entry point. Mirror the same
-    // rule here.
+    const body = await req.json().catch(() => ({}));
+    const str = (v) => (typeof v === "string" ? v.trim() : "");
+    const first_name = str(body.first_name);
+    const surname = str(body.surname);
+    const username = str(body.username);
+    const email = str(body.email).toLowerCase();
+    const password = typeof body.password === "string" ? body.password : "";
+
     if (!first_name || !surname || !username || !email || !password) {
+      return Response.json({ error: "All fields are required." }, { status: 400 });
+    }
+    if (first_name.length > 50 || surname.length > 50) {
+      return Response.json({ error: "Name is too long." }, { status: 400 });
+    }
+    if (!USERNAME_RE.test(username)) {
       return Response.json(
-        { error: "All fields are required." },
+        { error: "Username must be 3-30 characters: letters, numbers, dot, dash or underscore." },
         { status: 400 },
       );
     }
-
-    if (typeof password !== "string" || password.length < 6) {
+    if (!EMAIL_RE.test(email) || email.length > 254) {
+      return Response.json({ error: "Enter a valid email address." }, { status: 400 });
+    }
+    // bcrypt only uses the first 72 bytes; cap length to avoid a CPU-DoS vector.
+    if (password.length < 8 || password.length > 72) {
       return Response.json(
-        { error: "Password must be at least 6 characters long." },
+        { error: "Password must be between 8 and 72 characters long." },
         { status: 400 },
       );
     }
@@ -59,7 +83,7 @@ export async function POST(req) {
       }
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 12);
 
     const result = await pool.query(
       `INSERT INTO users
@@ -179,7 +203,7 @@ export async function POST(req) {
               <tr>
                 <td style="background:#FAFAF9;border-top:1px solid #E7E5E4;padding:20px 40px;">
                   <p style="margin:0 0 4px;font-size:12px;color:#78716C;line-height:1.6;">
-                    This email was sent to <strong>${email}</strong>.
+                    This email was sent to <strong>${escapeHtml(email)}</strong>.
                     Questions? Contact <a href="mailto:support@nepogames.com" style="color:#78716C;">support@nepogames.com</a>.
                   </p>
                   <p style="margin:8px 0 0;font-size:12px;color:#A8A29E;">
@@ -205,7 +229,7 @@ If you didn't create an account, ignore this email.`,
 
     return Response.json(result.rows[0], { status: 201 });
   } catch (err) {
-    console.error(err);
+    console.error("Signup error:", err.message);
 
     // FIX: the SELECT-then-INSERT duplicate check above isn't atomic — two
     // signups for the same email/username submitted at the same instant can

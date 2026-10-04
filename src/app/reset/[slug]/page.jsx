@@ -1,3 +1,4 @@
+// ROUTE: src/app/reset/[slug]/page.jsx
 "use client";
 
 import React from "react";
@@ -32,6 +33,11 @@ export default function Login() {
 
       if (password !== confirmPassword) {
         setError("Passwords do not match");
+        return;
+      }
+
+      if (password.length < 8) {
+        setError("Password must be at least 8 characters");
         return;
       }
 
@@ -133,7 +139,7 @@ export default function Login() {
                         Enter your Password
                       </label>
 
-                      <button
+                      <button aria-label="Toggle password visibility"
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
                         className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
@@ -176,7 +182,7 @@ export default function Login() {
                         Confirm your Password
                       </label>
 
-                      <button
+                      <button aria-label="Toggle password visibility"
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
                         className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"

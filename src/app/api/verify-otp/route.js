@@ -1,6 +1,8 @@
+// ROUTE: src/app/api/verify-otp/route.js
 // src/app/api/verify-otp/route.js
 import pool from "@/lib/db";
 import { requireUser } from "@/lib/auth";
+import { checkRateLimit, tooManyRequests } from "@/lib/rateLimit";
 
 // FIX (critical): same App Router handler-signature bug as send-otp/route.js
 // — this was `export default function handler(req, res)` with `req.body`,
@@ -19,9 +21,14 @@ export async function POST(req) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { phone, otp } = await req.json();
+    const body = await req.json().catch(() => ({}));
+    const phone = typeof body.phone === "string" ? body.phone.trim() : "";
+    const otp = typeof body.otp === "string" ? body.otp.trim() : "";
 
-    if (!phone || !otp) {
+    const rl = await checkRateLimit(`sms-otp-verify:${user.id}`, { limit: 15, windowSeconds: 3600, failClosed: true });
+    if (!rl.allowed) return tooManyRequests();
+
+    if (!phone || !/^\d{6}$/.test(otp)) {
       return Response.json(
         { error: "Phone and OTP required" },
         { status: 400 },
@@ -29,7 +36,7 @@ export async function POST(req) {
     }
 
     const result = await pool.query(
-      `SELECT phone_verification_code, verification_expires
+      `SELECT phone_verification_code, verification_expires, COALESCE(otp_attempts, 0) AS otp_attempts
        FROM users WHERE id = $1`,
       [user.id],
     );
@@ -58,7 +65,17 @@ export async function POST(req) {
     const storedOtp = row.phone_verification_code.slice(0, separatorIndex);
     const storedPhone = row.phone_verification_code.slice(separatorIndex + 1);
 
+    // Max 5 wrong guesses per issued code — a 6-digit code is otherwise
+    // brute-forceable.
+    if (Number(row.otp_attempts) >= 5) {
+      return Response.json({ error: "Too many incorrect attempts. Request a new code." }, { status: 429 });
+    }
+
     if (storedOtp !== otp || storedPhone !== phone) {
+      await pool.query(
+        `UPDATE users SET otp_attempts = COALESCE(otp_attempts, 0) + 1 WHERE id = $1`,
+        [user.id],
+      );
       return Response.json({ error: "Invalid OTP" }, { status: 400 });
     }
 
@@ -67,6 +84,7 @@ export async function POST(req) {
     await pool.query(
       `UPDATE users
        SET phone_verified = true,
+           otp_attempts = 0,
            phone_number = $1,
            phone_verification_code = NULL,
            verification_expires = NULL
