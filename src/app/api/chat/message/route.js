@@ -1,27 +1,37 @@
+// ROUTE: src/app/api/chat/message/route.js
 import { NextResponse } from "next/server";
 import pool from "@/lib/db";
+import { authorizeChatSession } from "@/lib/chatSession";
+import { checkRateLimit, getClientIp, tooManyRequests } from "@/lib/rateLimit";
 
 export async function POST(req) {
   try {
-    const { sessionId, userMessage } = await req.json();
+    const body = await req.json().catch(() => ({}));
+    const userMessage = typeof body.userMessage === "string" ? body.userMessage.trim() : "";
 
-    if (!sessionId || !userMessage) {
+    if (!body.sessionId || !userMessage) {
       return NextResponse.json(
         { error: "sessionId and userMessage are required" },
         { status: 400 },
       );
     }
+    if (userMessage.length > 1000) {
+      return NextResponse.json({ error: "Message is too long" }, { status: 400 });
+    }
 
-    // Verify session exists
-    const sessionResult = await pool.query(
-      "SELECT * FROM chat_sessions WHERE id = $1 AND deleted_at IS NULL",
-      [sessionId],
-    );
-    const chatSession = sessionResult.rows[0];
-    if (!chatSession) {
+    // Caller must own the session (previously ANY session id was accepted).
+    const access = await authorizeChatSession(req, body.sessionId);
+    if (!access.ok) {
       return NextResponse.json({ error: "Session not found" }, { status: 404 });
     }
-    // After fetching chatSession, add:
+    const sessionId = access.session.id;
+    const chatSession = access.session;
+
+    // Each message may call a paid AI model, so cap it per IP as well as the
+    // per-session cap below.
+    const rl = await checkRateLimit(`chat-msg:${getClientIp(req)}`, { limit: 20, windowSeconds: 60 });
+    if (!rl.allowed) return tooManyRequests();
+
     const countRes = await pool.query(
       `SELECT COUNT(*) FROM chat_messages WHERE session_id = $1 AND role = 'user'`,
       [sessionId],
@@ -77,10 +87,15 @@ export async function POST(req) {
     }
 
     const aiRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
       {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        // Key goes in a header, not the URL (URLs end up in logs/traces).
+        headers: {
+          "Content-Type": "application/json",
+          "x-goog-api-key": process.env.GEMINI_API_KEY || "",
+        },
+        signal: AbortSignal.timeout(20000),
         body: JSON.stringify({
           system_instruction: {
             parts: [
@@ -134,7 +149,7 @@ Never assume what the user's problem is. Always ask first.`,
 
     return NextResponse.json({ mode: "bot", reply: aiReply });
   } catch (err) {
-    console.error("POST /api/chat/message error:", err);
+    console.error("POST /api/chat/message error:", err.message);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 },

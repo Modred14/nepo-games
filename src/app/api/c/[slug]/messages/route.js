@@ -1,3 +1,4 @@
+// ROUTE: src/app/api/c/[slug]/messages/route.js
 import pool from "../../../../../lib/db";
 import { requireUser } from "../../../../../lib/auth";
 import {
@@ -20,30 +21,50 @@ import {
 export async function GET(req, context) {
   try {
     const params = await context.params;
-    const listing_id = params.slug;
+    const listing_id = Number(params.slug);
     const { searchParams } = new URL(req.url);
 
-    const user = await requireUser(); // ✅ Zero DB — reads from JWT
+    const user = await requireUser();
     if (!user) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const sender_id = user.id;
-    const receiver_id = searchParams.get("receiver_id");
+    const sender_id = Number(user.id);
+    const receiver_id = Number(searchParams.get("receiver_id"));
 
-    if (!sender_id || !receiver_id || !listing_id) {
+    if (
+      !Number.isInteger(sender_id) ||
+      !Number.isInteger(receiver_id) ||
+      receiver_id <= 0 ||
+      !Number.isInteger(listing_id) ||
+      listing_id <= 0 ||
+      receiver_id === sender_id
+    ) {
       return Response.json(
-        { error: "Missing params (sender_id, receiver_id, listing_id)" },
+        { error: "Missing params (receiver_id, listing_id)" },
         { status: 400 },
       );
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // 1. GET OR CREATE CONVERSATION
-    //    Cache the conversation lookup — it almost never changes after creation
-    // ─────────────────────────────────────────────────────────────────────────
-    const convoKey = `convo:${listing_id}:${Math.min(sender_id, receiver_id)}:${Math.max(sender_id, receiver_id)}`;
+    // SECURITY: a conversation about a listing is ONLY ever between the
+    // listing's seller and one buyer. Previously any two ids could be
+    // supplied, so a user could create conversations with arbitrary users
+    // (harassment/phishing channel under a real listing) and the system
+    // would then treat it as a legitimate trade chat. One side MUST be the
+    // listing owner.
+    const listingRes = await pool.query(
+      `SELECT user_id FROM listings WHERE id = $1 AND deleted_at IS NULL`,
+      [listing_id],
+    );
+    if (listingRes.rows.length === 0) {
+      return Response.json({ error: "Listing not found" }, { status: 404 });
+    }
+    const sellerId = Number(listingRes.rows[0].user_id);
+    if (sender_id !== sellerId && receiver_id !== sellerId) {
+      return Response.json({ error: "Not allowed" }, { status: 403 });
+    }
 
+    const convoKey = `convo:${listing_id}:${Math.min(sender_id, receiver_id)}:${Math.max(sender_id, receiver_id)}`;
     let conversation = await getCached(convoKey);
 
     if (!conversation) {
@@ -60,6 +81,11 @@ export async function GET(req, context) {
       );
 
       if (convo.rows.length === 0) {
+        // Only a prospective BUYER may open the conversation (the seller
+        // cannot cold-start chats with arbitrary users).
+        if (sender_id === sellerId) {
+          return Response.json({ error: "Not allowed" }, { status: 403 });
+        }
         try {
           convo = await pool.query(
             `INSERT INTO conversations (sender_id, receiver_id, listing_id)
@@ -67,8 +93,7 @@ export async function GET(req, context) {
              RETURNING *`,
             [sender_id, receiver_id, listing_id],
           );
-        } catch (err) {
-          // Race condition fallback
+        } catch {
           convo = await pool.query(
             `SELECT * FROM conversations
              WHERE listing_id = $1
@@ -84,22 +109,21 @@ export async function GET(req, context) {
       }
 
       if (!convo.rows[0]) {
-        return Response.json(
-          { error: "Failed to create/fetch conversation" },
-          { status: 500 },
-        );
+        return Response.json({ error: "Failed to create/fetch conversation" }, { status: 500 });
       }
 
       conversation = convo.rows[0];
-      // Cache for 1 hour — conversations basically never change
       await setCached(convoKey, conversation, 60 * 60);
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // 2. GET MESSAGES — cached for 30s
-    //    The POST route calls invalidateCache(messagesKey) after each new message
-    //    so the next GET after a send always gets fresh data
-    // ─────────────────────────────────────────────────────────────────────────
+    // Final membership check (covers a stale/poisoned cache entry).
+    if (
+      Number(conversation.sender_id) !== sender_id &&
+      Number(conversation.receiver_id) !== sender_id
+    ) {
+      return Response.json({ error: "Not allowed" }, { status: 403 });
+    }
+
     const messagesKey = `messages:${conversation.id}`;
     let messages = await getCached(messagesKey);
 
@@ -116,9 +140,9 @@ export async function GET(req, context) {
 
     return Response.json({ conversation, messages });
   } catch (err) {
-    console.error("🔥 CHAT GET ERROR:", err);
+    console.error("CHAT GET ERROR:", err.message);
     return Response.json(
-      { error: "Server error", details: err.message },
+      { error: "Server error" },
       { status: 500 },
     );
   }

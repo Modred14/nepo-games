@@ -1,4 +1,4 @@
-// ROUTE: src/app/api/admin/reauth/route.js  (NEW)
+// ROUTE: src/app/api/admin/reauth/route.js
 //
 // ADMIN DASHBOARD: verifies the admin's own credential (password, or PIN
 // as a fallback — see below) before issuing a short-lived step-up token
@@ -45,7 +45,9 @@ export async function POST(req) {
       );
     }
 
-    const { credential, action } = await req.json();
+    const body = await req.json().catch(() => ({}));
+    const credential = typeof body.credential === "string" ? body.credential : "";
+    const action = body.action;
 
     if (!VALID_ACTIONS.includes(action)) {
       return Response.json({ error: "Unknown action" }, { status: 400 });
@@ -92,7 +94,7 @@ export async function POST(req) {
     const token = signReauthToken({ adminId: admin.id, action });
     return Response.json({ token, expiresInSeconds: 300 });
   } catch (err) {
-    console.error("ADMIN REAUTH ERROR:", err);
+    console.error("ADMIN REAUTH ERROR:", err.message);
     return Response.json({ error: "Server error" }, { status: 500 });
   }
 }

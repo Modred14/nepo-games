@@ -1,4 +1,11 @@
-// src/app/api/c/[slug]/confirm/route.js
+// ROUTE: src/app/api/c/[slug]/confirm/route.js
+//
+// SECURITY (audit hardening): the delivery is now joined to the ONE live
+// (paid, held/frozen) order that belongs to this conversation, instead of to
+// "any transaction on the same listing". The old join could pick up an old
+// cancelled/refunded order, so a buyer whose order had been refunded could
+// still "confirm" and release funds to the seller, and a seller's funds could
+// be released against the wrong order.
 // ROUTE: src/app/api/c/[slug]/confirm/route.js
 //
 // ADMIN DASHBOARD PHASE 3: a buyer can no longer confirm/release a
@@ -23,7 +30,10 @@ export async function POST(req, { params }) {
     }
 
     const { searchParams } = new URL(req.url);
-    const conversationId = searchParams.get("conversationId");
+    const conversationId = Number(searchParams.get("conversationId"));
+    if (!Number.isInteger(conversationId) || conversationId <= 0) {
+      return Response.json({ error: "Missing conversationId" }, { status: 400 });
+    }
 
     await client.query("BEGIN");
 
@@ -39,11 +49,17 @@ export async function POST(req, { params }) {
         t.escrow_status,
         t.frozen
       FROM login_deliveries ld
-      JOIN transactions t ON t.listing_id = ld.listing_id
+      JOIN conversations c ON c.id = ld.conversation_id
+      JOIN transactions t
+        ON t.listing_id = ld.listing_id
+       AND t.payment_status = 'paid'
+       AND t.escrow_status IN ('holding', 'frozen')
+       AND ((c.sender_id = t.buyer_id AND c.receiver_id = t.seller_id)
+         OR (c.sender_id = t.seller_id AND c.receiver_id = t.buyer_id))
       WHERE ld.conversation_id = $1
       ORDER BY ld.created_at DESC
       LIMIT 1
-      FOR UPDATE
+      FOR UPDATE OF ld, t
       `,
       [conversationId],
     );
@@ -53,7 +69,7 @@ export async function POST(req, { params }) {
     if (!login) {
       await client.query("ROLLBACK");
       return Response.json(
-        { error: "No active delivery found" },
+        { error: "No active delivery found for this order" },
         { status: 404 },
       );
     }
@@ -168,8 +184,10 @@ export async function POST(req, { params }) {
 
     return Response.json({ success: true });
   } catch (err) {
-    await client.query("ROLLBACK");
-    console.error("CONFIRM ERROR:", err);
+    try {
+      await client.query("ROLLBACK");
+    } catch {}
+    console.error("CONFIRM ERROR:", err.message);
     return Response.json({ error: "Server error" }, { status: 500 });
   } finally {
     client.release();

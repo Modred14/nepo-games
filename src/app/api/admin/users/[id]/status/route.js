@@ -1,4 +1,4 @@
-// ROUTE: src/app/api/admin/users/[id]/status/route.js  (NEW)
+// ROUTE: src/app/api/admin/users/[id]/status/route.js
 //
 // ADMIN DASHBOARD PHASE 2: change a user's account_status
 // (active/suspended/banned). Enforcement itself lives in
@@ -18,7 +18,8 @@ export async function POST(req, { params }) {
     }
 
     const { id } = await params;
-    const { status, reason } = await req.json();
+    const body = await req.json().catch(() => ({}));
+    const { status, reason } = body;
 
     if (!VALID_STATUSES.includes(status)) {
       return Response.json(
@@ -43,6 +44,15 @@ export async function POST(req, { params }) {
     const target = targetRes.rows[0];
     if (!target) {
       return Response.json({ error: "User not found" }, { status: 404 });
+    }
+
+    // A regular admin must not be able to suspend/ban another admin (or a
+    // super admin). Only super admins manage other admins' accounts.
+    if (target.role === "admin" && admin.adminRole !== "super_admin") {
+      return Response.json(
+        { error: "Only a super admin can change another admin's account status" },
+        { status: 403 },
+      );
     }
 
     if (target.account_status === status) {

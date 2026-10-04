@@ -1,10 +1,12 @@
+// ROUTE: src/app/api/c/[slug]/mark-read/route.js
 import pool from "../../../../../lib/db";
 import { requireUser } from "../../../../../lib/auth";
 
 export async function POST(req) {
   try {
     const SYSTEM_USER_ID = 1;
-    const { gameId } = await req.json();
+    const body = await req.json().catch(() => ({}));
+    const gameId = Number(body.gameId);
     const user = await requireUser();
 
     if (!user) {
@@ -16,8 +18,7 @@ export async function POST(req) {
       return Response.json({ success: true, bypassed: true });
     }
 
-    if (!gameId) {
-      console.log(gameId, user_id);
+    if (!Number.isInteger(gameId) || gameId <= 0) {
       return Response.json({ error: "Missing fields" }, { status: 400 });
     }
 

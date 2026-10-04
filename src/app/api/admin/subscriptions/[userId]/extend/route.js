@@ -1,4 +1,4 @@
-// ROUTE: src/app/api/admin/subscriptions/[userId]/extend/route.js  (NEW)
+// ROUTE: src/app/api/admin/subscriptions/[userId]/extend/route.js
 //
 // ADMIN DASHBOARD PHASE 5: grants/extends subscription time. Follows the
 // EXACT same rollover + tier-derivation logic as a real payment in
@@ -20,11 +20,15 @@ export async function POST(req, { params }) {
     }
 
     const { userId } = await params;
-    const { days, reason } = await req.json();
+    const body = await req.json().catch(() => ({}));
+    const { days, reason } = body;
 
     const numDays = Number(days);
-    if (!Number.isInteger(numDays) || numDays === 0) {
-      return Response.json({ error: "days must be a non-zero whole number" }, { status: 400 });
+    if (!Number.isInteger(numDays) || numDays === 0 || Math.abs(numDays) > 3650) {
+      return Response.json({ error: "days must be a non-zero whole number (max 3650)" }, { status: 400 });
+    }
+    if (!Number.isInteger(Number(userId)) || Number(userId) <= 0) {
+      return Response.json({ error: "Invalid user id" }, { status: 400 });
     }
 
     await client.query("BEGIN");

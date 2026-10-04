@@ -1,4 +1,4 @@
-// ROUTE: src/app/admin/_components/AdminShell.jsx  (NEW)
+// ROUTE: src/app/admin/_components/AdminShell.jsx
 //
 // DESIGN PASS: shared shell (sidebar + topbar) for every /admin page, and
 // home for the admin design system's CSS variables. Every color/radius/
@@ -7,7 +7,7 @@
 // block: #1a56db/#1e40af/#1e3a8a blue, slate neutrals, 10-16px radii,
 // Bricolage Grotesque headings already set globally on <body>) — not
 // invented from scratch, so the admin dashboard actually looks like it
-// belongs to Nepo Games rather than a generic template dropped on top.
+// belongs to Nepogames rather than a generic template dropped on top.
 //
 // Sidebar links ONLY point at pages that actually exist and work right
 // now (Dashboard, Users, Withdrawals, Disputes, Support, Audit log).
@@ -100,7 +100,7 @@ export default function AdminShell({ children }) {
     <div className="adm-shell">
       <aside className={`adm-sidebar ${mobileOpen ? "adm-sidebar--open" : ""}`}>
         <div className="adm-sidebar__brand">
-          <span className="adm-sidebar__logo">Nepo Games</span>
+          <span className="adm-sidebar__logo">Nepogames</span>
           <span className="adm-sidebar__tag">Admin</span>
         </div>
 

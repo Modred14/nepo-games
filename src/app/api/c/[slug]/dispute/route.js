@@ -1,7 +1,10 @@
+// ROUTE: src/app/api/c/[slug]/dispute/route.js
 import pool from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import { emitToRoom } from "@/lib/socket";
-import { resend } from "@/lib/resend"; // adjust to your resend import path
+import { resend } from "@/lib/resend";
+import { escapeHtml } from "@/lib/html";
+import { checkRateLimit, tooManyRequests } from "@/lib/rateLimit";
 
 const SYSTEM_USER_ID = 1;
 
@@ -15,7 +18,13 @@ export async function POST(req, { params }) {
     }
 
     const { searchParams } = new URL(req.url);
-    const conversationId = searchParams.get("conversationId");
+    const conversationId = Number(searchParams.get("conversationId"));
+    if (!Number.isInteger(conversationId) || conversationId <= 0) {
+      return Response.json({ error: "Missing conversationId" }, { status: 400 });
+    }
+
+    const rl = await checkRateLimit(`dispute:${user.id}`, { limit: 5, windowSeconds: 600 });
+    if (!rl.allowed) return tooManyRequests();
 
     await client.query("BEGIN");
 
@@ -37,14 +46,19 @@ export async function POST(req, { params }) {
         l.price       AS game_price,
         l.platform    AS game_type
       FROM login_deliveries ld
+      JOIN conversations c      ON c.id = ld.conversation_id
       JOIN transactions t       ON t.listing_id = ld.listing_id
+                               AND t.payment_status = 'paid'
+                               AND t.escrow_status IN ('holding', 'frozen')
+                               AND ((c.sender_id = t.buyer_id AND c.receiver_id = t.seller_id)
+                                 OR (c.sender_id = t.seller_id AND c.receiver_id = t.buyer_id))
       JOIN users buyer          ON buyer.id = t.buyer_id
       JOIN users seller         ON seller.id = t.seller_id
       JOIN listings l           ON l.id = ld.listing_id
       WHERE ld.conversation_id = $1
       ORDER BY ld.created_at DESC
       LIMIT 1
-      FOR UPDATE
+      FOR UPDATE OF ld, t
       `,
       [conversationId],
     );
@@ -57,6 +71,11 @@ export async function POST(req, { params }) {
         { error: "No active delivery found" },
         { status: 404 },
       );
+    }
+
+    if (Number(login.buyer_id) !== Number(user.id)) {
+      await client.query("ROLLBACK");
+      return Response.json({ error: "Not allowed" }, { status: 403 });
     }
 
     const now = new Date();
@@ -157,10 +176,13 @@ export async function POST(req, { params }) {
 
     // 7. Send admin dispute alert email
     try {
+      // PRIVACY: a personal address was hardcoded here. Configure
+      // ADMIN_ALERT_EMAIL; if unset the alert is skipped (dispute still saved).
+      if (!process.env.ADMIN_ALERT_EMAIL) throw new Error("ADMIN_ALERT_EMAIL not set");
       await resend.emails.send({
       from: "Nepogames <no-reply@support.nepogames.com>",
-      to: "favourdomirin@gmail.com",
-      subject: `⚠️ Dispute Raised — ${login.game_title} (Ref: ${login.payment_reference})`,
+      to: process.env.ADMIN_ALERT_EMAIL,
+      subject: `⚠️ Dispute Raised — ${String(login.game_title).replace(/[\r\n]/g, " ")} (Ref: ${login.payment_reference})`,
       html: `
         <!DOCTYPE html>
         <html lang="en">
@@ -213,10 +235,10 @@ export async function POST(req, { params }) {
                         <tr>
                           <td style="padding:20px 24px;">
                             <p style="margin:0 0 4px;font-size:20px;font-weight:500;color:#0A0A0A;font-family:Georgia,serif;">
-                              ${login.game_title}
+                              ${escapeHtml(login.game_title)}
                             </p>
                             <p style="margin:0 0 12px;font-size:13px;color:#57534E;">
-                              ${login.game_type ?? "—"}
+                              ${escapeHtml(login.game_type ?? "—")}
                             </p>
                             <table cellpadding="0" cellspacing="0" style="width:100%;">
                               <tr>
@@ -228,13 +250,13 @@ export async function POST(req, { params }) {
                               <tr>
                                 <td style="font-size:13px;color:#78716C;padding:3px 0;">Payment ref</td>
                                 <td style="font-size:13px;color:#0A0A0A;font-weight:500;text-align:right;padding:3px 0;font-family:monospace;">
-                                  ${login.payment_reference}
+                                  ${escapeHtml(login.payment_reference)}
                                 </td>
                               </tr>
                               <tr>
                                 <td style="font-size:13px;color:#78716C;padding:3px 0;">Conversation</td>
                                 <td style="font-size:13px;color:#0A0A0A;font-weight:500;text-align:right;padding:3px 0;font-family:monospace;">
-                                  #${conversationId}
+                                  #${escapeHtml(conversationId)}
                                 </td>
                               </tr>
                             </table>
@@ -253,8 +275,8 @@ export async function POST(req, { params }) {
                               <tr>
                                 <td style="padding:16px 18px;">
                                   <p style="margin:0 0 4px;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:#78716C;">Buyer</p>
-                                  <p style="margin:0 0 4px;font-size:15px;font-weight:500;color:#0A0A0A;">${login.buyer_name}</p>
-                                  <p style="margin:0;font-size:13px;color:#1D4ED8;">${login.buyer_email}</p>
+                                  <p style="margin:0 0 4px;font-size:15px;font-weight:500;color:#0A0A0A;">${escapeHtml(login.buyer_name)}</p>
+                                  <p style="margin:0;font-size:13px;color:#1D4ED8;">${escapeHtml(login.buyer_email)}</p>
                                 </td>
                               </tr>
                             </table>
@@ -264,8 +286,8 @@ export async function POST(req, { params }) {
                               <tr>
                                 <td style="padding:16px 18px;">
                                   <p style="margin:0 0 4px;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:#78716C;">Seller</p>
-                                  <p style="margin:0 0 4px;font-size:15px;font-weight:500;color:#0A0A0A;">${login.seller_name}</p>
-                                  <p style="margin:0;font-size:13px;color:#1D4ED8;">${login.seller_email}</p>
+                                  <p style="margin:0 0 4px;font-size:15px;font-weight:500;color:#0A0A0A;">${escapeHtml(login.seller_name)}</p>
+                                  <p style="margin:0;font-size:13px;color:#1D4ED8;">${escapeHtml(login.seller_email)}</p>
                                 </td>
                               </tr>
                             </table>
@@ -321,7 +343,7 @@ export async function POST(req, { params }) {
     } catch (rollbackErr) {
       // transaction may already be closed — ignore
     }
-    console.error("DISPUTE ERROR:", err);
+    console.error("DISPUTE ERROR:", err.message);
     return Response.json({ error: "Server error" }, { status: 500 });
   } finally {
     client.release();

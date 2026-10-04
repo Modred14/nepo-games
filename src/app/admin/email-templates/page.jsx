@@ -1,6 +1,6 @@
-// ROUTE: src/app/admin/email-templates/page.jsx  (NEW)
+// ROUTE: src/app/admin/email-templates/page.jsx
 //
-// Read-only viewer for what Nepo Games' 8 separate transactional emails
+// Read-only viewer for what Nepogames' 8 separate transactional emails
 // actually say. There is no edit capability here — see the banner below
 // and src/app/admin/_data/emailTemplates.js for why: 8 scattered files
 // with no shared template system, two of them being password reset and
@@ -41,7 +41,7 @@ export default function AdminEmailTemplatesPage() {
     <AdminShell>
       <h1 className="adm-h1">Email templates</h1>
       <p className="adm-sub">
-        What Nepo Games actually sends, for reference — read-only.
+        What Nepogames actually sends, for reference — read-only.
       </p>
 
       <div

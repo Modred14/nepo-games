@@ -1,3 +1,4 @@
+// ROUTE: src/app/api/c/[slug]/rate/route.js
 // src/app/api/c/[slug]/rate/route.js
 import { NextResponse } from "next/server";
 import pool from "@/lib/db";
@@ -11,9 +12,11 @@ export async function POST(req, { params }) {
     }
 
    
-    const { rating, conversationId  } = await req.json();
+    const body = await req.json().catch(() => ({}));
+    const rating = Number(body.rating);
+    const conversationId = Number(body.conversationId);
 
-    if (!rating || rating < 1 || rating > 5) {
+    if (!Number.isInteger(rating) || rating < 1 || rating > 5 || !Number.isInteger(conversationId) || conversationId <= 0) {
       return NextResponse.json({ error: "Invalid rating" }, { status: 400 });
     }
 

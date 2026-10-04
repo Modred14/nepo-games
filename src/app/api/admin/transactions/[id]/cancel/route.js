@@ -1,4 +1,4 @@
-// ROUTE: src/app/api/admin/transactions/[id]/cancel/route.js  (NEW)
+// ROUTE: src/app/api/admin/transactions/[id]/cancel/route.js
 //
 // ADMIN DASHBOARD PHASE 3: "cancel transaction" from the spec, scoped
 // specifically to transactions where payment never actually completed
@@ -30,7 +30,7 @@ export async function POST(req, { params }) {
     await client.query("BEGIN");
 
     const res = await client.query(
-      `SELECT id, listing_id, transaction_status, escrow_status FROM transactions WHERE id = $1 FOR UPDATE`,
+      `SELECT id, listing_id, buyer_id, transaction_status, payment_status, escrow_status FROM transactions WHERE id = $1 FOR UPDATE`,
       [id],
     );
     const tx = res.rows[0];
@@ -39,7 +39,15 @@ export async function POST(req, { params }) {
       return Response.json({ error: "Transaction not found" }, { status: 404 });
     }
 
-    if (!CANCELLABLE_STATUSES.includes(tx.transaction_status)) {
+    // SECURITY/FINANCIAL: transaction_status 'pending' is ALSO the status of an
+    // order that has been PAID and is sitting in escrow. Cancelling that here
+    // would mark the payment failed while the buyer's money is held, with no
+    // refund. Only orders that have NOT been paid may be cancelled this way;
+    // paid orders go through the resolve (refund/release) flow.
+    if (
+      tx.payment_status !== "pending" ||
+      !CANCELLABLE_STATUSES.includes(tx.transaction_status)
+    ) {
       await client.query("ROLLBACK");
       return Response.json(
         {

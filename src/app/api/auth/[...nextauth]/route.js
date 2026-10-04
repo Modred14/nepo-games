@@ -12,6 +12,20 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcrypt";
 import pool from "../../../../lib/db";
 import { resend } from "../../../../lib/resend";
+import { escapeHtml } from "../../../../lib/html";
+import { checkRateLimit } from "../../../../lib/rateLimit";
+
+// Next-auth hands authorize() a plain headers object (not a Headers instance).
+function clientIpFromAuthReq(req) {
+  const h = req?.headers || {};
+  const pick = (k) => h[k] || h[k.toLowerCase()];
+  return (
+    pick("fly-client-ip") ||
+    pick("x-real-ip") ||
+    String(pick("x-forwarded-for") || "").split(",")[0].trim() ||
+    "unknown"
+  );
+}
 
 const defaultAvatar = "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
 
@@ -65,11 +79,23 @@ export const authOptions = {
         password: {},
       },
 
-      async authorize(credentials) {
+      async authorize(credentials, req) {
         try {
-          const { email, password } = credentials;
+          const { email, password } = credentials || {};
 
-          if (!email || !password) return null;
+          if (typeof email !== "string" || typeof password !== "string") return null;
+          if (!email || !password || email.length > 254 || password.length > 200) return null;
+
+          // BRUTE-FORCE PROTECTION (previously none): limit per IP and per
+          // target account. Fails CLOSED if the limiter is unavailable.
+          const ip = clientIpFromAuthReq(req);
+          const [byIp, byEmail] = await Promise.all([
+            checkRateLimit(`login-ip:${ip}`, { limit: 20, windowSeconds: 900, failClosed: true }),
+            checkRateLimit(`login-email:${email.toLowerCase()}`, { limit: 8, windowSeconds: 900, failClosed: true }),
+          ]);
+          if (!byIp.allowed || !byEmail.allowed) {
+            throw new Error("TOO_MANY_ATTEMPTS");
+          }
 
           const user = await fetchFullUserProfile(email);
 
@@ -218,7 +244,7 @@ export const authOptions = {
               <tr>
                 <td style="background:#FAFAF9;border-top:1px solid #E7E5E4;padding:20px 40px;">
                   <p style="margin:0 0 4px;font-size:12px;color:#78716C;line-height:1.6;">
-                    This email was sent to <strong>${email}</strong>.
+                    This email was sent to <strong>${escapeHtml(email)}</strong>.
                     Questions? Contact <a href="mailto:support@nepogames.com" style="color:#78716C;">support@nepogames.com</a>.
                   </p>
                   <p style="margin:8px 0 0;font-size:12px;color:#A8A29E;">
@@ -272,7 +298,7 @@ If you didn't create an account, ignore this email.`,
             role: user.role,
           };
         } catch (err) {
-          console.error("Credentials Auth Error:", err);
+          console.error("Credentials Auth Error:", err.message);
           throw err;
         }
       },
@@ -283,6 +309,10 @@ If you didn't create an account, ignore this email.`,
     strategy: "jwt",
     maxAge: 7 * 24 * 60 * 60,
   },
+  jwt: { maxAge: 7 * 24 * 60 * 60 },
+  // Session cookie is HttpOnly + SameSite=Lax by next-auth default; in
+  // production it is additionally forced to the __Secure- prefixed Secure form.
+  useSecureCookies: process.env.NODE_ENV === "production",
   // NOTE: role/plan/etc. live on the JWT and can be up to `maxAge` stale
   // (e.g. a revoked admin keeps admin-looking data in their token until
   // they re-login). We deliberately do NOT re-check the DB here on every
@@ -298,8 +328,13 @@ If you didn't create an account, ignore this email.`,
 
   callbacks: {
     // 🔥 HANDLE GOOGLE SIGN-IN + DB SYNC
-    async signIn({ user, account }) {
+    async signIn({ user, account, profile }) {
       if (account.provider !== "google") return true;
+
+      // SECURITY: only accept Google identities whose email Google has
+      // verified; otherwise an unverified address could be used to claim
+      // an existing account that shares that email.
+      if (profile?.email_verified === false) return false;
 
       try {
         const { name, email, image } = user;
@@ -307,7 +342,7 @@ If you didn't create an account, ignore this email.`,
         if (!email) return false;
 
         const first_name = name?.split(" ")[0] || "Nepo User";
-        const surname = name?.split(" ")[1] || "";
+        const surname = name?.split(" ").slice(1).join(" ") || "";
 
         const existing = await pool.query(
           `SELECT * FROM users WHERE email = $1`,
@@ -394,7 +429,7 @@ If you didn't create an account, ignore this email.`,
 
         return true;
       } catch (err) {
-        console.error("Google Auth Error:", err);
+        console.error("Google Auth Error:", err.message);
         return false;
       }
     },
@@ -420,8 +455,30 @@ If you didn't create an account, ignore this email.`,
           role: user.role,
         };
       }
-      if (trigger === "update" && session?.user) {
-        token.user = { ...token.user, ...session.user };
+      // SECURITY (critical): this used to merge `session.user` — data sent by
+      // the BROWSER via useSession().update() — straight into the token:
+      //   token.user = { ...token.user, ...session.user }
+      // A logged-in user could call update({ user: { id: <victim id>,
+      // role: "admin" } }) and the server would issue them a session for the
+      // victim's id (account takeover / impersonation, incl. access to the
+      // victim's wallet and escrow credentials). Client-supplied data is now
+      // ignored entirely; the refreshed fields are re-read from the database
+      // using the id that is already inside the signed token.
+      if (trigger === "update" && token.user?.id) {
+        try {
+          const fresh = await pool.query(
+            `SELECT first_name, surname, username, profile_image, phone_verified,
+                    plan, subscription_status, subscription_start,
+                    subscription_end, payment_provider, pin_set, role
+               FROM users WHERE id = $1`,
+            [token.user.id],
+          );
+          if (fresh.rows[0]) {
+            token.user = { ...token.user, ...fresh.rows[0] };
+          }
+        } catch (err) {
+          console.error("jwt refresh failed:", err.message);
+        }
       }
 
       return token;

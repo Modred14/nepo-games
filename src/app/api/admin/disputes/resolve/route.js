@@ -51,9 +51,11 @@ export async function POST(req) {
       );
     }
 
-    const { conversationId, resolution, reason } = await req.json();
+    const body = await req.json().catch(() => ({}));
+    const conversationId = Number(body.conversationId);
+    const { resolution, reason } = body;
 
-    if (!conversationId || !["release_seller", "refund_buyer"].includes(resolution)) {
+    if (!Number.isInteger(conversationId) || conversationId <= 0 || !["release_seller", "refund_buyer"].includes(resolution)) {
       return Response.json(
         { error: "conversationId and a valid resolution ('release_seller' or 'refund_buyer') are required" },
         { status: 400 },
@@ -73,11 +75,16 @@ export async function POST(req) {
         t.escrow_status,
         t.amount
       FROM login_deliveries ld
-      JOIN transactions t ON t.listing_id = ld.listing_id
+      JOIN conversations c ON c.id = ld.conversation_id
+      JOIN transactions t
+        ON t.listing_id = ld.listing_id
+       AND t.payment_status = 'paid'
+       AND ((c.sender_id = t.buyer_id AND c.receiver_id = t.seller_id)
+         OR (c.sender_id = t.seller_id AND c.receiver_id = t.buyer_id))
       WHERE ld.conversation_id = $1
-      ORDER BY ld.created_at DESC
+      ORDER BY t.created_at DESC, ld.created_at DESC
       LIMIT 1
-      FOR UPDATE
+      FOR UPDATE OF ld, t
       `,
       [conversationId],
     );
@@ -206,9 +213,8 @@ export async function POST(req) {
     try {
       await client.query("ROLLBACK");
     } catch {
-     console.log("")
     }
-    console.error("DISPUTE RESOLVE ERROR:", err);
+    console.error("DISPUTE RESOLVE ERROR:", err.message);
     return Response.json({ error: "Server error" }, { status: 500 });
   } finally {
     client.release();

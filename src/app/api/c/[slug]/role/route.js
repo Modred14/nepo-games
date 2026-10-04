@@ -1,7 +1,9 @@
+// ROUTE: src/app/api/c/[slug]/role/route.js
 // src/app/api/c/[slug]/role/route.js
 import pool from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import { getCached, setCached } from "@/lib/cache";
+import { maskEmail } from "@/lib/html";
 
 /**
  * GET /api/listings/[slug]/role
@@ -11,7 +13,11 @@ import { getCached, setCached } from "@/lib/cache";
  */
 export async function GET(req, { params }) {
   try {
-    const { slug: listing_id } = await params;
+    const { slug } = await params;
+    const listing_id = Number(slug);
+    if (!Number.isInteger(listing_id) || listing_id <= 0) {
+      return Response.json({ error: "Invalid listing" }, { status: 400 });
+    }
 
     const currentUser = await requireUser(); // ✅ Zero DB — reads from JWT
 
@@ -54,6 +60,27 @@ export async function GET(req, { params }) {
         : null
       : seller_id;
 
+    // The "other side" of a trade chat can only be a participant of an actual
+    // conversation on this listing — otherwise this endpoint would be a
+    // user-lookup oracle for any user id.
+    if (otherId !== null) {
+      if (!Number.isInteger(otherId) || otherId <= 0) {
+        return Response.json({ error: "Invalid receiver" }, { status: 400 });
+      }
+      if (isSeller) {
+        const part = await pool.query(
+          `SELECT 1 FROM conversations
+            WHERE listing_id = $1
+              AND ((sender_id = $2 AND receiver_id = $3) OR (sender_id = $3 AND receiver_id = $2))
+            LIMIT 1`,
+          [listing_id, current_user_id, otherId],
+        );
+        if (part.rows.length === 0) {
+          return Response.json({ error: "Not allowed" }, { status: 403 });
+        }
+      }
+    }
+
     const [otherUserRes, listingRes] = await Promise.all([
       otherId
         ? pool.query(
@@ -72,7 +99,8 @@ export async function GET(req, { params }) {
       ),
     ]);
 
-    const otherUser = otherUserRes.rows[0] || null;
+    const otherUserRow = otherUserRes.rows[0] || null;
+    const otherUser = otherUserRow ? { ...otherUserRow, email: maskEmail(otherUserRow.email) } : null;
     const listingInfo = listingRes.rows[0] || null;
 
     return Response.json({
@@ -87,9 +115,9 @@ export async function GET(req, { params }) {
       listing: listingInfo,
     });
   } catch (err) {
-    console.error("ROLE API ERROR:", err);
+    console.error("ROLE API ERROR:", err.message);
     return Response.json(
-      { error: "Server error", details: err.message },
+      { error: "Server error" },
       { status: 500 },
     );
   }

@@ -1,9 +1,10 @@
+// ROUTE: src/app/admin/_data/emailTemplates.js
 // src/app/admin/_data/emailTemplates.js  (NEW)
 //
 // ADMIN DASHBOARD: read-only catalog backing /admin/email-templates.
 //
 // WHY THIS IS A HAND-CURATED SNAPSHOT, NOT A LIVE FILE READER:
-// Nepo Games sends email from 8 separate files, each with its own inline
+// Nepogames sends email from 8 separate files, each with its own inline
 // `resend.emails.send({ html: "..." })` call — there is no shared
 // template system anywhere in the codebase (verified by searching every
 // call site: src/app/api/auth/[...nextauth]/route.js,

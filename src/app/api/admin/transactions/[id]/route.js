@@ -1,4 +1,4 @@
-// ROUTE: src/app/api/admin/transactions/[id]/route.js  (NEW)
+// ROUTE: src/app/api/admin/transactions/[id]/route.js
 //
 // ADMIN DASHBOARD PHASE 3: full transaction detail, built from every
 // table that actually touches one transaction's lifecycle — this is
@@ -86,7 +86,9 @@ export async function GET(req, { params }) {
 
     return Response.json({
       transaction,
-      deliveries: deliveryRes.rows,
+      // PRIVACY: game-account credentials are never sent to the admin UI
+      // (it doesn't display them, and they are encrypted at rest).
+      deliveries: deliveryRes.rows.map(({ details, ...rest }) => rest),
       ledger: ledgerRes.rows,
       timeline,
     });
